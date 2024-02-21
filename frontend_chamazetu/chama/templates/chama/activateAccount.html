@@ -1,0 +1,43 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Activate Your Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        .main {
+            padding: 20px;
+            background-color: white;
+            color: black;
+        }
+        .button {
+            display: inline-block;
+            color: white;
+            background-color: #3498db;
+            padding: 10px 20px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main">
+            <h2>Welcome to chamaZetu, {{ user }}!</h2>
+            <p>We're excited to have you on board. To get started, please verify your account by clicking the link below:</p>
+            <a href="http://192.168.100.2:8000{% url 'activate' uidb64=uid token=token %}" class="button">Activate Account</a>
+            <p>Thank you,<br>The chamaZetu Team</p>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}

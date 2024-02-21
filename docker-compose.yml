@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  chamazetu_database:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: mankindjnr
+      POSTGRES_PASSWORD: MhF6£MN&:]d21C,y38(p2(b-
+      POSTGRES_DB: chamazetudb
+    ports:
+      - "5433:5432"
+
+  chamazetu_frontend:
+    build:
+      context: ./frontend_chamazetu
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./frontend_chamazetu:/usr/src/djangofrontend/
+    ports:
+      - "8000:8000"
+    depends_on:
+      - chamazetu_database
+    environment:
+      - DATABASE_URL=postgres://mankindjnr:MhF6£MN&:]d21C,y38(p2(b-@chamazetu_database:5432/postgres
+
+  chamazetu_backend:
+    build:
+      context: ./backend_chamazetu
+    command: uvicorn app.main:app --host 0.0.0.0 --port 9400 --reload
+    volumes:
+      - ./backend_chamazetu:/usr/src/fastbackend/
+    ports:
+      - "9400:9400"
+    depends_on:
+      - chamazetu_database
+    environment:
+      - DATABASE_URL=postgres://mankindjnr:MhF6£MN&:]d21C,y38(p2(b-@chamazetu_database:5432/postgres
