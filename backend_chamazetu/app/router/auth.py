@@ -22,11 +22,13 @@ async def login(
     )
 
     if not user:
+        print("User not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
 
     if not user.is_active or not user.is_verified:
+        print("User not active or not verified")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
@@ -38,6 +40,8 @@ async def login(
 
     access_token = await oauth2.create_access_token(data={"sub": user.email})
     refresh_token = await oauth2.create_refresh_token(data={"sub": user.email})
+
+    print(f"access_token: {access_token}")
 
     return {
         "access_token": access_token,

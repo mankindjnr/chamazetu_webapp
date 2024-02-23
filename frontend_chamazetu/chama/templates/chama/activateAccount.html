@@ -26,6 +26,13 @@
             background-color: #3498db;
             padding: 10px 20px;
             text-decoration: none;
+            border-radius: 20px;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
         }
     </style>
 </head>
@@ -34,7 +41,7 @@
         <div class="main">
             <h2>Welcome to chamaZetu, {{ user }}!</h2>
             <p>We're excited to have you on board. To get started, please verify your account by clicking the link below:</p>
-            <a href="http://192.168.100.2:8000{% url 'activate' uidb64=uid token=token %}" class="button">Activate Account</a>
+            <a href="https://192.168.100.7:8000{% url 'activate' uidb64=uid token=token %}" class="button">Activate Account</a>
             <p>Thank you,<br>The chamaZetu Team</p>
         </div>
     </div>

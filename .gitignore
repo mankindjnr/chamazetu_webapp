@@ -1,5 +1,9 @@
+.env
 frontend_chamazetu/.env
 backend_chamazetu/.env
 frontend_chamazetu/djfront
 backend_chamazetu/fast
 backend_chamazetu/staticfiles
+frontend_chamazetu/key.pem
+frontend_chamazetu/cert.pem
+frontend_chamazetu/certs

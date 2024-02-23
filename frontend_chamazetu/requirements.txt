@@ -8,6 +8,7 @@ cryptography==41.0.7
 deprecation==2.1.0
 Django==5.0.1
 django-cors-headers==4.3.1
+django-sslserver==0.22
 ecdsa==0.18.0
 exceptiongroup==1.2.0
 gotrue==2.1.0
