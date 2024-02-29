@@ -121,40 +121,40 @@ def signin(request, role):
             refresh_token = response.json()["refresh_token"]
             current_user = request.POST["email"]
 
-        # check if user is a member or manager from db
-        query = "SELECT is_manager FROM users WHERE email = %s"
-        params = [current_user]
-        position = execute_sql(query, params)
+            # check if user is a member or manager from db
+            query = "SELECT is_manager FROM users WHERE email = %s"
+            params = [current_user]
+            position = execute_sql(query, params)
 
-        is_manager = position[0][0]
-        if is_manager == True:
-            response = HttpResponseRedirect(reverse("managerdashboard"))
-        else:
-            response = HttpResponseRedirect(reverse("memberdashboard"))
+            is_manager = position[0][0]
+            if is_manager == True:
+                response = HttpResponseRedirect(reverse("managerdashboard"))
+            else:
+                response = HttpResponseRedirect(reverse("memberdashboard"))
 
-        # successful login - store tokens - redirect to dashboard
-        response.set_cookie(
-            "current_user",
-            current_user,
-            secure=True,
-            httponly=True,
-            samesite="Strict",
-        )
-        response.set_cookie(
-            "access_token",
-            f"Bearer {access_token}",
-            secure=True,
-            httponly=True,
-            samesite="Strict",
-        )
-        response.set_cookie(
-            "refresh_token",
-            f"Bearer {refresh_token}",
-            secure=True,
-            httponly=True,
-            samesite="Strict",
-        )
-        return response
+            # successful login - store tokens - redirect to dashboard
+            response.set_cookie(
+                "current_user",
+                current_user,
+                secure=True,
+                httponly=True,
+                samesite="Strict",
+            )
+            response.set_cookie(
+                "access_token",
+                f"Bearer {access_token}",
+                secure=True,
+                httponly=True,
+                samesite="Strict",
+            )
+            response.set_cookie(
+                "refresh_token",
+                f"Bearer {refresh_token}",
+                secure=True,
+                httponly=True,
+                samesite="Strict",
+            )
+            return response
     else:
         # unsuccessful login - redirect to login page - send message to user - not verified
         return render(request, f"chama/{role}login.html")
@@ -181,6 +181,7 @@ def signup(request, role):  # implement the manager signup
         elif role == "member":
             is_member = True
 
+        # TODO: is_active to be changed to false by default till the user verifies their email
         data = {
             "email": email,
             "password": password,
