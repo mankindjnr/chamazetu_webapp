@@ -80,7 +80,7 @@ def managerdashboard(request):
     access_token = request.COOKIES.get("access_token")
 
     # might have to add a check for admin/ authorization - add it to the token
-    # backend validation of token
+    # local validation of token
     current_user = request.COOKIES.get("current_user")
     response = validate_token(request, "manager")
     if isinstance(response, HttpResponseRedirect):
@@ -88,8 +88,28 @@ def managerdashboard(request):
         if isinstance(refreshed_response, HttpResponseRedirect):
             return refreshed_response
 
+    # get the id of the current user
+    query = "SELECT id FROM users WHERE email = %s"
+    params = [current_user]
+    user_id = (execute_sql(query, params))[0][0]
+
+    # get the chamas connected to id of the current user
+    query = "SELECT chamaname, is_active FROM chamas WHERE user_id = %s"
+    params = [user_id]
+    chamas = execute_sql(query, params)
+
+    print("---------chamas---------")
+    print(user_id)
+    print(current_user)
+    chama = dict(chamas)
+    print()
     return render(
-        request, "chama/managerdashboard.html", {"current_user": current_user}
+        request,
+        "chama/managerdashboard.html",
+        {
+            "current_user": current_user,
+            "chamas": chamas,
+        },
     )
 
 
@@ -114,19 +134,25 @@ def signin(request, role):
         # TODO: include a try and retry mechanism for the auth route call
         # send the data to the auth server for verification and login
         response = requests.post("http://chamazetu_backend:9400/users/login", data=data)
-        print(response.json())
 
         if response.status_code == 200:
             access_token = response.json()["access_token"]
             refresh_token = response.json()["refresh_token"]
             current_user = request.POST["email"]
 
+            print("---------login current_user---------")
+            print(current_user)
+
             # check if user is a member or manager from db
             query = "SELECT is_manager FROM users WHERE email = %s"
             params = [current_user]
             position = execute_sql(query, params)
+            print("---------position---------")
+            print(position)
 
             is_manager = position[0][0]
+            print("---------is_manager---------")
+            print(is_manager)
             if is_manager == True:
                 response = HttpResponseRedirect(reverse("managerdashboard"))
             else:
@@ -204,15 +230,12 @@ def signup(request, role):  # implement the manager signup
             current_user = response.json()["User"][0]
             # -------------------email verification-------------------------------------
             current_site = get_current_site(request)
-            print("---------current_site---------")
-            print(current_site)
-            print()
             mail_subject = "Activate your chamaZetu account."
             message = render_to_string(
                 "chama/activateAccount.html",
                 {
                     "user": username,
-                    "domain": current_site.domain,
+                    "current_site": current_site,
                     "uid": urlsafe_base64_encode(force_bytes(current_user["id"])),
                     "token": current_user["activation_code"],
                 },
