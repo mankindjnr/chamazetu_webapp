@@ -3,9 +3,9 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, T
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-# a many to many relationship - association table between members and chamas
-member_chama = Table(
-    "member_chama",
+# Define the many-to-many relationship table between members and chamas
+members_chamas_association = Table(
+    "members_chamas",
     Base.metadata,
     Column("member_id", Integer, ForeignKey("members.id")),
     Column("chama_id", Integer, ForeignKey("chamas.id")),
@@ -15,80 +15,79 @@ member_chama = Table(
 class Member(Base):
     __tablename__ = "members"
 
-    id = Column(Integer, primary_key=True)
-    email = Column(String(100), nullable=False, unique=True, index=True)
-    password = Column(String(250), nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    email_verified = Column(Boolean, default=False)
+    password = Column(String, nullable=False)
+    date_joined = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = Column(Boolean, default=True)
-    # for manager to assign an assistant # TODO: add this to the managers dashboard-they can assign already existing members to be staff
+    is_member = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
-    is_verified = Column(Boolean, default=False)
 
-    # defining the relationship to chama
+    # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
+    transactions = relationship("Transaction", back_populates="member")
+    # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
     chamas = relationship(
-        "Chama", secondary=member_chama, back_populates="members", lazy="dynamic"
+        "Chama", secondary=members_chamas_association, back_populates="members"
     )
-    transaction_sent = relationship(
-        "Transaction", back_populates="sender", foreign_keys="Transaction.sender_id"
-    )
-    transaction_received = relationship(
-        "Transaction",
-        back_populates="recepient",
-        foreign_keys="Transaction.recepient_id",
+
+
+class Chama(Base):
+    __tablename__ = "chamas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_name = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=False)
+    date_created = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False)
+    verified_chama = Column(Boolean, default=True)  # bluecheckmark
+
+    # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
+    transactions = relationship("Transaction", back_populates="chama")
+    # Define the one-to-many relationship between manager and chamas(1 manager can have many chamas)
+    manager_id = Column(Integer, ForeignKey("managers.id"))
+    manager = relationship("Manager", back_populates="chamas")
+    # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
+    members = relationship(
+        "Member", secondary=members_chamas_association, back_populates="chamas"
     )
 
 
 class Manager(Base):
     __tablename__ = "managers"
 
-    id = Column(Integer, primary_key=True)
-    email = Column(String(100), nullable=False, unique=True, index=True)
-    password = Column(String(250), nullable=False)
-    created_at = Column(DateTime, default=datetime.now)
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    email_verified = Column(Boolean, default=False)
+    date_joined = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
     is_active = Column(Boolean, default=True)
-    # for manager to assign an assistant # TODO: add this to the managers dashboard-they can assign already existing members to be staff
+    is_manager = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
-    is_verified = Column(Boolean, default=False)
 
-    # defining relationship to transaction
+    # Define the one-to-many relationship between manager and chamas(1 manager can have many chamas)
     chamas = relationship("Chama", back_populates="manager")
-
-
-# many to many relation between users and chamas where users can be in many chamas and chamas can have many users
-class Chama(Base):
-    __tablename__ = "chamas"
-
-    id = Column(Integer, primary_key=True)
-    chamaname = Column(String(100), nullable=False, unique=True, index=True)
-    manage_id = Column(Integer, ForeignKey("managers.id"))
-    member_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
-    is_active = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
-    is_verified = Column(Boolean, default=True)  # blue checkmark for legacy groups
-    description = Column(String(250), nullable=False)
-
-    # defining the relationship to user
-    members = relationship(
-        "Member", secondary=member_chama, back_populates="chamas", lazy="dynamic"
-    )
-    manager = relationship("Manager", back_populates="chamas")
-    transactions = relationship("Transaction", back_populates="recepient")
 
 
 class Transaction(Base):
     __tablename__ = "transactions"
 
-    id = Column(Integer, primary_key=True)
-    sender_id = Column(Integer, ForeignKey("members.id"), nullable=False)
-    sender = relationship(
-        "Member", back_populates="transaction_sent", foreign_keys=[sender_id]
-    )
-    recepient_id = Column(Integer, ForeignKey("chamas.id"), nullable=False)
-    recepient = relationship("Chama", back_populates="transactions")
+    id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
-    sent_at = Column(DateTime, default=datetime.now)
+    date_of_transaction = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    transaction_completed = Column(Boolean, default=False)
+    transaction_type = Column(
+        String, nullable=False
+    )  # deposit, withdrawal, loan, loan_payment, interest
     is_reversed = Column(Boolean, default=False)
+
+    # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    chama = relationship("Chama", back_populates="transactions")
+    # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
+    member_id = Column(Integer, ForeignKey("members.id"))
+    member = relationship("Member", back_populates="transactions")

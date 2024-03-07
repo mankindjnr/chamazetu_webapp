@@ -15,8 +15,8 @@ RUN pip install -r requirements.txt
 COPY . /app/frontend/
 
 # Install wait-for-it
-ADD https://github.com/eficode/wait-for/raw/master/wait-for /wait-for
-RUN chmod +x /wait-for
+#ADD https://github.com/eficode/wait-for/raw/master/wait-for /wait-for
+#RUN chmod +x /wait-for
 # without migrating the db i can skip the wait-for-it - i'll migrate the db manually in the container
 
 RUN python manage.py collectstatic --no-input
@@ -34,4 +34,5 @@ COPY ./key.pem /app/frontend/certs
 
 EXPOSE 443
 
-CMD /wait-for chamazetu_database:5432 -- python manage.py runsslserver --certificate /app/frontend/certs/cert.pem --key /app/frontend/certs/key.pem 0.0.0.0:8000
+#CMD /wait-for chamazetu_database:5432 -- python manage.py runsslserver --certificate /app/frontend/certs/cert.pem --key /app/frontend/certs/key.pem 0.0.0.0:8000
+CMD python manage.py runsslserver --certificate /app/frontend/certs/cert.pem --key /app/frontend/certs/key.pem 0.0.0.0:8000

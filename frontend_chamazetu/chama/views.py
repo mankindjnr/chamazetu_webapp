@@ -89,12 +89,12 @@ def managerdashboard(request):
             return refreshed_response
 
     # get the id of the current user
-    query = "SELECT id FROM users WHERE email = %s"
+    query = "SELECT id FROM managers WHERE email = %s"
     params = [current_user]
     user_id = (execute_sql(query, params))[0][0]
 
     # get the chamas connected to id of the current user
-    query = "SELECT chamaname, is_active FROM chamas WHERE user_id = %s"
+    query = "SELECT chama_name, is_active FROM chamas WHERE user_id = %s"
     params = [user_id]
     chamas = execute_sql(query, params)
 
@@ -130,7 +130,6 @@ def signin(request, role):
             "username": request.POST["email"],
             "password": request.POST["password"],
         }
-
         # TODO: include a try and retry mechanism for the auth route call
         # send the data to the auth server for verification and login
         response = requests.post("http://chamazetu_backend:9400/users/login", data=data)
@@ -142,20 +141,17 @@ def signin(request, role):
 
             print("---------login current_user---------")
             print(current_user)
+            print()
+            print("---------login access_token---------")
+            print(access_token)
+            print()
+            print("---------login refresh_token---------")
+            print(refresh_token)
 
-            # check if user is a member or manager from db
-            query = "SELECT is_manager FROM users WHERE email = %s"
-            params = [current_user]
-            position = execute_sql(query, params)
-            print("---------position---------")
-            print(position)
-
-            is_manager = position[0][0]
-            print("---------is_manager---------")
-            print(is_manager)
-            if is_manager == True:
+            # check if user is a member or manager
+            if role == "manager":
                 response = HttpResponseRedirect(reverse("managerdashboard"))
-            else:
+            elif role == "member":
                 response = HttpResponseRedirect(reverse("memberdashboard"))
 
             # successful login - store tokens - redirect to dashboard
@@ -192,31 +188,29 @@ def signin(request, role):
 def signup(request, role):  # implement the manager signup
     if request.method == "POST":
         email = request.POST["email"]
-        username = request.POST["username"]
         password = request.POST["password"]
         confirm_password = request.POST["password2"]
 
         if password != confirm_password:
             return render(request, f"chama/{role}signup.html")
 
-        # checking if the user is a manager or member
-        is_manager = False
-        is_member = False
-        if role == "manager":
-            is_manager = True
-        elif role == "member":
-            is_member = True
+        # # checking if the user is a manager or member
+        # is_manager = False
+        # is_member = False
+        # if role == "manager":
+        #     is_manager = True
+        # elif role == "member":
+        #     is_member = True
 
         # TODO: is_active to be changed to false by default till the user verifies their email
+        print("---------signup role---------")
+        print(role)
         data = {
             "email": email,
             "password": password,
-            "username": username,
-            "is_active": True,
-            "is_manager": is_manager,
-            "is_member": is_member,
-            "is_staff": False,
-            "is_verified": False,
+            "is_active": False,
+            "email_verified": False,
+            "role": role,
         }
         headers = {"Content-type": "application/json"}
         response = requests.post(
@@ -234,7 +228,7 @@ def signup(request, role):  # implement the manager signup
             message = render_to_string(
                 "chama/activateAccount.html",
                 {
-                    "user": username,
+                    "user": email,
                     "current_site": current_site,
                     "uid": urlsafe_base64_encode(force_bytes(current_user["id"])),
                     "token": current_user["activation_code"],
@@ -271,28 +265,29 @@ def verify_signup_token(request, token, role):
         return HttpResponseRedirect(reverse("signin", args=[role]))
 
 
-# TODO: replace the supabase calls with the postgres calls - since the db is a container
-# TODO: start using raw sql queries to interact with the db
 # the activation link sent to the user's email
 def activate(request, uidb64, token):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uid to user id
-        # user = supabase.table("users").select("*").eq("id", uid).execute()
 
-        query = "SELECT email, is_manager FROM users WHERE id = %s"
+        query = "SELECT email FROM members WHERE id = %s"
         params = [uid]
-        user = execute_sql(query, params)
-        print("---------raw user---------")
-        print(user)
-        print()
+        member = execute_sql(query, params)
+        print("---------raw member---------")
+        print(member)
 
-        role = user[0][1]
-        if role == True:
-            role = "manager"
-        else:
+        query = "SELECT email FROM managers WHERE id = %s"
+        params = [uid]
+        manager = execute_sql(query, params)
+        print("---------raw manager---------")
+        print(manager)
+
+        if member:
             role = "member"
-
-        user = user[0][0]
+            user = member[0][0]
+        elif manager:
+            role = "manager"
+            user = manager[0][0]
 
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
@@ -301,9 +296,8 @@ def activate(request, uidb64, token):
         request, token, role
     ):  # validate the jwt token here
         # activate user and redirect to home page
-        # supabase.table("users").update({"is_verified": True}).eq("id", uid).execute()
 
-        query = "UPDATE users SET is_verified = True WHERE id = %s RETURNING *"
+        query = f"UPDATE {role}s SET email_verified = True, is_active = True WHERE id = %s RETURNING *"
         params = [uid]
         execute_sql(query, params)
 

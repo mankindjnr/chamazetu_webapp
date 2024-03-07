@@ -4,20 +4,19 @@ from typing import Optional, List
 from pydantic.types import conint
 from decouple import config
 
+
 # ============== user =================
 class UserBase(BaseModel):
     email: EmailStr
-    username: str
     password: str
-    is_active: bool # account is active or not
-    is_manager: bool
-    is_member: bool
-    is_staff: bool
-    is_verified: bool # email verification
+    is_active: bool  # account is active or not
+    email_verified: bool  # email verification
+    role: str  # member or manager
 
     class Config:
         orm_mode = True
         from_attributes = True
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -34,11 +33,13 @@ class Response(BaseModel):
     activation_code: str
     created_at: datetime
 
+
 class UserResp(BaseModel):
     User: List[Response]
 
     class Config:
         orm_mode = True
+
 
 # ====================  Token  ====================
 class Token(BaseModel):
@@ -46,9 +47,11 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str
 
+
 class refreshedToken(BaseModel):
     new_access_token: str
     refreshed_token_type: str
+
 
 class TokenData(BaseModel):
     username: str

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-import logging
+from pydantic import BaseModel, Field
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -15,22 +15,50 @@ async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db),
 ):
+    # the table to check for (member or manager)
+    # select is_member from members where email = user_credentials.username - in sqlalchemy
+
+    try:
+        is_member = (
+            db.query(models.Member.is_member)
+            .filter(models.Member.email == user_credentials.username)
+            .first()
+        )[0]
+
+        is_manager = (
+            db.query(models.Manager.is_manager)
+            .filter(models.Manager.email == user_credentials.username)
+            .first()
+        )[0]
+    except TypeError as e:
+        pass
+
+    if is_member:
+        dbtable = "Member"
+    elif is_manager:
+        dbtable = "Manager"
+
+    # return result[0] if result else None
+    ModelClass = getattr(
+        models, dbtable
+    )  # dynamically get the class from the models module(models.Member)
+
     user = (
-        db.query(models.User)
-        .filter(models.User.email == user_credentials.username)
+        db.query(ModelClass)
+        .filter(ModelClass.email == user_credentials.username)
         .first()
     )
 
     if not user:
-        print("User not found")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
 
-    if not user.is_active or not user.is_verified:
+    if not user.is_active or not user.email_verified:
         print("User not active or not verified")
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="user not active or not verified",
         )
 
     if not utils.verify_password(user_credentials.password, user.password):
@@ -63,7 +91,8 @@ async def new_access_token(token_data: schemas.TokenData = Body(...)):
 
 
 # this is for logout, currently not working but everything else is working
+# TODO: update the User to correctly logout
 @router.post("/logout")
-async def logout(current_user: models.User = Depends(oauth2.get_current_user)):
+async def logout(current_user: models.Member = Depends(oauth2.get_current_user)):
     token_data = schemas.TokenData(username=current_user.email, expires=0)
     return {"token_data": token_data}
