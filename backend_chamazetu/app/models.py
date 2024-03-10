@@ -2,6 +2,7 @@ from .database import Base
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Table
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from datetime import timezone
 
 # Define the many-to-many relationship table between members and chamas
 members_chamas_association = Table(
@@ -19,8 +20,12 @@ class Member(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     email_verified = Column(Boolean, default=False)
     password = Column(String, nullable=False)
-    date_joined = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    date_joined = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
     is_active = Column(Boolean, default=True)
     is_member = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
@@ -39,8 +44,12 @@ class Chama(Base):
     id = Column(Integer, primary_key=True, index=True)
     chama_name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=False)
-    date_created = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    date_created = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
     is_active = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark
@@ -61,9 +70,14 @@ class Manager(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
     email_verified = Column(Boolean, default=False)
-    date_joined = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    date_joined = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
     is_active = Column(Boolean, default=True)
     is_manager = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
@@ -77,8 +91,12 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
-    date_of_transaction = Column(DateTime, default=datetime.now)
-    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    date_of_transaction = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=datetime.now(timezone.utc),
+        onupdate=datetime.now(timezone.utc),
+    )
     transaction_completed = Column(Boolean, default=False)
     transaction_type = Column(
         String, nullable=False
