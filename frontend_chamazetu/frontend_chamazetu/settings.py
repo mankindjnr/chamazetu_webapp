@@ -26,6 +26,8 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "chama.apps.ChamaConfig",
+    "member.apps.MemberConfig",
+    "manager.apps.ManagerConfig",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

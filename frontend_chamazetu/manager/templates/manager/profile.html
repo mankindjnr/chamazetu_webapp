@@ -7,7 +7,7 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center">
+      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/logo.png' %}" alt="">
         <span class="d-none d-lg-block">manager</span>
       </a>
@@ -181,7 +181,7 @@
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
               <h6>ni amos</h6>
-              <span>manager</span>
+              <span>managerss</span>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -218,7 +218,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -238,7 +238,7 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'managerdashboard' %}">
+        <a class="nav-link collapsed" href="{% url 'manager:dashboard' %}">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
@@ -266,7 +266,7 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link " href="{% url 'profile' 'manager' %}">
+        <a class="nav-link " href="{% url 'manager:profile' %}">
           <i class="bi bi-person"></i>
           <span>Profile</span>
         </a>

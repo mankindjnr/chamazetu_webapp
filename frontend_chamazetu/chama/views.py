@@ -10,11 +10,9 @@ from .rawsql import execute_sql
 from .usermanagement import (
     validate_token,
     refresh_token,
-    memberdashboard,
-    managerdashboard,
-    profile,
     signin,
     signup,
+    signout,
     verify_signup_token,
     activate,
 )

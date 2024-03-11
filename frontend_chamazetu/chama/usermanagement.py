@@ -1,5 +1,5 @@
 import requests, jwt, json
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
@@ -59,69 +59,6 @@ def refresh_token(request, role):
         return HttpResponseRedirect(reverse("signin", args=[role]))
 
 
-def memberdashboard(request):
-    access_token = request.COOKIES.get("access_token")
-
-    # backend validation of token
-    current_user = request.COOKIES.get("current_user")
-    response = validate_token(request, "member")
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, "member")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
-    return render(request, "chama/memberdashboard.html", {"current_user": current_user})
-
-
-def managerdashboard(request):
-    access_token = request.COOKIES.get("access_token")
-
-    # might have to add a check for admin/ authorization - add it to the token
-    # local validation of token
-    current_user = request.COOKIES.get("current_user")
-    response = validate_token(request, "manager")
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, "manager")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
-    # get the id of the current mananger
-    query = "SELECT id FROM managers WHERE email = %s"
-    params = [current_user]
-    manager_id = (execute_sql(query, params))[0][0]
-
-    # get the chamas connected to id of the current user
-    query = "SELECT chama_name FROM chamas WHERE manager_id = %s AND is_active = True"
-    params = [manager_id]
-    chamas = execute_sql(query, params)
-
-    print("---------chamas---------")
-    print(manager_id)
-    print(current_user)
-    chama = dict(chamas)
-    print(len(chama))
-    print()
-    return render(
-        request,
-        "chama/managerdashboard.html",
-        {
-            "current_user": current_user,
-            "chamas": chamas,
-        },
-    )
-
-
-def profile(request, role):
-    response = validate_token(request, role)
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, role)
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
-    page = f"chama/{role}profile.html"
-    return render(request, page)
-
-
 def signin(request, role):
     if request.method == "POST":
         data = {
@@ -150,9 +87,10 @@ def signin(request, role):
 
             # check if user is a member or manager
             if role == "manager":
-                response = HttpResponseRedirect(reverse("managerdashboard"))
+                # response = HttpResponseRedirect(reverse("managerdashboard"))
+                response = redirect(reverse("manager:dashboard"))
             elif role == "member":
-                response = HttpResponseRedirect(reverse("memberdashboard"))
+                response = redirect(reverse("member:dashboard"))
 
             # successful login - store tokens - redirect to dashboard
             response.set_cookie(
@@ -246,6 +184,15 @@ def signup(request, role):  # implement the manager signup
 
     page = f"chama/{role}signup.html"
     return render(request, page)
+
+
+def signout(request):
+    # TODO: in the server side, invalidate the token
+    response = HttpResponseRedirect(reverse("index"))
+    response.delete_cookie("current_user")
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
 
 
 # validation of the signup jwt token (15 min lifespan)
