@@ -43,6 +43,7 @@ class Chama(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     chama_name = Column(String, index=True, nullable=False)
+    num_of_members_allowed = Column(String, nullable=False)
     description = Column(String, nullable=False)
     date_created = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
@@ -50,9 +51,19 @@ class Chama(Base):
         default=datetime.now(timezone.utc),
         onupdate=datetime.now(timezone.utc),
     )
-    is_active = Column(Boolean, default=True)
+    registration_fee = Column(Integer, nullable=False)
+    contribution_amount = Column(Integer, nullable=False)
+    contribution_interval = Column(
+        String, nullable=False
+    )  # daily, weekly, monthly, custom
+    is_active = Column(
+        Boolean, default=False
+    )  # chama is active on start cycle day (auto/manual)
+    accepting_members = Column(Boolean, default=True)  # chama is accepting new members
+    start_cycle = Column(DateTime, nullable=False)
+    end_cycle = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False)
-    verified_chama = Column(Boolean, default=True)  # bluecheckmark
+    verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
 
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     transactions = relationship("Transaction", back_populates="chama")

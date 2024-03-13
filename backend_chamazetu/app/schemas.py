@@ -55,3 +55,27 @@ class refreshedToken(BaseModel):
 
 class TokenData(BaseModel):
     username: str
+
+
+# ============== chama =================
+class ChamaBase(BaseModel):
+    chama_name: str
+    num_of_members_allowed: int
+    description: str
+    registration_fee: int
+    contribution_amount: int
+    contribution_interval: str
+    start_cycle: datetime
+    end_cycle: datetime
+    manager_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaResp(BaseModel):
+    Chama: List[ChamaBase]
+
+    class Config:
+        orm_mode = True
