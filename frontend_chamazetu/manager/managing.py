@@ -8,6 +8,7 @@ from django.contrib import messages
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.rawsql import execute_sql
+from datetime import datetime
 
 from chama.usermanagement import (
     validate_token,
@@ -24,11 +25,14 @@ def dashboard(request):
     # local validation of token
     response = validate_token(request, "manager")
     if isinstance(response, HttpResponseRedirect):
+        print("expired")
         refreshed_response = refresh_token(request, "manager")
         if isinstance(refreshed_response, HttpResponseRedirect):
             return refreshed_response
 
     # get the id of the current mananger
+    print("----------the new cookie----------")
+    print(request.COOKIES.get("access_token"))
     query = "SELECT id FROM managers WHERE email = %s"
     params = [current_user]
     manager_id = (execute_sql(query, params))[0][0]
@@ -54,9 +58,10 @@ def dashboard(request):
     )
 
 
+# TODO: check if we need to check the tokens validity here - improve the check
 @tokens_in_cookies("manager")
 def chamas(request):
-    if request.POST:
+    if request.method == "POST":
         chama_name = request.POST.get("chama_name")
         description = request.POST.get("description")
         members_allowed = request.POST.get("members")
@@ -74,19 +79,9 @@ def chamas(request):
         params = [chama_manager]
         manager_id = (execute_sql(query, params))[0][0]
 
-        query = "INSERT INTO chamas (chama_name, num_of_members_allowed, description, registration_fee, contribution_amount, contribution_interval, start_cycle, end_cycle, manager_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id"
-        params = [
-            chama_name,
-            description,
-            members_allowed,
-            registration_fee,
-            share_price,
-            contribution_frequency,
-            start_date,
-            end_date,
-            manager_id,
-        ]
-        execute_sql(query, params)
+        # Convert start_date and end_date to datetime objects and get current time
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
         data = {
             "chama_name": chama_name,
@@ -95,20 +90,25 @@ def chamas(request):
             "registration_fee": registration_fee,
             "contribution_amount": share_price,
             "contribution_interval": contribution_frequency,
-            "start_cycle": start_date,
-            "end_cycle": end_date,
+            "start_cycle": start_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "end_cycle": end_date.strftime("%Y-%m-%d %H:%M:%S"),
             "manager_id": manager_id,
         }
 
-        headers = {"Content-type": "application/json"}
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"{request.COOKIES.get('access_token')}",
+        }
         response = requests.post(
             "http://chamazetu_backend:9400/chamas",
-            data=json.dumps(data),
+            json=data,
             headers=headers,
         )
         print("---------chama creation response---------")
         print(response.status_code)
         print()
+        print(response)
+
         if response.status_code == 201:
             messages.success(request, "Chama created successfully.")
             return redirect(reverse("manager:dashboard"))

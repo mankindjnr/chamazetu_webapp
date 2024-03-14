@@ -42,7 +42,7 @@ class Chama(Base):
     __tablename__ = "chamas"
 
     id = Column(Integer, primary_key=True, index=True)
-    chama_name = Column(String, index=True, nullable=False)
+    chama_name = Column(String, index=True, unique=True, nullable=False)
     num_of_members_allowed = Column(String, nullable=False)
     description = Column(String, nullable=False)
     date_created = Column(DateTime, default=datetime.now(timezone.utc))

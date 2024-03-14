@@ -91,6 +91,7 @@ async def login(
 
 @router.post("/refresh", response_model=schemas.refreshedToken)
 async def new_access_token(token_data: schemas.TokenData = Body(...)):
+    print("----we are refreshing")
     try:
         logging.info(f"token_data: {token_data}")
         new_access_token = await oauth2.create_access_token(

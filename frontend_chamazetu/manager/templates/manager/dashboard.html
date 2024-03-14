@@ -19,7 +19,19 @@
       </form>
     </div><!-- End Search Bar -->
 
-    <div class="search-bar">
+    <!-- <div class="search-bar">
+      {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+        {% for messages in messages %}
+          <strong>{{ messages }}</strong>
+          {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endif %} -->
+      <!-- End notfication Bar -->
+
+    <nav class="header-nav ms-auto">
+      <div class="search-bar">
       {% if messages %}
       <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
         {% for messages in messages %}
@@ -28,9 +40,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
       {% endif %}
-      <!-- End notfication Bar -->
-
-    <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
 
         <li class="nav-item d-block d-lg-none">
@@ -295,6 +304,17 @@
 
     <div class="pagetitle">
       <h1>Dashboard</h1>
+      <div class="search-bar">
+        {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for messages in messages %}
+            <strong>{{ messages }}</strong>
+            {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+      </div>
+      
     </div><!-- End Page Title -->
 
     <section class="section dashboard">
@@ -305,12 +325,13 @@
           <div class="row">
 
             <!-- chama Card -->
-            {% if chama %}
+            {% if chamas %}
+            {% for key, value in chamas.items %}
             <div class="col-xxl-4 col-md-6">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">chamaname <span>| not active</span></h5>
+                  <h5 class="card-title">{{ key }} <span>| {{ value }}</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -326,6 +347,7 @@
 
               </div>
             </div><!-- End chama Card -->
+            {% endfor %}
             {% else %}
             <!-- if no chama -->
             <div class="col-xxl-4 col-xl-12">

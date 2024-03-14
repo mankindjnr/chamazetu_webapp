@@ -28,7 +28,7 @@ def validate_token(request, role=None):
         print("---------valid_token---------")
     except (InvalidTokenError, ExpiredSignatureError) as e:
         print("---------invalid_token---------")
-        return HttpResponseRedirect(reverse("signin", args=[role]))
+        return redirect(reverse("signin", args=[role]))
 
 
 def refresh_token(request, role):
@@ -52,8 +52,14 @@ def refresh_token(request, role):
         )
         refresh_data = refresh_access.json()
         new_access_token = refresh_data["new_access_token"]
-        response = HttpResponse("Access token refreshed")
-        response.set_cookie("access_token", new_access_token)
+        response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
+        response.set_cookie(
+            "access_token",
+            f"Bearer {new_access_token}",
+            secure=True,
+            httponly=True,
+            samesite="Strict",
+        )
         return response
     except (InvalidTokenError, ExpiredSignatureError) as e:
         return HttpResponseRedirect(reverse("signin", args=[role]))
@@ -76,18 +82,8 @@ def signin(request, role):
             refresh_token = response.json()["refresh_token"]
             current_user = request.POST["email"]
 
-            print("---------login current_user---------")
-            print(current_user)
-            print()
-            print("---------login access_token---------")
-            print(access_token)
-            print()
-            print("---------login refresh_token---------")
-            print(refresh_token)
-
             # check if user is a member or manager
             if role == "manager":
-                # response = HttpResponseRedirect(reverse("managerdashboard"))
                 response = redirect(reverse("manager:dashboard"))
             elif role == "member":
                 response = redirect(reverse("member:dashboard"))

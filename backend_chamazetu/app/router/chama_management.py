@@ -12,6 +12,8 @@ async def create_chama(
     db: Session = Depends(database.get_db),
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
+
+    print("-------backend current user\n", current_user)
     chama_dict = chama.dict()
     chama_dict["manager_id"] = current_user.id
     new_chama = models.Chama(**chama_dict)
