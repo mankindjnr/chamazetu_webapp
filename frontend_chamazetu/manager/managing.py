@@ -117,6 +117,42 @@ def chamas(request):
 
 
 @tokens_in_cookies("manager")
+def chama(request, key):
+    response = validate_token(request, "manager")
+    if isinstance(response, HttpResponseRedirect):
+        refreshed_response = refresh_token(request, "manager")
+        if isinstance(refreshed_response, HttpResponseRedirect):
+            return refreshed_response
+
+    # get the chama details
+    chama_name = key
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"{request.COOKIES.get('access_token')}",
+    }
+    data = {"chama_name": chama_name}
+    response = requests.get(
+        f"http://chamazetu_backend:9400/chamas",
+        json=data,
+        headers=headers,
+    )
+    if response.status_code == 200:
+        chama = response.json()["Chama"][0]
+        print("---------chama details---------")
+        print(chama)
+        print()
+        return render(
+            request,
+            "manager/chamadashboard.html",
+            {
+                "chama": chama,
+            },
+        )
+    else:
+        return redirect(reverse("manager:dashboard"))
+
+
+@tokens_in_cookies("manager")
 def profile(request, role="manager"):
     response = validate_token(request, role)
     if isinstance(response, HttpResponseRedirect):

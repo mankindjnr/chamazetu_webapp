@@ -8,4 +8,5 @@ urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
     path("profile", views.profile, name="profile"),
     path("chamas", views.chamas, name="chamas"),
+    path("chama/<str:key>", views.chama, name="chama"),
 ]

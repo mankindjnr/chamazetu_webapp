@@ -5,4 +5,5 @@ from .managing import (
     dashboard,
     chamas,
     profile,
+    chama,
 )

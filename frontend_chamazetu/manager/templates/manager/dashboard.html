@@ -33,13 +33,15 @@
     <nav class="header-nav ms-auto">
       <div class="search-bar">
       {% if messages %}
-      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
-        {% for messages in messages %}
-          <strong>{{ messages }}</strong>
-          {% endfor %}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for messages in messages %}
+            <strong>{{ messages }}</strong>
+            {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
       </div>
-      {% endif %}
+
       <ul class="d-flex align-items-center">
 
         <li class="nav-item d-block d-lg-none">
@@ -267,18 +269,23 @@
           <i class="bi bi-menu-button-wide"></i><span>ChamaZangu</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          {% if chamas %}
+          {% for key in chamas.keys %}
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>52week challenge</span>
+              <i class="bi bi-circle"></i><span>{{ key }}</span>
             </a>
           </li>
+          {% endfor %}
+          {% else %}
           <li>
             <a href="#">
-              <i class="bi bi-circle"></i><span>mmf challenge</span>
+              <i class="bi bi-circle"></i><span>no chamas available</span>
             </a>
           </li>
+          {% endif %}
         </ul>
-      </li><!-- End Components Nav -->
+      </li><!-- End chamas Nav -->
 
       <li class="nav-heading">Pages</li>
 
@@ -289,12 +296,12 @@
         </a>
       </li><!-- End Profile Page Nav -->
 
-      <li class="nav-item">
+      <li id="showFormBtn" class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-question-circle"></i>
-          <span>chama FAQ</span>
+          <span>create new chama</span>
         </a>
-      </li><!-- End F.A.Q Page Nav -->
+      </li><!-- End create chama Nav -->
 
     </ul>
 
@@ -323,59 +330,7 @@
         <!-- Left side columns -->
         <div class="col-lg-8">
           <div class="row">
-
-            <!-- chama Card -->
-            {% if chamas %}
-            {% for key, value in chamas.items %}
-            <div class="col-xxl-4 col-md-6">
-              <div class="card info-card sales-card">
-
-                <div class="card-body">
-                  <h5 class="card-title">{{ key }} <span>| {{ value }}</span></h5>
-
-                  <div class="d-flex align-items-center">
-                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-cart"></i>
-                    </div>
-                    <div class="ps-3">
-                      <h6>no of members</h6>
-                      <span class="text-success small pt-1 fw-bold">ksh</span> <span class="text-muted small pt-2 ps-1">40,000</span>
-
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div><!-- End chama Card -->
-            {% endfor %}
-            {% else %}
-            <!-- if no chama -->
-            <div class="col-xxl-4 col-xl-12">
-
-              <div class="card info-card customers-card">
-
-                <div class="card-body">
-                  <h5 class="card-title">no chamas available </h5>
-
-                  <div class="d-flex align-items-center">
-                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-people"></i>
-                    </div>
-                    <div class="ps-3">
-                      <span class="text-muted small pt-1 fw-bold">
-                        Welcome to chamaZetu! It looks like you haven't created any chamas yet. Get started by creating your first chama now.
-                      </span>
-
-                    </div>
-                  </div>
-                  <button id="showFormBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create</button>
-                </div>
-              </div>
-
-            </div><!-- End no chama available/create one Card -->
-            {% endif %}
-
-            <!-- chama creation form -->
+            <!-- creating chama form-->
             <!-- TODO: introduce js checks before submission refuse sql injection elements i.e undescore -->
             <div id="chamaForm" style="display: none;">
               <div class="col-xxl-4 col-xl-12">
@@ -479,9 +434,60 @@
                 }
             </script>
           </div> <!-- the id hiding the form-->
-            <!-- End chama creation form -->
 
+            <!-- chama Card -->
+            {% if chamas %}
+            {% for key, value in chamas.items %}
+            
+            <div class="col-xxl-4 col-md-6">
+              <a href="{% url 'manager:chama' key %}" style="text-decoration: none; color: inherit;">
+              <div class="card info-card sales-card">
 
+                <div class="card-body">
+                  <h5 class="card-title">{{ key }} <span>| {% if value %} active {% else %} not active {% endif %} </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="bi bi-cart"></i>
+                    </div>
+                    <div class="ps-3">
+                      <h6>no of members</h6>
+                      <span class="text-success small pt-1 fw-bold">ksh</span> <span class="text-muted small pt-2 ps-1">40,000</span>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              </a>
+            </div><!-- End chama Card -->
+            {% endfor %}
+            {% else %}
+            <!-- if no chama -->
+            <div class="col-xxl-4 col-xl-12">
+
+              <div class="card info-card customers-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">no chamas available </h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="bi bi-people"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-muted small pt-1 fw-bold">
+                        Welcome to chamaZetu! It looks like you haven't created any chamas yet. Get started by creating your first chama now.
+                      </span>
+
+                    </div>
+                  </div>
+                  <button id="showFormBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create</button>
+                </div>
+              </div>
+
+            </div><!-- End no chama available/create one Card -->
+            {% endif %}
 
           </div>
         </div><!-- End Left side columns -->
@@ -534,8 +540,13 @@
 
     // show chama creation form
     document.getElementById("showFormBtn").addEventListener("click", function() {
-      document.getElementById("chamaForm").style.display = "block";
-    })
+      let form = document.getElementById("chamaForm");
+      if (form.style.display === "none") {
+        form.style.display = "block";
+      } else {
+        form.style.display = "none";
+      }
+    });
   </script>
 
 
