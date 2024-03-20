@@ -14,25 +14,27 @@ RUN pip install -r requirements.txt
 # Copy the content of the local src directory to the working directory
 COPY . /app/frontend/
 
-# Install wait-for-it
-#ADD https://github.com/eficode/wait-for/raw/master/wait-for /wait-for
-#RUN chmod +x /wait-for
-# without migrating the db i can skip the wait-for-it - i'll migrate the db manually in the container
-
 RUN python manage.py collectstatic --no-input
 
-# RUN python manage.py migrate
-
-# Command to run on container start
-# CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
-
-# Use wait-for-it to delay execution until db is ready
-# CMD /wait-for chamazetu_backend:5432 -- python manage.py migrate && python manage.py runserver 0.0.0.0:8000
-# withuot migrate i can skip the wait-for-it
 COPY ./cert.pem /app/frontend/certs
 COPY ./key.pem /app/frontend/certs
 
 EXPOSE 443
+
+# create a new user "appuser" and switch to it
+# RUN addgroup --system app && adduser --system --group app
+# USER app
+
+# Ensure that the certificates directory exists
+# RUN mkdir -p /app/frontend/certs
+
+# Copy certificate and key files to the container
+# COPY ./cert.pem /app/frontend/certs/
+# COPY ./key.pem /app/frontend/certs/
+
+# # Adjust permissions for the certificate and key files
+# RUN chown -R app:app /app/frontend/certs
+# RUN chmod 600 /app/frontend/certs/*
 
 #CMD /wait-for chamazetu_database:5432 -- python manage.py runsslserver --certificate /app/frontend/certs/cert.pem --key /app/frontend/certs/key.pem 0.0.0.0:8000
 CMD python manage.py runsslserver --certificate /app/frontend/certs/cert.pem --key /app/frontend/certs/key.pem 0.0.0.0:8000

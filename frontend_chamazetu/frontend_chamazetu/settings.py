@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_celery_results",
+    "django_celery_beat",
     "corsheaders",
     "sslserver",
 ]
@@ -60,6 +62,8 @@ CORS_TRUSTED_ORIGINS = [
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
 
+CELERY_IMPORTS = ("chama.tasks",)
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -78,16 +82,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "frontend_chamazetu.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
 
 DATABASES = {
     "default": {
@@ -144,3 +138,19 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Celery settings
+CELERY_BROKER_URL = "redis://message_broker:6379"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Africa/Nairobi"
+
+# monitor celery tasks
+# CELERY_RESULT_BACKEND = "django-db"  # YOU CAN USE REDIS AS WELL
+# using redis as the result backend
+CELERY_RESULT_BACKEND = "redis://message_broker:6379"
+
+# celery beat settings
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"

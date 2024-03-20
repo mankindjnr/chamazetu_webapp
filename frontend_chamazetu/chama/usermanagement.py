@@ -14,6 +14,7 @@ from django.contrib import messages
 from frontend_chamazetu import settings
 
 from .rawsql import execute_sql
+from .tasks import sending_email
 
 
 def validate_token(request, role=None):
@@ -164,11 +165,12 @@ def signup(request, role):  # implement the manager signup
             from_email = settings.EMAIL_HOST_USER
             to_email = [current_user["email"]]
 
-            verification_mail = EmailMultiAlternatives(
-                subject=mail_subject, body=message, from_email=from_email, to=to_email
-            )
-            verification_mail.attach_alternative(message, "text/html")
-            verification_mail.send(fail_silently=True)
+            sending_email.delay(mail_subject, message, from_email, to_email)
+            # verification_mail = EmailMultiAlternatives(
+            #     subject=mail_subject, body=message, from_email=from_email, to=to_email
+            # )
+            # verification_mail.attach_alternative(message, "text/html")
+            # verification_mail.send(fail_silently=True)
 
             messages.success(
                 request,
