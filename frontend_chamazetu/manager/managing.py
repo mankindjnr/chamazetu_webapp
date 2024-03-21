@@ -116,6 +116,7 @@ def chamas(request):
     return redirect(reverse("manager:dashboard"))
 
 
+# it gets the one chama details and displays them
 @tokens_in_cookies("manager")
 def chama(request, key):
     response = validate_token(request, "manager")

@@ -166,11 +166,6 @@ def signup(request, role):  # implement the manager signup
             to_email = [current_user["email"]]
 
             sending_email.delay(mail_subject, message, from_email, to_email)
-            # verification_mail = EmailMultiAlternatives(
-            #     subject=mail_subject, body=message, from_email=from_email, to=to_email
-            # )
-            # verification_mail.attach_alternative(message, "text/html")
-            # verification_mail.send(fail_silently=True)
 
             messages.success(
                 request,
