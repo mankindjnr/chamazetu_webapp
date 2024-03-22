@@ -17,6 +17,8 @@ from .usermanagement import (
     activate,
 )
 
+from .chamas import get_all_chamas
+
 
 # Create your views here.
 def index(request):

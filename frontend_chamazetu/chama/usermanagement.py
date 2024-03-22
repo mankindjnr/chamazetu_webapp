@@ -29,7 +29,7 @@ def validate_token(request, role=None):
         print("---------valid_token---------")
     except (InvalidTokenError, ExpiredSignatureError) as e:
         print("---------invalid_token---------")
-        return redirect(reverse("signin", args=[role]))
+        return redirect(reverse("chama:signin", args=[role]))
 
 
 def refresh_token(request, role):
@@ -63,7 +63,7 @@ def refresh_token(request, role):
         )
         return response
     except (InvalidTokenError, ExpiredSignatureError) as e:
-        return HttpResponseRedirect(reverse("signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
 def signin(request, role):
@@ -173,7 +173,7 @@ def signup(request, role):  # implement the manager signup
             )
             #  -------------------email confirmation-------------------------------------
             role = role
-            return HttpResponseRedirect(reverse("signin", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
     page = f"chama/{role}signup.html"
     return render(request, page)
@@ -194,7 +194,7 @@ def verify_signup_token(request, token, role):
         jwt.decode(token, config("JWT_SECRET"), algorithms=["HS256"])
         return True
     except InvalidTokenError as e:
-        return HttpResponseRedirect(reverse("signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
 # the activation link sent to the user's email
@@ -226,7 +226,7 @@ def activate(request, role, uidb64, token):
         execute_sql(query, params)
 
         messages.success(request, "Account activated successfully. You can now login.")
-        return HttpResponseRedirect(reverse("signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
     else:
         # if the token has expired, send another one - checking if the user is thne database and unverified
         return HttpResponse("Activation link is has expired!")

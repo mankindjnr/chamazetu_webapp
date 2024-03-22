@@ -40,15 +40,15 @@
     
           <nav id="navbar" class="navbar order-last order-lg-0">
             <ul>
-              <li><a href="{% url 'index' %}" class="active">Home</a></li>
+              <li><a href="{% url 'chama:index' %}" class="active">Home</a></li>
     
-              <li><a href="{% url 'signin' 'manager' %}">manager login</a></li>
-              <li><a href="{% url 'signin' 'member' %}">member login</a></li>
-              <li><a href="about.html">Services</a></li>
+              <li><a href="{% url 'chama:signin' 'manager' %}" target="_blank" rel="noopener noreferrer">manager login</a></li>
+              <li><a href="{% url 'chama:signin' 'member' %}" target="_blank" rel="noopener noreferrer">member login</a></li>
+              <li><a href="#">Services</a></li>
               <li class="dropdown"><a href="#"><span>signup</span> <i class="bi bi-chevron-down"></i></a>
                 <ul>
-                  <li><a href="{% url 'signup' 'manager' %}">Manager Account</a></li>
-                  <li><a href="{% url 'signup' 'member' %}">Member Account</a></li>
+                  <li><a href="{% url 'chama:signup' 'manager' %}" target="_blank" rel="noopener noreferrer">Manager Account</a></li>
+                  <li><a href="{% url 'chama:signup' 'member' %}" target="_blank" rel="noopener noreferrer">Member Account</a></li>
                 </ul>
               </li>
     

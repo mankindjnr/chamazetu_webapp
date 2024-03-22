@@ -30,7 +30,30 @@ def dashboard(request):
         if isinstance(refreshed_response, HttpResponseRedirect):
             return refreshed_response
 
-    return render(request, "member/dashboard.html", {"current_user": current_user})
+    # get the current users id
+    try:
+        query = "SELECT id FROM members WHERE email = %s"
+        params = [current_user]
+        member_id = (execute_sql(query, params))[0][0]
+        # use the id to get the chama the user is in from the associate table
+        query = "SELECT chama_id FROM members_chamas WHERE member_id = %s"
+        params = [member_id]
+        chama_ids = (execute_sql(query, params))[0][0]
+    except Exception as e:
+        print(e)
+        chama_ids = None
+
+    print("---------chama_id---------")
+    print(chama_ids)
+
+    return render(
+        request,
+        "member/dashboard.html",
+        {
+            "current_user": current_user,
+            "chama_ids": chama_ids,
+        },
+    )
 
 
 @tokens_in_cookies("member")
