@@ -20,9 +20,9 @@ from .tasks import sending_email
 def validate_token(request, role=None):
     try:
         print("---------validating_token---------")
-        print(request.COOKIES.get("access_token"))
+        print(request.COOKIES.get(f"{role}_access_token"))
         jwt.decode(
-            request.COOKIES.get("access_token").split(" ")[1],
+            request.COOKIES.get(f"{role}_access_token").split(" ")[1],
             config("JWT_SECRET"),
             algorithms=["HS256"],
         )
@@ -34,7 +34,7 @@ def validate_token(request, role=None):
 
 def refresh_token(request, role):
     try:
-        refresh_token = request.COOKIES.get("refresh_token").split(" ")[1]
+        refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
             refresh_token, config("JWT_SECRET"), algorithms=["HS256"]
@@ -43,6 +43,7 @@ def refresh_token(request, role):
         email_claim = decoded_token.get("sub")
         data = {
             "username": email_claim,
+            "role": role,
         }
 
         headers = {"Content-type": "application/json"}
@@ -55,7 +56,7 @@ def refresh_token(request, role):
         new_access_token = refresh_data["new_access_token"]
         response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
         response.set_cookie(
-            "access_token",
+            f"{role}_access_token",
             f"Bearer {new_access_token}",
             secure=True,
             httponly=True,
@@ -67,11 +68,20 @@ def refresh_token(request, role):
 
 
 def signin(request, role):
+    print("---------login hit-----------------")
     if request.method == "POST":
         data = {
             "username": request.POST["email"],
             "password": request.POST["password"],
         }
+        print("---------signin---data------")
+
+        # TODO: check if the user is already logged in and redirect to the dashboard or
+        # TODO: if the user email is not the same as the payload of the token, signout the other user in the background
+        # print("---------signin---path------")
+        # if request.path == "/signin/manager":
+        #     if request.COOKIES.get("manager_access_token"):
+        #         if
         # TODO: include a try and retry mechanism for the auth route call
         # send the data to the auth server for verification and login
         response = requests.post(
@@ -79,8 +89,10 @@ def signin(request, role):
         )
 
         if response.status_code == 200:
-            access_token = response.json()["access_token"]
-            refresh_token = response.json()["refresh_token"]
+            access_tokens = {}
+            refresh_tokens = {}
+            access_tokens[role] = response.json()["access_token"]
+            refresh_tokens[role] = response.json()["refresh_token"]
             current_user = request.POST["email"]
 
             # check if user is a member or manager
@@ -91,22 +103,22 @@ def signin(request, role):
 
             # successful login - store tokens - redirect to dashboard
             response.set_cookie(
-                "current_user",
+                f"current_{role}",
                 current_user,
                 secure=True,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
-                "access_token",
-                f"Bearer {access_token}",
+                f"{role}_access_token",
+                f"Bearer {access_tokens.get(role)}",
                 secure=True,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
-                "refresh_token",
-                f"Bearer {refresh_token}",
+                f"{role}_refresh_token",
+                f"Bearer {refresh_tokens.get(role)}",
                 secure=True,
                 httponly=True,
                 samesite="Strict",
@@ -179,12 +191,13 @@ def signup(request, role):  # implement the manager signup
     return render(request, page)
 
 
-def signout(request):
+def signout(request, role):
     # TODO: in the server side, invalidate the token
-    response = HttpResponseRedirect(reverse("index"))
-    response.delete_cookie("current_user")
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+    print(role)
+    response = HttpResponseRedirect(reverse("chama:index"))
+    response.delete_cookie(f"current_{role}")
+    response.delete_cookie(f"{role}_access_token")
+    response.delete_cookie(f"{role}_refresh_token")
     return response
 
 

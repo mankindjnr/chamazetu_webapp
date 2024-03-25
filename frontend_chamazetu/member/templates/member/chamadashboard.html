@@ -5,9 +5,9 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center">
+      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/favicon.png' %}" alt="">
-        <span class="d-none d-lg-block">manager chamaZetu</span>
+        <span class="d-none d-lg-block">{{ chama.chama_name }}</span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
@@ -173,12 +173,12 @@
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
             <img src="{% static 'chama/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle">
-            <span class="d-none d-md-block dropdown-toggle ps-2">{{ current_user.email }}</span>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>{{ current_user.email }}</h6>
+              <h6>{{ current_user }}</h6>
               <span>manager</span>
             </li>
             <li>
@@ -216,7 +216,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'member' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -236,54 +236,42 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link " href="#">
+        <a class="nav-link " href="{% url 'member:dashboard' %}">
           <i class="bi bi-grid"></i>
           <span>Dashboard</span>
         </a>
       </li><!-- End Dashboard Nav -->
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
-          <i class="bi bi-menu-button-wide"></i><span>ChamaZangu</span><i class="bi bi-chevron-down ms-auto"></i>
-        </a>
-        <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>52week challenge</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <i class="bi bi-circle"></i><span>mmf challenge</span>
-            </a>
-          </li>
-        </ul>
-      </li><!-- End Components Nav -->
-
       <li class="nav-heading">Pages</li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:profile' 'manager' %}">
-          <i class="bi bi-person"></i>
-          <span>Profile</span>
-        </a>
-      </li><!-- End Profile Page Nav -->
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-question-circle"></i>
-          <span>chama FAQ</span>
+          <span>Investment performance</span> 
         </a>
-      </li><!-- End F.A.Q Page Nav -->
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-question-circle"></i>
+          <span>About chama</span> 
+        </a>
+      </li><!-- End about Page Nav -->
 
     </ul>
 
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">
-
+    {% if chama %}
     <div class="pagetitle">
-      <h1>chamaname | Dashboard</h1>
+      <h1>{{ chama.chama_name}}</h1>
+      <nav>
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">Home</li>
+          <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+      </nav>
     </div><!-- End Page Title -->
 
     <section class="section dashboard">
@@ -298,134 +286,116 @@
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Sales <span>| Today</span></h5>
-
-                  <div class="d-flex align-items-center">
-                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-cart"></i>
-                    </div>
-                    <div class="ps-3">
-                      <h6>145</h6>
-                      <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span>
-
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div><!-- End Sales Card -->
-
-            <!-- Revenue Card -->
-            <div class="col-xxl-4 col-md-6">
-              <div class="card info-card revenue-card">
-
-                <div class="card-body">
-                  <h5 class="card-title">Revenue <span>| This Month</span></h5>
+                  <h5 class="card-title">Deposits <span>| Today</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>$3,264</h6>
-                      <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span>
+                      <h6>ksh: 145</h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
                   </div>
                 </div>
 
               </div>
-            </div><!-- End Revenue Card -->
+            </div><!-- End deposit Card -->
 
-            <!-- Customers Card -->
-            <div class="col-xxl-4 col-xl-12">
-
-              <div class="card info-card customers-card">
+            <!-- total deposited Card -->
+            <div class="col-xxl-4 col-md-6">
+              <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Customers <span>| This Year</span></h5>
+                  <h5 class="card-title">Account <span>| {{ chama.num_of_members_allowed}} members</span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-people"></i>
+                      <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>1244</h6>
-                      <span class="text-danger small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">decrease</span>
+                      <h6>Ksh: 3,264</h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
                   </div>
-
                 </div>
+
               </div>
+            </div><!-- End account Card -->
 
-            </div><!-- End Customers Card -->
+            <!-- investment Card -->
+            <div class="col-xxl-4 col-xl-12">
+              <div class="card info-card customers-card">
+                  <div class="card-body">
+                      <h5 class="card-title">Investment <span>| Balance</span></h5>
+                      <div class="d-flex align-items-center justify-content-center">
+                        <h6>Ksh: 1244</h6>
+                    </div>
+                      <div class="ps-3">
+                          <div class="d-flex justify-content-between align-items-start">
+                              <div>
+                                  <!--head--><span class="text-muted small">Int earned yesterday</span><br>
+                                  <!--child--><span class="text-danger small fw-bold">Ksh:</span>
+                              </div>
+                              <div class="text-end">
+                                  <!--head--><span class="text-muted small">Int rate (last 24hrs)</span><br>
+                                  <!--child--><span class="text-danger small fw-bold">12%</span>
+                              </div>
+                          </div>
+                          <hr>
+                          <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                              <button id="showFormBtn" class="btn btn-outline-dark btn-sm">Invest</button>
+                            </div>
+                            <div class="text-end">
+                              <button id="showFormBtn" class="btn btn-outline-dark btn-sm">Withdraw</button>
+                            </div>
+                        </div>
+                      </div>
+                  </div>
+              </div>
+            </div><!-- End investments Card -->
+          
 
-            <!-- Recent Sales -->
+            <!-- performance monthly -->
             <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
-                <div class="filter">
-                  <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-                  <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                    <li class="dropdown-header text-start">
-                      <h6>Filter</h6>
-                    </li>
-
-                    <li><a class="dropdown-item" href="#">Today</a></li>
-                    <li><a class="dropdown-item" href="#">This Month</a></li>
-                    <li><a class="dropdown-item" href="#">This Year</a></li>
-                  </ul>
-                </div>
-
                 <div class="card-body">
-                  <h5 class="card-title">Recent Sales <span>| Today</span></h5>
+                  <h5 class="card-title">Fund performance <span>| selected period</span></h5>
 
-                  <table class="table table-borderless datatable">
+                  <table class="table">
                     <thead>
+                      <!-- TODO: they will become buttons that users can select to see monthly performance -->
                       <tr>
-                        <th scope="col">#</th>
-                        <th scope="col">Customer</th>
-                        <th scope="col">Product</th>
-                        <th scope="col">Price</th>
-                        <th scope="col">Status</th>
+                        <th scope="col">3 months</th>
+                        <th scope="col">6 months</th>
+                        <th scope="col">12 months</th>
                       </tr>
+                      <tr>
+                        <th scope="col">month</th>
+                        <th scope="col">int earned</th>
+                        <th scope="col">Total investment</th>
+                      </tr>
+                      
                     </thead>
                     <tbody>
                       <tr>
-                        <th scope="row"><a href="#">#2457</a></th>
-                        <td>Brandon Jacob</td>
-                        <td><a href="#" class="text-primary">At praesentium minu</a></td>
-                        <td>$64</td>
-                        <td><span class="badge bg-success">Approved</span></td>
+                        <td>march</td>
+                        <td><a href="#" class="text-primary">Ksh 1000</a></td>
+                        <td>Ksh 10,000</td>
                       </tr>
                       <tr>
-                        <th scope="row"><a href="#">#2147</a></th>
-                        <td>Bridie Kessler</td>
-                        <td><a href="#" class="text-primary">Blanditiis dolor omnis similique</a></td>
-                        <td>$47</td>
-                        <td><span class="badge bg-warning">Pending</span></td>
+                        <td>February</td>
+                        <td><a href="#" class="text-primary">Ksh 10000</a></td>
+                        <td>Ksh 1,000,000</td>
                       </tr>
                       <tr>
-                        <th scope="row"><a href="#">#2049</a></th>
-                        <td>Ashleigh Langosh</td>
-                        <td><a href="#" class="text-primary">At recusandae consectetur</a></td>
-                        <td>$147</td>
-                        <td><span class="badge bg-success">Approved</span></td>
-                      </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2644</a></th>
-                        <td>Angus Grady</td>
-                        <td><a href="#" class="text-primar">Ut voluptatem id earum et</a></td>
-                        <td>$67</td>
-                        <td><span class="badge bg-danger">Rejected</span></td>
-                      </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2644</a></th>
-                        <td>Raheem Lehner</td>
-                        <td><a href="#" class="text-primary">Sunt similique distinctio</a></td>
-                        <td>$165</td>
-                        <td><span class="badge bg-success">Approved</span></td>
+                        <td>January</td>
+                        <td><a href="#" class="text-primary">Ksh 1000000</a></td>
+                        <td>Ksh 10,000,000</td>
                       </tr>
                     </tbody>
                   </table>
@@ -433,7 +403,7 @@
                 </div>
 
               </div>
-            </div><!-- End Recent Sales -->
+            </div><!-- End fund performance -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -443,50 +413,131 @@
 
           <!-- Recent Activity -->
           <div class="card">
-            <div class="filter">
-              <a class="icon" href="#" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></a>
-              <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <li class="dropdown-header text-start">
-                  <h6>Filter</h6>
-                </li>
-
-                <li><a class="dropdown-item" href="#">Today</a></li>
-                <li><a class="dropdown-item" href="#">This Month</a></li>
-                <li><a class="dropdown-item" href="#">This Year</a></li>
-              </ul>
-            </div>
 
             <div class="card-body">
-              <h5 class="card-title">Recent transactions <span>| Today</span></h5>
+              <h5 class="card-title">Recent Activity <span>| deposits</span></h5>
 
               <div class="activity">
 
                 <div class="activity-item d-flex">
-                  <div class="activite-label">10:40 am</div>
+                  <div class="activite-label">32 min</div>
                   <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
                   <div class="activity-content">
-                    jenny <a href="#" class="fw-bold text-dark">Deposit Ksh 2300</a>
+                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
                   </div>
                 </div><!-- End activity item-->
 
                 <div class="activity-item d-flex">
-                  <div class="activite-label">10:00 am</div>
+                  <div class="activite-label">56 min</div>
                   <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
                   <div class="activity-content">
                     Voluptatem blanditiis blanditiis eveniet
                   </div>
                 </div><!-- End activity item-->
-              
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 hrs</div>
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    Voluptates corrupti molestias voluptatem
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">1 day</div>
+                  <i class='bi bi-circle-fill activity-badge text-info align-self-start'></i>
+                  <div class="activity-content">
+                    Tempore autem saepe <a href="#" class="fw-bold text-dark">occaecati voluptatem</a> tempore
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 days</div>
+                  <i class='bi bi-circle-fill activity-badge text-warning align-self-start'></i>
+                  <div class="activity-content">
+                    Est sit eum reiciendis exercitationem
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">4 weeks</div>
+                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
+                  <div class="activity-content">
+                    Dicta dolorem harum nulla eius. Ut quidem quidem sit quas
+                  </div>
+                </div><!-- End activity item-->
+
               </div>
 
             </div>
           </div><!-- End Recent Activity -->
 
-          <!-- News & Updates Traffic -->
+          <!-- withdrawal Report -->
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">Recent Activity <span>| withdrawals </span></h5>
+
+              <div class="activity">
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">32 min</div>
+                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
+                  <div class="activity-content">
+                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">56 min</div>
+                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
+                  <div class="activity-content">
+                    Voluptatem blanditiis blanditiis eveniet
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 hrs</div>
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    Voluptates corrupti molestias voluptatem
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">1 day</div>
+                  <i class='bi bi-circle-fill activity-badge text-info align-self-start'></i>
+                  <div class="activity-content">
+                    Tempore autem saepe <a href="#" class="fw-bold text-dark">occaecati voluptatem</a> tempore
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">2 days</div>
+                  <i class='bi bi-circle-fill activity-badge text-warning align-self-start'></i>
+                  <div class="activity-content">
+                    Est sit eum reiciendis exercitationem
+                  </div>
+                </div><!-- End activity item-->
+
+                <div class="activity-item d-flex">
+                  <div class="activite-label">4 weeks</div>
+                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
+                  <div class="activity-content">
+                    Dicta dolorem harum nulla eius. Ut quidem quidem sit quas
+                  </div>
+                </div><!-- End activity item-->
+
+              </div>
+
+            </div>
+          </div><!-- End Budget Report -->
+
+          <!-- News & Updates -->
           <div class="card">
 
             <div class="card-body pb-0">
-              <h5 class="card-title">Updates &amp; new products <span>| Latest</span></h5>
+              <h5 class="card-title">News &amp; Updates <span>| Today</span></h5>
 
               <div class="news">
                 <div class="post-item clearfix">
@@ -501,6 +552,12 @@
                   <p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
                 </div>
 
+                <div class="post-item clearfix">
+                  <img src="{% static 'chama/img/news-3.jpg' %}" alt="">
+                  <h4><a href="#">Id quia et et ut maxime similique occaecati ut</a></h4>
+                  <p>Fugiat voluptas vero eaque accusantium eos. Consequuntur sed ipsam et totam...</p>
+                </div>
+
               </div><!-- End sidebar recent posts-->
 
             </div>
@@ -510,6 +567,15 @@
 
       </div>
     </section>
+    {% else %}
+    <!-- redirect home, this chama does not exists -->
+    <div class="alert alert-danger" role="alert">
+      <h4 class="alert-heading">No chama found!</h4>
+      <p>It seems you have not created a chama yet. Please create a chama to continue.</p>
+      <hr>
+      <p class="mb-0">Click <a href="{% url 'manager:createchama' %}">here</a> to create a chama.</p>
+    </div>
+    {% endif %}
 
   </main><!-- End #main -->
 

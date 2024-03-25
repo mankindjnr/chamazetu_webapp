@@ -18,9 +18,7 @@ from chama.usermanagement import (
 
 @tokens_in_cookies("manager")
 def dashboard(request):
-    access_token = request.COOKIES.get("access_token")
-    current_user = request.COOKIES.get("current_user")
-
+    current_user = request.COOKIES.get("current_manager")
     # might have to add a check for admin/ authorization - add it to the token
     # local validation of token
     response = validate_token(request, "manager")
@@ -32,7 +30,7 @@ def dashboard(request):
 
     # get the id of the current mananger
     print("----------the new cookie----------")
-    print(request.COOKIES.get("access_token"))
+    print(request.COOKIES.get(f"manager_access_token"))
     query = "SELECT id FROM managers WHERE email = %s"
     params = [current_user]
     manager_id = (execute_sql(query, params))[0][0]
@@ -63,6 +61,7 @@ def dashboard(request):
 def chamas(request):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
+        chama_type = request.POST.get("chama_type")
         description = request.POST.get("description")
         members_allowed = request.POST.get("members")
         registration_fee = request.POST.get("registration")
@@ -73,7 +72,7 @@ def chamas(request):
 
         # check if start_date is less than end_date and if start date is today and change the is_active to True
 
-        chama_manager = request.COOKIES.get("current_user")
+        chama_manager = request.COOKIES.get("current_manager")
 
         query = "SELECT id FROM managers WHERE email = %s"
         params = [chama_manager]
@@ -85,6 +84,7 @@ def chamas(request):
 
         data = {
             "chama_name": chama_name,
+            "chama_type": chama_type,
             "description": description,
             "num_of_members_allowed": members_allowed,
             "registration_fee": registration_fee,
@@ -97,7 +97,7 @@ def chamas(request):
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"{request.COOKIES.get('access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
         }
         response = requests.post(
             "http://chamazetu_backend:9400/chamas",
@@ -127,9 +127,10 @@ def chama(request, key):
 
     # get the chama details
     chama_name = key
+    current_user = request.COOKIES.get("current_manager")
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"{request.COOKIES.get('access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
     }
     data = {"chama_name": chama_name}
     response = requests.get(
@@ -146,6 +147,8 @@ def chama(request, key):
             request,
             "manager/chamadashboard.html",
             {
+                "current_user": current_user,
+                "chama_name": chama_name,
                 "chama": chama,
             },
         )

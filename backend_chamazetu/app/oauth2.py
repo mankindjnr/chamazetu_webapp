@@ -1,6 +1,8 @@
+import logging
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from decouple import config
@@ -32,20 +34,40 @@ async def create_refresh_token(data: dict):
 
 
 async def verify_access_token(token: str, credentials_exception):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        print("---------verying access token--------")
-        print(username)
-        if username is None:
-            raise credentials_exception
-            print("---------NONE access token--------")
-        token_data = schemas.TokenData(username=username)
-        print("---------token data--------")
-        print("token_data", token_data)
-        return token_data
-    except JWTError:
+    print("------verifying access token--------")
+    if not token:
         raise credentials_exception
+
+    if not token.startswith("Bearer"):
+        raise credentials_exception
+    print("---------aecret key check-------------")
+    if not SECRET_KEY or not ALGORITHM:
+        raise credentials_exception
+    print("---------try key check-------------")
+    try:
+        payload = jwt.decode(token.split(" ")[1], SECRET_KEY, algorithms=[ALGORITHM])
+        print("------payload--------")
+        print(payload)
+    except ExpiredSignatureError:
+        print("------expired token--------")
+        raise credentials_exception
+    except InvalidTokenError:
+        print("------invalid token--------")
+        raise credentials_exception
+    except Exception as e:
+        print("------unknown error--------")
+        raise credentials_exception
+
+    username: str = payload.get("sub")
+    role: str = payload.get("role")
+    print("------username and role--------")
+    if not username or not role:
+        raise credentials_exception
+
+    # check if the user exists in the database
+
+    token_data = schemas.TokenData(username=username, role=role)
+    return token_data
 
 
 async def get_current_user(
@@ -61,9 +83,9 @@ async def get_current_user(
     print("------checking for current user--------")
     token = await verify_access_token(token, credentials_exception)
     print("-----the token in question\n", token)
-    user = (
-        db.query(models.Manager).filter(models.Manager.email == token.username).first()
-    )
+    role = token.role
+    Model = getattr(models, role.capitalize())
+    user = db.query(Model).filter(Model.email == token.username).first()
     if user is None:
         raise credentials_exception
     return user

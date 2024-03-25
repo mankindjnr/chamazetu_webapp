@@ -14,8 +14,35 @@ from chama.usermanagement import (
 )
 
 
-def my_chamas(request):
-    pass
+@tokens_in_cookies("member")
+def view_chama(request, chamaid):
+    response = validate_token(request, "member")
+    if isinstance(response, HttpResponseRedirect):
+        refreshed_response = refresh_token(request, "member")
+        if isinstance(refreshed_response, HttpResponseRedirect):
+            return refreshed_response
+
+    data = {"chamaid": chamaid}
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+    }
+    resp = requests.get(
+        f"http://chamazetu_backend:9400/chamas/chama", json=data, headers=headers
+    )
+    if resp.status_code == 200:
+        chama = resp.json()["Chama"][0]
+        print("---------chama details---------")
+        print(chama)
+        print()
+
+        return render(
+            request,
+            "member/chamadashboard.html",
+            {
+                "chama": chama,
+            },
+        )
 
 
 def join_chama(request):

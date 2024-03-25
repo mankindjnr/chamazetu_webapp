@@ -43,6 +43,7 @@ class Chama(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     chama_name = Column(String, index=True, unique=True, nullable=False)
+    chama_type = Column(String, nullable=False)  # investment, savings, lending
     num_of_members_allowed = Column(String, nullable=False)
     description = Column(String, nullable=False)
     date_created = Column(DateTime, default=datetime.now(timezone.utc))

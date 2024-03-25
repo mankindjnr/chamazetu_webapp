@@ -16,13 +16,19 @@ async def create_chama(
 ):
 
     print("-------backend current user\n", current_user)
-    chama_dict = chama.dict()
-    chama_dict["manager_id"] = current_user.id
-    new_chama = models.Chama(**chama_dict)
-    db.add(new_chama)
-    db.commit()
-    db.refresh(new_chama)
-    return {"Chama": [new_chama]}
+    try:
+        chama_dict = chama.dict()
+        chama_dict["manager_id"] = current_user.id
+
+        new_chama = models.Chama(**chama_dict)
+        db.add(new_chama)
+        db.commit()
+        db.refresh(new_chama)
+
+        return {"Chama": [new_chama]}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to create chama")
 
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp)
@@ -33,6 +39,20 @@ async def get_chama_by_name(
 ):
     chama_name = chama_name["chama_name"]
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama": [chama]}
+
+
+@router.get("/chama", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp)
+async def get_chama_by_id(
+    chama_id: dict = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    chama_id = chama_id["chamaid"]
+    print("chama_id", chama_id)
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": [chama]}

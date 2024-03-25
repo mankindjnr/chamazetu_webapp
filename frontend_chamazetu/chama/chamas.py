@@ -10,10 +10,11 @@ from .rawsql import execute_sql
 
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist
+# TODO: check if the user is logged in and make the chama application button available and joining
 def get_all_chamas(request):
-    query = "SELECT chama_name, manager_id FROM chamas WHERE accepting_members = %s"
+    query = "SELECT manager_id, chama_type, chama_name, id FROM chamas WHERE accepting_members = %s"
     params = [True]
-    chamas = dict(execute_sql(query, params))
+    chamas = execute_sql(query, params)
     print("---------public chamas---------")
     print(chamas)
     return render(

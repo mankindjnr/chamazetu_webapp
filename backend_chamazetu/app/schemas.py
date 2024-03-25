@@ -55,11 +55,13 @@ class refreshedToken(BaseModel):
 
 class TokenData(BaseModel):
     username: str
+    role: str
 
 
 # ============== chama =================
 class ChamaBase(BaseModel):
     chama_name: str
+    chama_type: str
     num_of_members_allowed: int
     description: str
     registration_fee: int

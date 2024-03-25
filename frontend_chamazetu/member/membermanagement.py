@@ -16,12 +16,12 @@ from chama.usermanagement import (
 
 @tokens_in_cookies("member")
 def dashboard(request):
-    access_token = request.COOKIES.get("access_token")
+    access_token = request.COOKIES.get("member_access_token")
     print("-------member-sync-check--------")
     print(access_token)
 
     # backend validation of token
-    current_user = request.COOKIES.get("current_user")
+    current_user = request.COOKIES.get("current_member")
     print("---------current_user---------")
     print(current_user)
     response = validate_token(request, "member")

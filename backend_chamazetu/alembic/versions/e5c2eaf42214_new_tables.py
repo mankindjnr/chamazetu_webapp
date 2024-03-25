@@ -1,8 +1,8 @@
-"""clean sweep
+"""new tables
 
-Revision ID: a990ec39bfd8
+Revision ID: e5c2eaf42214
 Revises: 
-Create Date: 2024-03-07 10:29:38.702740
+Create Date: 2024-03-25 09:59:26.346466
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a990ec39bfd8'
+revision: str = 'e5c2eaf42214'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,10 +23,12 @@ def upgrade() -> None:
     op.create_table('managers',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
+    sa.Column('password', sa.String(), nullable=False),
     sa.Column('email_verified', sa.Boolean(), nullable=True),
     sa.Column('date_joined', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('is_manager', sa.Boolean(), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -40,6 +42,7 @@ def upgrade() -> None:
     sa.Column('date_joined', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('is_member', sa.Boolean(), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
@@ -48,17 +51,25 @@ def upgrade() -> None:
     op.create_table('chamas',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chama_name', sa.String(), nullable=False),
+    sa.Column('chama_type', sa.String(), nullable=False),
+    sa.Column('num_of_members_allowed', sa.String(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('date_created', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.Column('registration_fee', sa.Integer(), nullable=False),
+    sa.Column('contribution_amount', sa.Integer(), nullable=False),
+    sa.Column('contribution_interval', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('accepting_members', sa.Boolean(), nullable=True),
+    sa.Column('start_cycle', sa.DateTime(), nullable=False),
+    sa.Column('end_cycle', sa.DateTime(), nullable=False),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.Column('verified_chama', sa.Boolean(), nullable=True),
     sa.Column('manager_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['manager_id'], ['managers.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_chamas_chama_name'), 'chamas', ['chama_name'], unique=False)
+    op.create_index(op.f('ix_chamas_chama_name'), 'chamas', ['chama_name'], unique=True)
     op.create_index(op.f('ix_chamas_id'), 'chamas', ['id'], unique=False)
     op.create_table('members_chamas',
     sa.Column('member_id', sa.Integer(), nullable=True),

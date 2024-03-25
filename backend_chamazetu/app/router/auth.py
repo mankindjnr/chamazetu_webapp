@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
 import logging
+from decouple import config
+from jose import jwt
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -40,8 +42,12 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
 
-    access_token = await oauth2.create_access_token(data={"sub": user.email})
-    refresh_token = await oauth2.create_refresh_token(data={"sub": user.email})
+    access_token = await oauth2.create_access_token(
+        data={"sub": user.email, "role": "member"}
+    )
+    refresh_token = await oauth2.create_refresh_token(
+        data={"sub": user.email, "role": "member"}
+    )
 
     return {
         "access_token": access_token,
@@ -79,8 +85,16 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
 
-    access_token = await oauth2.create_access_token(data={"sub": user.email})
-    refresh_token = await oauth2.create_refresh_token(data={"sub": user.email})
+    access_token = await oauth2.create_access_token(
+        data={"sub": user.email, "role": "manager"}
+    )
+    refresh_token = await oauth2.create_refresh_token(
+        data={"sub": user.email, "role": "manager"}
+    )
+
+    print("----access payload")
+    payload = jwt.decode(access_token, config("JWT_SECRET"), algorithms="HS256")
+    print(payload)
 
     return {
         "access_token": access_token,
@@ -90,12 +104,14 @@ async def login(
 
 
 @router.post("/refresh", response_model=schemas.refreshedToken)
-async def new_access_token(token_data: schemas.TokenData = Body(...)):
-    print("----we are refreshing")
+async def new_access_token(
+    token_data: schemas.TokenData = Body(...),
+    # current_user: models.Member = Depends(oauth2.get_current_user),
+):
     try:
         logging.info(f"token_data: {token_data}")
         new_access_token = await oauth2.create_access_token(
-            data={"sub": token_data.username}
+            data={"sub": token_data.username, "role": token_data.role}
         )
         return {"new_access_token": new_access_token, "refreshed_token_type": "bearer"}
     except Exception as e:

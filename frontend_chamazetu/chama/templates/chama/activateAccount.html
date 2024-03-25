@@ -41,7 +41,7 @@
         <div class="main">
             <h2>Welcome to chamaZetu, {{ user }}!</h2>
             <p>We're excited to have you on board. To get started, please verify your account by clicking the link below:</p>
-            <a href="https://{{ current_site }}{% url 'activate' role=role uidb64=uid token=token %}" class="button">Activate Account</a>
+            <a href="https://{{ current_site }}{% url 'chama:activate' role=role uidb64=uid token=token %}" class="button">Activate Account</a>
             <p>Thank you,<br>The chamaZetu Team</p>
         </div>
     </div>

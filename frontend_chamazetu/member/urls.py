@@ -7,6 +7,6 @@ app_name = "member"
 urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
     path("profile", views.profile, name="profile"),
-    path("chamas", views.my_chamas, name="chamas"),
+    path("chama/<int:chamaid>", views.view_chama, name="chama"),
     path("join", views.join_chama, name="join"),
 ]
