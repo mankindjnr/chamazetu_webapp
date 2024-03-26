@@ -40,6 +40,9 @@
     
           <nav id="navbar" class="navbar order-last order-lg-0">
             <ul>
+              {% if role %}
+                <li><a href="{% url 'member:dashboard' %}">Dashboard</a></li>
+              {% else %}
               <li><a href="{% url 'chama:index' %}" class="active">Home</a></li>
     
               <li><a href="{% url 'chama:signin' 'manager' %}" target="_blank" rel="noopener noreferrer">manager login</a></li>
@@ -52,6 +55,7 @@
                   <li><a href="{% url 'chama:signup' 'member' %}" target="_blank" rel="noopener noreferrer">Member Account</a></li>
                 </ul>
               </li>
+              {% endif %}
     
             </ul>
             <i class="bi bi-list mobile-nav-toggle"></i>

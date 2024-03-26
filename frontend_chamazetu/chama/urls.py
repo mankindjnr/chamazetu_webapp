@@ -11,4 +11,6 @@ urlpatterns = [
     path("signout/<str:role>", views.signout, name="signout"),
     path("activate/<role>/<uidb64>/<token>", views.activate, name="activate"),
     path("chamas", views.get_all_chamas, name="chamas"),
+    path("chamas/<str:role>", views.get_all_chamas, name="chamas"),
+    path("chama/<int:chamaid>", views.get_chama, name="chama"),
 ]

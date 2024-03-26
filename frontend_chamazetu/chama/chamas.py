@@ -11,7 +11,7 @@ from .rawsql import execute_sql
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist
 # TODO: check if the user is logged in and make the chama application button available and joining
-def get_all_chamas(request):
+def get_all_chamas(request, role=None):
     query = "SELECT manager_id, chama_type, chama_name, id FROM chamas WHERE accepting_members = %s"
     params = [True]
     chamas = execute_sql(query, params)
@@ -21,6 +21,28 @@ def get_all_chamas(request):
         request,
         "chama/allchamas.html",
         {
+            "role": role,
             "chamas": chamas,
         },
     )
+
+
+def get_chama(request, chamaid):
+    data = {"chamaid": chamaid}
+
+    resp = requests.get(f"http://chamazetu_backend:9400/chamas/public_chama", json=data)
+    if resp.status_code == 200:
+        chama = resp.json()["Chama"][0]
+        print("---------public details---------")
+        print(chama)
+        print()
+
+        return render(
+            request,
+            "chama/blog_chama.html",
+            {
+                "chama": chama,
+            },
+        )
+    # if the chama is not found, return a 404 page or refresh the page
+    return HttpResponse("Chama not found")

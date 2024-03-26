@@ -17,7 +17,7 @@ from .usermanagement import (
     activate,
 )
 
-from .chamas import get_all_chamas
+from .chamas import get_all_chamas, get_chama
 
 
 # Create your views here.

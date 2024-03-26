@@ -8,8 +8,6 @@ This decorator checks if the access token is in the cookies
 
 # refresh here and store the tokens as well
 def tokens_in_cookies(role):
-    print("---------tokens_in_cookies---------")
-
     def decorator(func):
         def wrapper(request, *args, **kwargs):
             access_token = request.COOKIES.get(f"{role}_access_token")

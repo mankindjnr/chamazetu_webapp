@@ -64,6 +64,10 @@ def refresh_token(request, role):
         )
         return response
     except (InvalidTokenError, ExpiredSignatureError) as e:
+        print("---------invalid_token---------")
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+    except Exception as e:
+        print("---------error---------")
         return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 

@@ -40,6 +40,7 @@ def view_chama(request, chamaid):
             request,
             "chama/blog_chama.html",
             {
+                "role": "member",
                 "chama": chama,
             },
         )

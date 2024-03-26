@@ -8,6 +8,7 @@ router = APIRouter(prefix="/chamas", tags=["management"])
 # successful get status code
 
 
+# create chama for a logged in manager
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.ChamaResp)
 async def create_chama(
     chama: schemas.ChamaBase = Body(...),
@@ -31,6 +32,7 @@ async def create_chama(
         raise HTTPException(status_code=400, detail="Failed to create chama")
 
 
+# get chama by name for a logged in manager
 @router.get("/", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp)
 async def get_chama_by_name(
     chama_name: dict = Body(...),
@@ -44,14 +46,31 @@ async def get_chama_by_name(
     return {"Chama": [chama]}
 
 
+# get chama by id for a logged in member
 @router.get("/chama", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp)
 async def get_chama_by_id(
     chama_id: dict = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.Member = Depends(oauth2.get_current_user),
 ):
     chama_id = chama_id["chamaid"]
     print("chama_id", chama_id)
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama": [chama]}
+
+
+# getting the chama for a public user - no authentication required
+# TODO: the table being querries should be chama_blog/details and not chama, description should match in both
+@router.get(
+    "/public_chama", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp
+)
+async def view_chama(
+    chama_id: dict = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    chama_id = chama_id["chamaid"]
     chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")

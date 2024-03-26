@@ -30,7 +30,12 @@
           {% if chamas %}
           {% for chama in chamas %}
           <div class="col-lg-4 col-md-6 portfolio-item filter-card">
+            {% if role %}
             <a href="{% url 'member:chama' chama.3 %}" style="text-decoration: none; color: inherit;">
+            {% else %}
+            <!-- for unathenticated users -->
+            <a href="{% url 'chama:chama' chama.3 %}" style="text-decoration: none; color: inherit;">
+            {% endif %}
               <div class="card info-card sales-card">
 
                 <div class="card-body">
