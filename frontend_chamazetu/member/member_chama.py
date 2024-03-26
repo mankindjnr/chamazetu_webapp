@@ -38,7 +38,7 @@ def view_chama(request, chamaid):
 
         return render(
             request,
-            "member/chamadashboard.html",
+            "chama/blog_chama.html",
             {
                 "chama": chama,
             },
