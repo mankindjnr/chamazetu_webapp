@@ -6,4 +6,5 @@ from .managing import (
     chamas,
     profile,
     chama,
+    chama_join_status,
 )

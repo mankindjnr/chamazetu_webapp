@@ -7,6 +7,8 @@ from decouple import config
 from django.contrib import messages
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
+from chama.decorate.validate_refresh_token import validate_and_refresh_token
+
 from chama.rawsql import execute_sql
 from datetime import datetime
 
@@ -17,16 +19,9 @@ from chama.usermanagement import (
 
 
 @tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
 def dashboard(request):
     current_user = request.COOKIES.get("current_manager")
-    # might have to add a check for admin/ authorization - add it to the token
-    # local validation of token
-    response = validate_token(request, "manager")
-    if isinstance(response, HttpResponseRedirect):
-        print("expired")
-        refreshed_response = refresh_token(request, "manager")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
 
     # get the id of the current mananger
     print("----------the new cookie----------")
@@ -56,8 +51,8 @@ def dashboard(request):
     )
 
 
-# TODO: check if we need to check the tokens validity here - improve the check
 @tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
 def chamas(request):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
@@ -118,13 +113,8 @@ def chamas(request):
 
 # it gets the one chama details and displays them
 @tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
 def chama(request, key):
-    response = validate_token(request, "manager")
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, "manager")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
     # get the chama details
     chama_name = key
     current_user = request.COOKIES.get("current_manager")
@@ -157,12 +147,42 @@ def chama(request, key):
 
 
 @tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
 def profile(request, role="manager"):
-    response = validate_token(request, role)
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, role)
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
     page = f"manager/profile.html"
     return render(request, page)
+
+
+@tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
+def chama_join_status(request):
+    print("---------chama join path---------")
+    print(request.path)
+    if request.method == "POST":
+        chama_name = request.POST.get("chama_name")
+        status = request.POST.get("status")
+
+        print()
+        print(chama_name)
+        print(status)
+        if status == "on":
+            status = True
+        else:
+            status = False
+
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+        }
+        data = {"chama_name": chama_name, "accepting_members": status}
+        print()
+        print(data)
+        response = requests.put(
+            "http://chamazetu_backend:9400/chamas/join_status",
+            json=data,
+            headers=headers,
+        )
+
+        return redirect(reverse("manager:dashboard"))
+    else:
+        return redirect(reverse("manager:dashboard"))

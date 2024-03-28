@@ -60,11 +60,16 @@ class Chama(Base):
     is_active = Column(
         Boolean, default=False
     )  # chama is active on start cycle day (auto/manual)
-    accepting_members = Column(Boolean, default=True)  # chama is accepting new members
+    accepting_members = Column(
+        Boolean, nullable=False
+    )  # chama is accepting new members
     start_cycle = Column(DateTime, nullable=False)
     end_cycle = Column(DateTime, nullable=False)
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
+
+    rules = relationship("Rule", back_populates="chama")
+    faqs = relationship("Faq", back_populates="chama")
 
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     transactions = relationship("Transaction", back_populates="chama")
@@ -121,3 +126,50 @@ class Transaction(Base):
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
     member_id = Column(Integer, ForeignKey("members.id"))
     member = relationship("Member", back_populates="transactions")
+
+
+class chama_blog(Base):
+    __tablename__ = "chama_blog"
+
+    id = Column(Integer, primary_key=True, index=True)
+    manager_id = Column(Integer, ForeignKey("managers.id"))
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    paybill_number = Column(Integer, nullable=False)
+    twitter = Column(String, nullable=True)
+    facebook = Column(String, nullable=True)
+    linkedin = Column(String, nullable=True)
+
+
+class Rule(Base):
+    __tablename__ = "rules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    rule = Column(String, nullable=False)
+    chama = relationship("Chama", back_populates="rules")
+
+
+class Faq(Base):
+    __tablename__ = "faqs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    question = Column(String, nullable=False)
+    answer = Column(String, nullable=False)
+    chama = relationship("Chama", back_populates="faqs")
+
+
+# class PasswordReset(Base):
+#     __tablename__ = "password_resets"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     email = Column(String, unique=True, index=True, nullable=False)
+#     token = Column(String, nullable=False)
+#     date_created = Column(DateTime, default=datetime.now(timezone.utc))
+#     updated_at = Column(
+#         DateTime,
+#         default=datetime.now(timezone.utc),
+#         onupdate=datetime.now(timezone.utc),
+#     )
+#     is_active = Column(Boolean, default=True)
+#     is_deleted = Column(Boolean, default=False)

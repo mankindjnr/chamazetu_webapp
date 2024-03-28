@@ -27,6 +27,7 @@ def get_all_chamas(request, role=None):
     )
 
 
+# public chama access
 def get_chama(request, chamaid):
     data = {"chamaid": chamaid}
 
@@ -36,6 +37,8 @@ def get_chama(request, chamaid):
         print("---------public details---------")
         print(chama)
         print()
+        for detail in chama:
+            print(detail, ":", chama[detail])
 
         return render(
             request,

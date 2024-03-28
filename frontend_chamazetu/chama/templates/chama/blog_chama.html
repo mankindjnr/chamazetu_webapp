@@ -5,6 +5,8 @@
 {% block content %}
 
   <!-- ======= Hero Section ======= -->
+
+
   <!-- #hero -->
   <section id="breadcrumbs" class="breadcrumbs">
     <div class="container">
@@ -14,6 +16,8 @@
         if a use from this page clicks home, they cannot be asked to signin again, implement the check for cookies, 
         the access token, and the refresh token, another user, auto logout
      -->
+       <!-- display name in the hero section -->
+      <h5>{{ chama.chama_name }} | {{chama.chama_type }}</h5> 
 
     </div>
   </section>
@@ -29,20 +33,17 @@
             <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">
           </div>
           <div class="col-lg-6 pt-4 pt-lg-0">
-            <h3>Voluptatem dignissimos provident quasi corporis voluptates sit assumenda.</h3>
+            <h3>{{ chama.chama_name }} | {{ chama.num_of_members_allowed }} </h3>
             <p class="fst-italic">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-              magna aliqua.
+              chama overview.
             </p>
             <ul>
-              <li><i class="bx bx-check-double"></i> Ullamco laboris nisi ut aliquip ex ea commodo consequat.</li>
-              <li><i class="bx bx-check-double"></i> Duis aute irure dolor in reprehenderit in voluptate velit.</li>
-              <li><i class="bx bx-check-double"></i> Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate trideta storacalaperda mastiro dolore eu fugiat nulla pariatur.</li>
+              <li><i class="bx bx-check-double"></i>Registration fee: {{ chama.registration_fee }}</li>
+              <li><i class="bx bx-check-double"></i>Contribution per share: {{ chama.contribution_amount }} </li>
+              <li><i class="bx bx-check-double"></i>Contribution intervals: {{ chama.contribution_interval }} </li>
             </ul>
             <p>
-              Ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
-              velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-              culpa qui officia deserunt mollit anim id est laborum
+              {{ chama.description }}
             </p>
           </div>
         </div>

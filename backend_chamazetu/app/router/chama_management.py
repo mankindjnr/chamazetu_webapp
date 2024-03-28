@@ -41,6 +41,8 @@ async def get_chama_by_name(
 ):
     chama_name = chama_name["chama_name"]
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+    print("------------------------------")
+    print(chama)
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": [chama]}
@@ -72,6 +74,26 @@ async def view_chama(
 ):
     chama_id = chama_id["chamaid"]
     chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    # we will use the id to extract the manager details like profile photo
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": [chama]}
+
+
+# changing the status of a chama accepting new members or not
+@router.put("/join_status", status_code=status.HTTP_200_OK)
+async def change_chama_status(
+    status: dict = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    print("status", status)
+    accepting_members = status["accepting_members"]
+    chama_name = status["chama_name"]
+
+    chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    chama.accepting_members = accepting_members
+    db.commit()
+    return {"message": "Status updated successfully"}

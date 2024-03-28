@@ -33,6 +33,8 @@ def validate_token(request, role=None):
 
 
 def refresh_token(request, role):
+    print("---------refresh_token-PATH--------")
+    print(request.path)  # /manager/chama/vuka
     try:
         refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
