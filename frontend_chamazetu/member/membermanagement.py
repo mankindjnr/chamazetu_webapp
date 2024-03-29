@@ -6,6 +6,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
+from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 
 from chama.usermanagement import (
@@ -15,20 +16,12 @@ from chama.usermanagement import (
 
 
 @tokens_in_cookies("member")
+@validate_and_refresh_token("member")
 def dashboard(request):
-    access_token = request.COOKIES.get("member_access_token")
-    print("-------member-sync-check--------")
-    print(access_token)
-
     # backend validation of token
     current_user = request.COOKIES.get("current_member")
     print("---------current_user---------")
     print(current_user)
-    response = validate_token(request, "member")
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, "member")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
 
     # get the current users id
     try:
@@ -57,12 +50,7 @@ def dashboard(request):
 
 
 @tokens_in_cookies("member")
+@validate_and_refresh_token("member")
 def profile(request, role="member"):
-    response = validate_token(request, role)
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, role)
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
     page = f"member/profile.html"
     return render(request, page)

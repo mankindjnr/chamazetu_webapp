@@ -10,16 +10,12 @@
   <!-- #hero -->
   <section id="breadcrumbs" class="breadcrumbs">
     <div class="container">
-      
-      <!-- TODO: where i will insert the join button
-        on the header in base, check if authenticated and replace the logins/services/signup with dashboard
-        if a use from this page clicks home, they cannot be asked to signin again, implement the check for cookies, 
-        the access token, and the refresh token, another user, auto logout
-     -->
-       <!-- display name in the hero section -->
-      <h5>{{ chama.chama_name }} | {{chama.chama_type }}</h5> 
-
+      <h5>{{ chama.chama_name }} | {{chama.chama_type }}
+      {% if role %}
+        <a href="#" type="button" class="btn btn-outline-info" >join</a>
+        {% endif %}
     </div>
+  </h5>
   </section>
 
   <main id="main">

@@ -53,18 +53,23 @@ def dashboard(request):
 
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
-def chamas(request):
+def create_chama(request):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
         chama_type = request.POST.get("chama_type")
         description = request.POST.get("description")
         members_allowed = request.POST.get("members")
+        accepting_members = request.POST.get("accepting_members")
         registration_fee = request.POST.get("registration")
         share_price = request.POST.get("share_price")
         contribution_frequency = request.POST.get("frequency")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
 
+        if accepting_members == "on":
+            accepting_members = True
+        else:
+            accepting_members = False
         # check if start_date is less than end_date and if start date is today and change the is_active to True
 
         chama_manager = request.COOKIES.get("current_manager")
@@ -82,6 +87,7 @@ def chamas(request):
             "chama_type": chama_type,
             "description": description,
             "num_of_members_allowed": members_allowed,
+            "accepting_members": accepting_members,
             "registration_fee": registration_fee,
             "contribution_amount": share_price,
             "contribution_interval": contribution_frequency,
@@ -160,7 +166,7 @@ def chama_join_status(request):
     print(request.path)
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
-        status = request.POST.get("status")
+        status = request.POST.get("accepting_members")
 
         print()
         print(chama_name)

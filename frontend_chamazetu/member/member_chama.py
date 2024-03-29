@@ -6,6 +6,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
+from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 
 from chama.usermanagement import (
@@ -15,13 +16,8 @@ from chama.usermanagement import (
 
 
 @tokens_in_cookies("member")
+@validate_and_refresh_token("member")
 def view_chama(request, chamaid):
-    response = validate_token(request, "member")
-    if isinstance(response, HttpResponseRedirect):
-        refreshed_response = refresh_token(request, "member")
-        if isinstance(refreshed_response, HttpResponseRedirect):
-            return refreshed_response
-
     data = {"chamaid": chamaid}
     headers = {
         "Content-type": "application/json",

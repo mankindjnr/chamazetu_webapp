@@ -63,6 +63,7 @@ class ChamaBase(BaseModel):
     chama_name: str
     chama_type: str
     num_of_members_allowed: int
+    accepting_members: bool
     description: str
     registration_fee: int
     contribution_amount: int

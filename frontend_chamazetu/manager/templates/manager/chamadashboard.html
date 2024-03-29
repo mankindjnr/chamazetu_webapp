@@ -192,13 +192,36 @@
     {% if chama %}
     <div class="pagetitle d-flex justify-content-between align-items-center">
       <h1>{{ chama.chama_name}}</h1>
-      <button type="button" id="chamastatus" class="btn btn-primary btn-sm" onclick="toggleStatus('{{ chama.chama_name }}')">accepting members</button>
-      <form id="statusForm" action="{% url 'manager:join_status' %}" method="post" style="display: none;">
+      <!-- <form method="POST" action="{% url 'manager:join_status' %}">
         {% csrf_token %}
-        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}">
-        <input type="checkbox" id="statusCheckbox" name="status" onchange="changeButtonText('{{ chama.chama_name }}')">
-        <button type="submit" class="btn btn-success btn-sm" id="submitBtn">Save</button>
+        <input type="text" id="chama_name" name="chama_name" value="{{ chama.chama_name }}" style="display: none;">
+        <input type="checkbox" id="accepting_members" name="accepting_members" {% if chama.accepting_members %} checked {% endif %} style="display: none;">
+        <label for="accepting_members" id="accepting_members_label" >Accepting members</label>
+        <button type="button" class="btn btn-outline-dark" id="status">join status</button>
+        <button type="submit" class="btn btn-outline-dark">Save</button>
+      </form> -->
+      <form method="POST" action="{% url 'manager:join_status' %}">
+        {% csrf_token %}
+        <input type="text" id="chama_name" name="chama_name" value="{{ chama.chama_name }}" style="display: none;">
+        <button type="button" class="btn btn-outline-info btn-sm" id="status" onclick="toggleVisibility('accepting_members_div')">Join Status</button>
+        <div id="accepting_members_div" style="display: none;">
+          <input type="checkbox" id="accepting_members" name="accepting_members" {% if chama.accepting_members %} checked {% endif %}>
+          <label for="accepting_members" id="accepting_members_label">Accepting members</label>
+          <button type="submit" class="btn btn-outline-primary btn-sm">confirm</button>
+        </div>
       </form>
+    
+      <script>
+          function toggleVisibility(id) {
+              var x = document.getElementById(id);
+              if (x.style.display === "none") {
+                  x.style.display = "block";
+              } else {
+                  x.style.display = "none";
+              }
+          }
+      </script>
+
     </div><!-- End Page Title -->
 
     <section class="section dashboard">
@@ -453,27 +476,11 @@
   </main><!-- End #main -->
 
   <!-- linking a script for the checkbox -->
-  <script>
-      function toggleStatus(chamaName) {
-      var checkboxDiv = document.getElementById('statusForm');
-      var statusCheckbox = document.getElementById('statusCheckbox');
-      var chamastatus = document.getElementById('chamastatus');
-
-      // Toggle visibility of checkbox and submit button
-      checkboxDiv.style.display = checkboxDiv.style.display === 'none' ? 'block' : 'none';
-
-      // Set checkbox status based on button text
-      statusCheckbox.checked = chamastatus.textContent.trim() === 'accepting members';
+  <!-- <script>
+    document.getElementById('status').onclick = function() {
+      var checkbox = document.getElementById('accepting_members');
+      checkbox.style.display = checkbox.style.display === 'none' ? 'block' : 'none';
     }
-
-    function changeButtonText(chamaName) {
-      var statusCheckbox = document.getElementById('statusCheckbox');
-      var chamastatus = document.getElementById('chamastatus');
-
-      // Change button text based on checkbox status
-      chamastatus.textContent = statusCheckbox.checked ? 'accepting members' : 'not accepting members';
-    }
-  </script>
-
+  </script> -->
 
  {% endblock %}

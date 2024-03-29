@@ -42,7 +42,7 @@ async def get_chama_by_name(
     chama_name = chama_name["chama_name"]
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
     print("------------------------------")
-    print(chama)
+    print(chama.__dict__)
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": [chama]}
