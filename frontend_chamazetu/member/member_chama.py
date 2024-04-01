@@ -42,5 +42,57 @@ def view_chama(request, chamaid):
         )
 
 
+@tokens_in_cookies("member")
+@validate_and_refresh_token("member")
+def access_chama(request, chamaname):
+    data = {"chamaname": chamaname}
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+    }
+
+    resp = requests.get(
+        f"http://chamazetu_backend:9400/chamas/chama_name", json=data, headers=headers
+    )
+    if resp.status_code == 200:
+        chama = resp.json()["Chama"][0]
+        print("---------chama access details---------")
+        print(chama)
+        print()
+
+        return render(
+            request,
+            "member/chamadashboard.html",
+            {
+                "current_user": request.COOKIES.get("current_member"),
+                "role": "member",
+                "chama": chama,
+            },
+        )
+
+
+@tokens_in_cookies("member")
+@validate_and_refresh_token("member")
 def join_chama(request):
-    return HttpResponse("Join Chama")
+    if request.method == "POST":
+        data = {
+            "chamaname": request.POST.get("chamaname"),
+            "member": request.COOKIES.get("current_member"),
+        }
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        }
+        resp = requests.post(
+            f"http://chamazetu_backend:9400/chamas/join", json=data, headers=headers
+        )
+        if resp.status_code == 201:
+            return HttpResponseRedirect(reverse("member:dashboard"))
+        else:
+            return HttpResponseRedirect(
+                reverse("chama:chamas", args={"role": "member"})
+            )
+    else:
+        pass
+
+    return HttpResponseRedirect(reverse("chama:chamas", args={"role": "member"}))

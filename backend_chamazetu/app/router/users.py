@@ -63,3 +63,15 @@ async def get_user(
     db: Session = Depends(get_db),
 ):
     return {"email": current_user.email}
+
+
+# get member id by email
+@router.get("/member/{email}")
+async def get_user_by_email(
+    email: str,
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.Member).filter(models.Member.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"User": [user]}

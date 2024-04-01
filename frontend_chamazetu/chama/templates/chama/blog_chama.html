@@ -9,13 +9,43 @@
 
   <!-- #hero -->
   <section id="breadcrumbs" class="breadcrumbs">
-    <div class="container">
-      <h5>{{ chama.chama_name }} | {{chama.chama_type }}
+    <div class="container d-flex justify-content-between align-items-center">
+      <h5>{{ chama.chama_name }} | {{chama.chama_type }}</h5>
       {% if role %}
-        <a href="#" type="button" class="btn btn-outline-info" >join</a>
-        {% endif %}
+      <!-- Button trigger modal -->
+      <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#joinChamaModal">
+        join {{ chama.chama_name }}
+      </button>
+
+      <!-- Modal -->
+      <div class="modal fade" id="joinChamaModal" tabindex="-1" aria-labelledby="joinChamaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="joinChamaModalLabel">Become a member</h1>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form action="{% url 'member:join' %}" method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="chamaname" class="form-label">Chama Name</label>
+                  <input type="text" class="form-control" id="chamaname" name="chamaname" value="{{ chama.chama_name}}" readonly required>
+                </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-outline-success btn-sm">Become a member</button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <button type="button" class="btn">Login to join</a>
+
+      {% endif %}
     </div>
-  </h5>
   </section>
 
   <main id="main">

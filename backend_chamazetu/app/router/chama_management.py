@@ -63,6 +63,22 @@ async def get_chama_by_id(
     return {"Chama": [chama]}
 
 
+# get chama by name for a logged in member
+@router.get(
+    "/chama_name", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp
+)
+async def get_chama_by_name(
+    chama_name: dict = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    chama_name = chama_name["chamaname"]
+    chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama": [chama]}
+
+
 # getting the chama for a public user - no authentication required
 # TODO: the table being querries should be chama_blog/details and not chama, description should match in both
 @router.get(
@@ -97,3 +113,35 @@ async def change_chama_status(
     chama.accepting_members = accepting_members
     db.commit()
     return {"message": "Status updated successfully"}
+
+
+# members can join chamas
+@router.post("/join", status_code=status.HTTP_201_CREATED)
+async def join_chama(
+    chamaname: dict = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    chamaname = chamaname["chamaname"]
+    chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    chama.members.append(current_user)
+    db.commit()
+    return {"message": f"You have successfully joined {chamaname}"}
+
+
+# members retrieving all chamas they are part of using a list of chamaids
+@router.get(
+    "/my_chamas", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp
+)
+async def my_chamas(
+    chamaids: dict = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    chamaids = chamaids["chamaids"]
+    chamas = db.query(models.Chama).filter(models.Chama.id.in_(chamaids)).all()
+    if not chamas:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama": chamas}

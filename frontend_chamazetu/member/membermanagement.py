@@ -20,9 +20,8 @@ from chama.usermanagement import (
 def dashboard(request):
     # backend validation of token
     current_user = request.COOKIES.get("current_member")
-    print("---------current_user---------")
-    print(current_user)
 
+    # TODO: replace this with a call to the backend
     # get the current users id
     try:
         query = "SELECT id FROM members WHERE email = %s"
@@ -31,20 +30,38 @@ def dashboard(request):
         # use the id to get the chama the user is in from the associate table
         query = "SELECT chama_id FROM members_chamas WHERE member_id = %s"
         params = [member_id]
-        chama_ids = (execute_sql(query, params))[0][0]
+        chama_ids = execute_sql(query, params)
     except Exception as e:
         print(e)
         chama_ids = None
 
     print("---------chama_id---------")
-    print(chama_ids)
+    chamas_gen = (chama[0] for chama in chama_ids)
+    chama_ids = list(chamas_gen)
+
+    data = {"chamaids": chama_ids}
+
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+    }
+
+    resp = requests.get(
+        f"http://chamazetu_backend:9400/chamas/my_chamas", json=data, headers=headers
+    )
+
+    if resp.status_code == 200:
+        chamas = resp.json()["Chama"]
+        print("---------chamas---------")
+        print(chamas)
+        print()
 
     return render(
         request,
         "member/dashboard.html",
         {
             "current_user": current_user,
-            "chama_ids": chama_ids,
+            "chamas": chamas,
         },
     )
 
