@@ -332,16 +332,22 @@
                           <label for="chama_type" class="form-label">Chama Type</label>
                           <input type="text" class="form-control" id="chama_type" name="chama_type" placeholder="investment saving merry-go-round" required>
                         </div>
-                        <!--TODO: limit to 500 characters -->
+                        <!--TODO: limit to 500 characters check with javascript and notify the use with small text -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3" maxlength="500" required></textarea>
+                            <small id="descriptionHelp" class="form-text text-muted">max 500 characters</small>
                         </div>
-                        <!-- TODO: choice of any number of members or a set number required only -->
+
                         <div class="mb-3">
-                            <label for="members" class="form-label">Members</label> 
-                            <input type="number" class="form-control" id="members" name="members" min="1" placeholder="number of members" required>
+                            <label for="members" class="form-label">Number of Members</label> 
+                            <input type="number" class="form-control" id="members_allowed" name="members_allowed" min="1" placeholder="number of members" required>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="noLimit" name="noLimit">
+                              <label class="form-check-label" for="noLimit"><b>No limit</b></label>
+                            </div>
                         </div>
+
                         <div class="mb-3">
                           <label for="share_price" class="form-label">Share price</label>
                           <input type="number" class="form-control" id="share_price" name="share_price" placeholder="per member contribution" min="1" required>
@@ -355,7 +361,7 @@
                               <option value="daily">Daily</option>
                               <option value="weekly">Weekly</option>
                               <option value="monthly">Monthly</option>
-                              <option value="custom">custom</option>
+                              <!-- <option value="custom">custom</option> -->
                           </select>
                           <!-- helper message for the custom entry -->
                           <small id="frequencyHelp" class="form-text text-muted"></small>
@@ -364,39 +370,44 @@
                         <div class="mb-3" id="weekly_options" style="display: none;">
                             <label for="weekly_day" class="form-label">Select Day of Week</label>
                             <select class="form-select" id="weekly_day" name="weekly_day">
+                                <option value="sunday">Sunday</option>
                                 <option value="monday">Monday</option>
                                 <option value="tuesday">Tuesday</option>
                                 <option value="wednesday">Wednesday</option>
                                 <option value="thursday">Thursday</option>
                                 <option value="friday">Friday</option>
                                 <option value="saturday">Saturday</option>
-                                <option value="sunday">Sunday</option>
                             </select>
                         </div>
                         <!-- Monthly Options -->
                         <div class="mb-3" id="monthly_options" style="display: none;">
-                            <label for="monthly_date" class="form-label">Select Date</label>
-                            <input type="date" class="form-control" id="monthly_date" name="monthly_date">
+                            <label for="monthly_date" class="form-label">Enter Date Of Contribution</label>
+                            <input type="number" class="form-control" id="monthly_day" name="monthly_day" min="1" max="31" placeholder="day of the month">
                         </div>
                         <!-- End Frequency Selection -->
                         
                         <div class="mb-3">
-                          <label for="registration" class="form-label">Registration</label>
+                          <label for="registration" class="form-label">Registration Fee</label>
                           <input type="number" class="form-control" id="registration" name="registration" placeholder="enter 0 if no registration fee" min="1" required>
                         </div>
+                        <hr>
 
                         <div class="row mb-3">
+                          <p><b>How long one cycle will last</b></p>
                           <div class="col-md-6">
-                              <label for="start_date" class="form-label">Start Date</label>
+                              <label for="start_date" class="form-label">Start Cycle Date</label>
                               <input type="date" class="form-control" id="start_date" name="start_date" required>
                           </div>
                           <div class="col-md-6">
-                            <label for="end_date" class="form-label">End Date</label>
+                            <label for="end_date" class="form-label">End Cycle Date</label>
                             <input type="date" class="form-control" id="end_date" name="end_date" required>
                           </div>
                         </div>
                         <!-- checkbox -->
+                        <hr>
                         <div class="mb-3 form-check">
+                          <!-- a sentence notifying the manager -->
+                          <p><b>Check the box below if members can start joining immediately</b></p>
                           <input type="checkbox" class="form-check-input" id="accepting_members" name="accepting_members">
                           <label class="form-check-label" for="accepting_members">Accepting Members</label>
                         </div>
@@ -415,16 +426,26 @@
                     var frequency = document.getElementById("frequency").value;
                     if (frequency === "weekly") {
                         document.getElementById("weekly_options").style.display = "block";
-                        document.getElementById("bi_weekly_options").style.display = "none";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
                         document.getElementById("monthly_options").style.display = "none";
                     } else if (frequency === "monthly") {
                         document.getElementById("weekly_options").style.display = "none";
-                        document.getElementById("bi_weekly_options").style.display = "none";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
                         document.getElementById("monthly_options").style.display = "block";
-                    } else if (frequency === "custom") {
-                        document.getElementById("frequencyHelp").innerHTML = "you'll get to set the frequency later";
+                    } else {
+                        document.getElementById("weekly_options").style.display = "none";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
+                        document.getElementById("monthly_options").style.display = "none";
                     }
+                    // } else if (frequency === "custom") {
+                    //     document.getElementById("frequencyHelp").innerHTML = "you'll get to set the frequency later";
+                    // }
                 }
+
+                // no limit members or limit members
+                document.getElementById('noLimit').addEventListener('change', function() {
+                  document.getElementById('members_allowed').disabled = this.checked;
+              });
             </script>
           </div> <!-- the id hiding the form-->
 

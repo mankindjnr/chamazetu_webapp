@@ -47,7 +47,7 @@ def dashboard(request):
     }
 
     resp = requests.get(
-        f"http://chamazetu_backend:9400/chamas/my_chamas", json=data, headers=headers
+        f"{config('api_url')}/chamas/my_chamas", json=data, headers=headers
     )
 
     if resp.status_code == 200:
@@ -56,14 +56,24 @@ def dashboard(request):
         print(chamas)
         print()
 
-    return render(
-        request,
-        "member/dashboard.html",
-        {
-            "current_user": current_user,
-            "chamas": chamas,
-        },
-    )
+        return render(
+            request,
+            "member/dashboard.html",
+            {
+                "current_user": current_user,
+                "chamas": chamas,
+            },
+        )
+    else:
+        return render(request, "member/dashboard.html")
+
+
+def get_user_id(role, email):
+    url = f"{config('api_url')}/users/{role}/{email}"
+    resp = requests.get(url)
+    user = resp.json()
+    user_id = user["User_id"]
+    return user_id
 
 
 @tokens_in_cookies("member")

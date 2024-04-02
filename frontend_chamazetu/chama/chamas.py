@@ -31,7 +31,7 @@ def get_all_chamas(request, role=None):
 def get_chama(request, chamaid):
     data = {"chamaid": chamaid}
 
-    resp = requests.get(f"http://chamazetu_backend:9400/chamas/public_chama", json=data)
+    resp = requests.get(f"{config('api_url')}/chamas/public_chama", json=data)
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
         print("---------public details---------")
@@ -49,3 +49,11 @@ def get_chama(request, chamaid):
         )
     # if the chama is not found, return a 404 page or refresh the page
     return HttpResponse("Chama not found")
+
+
+def get_chama_id(chamaname):
+    resp = requests.get(f"{config('api_url')}/chamas/chama_id/{chamaname}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        chama_id = chama["Chama_id"]
+        return chama_id

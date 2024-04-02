@@ -62,12 +62,13 @@ class TokenData(BaseModel):
 class ChamaBase(BaseModel):
     chama_name: str
     chama_type: str
-    num_of_members_allowed: int
+    num_of_members_allowed: str
     accepting_members: bool
     description: str
     registration_fee: int
     contribution_amount: int
     contribution_interval: str
+    contribution_day: str
     start_cycle: datetime
     end_cycle: datetime
     manager_id: int
@@ -79,6 +80,29 @@ class ChamaBase(BaseModel):
 
 class ChamaResp(BaseModel):
     Chama: List[ChamaBase]
+
+    class Config:
+        orm_mode = True
+
+
+# ============== transaction =================
+class TransactionBase(BaseModel):
+    amount: int
+    chama_id: int
+
+    class Config:
+        orm_mode = True
+        # from_attributes = True
+
+
+class TransactionResp(BaseModel):
+    id: int
+    amount: int
+    member_id: int
+    chama_id: int
+    transaction_type: str
+    date_of_transaction: datetime
+    transaction_completed: bool
 
     class Config:
         orm_mode = True

@@ -50,7 +50,7 @@ def refresh_token(request, role):
 
         headers = {"Content-type": "application/json"}
         refresh_access = requests.post(
-            "http://chamazetu_backend:9400/auth/refresh",
+            f"{config('api_url')}/auth/refresh",
             data=json.dumps(data),
             headers=headers,
         )
@@ -82,7 +82,7 @@ def signin(request, role):
         }
         print("---------signin---data------")
 
-        # TODO: check if the user is already logged in and redirect to the dashboard or
+        # TODO: check if the user is already logged in and redirect to the dashboard or # remember me
         # TODO: if the user email is not the same as the payload of the token, signout the other user in the background
         # print("---------signin---path------")
         # if request.path == "/signin/manager":
@@ -90,9 +90,7 @@ def signin(request, role):
         #         if
         # TODO: include a try and retry mechanism for the auth route call
         # send the data to the auth server for verification and login
-        response = requests.post(
-            f"http://chamazetu_backend:9400/auth/{role}s/login/", data=data
-        )
+        response = requests.post(f"{config('api_url')}/auth/{role}s/login/", data=data)
 
         if response.status_code == 200:
             access_tokens = {}
@@ -158,7 +156,7 @@ def signup(request, role):  # implement the manager signup
         }
         headers = {"Content-type": "application/json"}
         response = requests.post(
-            "http://chamazetu_backend:9400/users",
+            f"{config('api_url')}/users",
             data=json.dumps(data),
             headers=headers,
         )

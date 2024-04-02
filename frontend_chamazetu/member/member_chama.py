@@ -23,9 +23,7 @@ def view_chama(request, chamaid):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
     }
-    resp = requests.get(
-        f"http://chamazetu_backend:9400/chamas/chama", json=data, headers=headers
-    )
+    resp = requests.get(f"{config('api_url')}/chamas/chama", json=data, headers=headers)
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
         print("---------chama details---------")
@@ -52,7 +50,7 @@ def access_chama(request, chamaname):
     }
 
     resp = requests.get(
-        f"http://chamazetu_backend:9400/chamas/chama_name", json=data, headers=headers
+        f"{config('api_url')}/chamas/chama_name", json=data, headers=headers
     )
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
@@ -84,7 +82,7 @@ def join_chama(request):
             "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
         }
         resp = requests.post(
-            f"http://chamazetu_backend:9400/chamas/join", json=data, headers=headers
+            f"{config('api_url')}/chamas/join", json=data, headers=headers
         )
         if resp.status_code == 201:
             return HttpResponseRedirect(reverse("member:dashboard"))

@@ -145,3 +145,15 @@ async def my_chamas(
     if not chamas:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": chamas}
+
+
+# retrieving chama id from its name
+@router.get("/chama_id/{chamaname}", status_code=status.HTTP_200_OK)
+async def get_chama_id(
+    chamaname: str,
+    db: Session = Depends(database.get_db),
+):
+    chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama_id": chama.id}

@@ -2,35 +2,45 @@ import requests, jwt, json
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from django.contrib import messages
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
+from .membermanagement import get_user_id
+from chama.chamas import get_chama_id
 
 
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def deposit_to_chama(request):
-    pass
-    # TODO: use the chama name and member email to get the chama id and member id before sending the deposit request to backend
-    # if request.method == 'POST':
-    #     amount = request.POST.get('amount')
-    #     member_id = request.COOKIES.get('member_id')
-    #     chama_id = request.COOKIES.get('chama_id')
-    #     url = f"{config('API_URL')}/chama/deposit"
-    #     headers = {
-    #         "Authorization": f"Bearer {request.COOKIES.get('access_token')}"
-    #     }
-    #     data = {
-    #         "amount": amount,
-    #         "member_id": member_id,
-    #         "chama_id": chama_id
-    #     }
-    #     response = requests.post(url, headers=headers, data=data)
-    #     if response.status_code == 200:
-    #         return HttpResponseRedirect(reverse('chama:chama_dashboard'))
-    #     else:
-    #         return HttpResponse('Failed to deposit')
-    # return render(request, 'chama/deposit_to_chama.html')
+    if request.method == "POST":
+        amount = request.POST.get("amount")
+        member_id = get_user_id("member", request.COOKIES.get("current_member"))
+        chama_id = get_chama_id(request.POST.get("chamaname"))
+
+        url = f"{config('api_url')}/transactions/deposit"
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        }
+        data = {
+            "amount": amount,
+            "chama_id": chama_id,
+        }
+        response = requests.post(url, headers=headers, json=data)
+
+        if response.status_code == 201:
+            print("--------------Deposit successful---------------")
+            print(response.json())
+            messages.success(request, "Deposit successful")
+            return HttpResponseRedirect(
+                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+            )
+
+    messages.error(request, "Failed to deposit")
+    return HttpResponseRedirect(
+        reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+    )

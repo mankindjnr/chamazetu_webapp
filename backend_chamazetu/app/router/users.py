@@ -66,12 +66,15 @@ async def get_user(
 
 
 # get member id by email
+# TODO: might have to repurpose to get managers id by email as well
 @router.get("/member/{email}")
 async def get_user_by_email(
     email: str,
     db: Session = Depends(get_db),
 ):
     user = db.query(models.Member).filter(models.Member.email == email).first()
+    print("-------id user---------")
+    print(user.id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"User": [user]}
+    return {"User_id": user.id}

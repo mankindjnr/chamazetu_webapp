@@ -57,14 +57,26 @@ def create_chama(request):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
         chama_type = request.POST.get("chama_type")
+        no_limit = request.POST.get("noLimit")
         description = request.POST.get("description")
-        members_allowed = request.POST.get("members")
         accepting_members = request.POST.get("accepting_members")
         registration_fee = request.POST.get("registration")
         share_price = request.POST.get("share_price")
         contribution_frequency = request.POST.get("frequency")
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
+
+        members_allowed = 0
+        if no_limit == "on":
+            members_allowed = "infinite"
+        else:
+            members_allowed = request.POST.get("members_allowed")
+
+        contribution_day = "daily"
+        if contribution_frequency == "weekly":
+            contribution_day = request.POST.get("weekly_day")
+        elif contribution_frequency == "monthly":
+            contribution_day = request.POST.get("monthly_day")
 
         if accepting_members == "on":
             accepting_members = True
@@ -91,10 +103,15 @@ def create_chama(request):
             "registration_fee": registration_fee,
             "contribution_amount": share_price,
             "contribution_interval": contribution_frequency,
+            "contribution_day": contribution_day,
             "start_cycle": start_date.strftime("%Y-%m-%d %H:%M:%S"),
             "end_cycle": end_date.strftime("%Y-%m-%d %H:%M:%S"),
             "manager_id": manager_id,
         }
+        print("nolimit", no_limit)
+        print("members_allowed", members_allowed)
+        print("--------------create chama details---------------")
+        print(data)
 
         headers = {
             "Content-type": "application/json",

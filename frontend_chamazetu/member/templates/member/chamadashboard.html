@@ -5,7 +5,7 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
+      <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/favicon.png' %}" alt="">
         <span class="d-none d-lg-block">{{ chama.chama_name }}</span>
       </a>
@@ -192,6 +192,18 @@
     {% if chama %}
     <div class="pagetitle d-flex justify-content-between align-items-center">
       <h1>{{ chama.chama_name}}</h1>
+
+      <!-- messages after deposit trial -->
+      {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+      <!-- end messages -->
+
       <!-- Button trigger modal -->
       <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#depositModal">
         Deposit
@@ -231,7 +243,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-outline-success btn-sm">Deposit</button>
+              <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
             </div>
             </form>
           </div>
@@ -239,12 +251,6 @@
       </div>
 
     </div><!-- End Page Title -->
-
-    {% if messages %}
-    <div class="alert alert-success" role="alert">
-      {{ messages }}
-    </div>
-    {% endif %}
 
     <section class="section dashboard">
       <div class="row">
@@ -575,6 +581,18 @@
     {% endif %}
 
   </main><!-- End #main -->
+
+  <script>
+    // notification
+    document.addEventListener("DOMContentLoaded", function() {
+    var chama_created = document.getElementById("chama_created");
+    if (chama_created) {
+      setTimeout(function() {
+        chama_created.style.display = "none";
+      }, 5000);
+    }
+  });
+  </script>
 
 
  {% endblock %}

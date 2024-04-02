@@ -12,6 +12,14 @@ members_chamas_association = Table(
     Column("chama_id", Integer, ForeignKey("chamas.id")),
 )
 
+# Define the many-to-many relationship table between chamas and investments one chama can have many investments and one investment can belong to many chamas
+chama_investment_association = Table(
+    "chama_investment",
+    Base.metadata,
+    Column("chama_id", Integer, ForeignKey("chamas.id")),
+    Column("investment_id", Integer, ForeignKey("investments.id")),
+)
+
 
 class Member(Base):
     __tablename__ = "members"
@@ -57,6 +65,7 @@ class Chama(Base):
     contribution_interval = Column(
         String, nullable=False
     )  # daily, weekly, monthly, custom
+    contribution_day = Column(String, nullable=False)  # tuesday, friday, 1st, 15th
     is_active = Column(
         Boolean, default=False
     )  # chama is active on start cycle day (auto/manual)
@@ -79,6 +88,10 @@ class Chama(Base):
     # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
     members = relationship(
         "Member", secondary=members_chamas_association, back_populates="chamas"
+    )
+    # Define the many-to-many relationship between chamas and investments one chama can have many investments and one investment can belong to many chamas
+    investments = relationship(
+        "investment", secondary=chama_investment_association, back_populates="chamas"
     )
 
 
@@ -108,6 +121,7 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
+    phone_number = Column(String(12), nullable=False)
     date_of_transaction = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -115,6 +129,9 @@ class Transaction(Base):
         onupdate=datetime.now(timezone.utc),
     )
     transaction_completed = Column(Boolean, default=False)
+    transaction_code = Column(
+        String, nullable=False
+    )  # mpesa code or bank transaction code
     transaction_type = Column(
         String, nullable=False
     )  # deposit, withdrawal, loan, loan_payment, interest
@@ -126,6 +143,45 @@ class Transaction(Base):
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
     member_id = Column(Integer, ForeignKey("members.id"))
     member = relationship("Member", back_populates="transactions")
+
+
+class Chama_Account(Base):
+    __tablename__ = "chama_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    account_balance = Column(Integer, nullable=False)
+    account_status = Column(Boolean, default=False)  # active or inactive
+
+
+class investment(Base):
+    __tablename__ = "investments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    investment_name = Column(String, nullable=False)
+    investment_type = Column(String, nullable=False)
+    investment_amount = Column(Integer, nullable=False)
+    investment_period = Column(
+        Integer, nullable=False
+    )  # number of days, weeks, months, years
+    investment_period_unit = Column(
+        String, nullable=False
+    )  # days, weeks, months, years
+    investment_rate = Column(Integer, nullable=False)  # interest rate
+    investment_start_date = Column(DateTime, default=datetime.now(timezone.utc))
+    investment_end_date = Column(DateTime, nullable=False)
+    investment_status = Column(Boolean, default=False)  # active or inactive
+    investment_return = Column(
+        Integer, nullable=False
+    )  # amt to be returned after invest period
+    investment_returned = Column(
+        Boolean, default=False
+    )  # has the investment been returned
+
+    # Define the many-to-many relationship between chamas and investments
+    chamas = relationship(
+        "Chama", secondary=chama_investment_association, back_populates="investments"
+    )
 
 
 class chama_blog(Base):
