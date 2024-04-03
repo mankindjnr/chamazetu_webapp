@@ -10,6 +10,14 @@
 
       </div>
     </section><!-- End Breadcrumbs -->
+    {% if messages %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="chama_created">
+      {% for messages in messages %}
+        <strong>{{ messages }}</strong>
+      {% endfor %}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
 
     <!-- ======= Portfolio Section ======= -->
     <section id="portfolio" class="portfolio">

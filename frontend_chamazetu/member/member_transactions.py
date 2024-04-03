@@ -11,6 +11,7 @@ from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from .membermanagement import get_user_id
 from chama.chamas import get_chama_id
+from .tasks import update_chama_account_balance
 
 
 @tokens_in_cookies("member")
@@ -18,8 +19,8 @@ from chama.chamas import get_chama_id
 def deposit_to_chama(request):
     if request.method == "POST":
         amount = request.POST.get("amount")
-        member_id = get_user_id("member", request.COOKIES.get("current_member"))
         chama_id = get_chama_id(request.POST.get("chamaname"))
+        phone_number = request.POST.get("phonenumber")
 
         url = f"{config('api_url')}/transactions/deposit"
         headers = {
@@ -29,18 +30,23 @@ def deposit_to_chama(request):
         data = {
             "amount": amount,
             "chama_id": chama_id,
+            "phone_number": f"254{phone_number}",
         }
         response = requests.post(url, headers=headers, json=data)
 
         if response.status_code == 201:
-            print("--------------Deposit successful---------------")
-            print(response.json())
-            messages.success(request, "Deposit successful")
+            # call the background task function to update the chama account balance
+            update_chama_account_balance.delay(
+                request.COOKIES.get("member_access_token"), chama_id, amount
+            )
+            messages.success(
+                request, f"Deposit to {request.POST.get('chamaname')} successful"
+            )
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
 
-    messages.error(request, "Failed to deposit")
+    messages.error(request, "Failed to deposit, please try again.")
     return HttpResponseRedirect(
         reverse("member:access_chama", args=(request.POST.get("chamaname"),))
     )

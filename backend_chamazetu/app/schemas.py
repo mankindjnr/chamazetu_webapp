@@ -70,7 +70,7 @@ class ChamaBase(BaseModel):
     contribution_interval: str
     contribution_day: str
     start_cycle: datetime
-    end_cycle: datetime
+    restart: bool
     manager_id: int
 
     class Config:
@@ -89,6 +89,7 @@ class ChamaResp(BaseModel):
 class TransactionBase(BaseModel):
     amount: int
     chama_id: int
+    phone_number: str
 
     class Config:
         orm_mode = True
@@ -103,6 +104,24 @@ class TransactionResp(BaseModel):
     transaction_type: str
     date_of_transaction: datetime
     transaction_completed: bool
+
+    class Config:
+        orm_mode = True
+
+
+# ============== chama account =================
+class ChamaAccountBase(BaseModel):
+    chama_id: int
+    amount_deposited: int
+
+    class Config:
+        orm_mode = True
+
+
+class ChamaAccountResp(BaseModel):
+    id: int
+    chama_id: int
+    account_balance: int
 
     class Config:
         orm_mode = True

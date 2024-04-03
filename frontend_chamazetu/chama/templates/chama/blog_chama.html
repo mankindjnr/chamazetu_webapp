@@ -54,6 +54,15 @@
     <section id="about" class="about">
       <div class="container">
 
+        {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for messages in messages %}
+            <strong>{{ messages }}</strong>
+          {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
         <div class="row">
           <div class="col-lg-6">
             <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">

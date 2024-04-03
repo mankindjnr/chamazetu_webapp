@@ -64,7 +64,6 @@ def create_chama(request):
         share_price = request.POST.get("share_price")
         contribution_frequency = request.POST.get("frequency")
         start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
 
         members_allowed = 0
         if no_limit == "on":
@@ -92,7 +91,6 @@ def create_chama(request):
 
         # Convert start_date and end_date to datetime objects and get current time
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")
 
         data = {
             "chama_name": chama_name,
@@ -105,7 +103,7 @@ def create_chama(request):
             "contribution_interval": contribution_frequency,
             "contribution_day": contribution_day,
             "start_cycle": start_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "end_cycle": end_date.strftime("%Y-%m-%d %H:%M:%S"),
+            "restart": False,
             "manager_id": manager_id,
         }
         print("nolimit", no_limit)
@@ -209,3 +207,7 @@ def chama_join_status(request):
         return redirect(reverse("manager:dashboard"))
     else:
         return redirect(reverse("manager:dashboard"))
+
+
+def restart_pause_stop_chama(request):
+    pass

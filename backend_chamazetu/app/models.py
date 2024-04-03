@@ -73,7 +73,7 @@ class Chama(Base):
         Boolean, nullable=False
     )  # chama is accepting new members
     start_cycle = Column(DateTime, nullable=False)
-    end_cycle = Column(DateTime, nullable=False)
+    restart = Column(Boolean, default=False)  # chama has restarted
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
 

@@ -126,6 +126,13 @@ async def join_chama(
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
+
+    # Check if the current user is already a member of the chama
+    if current_user in chama.members:
+        raise HTTPException(
+            status_code=400, detail="You are already a member of this chama"
+        )
+
     chama.members.append(current_user)
     db.commit()
     return {"message": f"You have successfully joined {chamaname}"}
@@ -157,3 +164,46 @@ async def get_chama_id(
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama_id": chama.id}
+
+
+# update accounts balance for a certain chama after a deposit transaction
+@router.put(
+    "/update_account",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ChamaAccountBase,
+)
+async def update_account_balance(
+    account: schemas.ChamaAccountBase = Body(...),
+    db: Session = Depends(database.get_db),
+    # current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    try:
+        account_dict = account.dict()
+        chama_id = account_dict["chama_id"]
+        new_deposit_amount = account_dict["amount_deposited"]
+
+        chama_account = (
+            db.query(models.Chama_Account)
+            .filter(models.Chama_Account.chama_id == chama_id)
+            .first()
+        )
+        if chama_account is None:
+            print("------chama_account is None--------")
+            chama_account = models.Chama_Account(
+                chama_id=chama_id, account_balance=new_deposit_amount
+            )
+            db.add(chama_account)
+            db.commit()
+            db.refresh(chama_account)
+            return chama_account
+
+        account_balance = chama_account.account_balance + new_deposit_amount
+        chama_account.account_balance = account_balance
+        db.commit()
+        db.refresh(chama_account)
+
+        return chama_account
+    except Exception as e:
+        print("------error--------")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to update account balance")
