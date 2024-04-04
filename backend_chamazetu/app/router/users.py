@@ -13,8 +13,6 @@ router = APIRouter(prefix="/users", tags=["Users"])
 async def create_user(
     user: schemas.UserBase = Body(...), db: Session = Depends(get_db)
 ):
-    print("-------------------")
-    print(user)
     dbtable = (user.role).capitalize().strip()
     print(dbtable)
 
@@ -27,8 +25,6 @@ async def create_user(
         "role"
     ]  # remove the role from the dictionary since we don't have it in the model
     new_user = ModelClass(**user_dict)
-    print("-------------------")
-    print(new_user)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -73,8 +69,6 @@ async def get_user_by_email(
     db: Session = Depends(get_db),
 ):
     user = db.query(models.Member).filter(models.Member.email == email).first()
-    print("-------id user---------")
-    print(user.id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"User_id": user.id}

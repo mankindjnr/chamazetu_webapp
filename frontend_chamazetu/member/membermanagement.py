@@ -8,6 +8,7 @@ from decouple import config
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
+from .date_trial import get_sunday_date
 
 from chama.usermanagement import (
     validate_token,
@@ -49,6 +50,16 @@ def dashboard(request):
     resp = requests.get(
         f"{config('api_url')}/chamas/my_chamas", json=data, headers=headers
     )
+    # ============================================================
+    datab = {
+        "member_id": 2,
+    }
+    resp_two = requests.get(
+        f"{config('api_url')}/transactions/chama_transactions", json=datab
+    )
+    print("===============================")
+    print(resp_two.json())
+    # ============================================================
 
     if resp.status_code == 200:
         chamas = resp.json()["Chama"]

@@ -17,10 +17,5 @@ def update_chama_account_balance(member_token, chama_id, amount):
         "amount_deposited": amount,
     }
 
-    print("------shared data--------")
-    print(data)
-    print()
-    print(url)
-
     response = requests.put(url, headers=headers, json=data)
     return None

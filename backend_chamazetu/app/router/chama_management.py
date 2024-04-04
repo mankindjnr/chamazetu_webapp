@@ -170,7 +170,7 @@ async def get_chama_id(
 @router.put(
     "/update_account",
     status_code=status.HTTP_200_OK,
-    response_model=schemas.ChamaAccountBase,
+    response_model=schemas.ChamaAccountResp,
 )
 async def update_account_balance(
     account: schemas.ChamaAccountBase = Body(...),
@@ -203,6 +203,7 @@ async def update_account_balance(
         db.refresh(chama_account)
 
         return chama_account
+
     except Exception as e:
         print("------error--------")
         print(e)

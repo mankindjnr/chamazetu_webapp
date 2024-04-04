@@ -77,19 +77,14 @@ def access_chama(request, chamaname):
     for thread in threads:
         thread.join()
 
-    # process the results i.e return the data
-    print("---------results first---------")
-    print(results)
-    print("---------results second---------")
-
+    # process the results of the threads
     if results[urls[0]]["status"] == 200:
         chama = results[urls[0]]["data"]["Chama"][0]
         transactions = []
         if results[urls[1]]["status"] == 200:
             if len(results[urls[1]]["data"]) > 0:
-                transactions = results[urls[1]]["data"][0]
-                transactions = results[urls[1]]["data"][0]
-                print("---------transactions---------")
+                transactions = results[urls[1]]["data"]
+                print("---------chama transactions---------")
                 print(transactions)
         return render(
             request,

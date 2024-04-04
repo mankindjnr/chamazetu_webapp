@@ -7,7 +7,7 @@
     <div class="d-flex align-items-center justify-content-between">
       <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/favicon.png' %}" alt="">
-        <span class="d-none d-lg-block">{{ chama.chama_name }}</span>
+        <span class="d-none d-lg-block">Dashboard</span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
@@ -286,7 +286,7 @@
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Account <span>| all time deposits</span></h5> <!--switch to num of members joined -->
+                  <h5 class="card-title">Account <span>| balance</span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -334,7 +334,7 @@
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">chama activity <span>| contribution days</span></h5>
+                  <h5 class="card-title">chama activity <span>| contributions</span></h5>
 
                   <table class="table">
                     <thead>
@@ -349,9 +349,11 @@
                         <th scope="col">saturday</th>
                       </tr>
                     </thead>
+                    {% if transactions %}
                     <tbody>
+                      {% for transaction in transactions %}
                       <tr>
-                        <th scope="row"><a href="#">#2457</a></th>
+                        <th scope="row">{{ transaction.id }}</th>
                         <td>Brandon Jacob</td>
                         <td><span class="badge bg-success">completed</span></td>
                         <td>$64</td>
@@ -360,47 +362,9 @@
                         <td><span class="badge bg-success">completed</span></td>
                         <td><span class="badge bg-success">completed</span></td>
                       </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2147</a></th>
-                        <td>Bridie Kessler</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td>$47</td>
-                        <td><span class="badge bg-warning">Pending</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                      </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2049</a></th>
-                        <td>Ashleigh Langosh</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td>$147</td>
-                        <td><span class="badge bg-success">Approved</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                      </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2644</a></th>
-                        <td>Angus Grady</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td>$67</td>
-                        <td><span class="badge bg-danger">Rejected</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                      </tr>
-                      <tr>
-                        <th scope="row"><a href="#">#2644</a></th>
-                        <td>Raheem Lehner</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td>$165</td>
-                        <td><span class="badge bg-success">Approved</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                      </tr>
+                      {% endfor %}
                     </tbody>
+                    {% endif %}
                   </table>
 
                 </div>

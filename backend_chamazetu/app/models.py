@@ -38,6 +38,8 @@ class Member(Base):
     is_member = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
 
+    fines = relationship("Fine", back_populates="member")
+
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
     transactions = relationship("Transaction", back_populates="member")
     # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
@@ -79,6 +81,7 @@ class Chama(Base):
 
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
+    fines = relationship("Fine", back_populates="chama")
 
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     transactions = relationship("Transaction", back_populates="chama")
@@ -151,7 +154,6 @@ class Chama_Account(Base):
     id = Column(Integer, primary_key=True, index=True)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     account_balance = Column(Integer, nullable=False)
-    account_status = Column(Boolean, default=False)  # active or inactive
 
 
 class investment(Base):
@@ -203,6 +205,20 @@ class Rule(Base):
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     rule = Column(String, nullable=False)
     chama = relationship("Chama", back_populates="rules")
+
+
+class Fine(Base):
+    __tablename__ = "fines"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    member_id = Column(Integer, ForeignKey("members.id"))
+    fine = Column(Integer, nullable=False)
+    fine_reason = Column(String, nullable=False)
+    fine_date = Column(DateTime, default=datetime.now(timezone.utc))
+    is_paid = Column(Boolean, default=False)
+    chama = relationship("Chama", back_populates="fines")
+    member = relationship("Member", back_populates="fines")
 
 
 class Faq(Base):

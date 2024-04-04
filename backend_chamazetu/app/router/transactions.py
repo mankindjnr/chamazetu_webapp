@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
+from datetime import datetime
+from sqlalchemy import and_
 from uuid import uuid4
 from typing import List
 
@@ -66,6 +68,38 @@ async def get_transactions(
             for transaction in transactions
         ]
     except Exception as e:
-        print("------error--------")
+        print("------chamaname chama error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to fetch transactions")
+
+
+# fetch transaction for a certain member using id and chama_id
+@router.get(
+    "/chama_transactions/{member_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.TransactionResp],
+)
+async def get_transactions(
+    data: dict = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        member_id = data.get("member_id")
+        print("member_id", member_id)
+        transactions = (
+            db.query(models.Transaction)
+            .filter(models.Transaction.member_id == member_id)
+            .filter(models.Transaction.chama_id == 1)
+            .all()
+        )
+
+        return [
+            schemas.TransactionResp(**transaction.__dict__)
+            for transaction in transactions
+        ]
+    except Exception as e:
+        print("------transactions chama error--------")
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to individual member fetch transactions"
+        )

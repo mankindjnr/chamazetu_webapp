@@ -34,33 +34,24 @@ async def create_refresh_token(data: dict):
 
 
 async def verify_access_token(token: str, credentials_exception):
-    print("------verifying access token--------")
     if not token:
         raise credentials_exception
 
     if not token.startswith("Bearer"):
         raise credentials_exception
-    print("---------aecret key check-------------")
     if not SECRET_KEY or not ALGORITHM:
         raise credentials_exception
-    print("---------try key check-------------")
     try:
         payload = jwt.decode(token.split(" ")[1], SECRET_KEY, algorithms=[ALGORITHM])
-        print("------payload--------")
-        print(payload)
     except ExpiredSignatureError:
-        print("------expired token--------")
         raise credentials_exception
     except InvalidTokenError:
-        print("------invalid token--------")
         raise credentials_exception
     except Exception as e:
-        print("------unknown error--------")
         raise credentials_exception
 
     username: str = payload.get("sub")
     role: str = payload.get("role")
-    print("------username and role--------")
     if not username or not role:
         raise credentials_exception
 
@@ -73,16 +64,12 @@ async def verify_access_token(token: str, credentials_exception):
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
-    print("------checking for current user--------")
-    print(token)
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid Credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    print("------checking for current user--------")
     token = await verify_access_token(token, credentials_exception)
-    print("-----the token in question\n", token)
     role = token.role
     Model = getattr(models, role.capitalize())
     user = db.query(Model).filter(Model.email == token.username).first()
