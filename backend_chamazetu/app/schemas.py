@@ -109,6 +109,16 @@ class TransactionResp(BaseModel):
         orm_mode = True
 
 
+class RecentTransactionResp(BaseModel):
+    amount: int
+    member_id: int
+    transaction_type: str
+    date_of_transaction: datetime
+
+    class Config:
+        orm_mode = True
+
+
 # ============== chama account =================
 class ChamaAccountBase(BaseModel):
     chama_id: int
@@ -119,7 +129,6 @@ class ChamaAccountBase(BaseModel):
 
 
 class ChamaAccountResp(BaseModel):
-    id: int
     chama_id: int
     account_balance: int
 

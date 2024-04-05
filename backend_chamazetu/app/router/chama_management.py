@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
+from datetime import datetime
+from sqlalchemy import func
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -166,6 +168,18 @@ async def get_chama_id(
     return {"Chama_id": chama.id}
 
 
+# retrieving all member ids of a chama
+@router.get("/members/{chama_id}", status_code=status.HTTP_200_OK)
+async def get_chama_members(
+    chama_id: str,
+    db: Session = Depends(database.get_db),
+):
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Members": [member.id for member in chama.members]}
+
+
 # update accounts balance for a certain chama after a deposit transaction
 @router.put(
     "/update_account",
@@ -201,10 +215,57 @@ async def update_account_balance(
         chama_account.account_balance = account_balance
         db.commit()
         db.refresh(chama_account)
-
+        # this is a background task, might not be necessary to return the updated account balance
         return chama_account
 
     except Exception as e:
         print("------error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to update account balance")
+
+
+# retrieve chama account balance
+@router.get(
+    "/account_balance/{chama_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ChamaAccountResp,
+)
+async def get_chama_account_balance(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    chama_account_balance = (
+        db.query(models.Chama_Account)
+        .filter(models.Chama_Account.chama_id == chama_id)
+        .first()
+    )
+    if not chama_account_balance:
+        raise HTTPException(status_code=404, detail="Chama account not found")
+    return chama_account_balance
+
+
+# retrieve all transactions to a chama done today and are deposits and sum the total amount
+@router.get(
+    "/today_deposits/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_today_deposit(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    today = datetime.now().date()
+    transactions = (
+        db.query(models.Transaction)
+        .filter(models.Transaction.chama_id == chama_id)
+        .filter(models.Transaction.transaction_type == "deposit")
+        .filter(func.date(models.Transaction.date_of_transaction) == today)
+        .all()
+    )
+
+    for transaction in transactions:
+        print(transaction.date_of_transaction)
+
+    if not transactions:
+        raise HTTPException(status_code=404, detail="No transactions found")
+    total_amount = sum([transaction.amount for transaction in transactions])
+    return {"today_deposits": total_amount}

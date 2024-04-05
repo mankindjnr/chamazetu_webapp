@@ -48,7 +48,7 @@ async def create_deposit_transaction(
 @router.get(
     "/{chamaname}",
     status_code=status.HTTP_200_OK,
-    response_model=List[schemas.TransactionResp],
+    response_model=List[schemas.RecentTransactionResp],
 )
 async def get_transactions(
     chama_id: dict = Body(...),
@@ -60,11 +60,12 @@ async def get_transactions(
         transactions = (
             db.query(models.Transaction)
             .filter(models.Transaction.chama_id == chama_id)
+            .filter(models.Transaction.transaction_completed == True)
             .all()
         )
 
         return [
-            schemas.TransactionResp(**transaction.__dict__)
+            schemas.RecentTransactionResp(**transaction.__dict__)
             for transaction in transactions
         ]
     except Exception as e:
@@ -73,33 +74,38 @@ async def get_transactions(
         raise HTTPException(status_code=400, detail="Failed to fetch transactions")
 
 
-# fetch transaction for a certain member using id and chama_id
-@router.get(
-    "/chama_transactions/{member_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=List[schemas.TransactionResp],
-)
-async def get_transactions(
-    data: dict = Body(...),
+# fetch transaction for all members in a chama, members ids are passed in the request body as a list
+@router.get("/{chamaname}/members", status_code=status.HTTP_200_OK)
+async def get_transactions_for_members(
+    chama_data: dict = Body(...),
     db: Session = Depends(database.get_db),
 ):
+    print("============chama activity============")
     try:
-        member_id = data.get("member_id")
-        print("member_id", member_id)
+        chama_id = chama_data["chama_id"]
         transactions = (
             db.query(models.Transaction)
-            .filter(models.Transaction.member_id == member_id)
-            .filter(models.Transaction.chama_id == 1)
+            .filter(models.Transaction.chama_id == chama_id)
             .all()
         )
+        members = chama_data["members_ids"]
+        members_transactions = {}
+        for member in members:
+            member_transactions = []
+            for transaction in transactions:
+                if (
+                    transaction.member_id == member
+                    and (transaction.date_of_transaction).strftime("%Y-%m-%d")
+                    >= chama_data["date_of_transaction"]
+                ):
+                    member_transactions.append(transaction)
+            members_transactions[member] = member_transactions
 
-        return [
-            schemas.TransactionResp(**transaction.__dict__)
-            for transaction in transactions
-        ]
+        return members_transactions
+
     except Exception as e:
-        print("------transactions chama error--------")
+        print("------extracting members transactions failed--------")
         print(e)
         raise HTTPException(
-            status_code=400, detail="Failed to individual member fetch transactions"
+            status_code=400, detail="Failed to fetch members transactions"
         )

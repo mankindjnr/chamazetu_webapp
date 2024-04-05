@@ -271,7 +271,7 @@
                       <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>ksh: 145</h6>
+                      <h6>ksh: {{ chama.today_deposits }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -293,7 +293,7 @@
                       <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>Ksh: 3,264</h6>
+                      <h6>Ksh: {{ chama.account_balance}}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -340,6 +340,8 @@
                     <thead>
                       <tr>
                         <th scope="col">members</th>
+                        <th scope="col">expected</th>
+                        <th scope="col">chama_day</th>
                         <th scope="col">sunday</th>
                         <th scope="col">monday</th>
                         <th scope="col">tuesday</th>
@@ -349,18 +351,20 @@
                         <th scope="col">saturday</th>
                       </tr>
                     </thead>
-                    {% if transactions %}
+                    {% if activity %}
                     <tbody>
-                      {% for transaction in transactions %}
+                      {% for transaction in activity %}
                       <tr>
-                        <th scope="row">{{ transaction.id }}</th>
-                        <td>Brandon Jacob</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td>$64</td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
-                        <td><span class="badge bg-success">completed</span></td>
+                        <th scope="row">{{ transaction.member_id }}</th>
+                        <td>share total</td>
+                        <td><span class="badge bg-success">paid so far</span></td>
+                        <td>{{ transaction.Sunday }} </td>
+                        <td>{{ transaction.Monday }} </td>
+                        <td>{{ transaction.Tuesday }} </td>
+                        <td>{{ transaction.Wednesday }} </td>
+                        <td>{{ transaction.Thursday }}</td>
+                        <td>{{ transaction.Friday }}</td>
+                        <td>{{ transaction.Saturday }}</td>
                       </tr>
                       {% endfor %}
                     </tbody>
@@ -382,153 +386,24 @@
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">Recent Activity <span>| deposits</span></h5>
-
+              <h5 class="card-title">Recent Transactions <span>|</span></h5>
+              {% if recent_transactions %}
               <div class="activity">
+                {% for transaction in recent_transactions %}
 
                 <div class="activity-item d-flex">
-                  <div class="activite-label">32 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
-                  <div class="activity-content">
-                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">56 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
-                  <div class="activity-content">
-                    Voluptatem blanditiis blanditiis eveniet
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">2 hrs</div>
+                  <div class="activite-label">{{ transaction.member_id }}</div>
                   <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
                   <div class="activity-content">
-                    Voluptates corrupti molestias voluptatem
+                    Deposited <a href="#" class="fw-bold text-dark">Ksh: {{ transaction.amount }}</a> on {{ transaction.date }} at {{ transaction.time }}
                   </div>
                 </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">1 day</div>
-                  <i class='bi bi-circle-fill activity-badge text-info align-self-start'></i>
-                  <div class="activity-content">
-                    Tempore autem saepe <a href="#" class="fw-bold text-dark">occaecati voluptatem</a> tempore
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">2 days</div>
-                  <i class='bi bi-circle-fill activity-badge text-warning align-self-start'></i>
-                  <div class="activity-content">
-                    Est sit eum reiciendis exercitationem
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">4 weeks</div>
-                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
-                  <div class="activity-content">
-                    Dicta dolorem harum nulla eius. Ut quidem quidem sit quas
-                  </div>
-                </div><!-- End activity item-->
-
+                {% endfor %}
               </div>
+              {% endif %}
 
             </div>
           </div><!-- End Recent Activity -->
-
-          <!-- withdrawal Report -->
-          <div class="card">
-
-            <div class="card-body">
-              <h5 class="card-title">Recent Activity <span>| withdrawals </span></h5>
-
-              <div class="activity">
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">32 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
-                  <div class="activity-content">
-                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">56 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
-                  <div class="activity-content">
-                    Voluptatem blanditiis blanditiis eveniet
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">2 hrs</div>
-                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
-                  <div class="activity-content">
-                    Voluptates corrupti molestias voluptatem
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">1 day</div>
-                  <i class='bi bi-circle-fill activity-badge text-info align-self-start'></i>
-                  <div class="activity-content">
-                    Tempore autem saepe <a href="#" class="fw-bold text-dark">occaecati voluptatem</a> tempore
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">2 days</div>
-                  <i class='bi bi-circle-fill activity-badge text-warning align-self-start'></i>
-                  <div class="activity-content">
-                    Est sit eum reiciendis exercitationem
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">4 weeks</div>
-                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
-                  <div class="activity-content">
-                    Dicta dolorem harum nulla eius. Ut quidem quidem sit quas
-                  </div>
-                </div><!-- End activity item-->
-
-              </div>
-
-            </div>
-          </div><!-- End Budget Report -->
-
-          <!-- News & Updates -->
-          <div class="card">
-
-            <div class="card-body pb-0">
-              <h5 class="card-title">News &amp; Updates <span>| Today</span></h5>
-
-              <div class="news">
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-1.jpg' %}" alt="">
-                  <h4><a href="#">Nihil blanditiis at in nihil autem</a></h4>
-                  <p>Sit recusandae non aspernatur laboriosam. Quia enim eligendi sed ut harum...</p>
-                </div>
-
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-2.jpg' %}" alt="">
-                  <h4><a href="#">Quidem autem et impedit</a></h4>
-                  <p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
-                </div>
-
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-3.jpg' %}" alt="">
-                  <h4><a href="#">Id quia et et ut maxime similique occaecati ut</a></h4>
-                  <p>Fugiat voluptas vero eaque accusantium eos. Consequuntur sed ipsam et totam...</p>
-                </div>
-
-              </div><!-- End sidebar recent posts-->
-
-            </div>
-          </div><!-- End News & Updates -->
 
         </div><!-- End Right side columns -->
 
