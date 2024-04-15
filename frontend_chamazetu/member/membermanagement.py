@@ -72,6 +72,21 @@ def get_user_id(role, email):
     return user_id
 
 
+def get_user_full_name(role, id):
+    url = f"{config('api_url')}/users/names/{role}/{id}"
+    resp = requests.get(url)
+    user = resp.json()
+    full_name = f"{user['first_name']} {user['last_name']}"
+    return full_name
+
+
+def get_member_expected_contribution(member_id, chama_id):
+    url = f"{config('api_url')}/members/expected_contribution"
+    data = {"member_id": member_id, "chama_id": chama_id}
+    resp = requests.get(url, json=data)
+    return resp.json()["member_expected_contribution"]
+
+
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def profile(request, role="member"):

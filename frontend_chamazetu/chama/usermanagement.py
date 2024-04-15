@@ -74,13 +74,11 @@ def refresh_token(request, role):
 
 
 def signin(request, role):
-    print("---------login hit-----------------")
     if request.method == "POST":
         data = {
             "username": request.POST["email"],
             "password": request.POST["password"],
         }
-        print("---------signin---data------")
 
         # TODO: check if the user is already logged in and redirect to the dashboard or # remember me
         # TODO: if the user email is not the same as the payload of the token, signout the other user in the background
@@ -128,16 +126,21 @@ def signin(request, role):
                 samesite="Strict",
             )
             return response
+        else:
+            # unsuccessful login - redirect to login page - send message to user - not verified
+            messages.error(request, f"user not a {role} or email not verified")
+            return render(request, f"chama/{role}login.html")
     else:
-        # unsuccessful login - redirect to login page - send message to user - not verified
         return render(request, f"chama/{role}login.html")
 
     page = f"chama/{role}login.html"
     return render(request, page)
 
 
-def signup(request, role):  # implement the manager signup
+def signup(request, role):
     if request.method == "POST":
+        first_name = request.POST["first_name"]
+        last_name = request.POST["last_name"]
         email = request.POST["email"]
         password = request.POST["password"]
         confirm_password = request.POST["password2"]
@@ -145,15 +148,18 @@ def signup(request, role):  # implement the manager signup
         if password != confirm_password:
             return render(request, f"chama/{role}signup.html")
 
-        print("---------signup role---------")
-        print(role)
         data = {
+            "first_name": first_name,
+            "last_name": last_name,
             "email": email,
             "password": password,
             "is_active": False,
             "email_verified": False,
             "role": role,
         }
+
+        print("---------signup role---------")
+        print(data)
         headers = {"Content-type": "application/json"}
         response = requests.post(
             f"{config('api_url')}/users",
@@ -190,14 +196,16 @@ def signup(request, role):  # implement the manager signup
             #  -------------------email confirmation-------------------------------------
             role = role
             return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        else:
+            messages.error(request, "email already in use as manager/member")
+            return HttpResponseRedirect(reverse("chama:signup", args=[role]))
 
     page = f"chama/{role}signup.html"
     return render(request, page)
 
 
 def signout(request, role):
-    # TODO: in the server side, invalidate the token
-    print(role)
+    # TODO: in the server side, invalidate the token. create table for tokens blcklist/whitelist/delete
     response = HttpResponseRedirect(reverse("chama:index"))
     response.delete_cookie(f"current_{role}")
     response.delete_cookie(f"{role}_access_token")
@@ -216,21 +224,15 @@ def verify_signup_token(request, token, role):
 
 # the activation link sent to the user's email
 def activate(request, role, uidb64, token):
-    print("---------activate---------")
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uidb64 to user id
 
         query = f"SELECT email FROM {role}s WHERE id = %s"
         params = [uid]
         user = execute_sql(query, params)
-        print("---------raw user---------")
-        print(user)
 
         user = user[0][0]
-        print("---------user---------")
     except (TypeError, ValueError, OverflowError, SyntaxError, Exception) as e:
-        print("---------error---------")
-        print(e)
         user = None
 
     if user is not None and verify_signup_token(
@@ -247,3 +249,49 @@ def activate(request, role, uidb64, token):
     else:
         # if the token has expired, send another one - checking if the user is thne database and unverified
         return HttpResponse("Activation link is has expired!")
+
+
+def forgot_password(request, role):
+    if request.method == "POST":
+        email = (request.POST["email"]).strip()
+
+        user_resp = requests.get(f"{config('api_url')}/users/{role}/{email}")
+        if user_resp.status_code == 200:
+            # TODO: call backend url to create an activation token and send email i;e signup
+            return render(
+                request,
+                "chama/update_forgotten_passwords.html",
+                {"role": role, "user": user_resp.json()["email"]},
+            )
+        else:
+            messages.error(request, "User not found")
+            return HttpResponseRedirect(reverse("chama:forgot_password", args=[role]))
+
+    return render(request, "chama/forgot_password_form.html", {"role": role})
+
+
+def update_forgotten_password(request, role):
+    if request.method == "POST":
+        email = request.POST["email"]
+        password = request.POST["password"]
+        confirm_password = request.POST["password2"]
+
+        if password != confirm_password:
+            messages.error(request, "passwords do not match")
+            return HttpResponseRedirect(
+                reverse("chama:update_forgotten_password", args=[role])
+            )
+
+        data = {"email": email, "updated_password": password}
+        updated_resp = requests.put(
+            f"{config('api_url')}/users/{role}/update_password", json=data
+        )
+        if updated_resp.status_code == 200:
+            messages.success(request, "password has been successfully updated")
+            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        else:
+            messages.error(request, "password update failed")
+            return HttpResponseRedirect(reverse("chama:forgot_password", args=[role]))
+
+    # might have to get a update forgotten password page
+    return render(request, "chama/forgot_password_form.html")

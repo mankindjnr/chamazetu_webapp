@@ -8,3 +8,5 @@ from .managing import (
     chama,
     chama_join_status,
 )
+
+from .chama_investments import invest, withdraw_from_investment

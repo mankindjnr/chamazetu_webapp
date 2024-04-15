@@ -7,7 +7,7 @@
     <div class="d-flex align-items-center justify-content-between">
       <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/favicon.png' %}" alt="">
-        <span class="d-none d-lg-block">{{ chama_name }}</span>
+        <span class="d-none d-lg-block">Dashboard</span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
@@ -193,12 +193,23 @@
     <div class="pagetitle d-flex justify-content-between align-items-center">
       <h1>{{ chama.chama_name}}</h1>
 
-      <!-- chama status trigger modal -->
+        <div class="search-bar">
+          {% if messages %}
+          <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+            {% for messages in messages %}
+              <strong>{{ messages }}</strong>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endif %}
+        </div>
+
+      <!-- chama join status trigger modal -->
       <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal">
         join status
       </button>
 
-      <!-- Modal -->
+      <!-- chama join status Modal -->
       <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -225,17 +236,6 @@
           </div>
         </div>
       </div>
-    
-      <script>
-          function toggleVisibility(id) {
-              var x = document.getElementById(id);
-              if (x.style.display === "none") {
-                  x.style.display = "block";
-              } else {
-                  x.style.display = "none";
-              }
-          }
-      </script>
 
     </div><!-- End Page Title -->
 
@@ -258,7 +258,7 @@
                       <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>ksh: 145</h6>
+                      <h6>Ksh: {{ chama.today_deposits }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -266,21 +266,21 @@
                 </div>
 
               </div>
-            </div><!-- End deposit Card -->
+            </div><!-- End today deposits Card -->
 
             <!-- total deposited Card -->
             <div class="col-xxl-4 col-md-6">
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Account <span>| {{ chama.num_of_members_allowed}} members</span></h5> <!--switch to num of members joined -->
+                  <h5 class="card-title">Account <span>| current</span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <i class="bi bi-currency-dollar"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>Ksh: 3,264</h6>
+                      <h6>Ksh: {{ chama.account_balance }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -294,28 +294,96 @@
             <div class="col-xxl-4 col-xl-12">
               <div class="card info-card customers-card">
                   <div class="card-body">
-                      <h5 class="card-title">Investment <span>| Balance</span></h5>
+                      <h5 class="card-title">MMF <span>| investment</span></h5>
                       <div class="d-flex align-items-center justify-content-center">
-                        <h6>Ksh: 1244</h6>
+                        <h6>Ksh: {{ chama.investment_balance }}</h6>
                     </div>
                       <div class="ps-3">
                           <div class="d-flex justify-content-between align-items-start">
                               <div>
-                                  <!--head--><span class="text-muted small">Int earned yesterday</span><br>
+                                  <!--head--><span class="text-muted small">Interest earned</span><br>
                                   <!--child--><span class="text-danger small fw-bold">Ksh:</span>
                               </div>
                               <div class="text-end">
-                                  <!--head--><span class="text-muted small">Int rate (last 24hrs)</span><br>
+                                  <!--head--><span class="text-muted small">Interest rate</span><br>
                                   <!--child--><span class="text-danger small fw-bold">12%</span>
                               </div>
                           </div>
                           <hr>
                           <div class="d-flex justify-content-between align-items-start">
                             <div>
-                              <button id="showFormBtn" class="btn btn-outline-dark btn-sm">Invest</button>
+                              <!-- invest trigger modal -->
+                              <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#investModal">
+                                Invest
+                              </button>
+
+                              <!-- invest Modal -->
+                              <div class="modal fade" id="investModal" tabindex="-1" aria-labelledby="investModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h1 class="modal-title fs-5" id="investModalLabel">Invest</h1>
+                                      <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                      <form method="POST" action="{% url 'manager:invest' %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                          <label for="invest_amount" class="form-label">amount to invest</label>
+                                          <input type="number" class="form-control" id="invest_amount" name="invest_amount" required>
+                                        </div>
+                                        <div>
+                                          <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" required>
+                                        </div>
+                                        <div>
+                                          <input type="hidden" name="investment_type" value="mmf" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+                                      <button type="submit" class="btn btn-outline-success btn-sm">Invest</button>
+                                    </div>
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                             <div class="text-end">
-                              <button id="showFormBtn" class="btn btn-outline-dark btn-sm">Withdraw</button>
+                              <!-- withdraw from investment trigger modal -->
+                              <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                                Withdraw
+                              </button>
+
+                              <!-- withdraw from investment Modal -->
+                              <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                  <div class="modal-content">
+                                    <div class="modal-header">
+                                      <h1 class="modal-title fs-5" id="withdrawModalLabel">Withdraw from investment</h1>
+                                      <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                      <form method="POST" action="{% url 'manager:withdraw_investment' %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                          <label for="withdraw_amount" class="form-label">amount to withdraw</label>
+                                          <input type="number" class="form-control" id="withdraw_amount" name="withdraw_amount" required>
+                                        </div>
+                                        <div>
+                                          <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" required>
+                                        </div>
+                                        <div>
+                                          <input type="hidden" name="investment_type" value="mmf" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+                                      <button type="submit" class="btn btn-outline-success btn-sm">withdraw</button>
+                                    </div>
+                                    </form>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                         </div>
                       </div>
@@ -329,7 +397,7 @@
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">Fund performance <span>| selected period</span></h5>
+                  <h5 class="card-title">Fund performance <span>|</span></h5>
 
                   <table class="table">
                     <thead>
@@ -380,41 +448,29 @@
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">Recent Activity <span>| deposits</span></h5>
+              <h5 class="card-title">Recent Activity <span>|</span></h5>
 
+              {% if recent_transactions %}
               <div class="activity">
-
+                {% for transaction in recent_transactions %}
                 <div class="activity-item d-flex">
-                  <div class="activite-label">32 min</div>
+                  <div class="activite-label">{{ transaction.member_name }}</div>
                   <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
                   <div class="activity-content">
-                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
+                    <p class="fw-bold text-dark">{{ transaction.transaction_type }} Ksh: {{ transaction.amount }} on {{ transaction.date }} at {{ transaction.time }}</p>
                   </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">56 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
-                  <div class="activity-content">
-                    Voluptatem blanditiis blanditiis eveniet
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">2 hrs</div>
-                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
-                  <div class="activity-content">
-                    Voluptates corrupti molestias voluptatem
-                  </div>
-                </div><!-- End activity item-->
+                </div>
+                {% endfor %}
+                <!-- End activity item-->
 
               </div>
+              {% endif %}
 
             </div>
           </div><!-- End Recent Activity -->
 
           <!-- withdrawal Report -->
-          <div class="card">
+          <!-- <div class="card">
 
             <div class="card-body">
               <h5 class="card-title">Recent Activity <span>| withdrawals </span></h5>
@@ -422,57 +478,18 @@
               <div class="activity">
 
                 <div class="activity-item d-flex">
-                  <div class="activite-label">32 min</div>
-                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
-                  <div class="activity-content">
-                    Quia quae rerum <a href="#" class="fw-bold text-dark">explicabo officiis</a> beatae
-                  </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
                   <div class="activite-label">56 min</div>
                   <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
                   <div class="activity-content">
                     Voluptatem blanditiis blanditiis eveniet
                   </div>
-                </div><!-- End activity item-->
-
-                <div class="activity-item d-flex">
-                  <div class="activite-label">4 weeks</div>
-                  <i class='bi bi-circle-fill activity-badge text-muted align-self-start'></i>
-                  <div class="activity-content">
-                    Dicta dolorem harum nulla eius. Ut quidem quidem sit quas
-                  </div>
-                </div><!-- End activity item-->
+                </div>
 
               </div>
 
             </div>
-          </div><!-- End Budget Report -->
-
-          <!-- News & Updates -->
-          <div class="card">
-
-            <div class="card-body pb-0">
-              <h5 class="card-title">News &amp; Updates <span>| Today</span></h5>
-
-              <div class="news">
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-1.jpg' %}" alt="">
-                  <h4><a href="#">Nihil blanditiis at in nihil autem</a></h4>
-                  <p>Sit recusandae non aspernatur laboriosam. Quia enim eligendi sed ut harum...</p>
-                </div>
-
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-2.jpg' %}" alt="">
-                  <h4><a href="#">Quidem autem et impedit</a></h4>
-                  <p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
-                </div>
-
-              </div><!-- End sidebar recent posts-->
-
-            </div>
-          </div><!-- End News & Updates -->
+          </div> -->
+          <!-- End Budget Report -->
 
         </div><!-- End Right side columns -->
 

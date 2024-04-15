@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, update, and_, table, column
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/chamas", tags=["management"])
-
-# successful get status code
 
 
 # create chama for a logged in manager
@@ -43,8 +41,6 @@ async def get_chama_by_name(
 ):
     chama_name = chama_name["chama_name"]
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
-    print("------------------------------")
-    print(chama.__dict__)
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
     return {"Chama": [chama]}
@@ -58,7 +54,6 @@ async def get_chama_by_id(
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
     chama_id = chama_id["chamaid"]
-    print("chama_id", chama_id)
     chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
@@ -120,11 +115,14 @@ async def change_chama_status(
 # members can join chamas
 @router.post("/join", status_code=status.HTTP_201_CREATED)
 async def join_chama(
-    chamaname: dict = Body(...),
+    chama_details: dict = Body(...),
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chamaname = chamaname["chamaname"]
+    chamaname = chama_details["chamaname"]
+    num_of_shares = chama_details["num_of_shares"]
+    member_id = current_user.id
+
     chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
@@ -138,6 +136,36 @@ async def join_chama(
     chama.members.append(current_user)
     db.commit()
     return {"message": f"You have successfully joined {chamaname}"}
+
+
+# members add the number of shares they want to have in a chama
+@router.put("/update_shares", status_code=status.HTTP_200_OK)
+async def add_shares(
+    shares: schemas.ChamaMemberSharesBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    shares = shares.dict()
+    chama_id = shares["chama_id"]
+    num_of_shares = shares["num_of_shares"]
+    member_id = current_user.id
+
+    add_shares = (
+        update(models.members_chamas_association)
+        .where(
+            and_(
+                models.members_chamas_association.c.member_id == member_id,
+                models.members_chamas_association.c.chama_id == chama_id,
+            )
+        )
+        .values(num_of_shares=num_of_shares)
+    )
+    db.execute(add_shares)
+    db.commit()
+    return {"message": "Shares added successfully"}
+
+
+# members can leave chamas
 
 
 # members retrieving all chamas they are part of using a list of chamaids
@@ -189,33 +217,40 @@ async def get_chama_members(
 async def update_account_balance(
     account: schemas.ChamaAccountBase = Body(...),
     db: Session = Depends(database.get_db),
-    # current_user: models.Member = Depends(oauth2.get_current_user),
 ):
     try:
         account_dict = account.dict()
         chama_id = account_dict["chama_id"]
-        new_deposit_amount = account_dict["amount_deposited"]
+        new_amount = account_dict["amount_deposited"]
+        transanction_type = account_dict["transaction_type"]
 
         chama_account = (
             db.query(models.Chama_Account)
             .filter(models.Chama_Account.chama_id == chama_id)
             .first()
         )
-        if chama_account is None:
-            print("------chama_account is None--------")
+        account_balance = 0
+        if not chama_account and transanction_type == "deposit":
             chama_account = models.Chama_Account(
-                chama_id=chama_id, account_balance=new_deposit_amount
+                chama_id=chama_id, account_balance=new_amount
             )
             db.add(chama_account)
             db.commit()
             db.refresh(chama_account)
             return chama_account
+        elif chama_account and transanction_type == "deposit":
+            account_balance = chama_account.account_balance + new_amount
+        elif chama_account and transanction_type == "withdraw":
+            account_balance = chama_account.account_balance - new_amount
+        else:
+            raise HTTPException(
+                status_code=400, detail="Failed to update account balance"
+            )
 
-        account_balance = chama_account.account_balance + new_deposit_amount
+        # this is a background task, might not be necessary to return the updated account balance
         chama_account.account_balance = account_balance
         db.commit()
         db.refresh(chama_account)
-        # this is a background task, might not be necessary to return the updated account balance
         return chama_account
 
     except Exception as e:
@@ -269,3 +304,9 @@ async def get_today_deposit(
         raise HTTPException(status_code=404, detail="No transactions found")
     total_amount = sum([transaction.amount for transaction in transactions])
     return {"today_deposits": total_amount}
+
+
+# get the number of members in a given chama by chama id
+
+
+# TODO: retrieve manager recent transactions and display beneath recent activity

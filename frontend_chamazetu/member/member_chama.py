@@ -13,6 +13,12 @@ from chama.rawsql import execute_sql
 from chama.chamas import get_chama_id
 from chama.thread_urls import fetch_data
 from .date_day_time import get_sunday_date, extract_date_time
+from .membermanagement import (
+    get_user_full_name,
+    get_user_id,
+    get_member_expected_contribution,
+)
+from .tasks import update_shares_number_for_member
 
 from chama.usermanagement import (
     validate_token,
@@ -52,7 +58,10 @@ def access_chama(request, chamaname):
 
     urls = [
         (f"{config('api_url')}/chamas/chama_name", {"chamaname": chamaname}),
-        (f"{config('api_url')}/transactions/{chamaname}", {"chama_id": chama_id}),
+        (
+            f"{config('api_url')}/transactions/{chamaname}",
+            {"chama_id": chama_id},
+        ),  # recent transactions
         (
             f"{config('api_url')}/transactions/{chamaname}/members",
             {
@@ -60,9 +69,11 @@ def access_chama(request, chamaname):
                 "members_ids": chama_members_id.json()["Members"],
                 "date_of_transaction": get_sunday_date().strftime("%Y-%m-%d"),
             },
-        ),
+        ),  # chama weekly activity
         (f"{config('api_url')}/chamas/account_balance/{chama_id}", None),
         (f"{config('api_url')}/chamas/today_deposits/{chama_id}", None),
+        (f"{config('api_url')}/investments/chamas/account_balance/{chama_id}", None),
+        (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
     ]
 
     headers = {
@@ -82,6 +93,7 @@ def access_chama(request, chamaname):
                 "chama": results.get("chama"),
                 "recent_transactions": results.get("recent_transactions"),
                 "activity": results.get("activity"),
+                "investment_activity": results.get("investment_activity"),
             },
         )
     else:
@@ -92,17 +104,6 @@ def access_chama(request, chamaname):
 def access_chama_threads(urls, headers):
     results = {}
     threads = []
-    # create and start a thread for each url
-    # TODO: fix the if idx < len(data_payload) condition to accomodate even more urls without data_payload (if data_payload[idx] exists do something else do something else)
-    # for idx, url in enumerate(urls):
-    #     if idx < len(data_payload) and idx < len(headers):
-    #         thread = threading.Thread(
-    #             target=fetch_data, args=(url, results, data_payload[idx], headers)
-    #         )
-    #     else:
-    #         thread = threading.Thread(
-    #             target=fetch_data, args=(url, results, data_payload[idx])
-    #         )
 
     for url, payload in urls:
         if payload:
@@ -120,29 +121,36 @@ def access_chama_threads(urls, headers):
         thread.join()
 
     chama = None
-    transactions = []
+    recent_activity = []
+    investment_activity = []
     members_weekly_transactions = []
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
+        chama_id = get_chama_id(chama["chama_name"])
         if results[urls[1][0]]["status"] == 200:
             if len(results[urls[1][0]]["data"]) > 0:
                 recent_activity = recent_transactions(results[urls[1][0]]["data"])
         if results[urls[2][0]]["status"] == 200:
             members_weekly_transactions = chama_weekly_contribution_activity(
-                results[urls[2][0]]["data"]
+                results[urls[2][0]]["data"], chama_id
             )
         if results[urls[3][0]]["status"] == 200:
             chama["account_balance"] = results[urls[3][0]]["data"]["account_balance"]
         if results[urls[4][0]]["status"] == 200:
             chama["today_deposits"] = results[urls[4][0]]["data"]["today_deposits"]
+        if results[urls[5][0]]["status"] == 200:
+            chama["investment_balance"] = results[urls[5][0]]["data"]["amount_invested"]
+        if results[urls[6][0]]["status"] == 200:
+            investment_activity = investment_activities(results[urls[6][0]]["data"])
 
     # return the processed results chama, transactions, members
     return {
         "chama": chama,
         "recent_transactions": recent_activity,
         "activity": members_weekly_transactions,
+        "investment_activity": investment_activity,
     }
 
 
@@ -156,24 +164,44 @@ def recent_transactions(transactions):
         transaction["date"] = extract_date_time(transaction["date_of_transaction"])[
             "date"
         ]
+        transaction["member_name"] = get_user_full_name(
+            "member", transaction["member_id"]
+        )
         recent_transactions.append(transaction)
 
-        if len(recent_transactions) == 9:
+        if len(recent_transactions) == 5:
             break
 
     return recent_transactions
 
 
+def investment_activities(activities):
+    invst_activity = []
+    for activity in activities:
+        activity["time"] = extract_date_time(activity["transaction_date"])["time"]
+        activity["date"] = extract_date_time(activity["transaction_date"])["date"]
+        invst_activity.append(activity)
+
+        if len(invst_activity) == 5:
+            break
+
+    return invst_activity
+
+
 # retrieve members weekly transactions and arrange them by membe and daily transactions amount
-def chama_weekly_contribution_activity(members_weekly_transactions):
+def chama_weekly_contribution_activity(members_weekly_transactions, chama_id):
     members_daily_transactions = defaultdict(lambda: defaultdict(int))
 
     for key, value in members_weekly_transactions.items():
-        member_id = key
+        member_name = get_user_full_name("member", key)
         for item in value:
             day = extract_date_time(item["date_of_transaction"])["day"]
             amount = item["amount"]
-            members_daily_transactions[member_id][day] += amount
+            expected_contribution = get_member_expected_contribution(key, chama_id)
+            members_daily_transactions[member_name][day] += amount
+
+    print("=====================================")
+    print(members_daily_transactions)
 
     chama_weekly_activity = organise_activity(members_daily_transactions)
 
@@ -191,14 +219,14 @@ def organise_activity(members_daily_transactions):
         "Friday",
         "Saturday",
     ]
-    for member_id, daily_transactions in members_daily_transactions.items():
+    for member_name, daily_transactions in members_daily_transactions.items():
         for day in days:
             if day not in daily_transactions:
                 daily_transactions[day] = 0
 
     activity = []
-    for member_id, daily_transactions in members_daily_transactions.items():
-        member_activity = {"member_id": member_id}
+    for member_name, daily_transactions in members_daily_transactions.items():
+        member_activity = {"member_name": member_name}
         # add the daily transactions and their amounts to the member_activity dictionary as key value pairs in order of the days of the week (Sunday to Saturday)
         for day in days:
             member_activity[day] = daily_transactions[day]
@@ -214,7 +242,7 @@ def join_chama(request):
     if request.method == "POST":
         data = {
             "chamaname": request.POST.get("chamaname"),
-            "member": request.COOKIES.get("current_member"),
+            "num_of_shares": request.POST.get("shares_num"),
         }
         headers = {
             "Content-type": "application/json",
@@ -224,6 +252,9 @@ def join_chama(request):
             f"{config('api_url')}/chamas/join", json=data, headers=headers
         )
         if resp.status_code == 201:
+            update_shares_number_for_member.delay(
+                get_chama_id(data["chamaname"]), data["num_of_shares"], headers
+            )
             return HttpResponseRedirect(reverse("member:dashboard"))
         elif resp.status_code == 400:
             messages.error(request, f"you are already a member of {data['chamaname']}")

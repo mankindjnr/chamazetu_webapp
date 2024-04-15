@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime
-from sqlalchemy import and_
+from sqlalchemy import and_, func, desc
 from uuid import uuid4
 from typing import List
 
@@ -56,11 +56,17 @@ async def get_transactions(
 ):
     try:
         chama_id = chama_id["chama_id"]
-        print("chama_id", chama_id)
+
         transactions = (
             db.query(models.Transaction)
-            .filter(models.Transaction.chama_id == chama_id)
-            .filter(models.Transaction.transaction_completed == True)
+            .filter(
+                and_(
+                    models.Transaction.chama_id == chama_id,
+                    models.Transaction.transaction_completed == True,
+                )
+            )
+            .order_by(desc(models.Transaction.date_of_transaction))
+            .limit(5)
             .all()
         )
 
@@ -80,7 +86,6 @@ async def get_transactions_for_members(
     chama_data: dict = Body(...),
     db: Session = Depends(database.get_db),
 ):
-    print("============chama activity============")
     try:
         chama_id = chama_data["chama_id"]
         transactions = (

@@ -21,6 +21,7 @@ def deposit_to_chama(request):
         amount = request.POST.get("amount")
         chama_id = get_chama_id(request.POST.get("chamaname"))
         phone_number = request.POST.get("phonenumber")
+        transaction_type = "deposit"
 
         url = f"{config('api_url')}/transactions/deposit"
         headers = {
@@ -36,17 +37,17 @@ def deposit_to_chama(request):
 
         if response.status_code == 201:
             # call the background task function to update the chama account balance
-            update_chama_account_balance.delay(
-                request.COOKIES.get("member_access_token"), chama_id, amount
-            )
+            update_chama_account_balance.delay(chama_id, amount, transaction_type)
             messages.success(
                 request, f"Deposit to {request.POST.get('chamaname')} successful"
             )
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
+        else:
+            messages.error(request, "Failed to deposit, please try again.")
+            return HttpResponseRedirect(
+                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+            )
 
-    messages.error(request, "Failed to deposit, please try again.")
-    return HttpResponseRedirect(
-        reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-    )
+    return redirect(reverse("member:dashboard"))

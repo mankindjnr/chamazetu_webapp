@@ -8,6 +8,8 @@ from decouple import config
 # ============== user =================
 class UserBase(BaseModel):
     email: EmailStr
+    first_name: str
+    last_name: str
     password: str
     is_active: bool  # account is active or not
     email_verified: bool  # email verification
@@ -123,6 +125,7 @@ class RecentTransactionResp(BaseModel):
 class ChamaAccountBase(BaseModel):
     chama_id: int
     amount_deposited: int
+    transaction_type: str
 
     class Config:
         orm_mode = True
@@ -134,3 +137,55 @@ class ChamaAccountResp(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+# ============== shares =================
+
+
+class ChamaMemberSharesBase(BaseModel):
+    chama_id: int
+    num_of_shares: int
+
+    class Config:
+        orm_mode = True
+
+
+class MemberSharesBase(BaseModel):
+    member_id: int
+    chama_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class MemberSharesResp(BaseModel):
+    member_expected_contribution: int
+
+    class Config:
+        orm_mode = True
+
+
+# =========== updated password =================
+class UpdatePasswordBase(BaseModel):
+    email: str
+    updated_password: str
+
+
+# =========== invest ===========================
+class InvestBase(BaseModel):
+    chama_id: int
+    amount: int
+    transaction_type: str
+
+
+class InvestmentPerformanceResp(BaseModel):
+    chama_id: int
+    amount_invested: int
+
+
+# ============ update investment account =========
+class UpdateInvestmentAccountBase(BaseModel):
+    amount_invested: int
+    investment_type: str
+    transaction_type: str
+    chama_id: int

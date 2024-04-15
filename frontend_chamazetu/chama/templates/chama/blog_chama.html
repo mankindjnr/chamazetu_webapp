@@ -32,6 +32,12 @@
                   <label for="chamaname" class="form-label">Chama Name</label>
                   <input type="text" class="form-control" id="chamaname" name="chamaname" value="{{ chama.chama_name}}" readonly required>
                 </div>
+                <div class="mb-3">
+                  <label for="shares" class="form-label">Number of shares</label>
+                  <input type="number" class="form-control" id="shares_num" name="shares_num" value="1" min="1" required>
+                  <!-- helper message to the user -->
+                  <div id="shares_num" class="form-text">Enter the number of shares you want to have in this chama</div>
+                </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>

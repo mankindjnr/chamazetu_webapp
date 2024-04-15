@@ -1,16 +1,19 @@
-import requests, jwt, json
+import requests, jwt, json, threading
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
 from django.contrib import messages
+from datetime import datetime
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
-
 from chama.rawsql import execute_sql
-from datetime import datetime
+from chama.thread_urls import fetch_data
+from chama.chamas import get_chama_id
+from member.member_chama import access_chama_threads, recent_transactions
+
 
 from chama.usermanagement import (
     validate_token,
@@ -24,8 +27,6 @@ def dashboard(request):
     current_user = request.COOKIES.get("current_manager")
 
     # get the id of the current mananger
-    print("----------the new cookie----------")
-    print(request.COOKIES.get(f"manager_access_token"))
     query = "SELECT id FROM managers WHERE email = %s"
     params = [current_user]
     manager_id = (execute_sql(query, params))[0][0]
@@ -35,9 +36,6 @@ def dashboard(request):
     params = [manager_id]
     chamas = execute_sql(query, params)
 
-    print("---------chamas---------")
-    print(manager_id)
-    print(current_user)
     chamas = dict(chamas)
     print(chamas)
     print()
@@ -116,7 +114,7 @@ def create_chama(request):
             "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
         }
         response = requests.post(
-            "http://chamazetu_backend:9400/chamas",
+            f"{config('api_url')}/chamas",
             json=data,
             headers=headers,
         )
@@ -138,33 +136,81 @@ def create_chama(request):
 def chama(request, key):
     # get the chama details
     chama_name = key
+    chama_id = get_chama_id(chama_name)
     current_user = request.COOKIES.get("current_manager")
     headers = {
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
     }
-    data = {"chama_name": chama_name}
-    response = requests.get(
-        f"http://chamazetu_backend:9400/chamas",
-        json=data,
-        headers=headers,
+
+    # ===================================
+    urls = (
+        (f"{config('api_url')}/chamas", {"chama_name": chama_name}),  # chama
+        (
+            f"{config('api_url')}/chamas/account_balance/{chama_id}",
+            None,
+        ),  # account_balance
+        (f"{config('api_url')}/chamas/today_deposits/{chama_id}", None),
+        (f"{config('api_url')}/transactions/{chama_name}", {"chama_id": chama_id}),
+        (
+            f"{config('api_url')}/investments/chamas/account_balance/{chama_id}",
+            None,
+        ),  # investment balance
     )
-    if response.status_code == 200:
-        chama = response.json()["Chama"][0]
-        print("---------chama details---------")
-        print(chama)
-        print()
+    # ===================================
+
+    results = chama_threads(urls, headers)
+    print("===========results thread=============")
+
+    if results["chama"]:
         return render(
             request,
             "manager/chamadashboard.html",
             {
                 "current_user": current_user,
                 "chama_name": chama_name,
-                "chama": chama,
+                "chama": results["chama"],
+                "recent_transactions": results["recent_activity"],
             },
         )
     else:
         return redirect(reverse("manager:dashboard"))
+
+
+def chama_threads(urls, headers):
+    results = {}
+    threads = []
+
+    for url, payload in urls:
+        if payload:
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, payload, headers)
+            )
+        else:
+            thread = threading.Thread(target=fetch_data, args=(url, results))
+
+        threads.append(thread)
+        thread.start()
+
+    # wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    chama = None
+    recent_activity = []
+    # append investment_balance, and account_balance
+    if results[urls[0][0]]["status"] == 200:
+        chama = results[urls[0][0]]["data"]["Chama"][0]
+        if results[urls[1][0]]["status"] == 200:
+            chama["account_balance"] = results[urls[1][0]]["data"]["account_balance"]
+        if results[urls[2][0]]["status"] == 200:
+            chama["today_deposits"] = results[urls[2][0]]["data"]["today_deposits"]
+        if results[urls[3][0]]["status"] == 200:
+            recent_activity = recent_transactions(results[urls[3][0]]["data"])
+        if results[urls[4][0]]["status"] == 200:
+            chama["investment_balance"] = results[urls[4][0]]["data"]["amount_invested"]
+
+    return {"chama": chama, "recent_activity": recent_activity}
 
 
 @tokens_in_cookies("manager")

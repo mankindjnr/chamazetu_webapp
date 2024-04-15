@@ -154,32 +154,25 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link " href="{% url 'member:dashboard' %}">
-          <i class="bi bi-grid"></i>
-          <span>Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
-
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
-          <span>members activity</span>
+          <i class="bi bi-grid"></i>
+          <span>members tracker</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
+          <i class="bi bi-grid"></i>
           <span>Investment performance</span> 
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
+          <i class="bi bi-grid"></i>
           <span>About chama</span> 
         </a>
       </li><!-- End about Page Nav -->
@@ -286,7 +279,7 @@
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Account <span>| balance</span></h5> <!--switch to num of members joined -->
+                  <h5 class="card-title">Account <span>| current</span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -307,14 +300,14 @@
             <div class="col-xxl-4 col-xl-12">
               <div class="card info-card customers-card">
                   <div class="card-body">
-                      <h5 class="card-title">Investment <span>| total</span></h5>
+                      <h5 class="card-title">MMF <span>| Investment</span></h5>
                       <div class="d-flex align-items-center justify-content-center">
-                        <h6>Ksh: 1244</h6>
+                        <h6>Ksh: {{chama.investment_balance }}</h6>
                     </div>
                       <div class="ps-3">
                           <div class="d-flex justify-content-between align-items-start">
                               <div>
-                                  <!--head--><span class="text-muted small">Int earned yesterday</span><br>
+                                  <!--head--><span class="text-muted small">Interest earned</span><br>
                                   <!--child--><span class="text-danger small fw-bold">Ksh:</span>
                               </div>
                               <div class="text-end">
@@ -355,7 +348,7 @@
                     <tbody>
                       {% for transaction in activity %}
                       <tr>
-                        <th scope="row">{{ transaction.member_id }}</th>
+                        <th scope="row">{{ transaction.member_name }}</th>
                         <td>share total</td>
                         <td><span class="badge bg-success">paid so far</span></td>
                         <td>{{ transaction.Sunday }} </td>
@@ -392,10 +385,30 @@
                 {% for transaction in recent_transactions %}
 
                 <div class="activity-item d-flex">
-                  <div class="activite-label">{{ transaction.member_id }}</div>
                   <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
                   <div class="activity-content">
-                    Deposited <a href="#" class="fw-bold text-dark">Ksh: {{ transaction.amount }}</a> on {{ transaction.date }} at {{ transaction.time }}
+                    <p class="text-dark">{{ transaction.member_name }} {{ transaction.transaction_type }} Ksh: {{ transaction.amount }} on {{ transaction.date }} at {{ transaction.time }}</p>
+                  </div>
+                </div><!-- End activity item-->
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div><!-- End Recent Activity -->
+
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">investment activity <span>| chama</span></h5>
+              {% if investment_activity %}
+              <div class="activity">
+                {% for activity in investment_activity %}
+
+                <div class="activity-item d-flex">
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{% if activity.transaction_type == 'deposit' %} Invested {% else %} Withdrew {% endif %} Ksh: {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
                   </div>
                 </div><!-- End activity item-->
                 {% endfor %}
@@ -428,7 +441,7 @@
     if (chama_created) {
       setTimeout(function() {
         chama_created.style.display = "none";
-      }, 5000);
+      }, 6000);
     }
   });
   </script>

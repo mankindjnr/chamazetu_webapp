@@ -15,6 +15,8 @@ from .usermanagement import (
     signout,
     verify_signup_token,
     activate,
+    forgot_password,
+    update_forgotten_password,
 )
 
 from .chamas import get_all_chamas, get_chama
