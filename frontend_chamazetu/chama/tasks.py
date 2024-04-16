@@ -23,3 +23,14 @@ def sending_email(subject, message, from_email, to_email):
     msg.attach_alternative(message, "text/html")
     msg.send(fail_silently=True)
     return None
+
+
+# update the contribution days for the chamas
+@shared_task
+def update_contribution_days():
+    """
+    Update the contribution days for the chamas
+    """
+    response = requests.put(f"{config('api_url')}/chamas/update_contribution_days")
+
+    return None

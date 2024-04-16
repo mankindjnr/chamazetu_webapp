@@ -3,6 +3,7 @@ import os
 
 from celery import Celery
 from django.conf import settings
+from celery.schedules import crontab
 
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "frontend_chamazetu.settings")
@@ -16,7 +17,12 @@ app.conf.update(timezone="Africa/Nairobi")
 app.config_from_object(settings, namespace="CELERY")
 
 # celery Beat settings
-app.conf.beat_schedule = {}
+app.conf.beat_schedule = {
+    "update-contribution-days": {
+        "task": "chama.tasks.update_contribution_days",
+        "schedule": crontab(minute=0, hour=0),  # executed at midnight everyday
+    }
+}
 
 app.autodiscover_tasks()
 

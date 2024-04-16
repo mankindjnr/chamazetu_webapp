@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func, update, and_, table, column
 
 from .. import schemas, database, utils, oauth2, models
@@ -30,6 +30,113 @@ async def create_chama(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail="Failed to create chama")
+
+
+# set contribution day for a chama during creation by checkign the start date, interval and day
+
+
+# updating contribution days for chamas
+@router.put("/update_contribution_days", status_code=status.HTTP_200_OK)
+async def update_contribution_days(
+    db: Session = Depends(database.get_db),
+):
+    # get chama_ids, contribution_interval, contribution_day from chamas
+    chamas = db.query(models.Chama).order_by(models.Chama.id).all()
+    chamas_details = {}
+    for chama in chamas:
+        chamas_details[chama.id] = {
+            "contribution_interval": chama.contribution_interval,
+            "contribution_day": chama.contribution_day,
+        }
+
+    for chama_id, details in chamas_details.items():
+        contribution_interval = details["contribution_interval"]
+        contribution_day = details["contribution_day"]
+
+        upcoming_contribution_date = calculate_next_contribution_date(
+            contribution_interval, contribution_day
+        )
+        chama_contribution_day = (
+            db.query(models.ChamaContributionDay).filter_by(chama_id=chama_id).first()
+        )
+
+        if chama_contribution_day:
+            # the chama_id exists - update the contribution day
+            if upcoming_contribution_date > datetime.now():
+                chama_contribution_day.next_contribution_date = (
+                    upcoming_contribution_date
+                )
+                print(
+                    f"Chama {chama_id} contribution day updated to {upcoming_contribution_date}"
+                )
+            else:
+                chama_contribution_day.next_contribution_date = (
+                    calculate_next_contribution_date(
+                        contribution_interval, contribution_day
+                    )
+                )
+        else:
+            # the chama_id does not exist - create a new record
+            new_record = models.ChamaContributionDay(
+                chama_id=chama_id, next_contribution_date=upcoming_contribution_date
+            )
+            db.add(new_record)
+            print(f"Chama {chama_id} contribution day created")
+
+    db.commit()
+
+    return {"message": "Contribution days updated successfully"}
+
+
+# ====================================================
+def calculate_next_contribution_date(contribution_interval, contribution_day):
+    today = datetime.now()
+    contribution_day_index = {
+        "Monday": 0,
+        "Tuesday": 1,
+        "Wednesday": 2,
+        "Thursday": 3,
+        "Friday": 4,
+        "Saturday": 5,
+        "Sunday": 6,
+    }
+    next_contribution_date = None
+    if contribution_interval == "daily":
+        next_contribution_date = today + timedelta(days=1)
+    elif contribution_interval == "weekly":
+        today_index = today.weekday()
+        contribution_day_index_value = contribution_day_index[
+            contribution_day.capitalize()
+        ]
+        days_until_contribution_day = (contribution_day_index_value - today_index) % 7
+        if days_until_contribution_day == 0:
+            # if today is the contribution day check if time is past the contribution time, if not, set the next contribution day to today else set it to next week
+            # if today.time() < contribution_time:
+            #     next_contribution_date = today
+            if today.time() < datetime.strptime("12:00", "%H:%M").time():
+                next_contribution_date = today
+            else:
+                next_contribution_date = today + timedelta(weeks=1)
+        else:
+            next_contribution_date = today + timedelta(days=days_until_contribution_day)
+
+    elif contribution_interval == "monthly":
+        # ensure the day is not 29, 30 or 31 for months that don't have those days
+        if today.month == 2 and contribution_day > 28:
+            contribution_day = 28
+
+        if today.day <= int(contribution_day):
+            # contribution day hasn't passed this month yet
+            next_month = today.replace(day=int(contribution_day))
+        else:
+            # contribution day has passed this month
+            next_month = today.replace(day=int(contribution_day))
+            next_month = next_month.replace(month=next_month.month + 1)
+        next_contribution_date = next_month
+    return next_contribution_date
+
+
+# ====================================================
 
 
 # get chama by name for a logged in manager
@@ -304,6 +411,28 @@ async def get_today_deposit(
         raise HTTPException(status_code=404, detail="No transactions found")
     total_amount = sum([transaction.amount for transaction in transactions])
     return {"today_deposits": total_amount}
+
+
+# get chama day and convert to string
+@router.get(
+    "/contribution_day/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_contrbution_day(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    contribution = (
+        db.query(models.ChamaContributionDay)
+        .filter(models.ChamaContributionDay.chama_id == chama_id)
+        .first()
+    )
+    if not contribution:
+        raise HTTPException(status_code=404, detail="Chama contribution day not found")
+    return {
+        "contribution_day": contribution.next_contribution_date.strftime("%A"),
+        "contribution_date": contribution.next_contribution_date,
+    }
 
 
 # get the number of members in a given chama by chama id

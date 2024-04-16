@@ -154,32 +154,25 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <li class="nav-item">
-        <a class="nav-link " href="{% url 'manager:dashboard' %}">
-          <i class="bi bi-grid"></i>
-          <span>Dashboard</span>
-        </a>
-      </li><!-- End Dashboard Nav -->
-
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
+          <i class="bi bi-grid"></i>
           <span>members tracker</span> 
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
+          <i class="bi bi-grid"></i>
           <span>Investment performance</span> 
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
-          <i class="bi bi-question-circle"></i>
+          <i class="bi bi-grid"></i>
           <span>About chama</span> 
         </a>
       </li><!-- End about Page Nav -->
@@ -454,10 +447,9 @@
               <div class="activity">
                 {% for transaction in recent_transactions %}
                 <div class="activity-item d-flex">
-                  <div class="activite-label">{{ transaction.member_name }}</div>
                   <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
                   <div class="activity-content">
-                    <p class="fw-bold text-dark">{{ transaction.transaction_type }} Ksh: {{ transaction.amount }} on {{ transaction.date }} at {{ transaction.time }}</p>
+                    <p class="fw-bold text-dark">{{ transaction.member_name }} {{ transaction.transaction_type }} Ksh: {{ transaction.amount }} on {{ transaction.date }} at {{ transaction.time }}</p>
                   </div>
                 </div>
                 {% endfor %}

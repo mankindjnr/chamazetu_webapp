@@ -10,7 +10,7 @@ from collections import defaultdict
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
-from chama.chamas import get_chama_id
+from chama.chamas import get_chama_id, get_chama_contribution_day
 from chama.thread_urls import fetch_data
 from .date_day_time import get_sunday_date, extract_date_time
 from .membermanagement import (
@@ -19,6 +19,7 @@ from .membermanagement import (
     get_member_expected_contribution,
 )
 from .tasks import update_shares_number_for_member
+from chama.tasks import update_contribution_days
 
 from chama.usermanagement import (
     validate_token,
@@ -129,6 +130,7 @@ def access_chama_threads(urls, headers):
     if results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
         chama_id = get_chama_id(chama["chama_name"])
+        chama["chama_day"] = get_chama_contribution_day(chama_id)
         if results[urls[1][0]]["status"] == 200:
             if len(results[urls[1][0]]["data"]) > 0:
                 recent_activity = recent_transactions(results[urls[1][0]]["data"])
@@ -190,26 +192,24 @@ def investment_activities(activities):
 
 # retrieve members weekly transactions and arrange them by membe and daily transactions amount
 def chama_weekly_contribution_activity(members_weekly_transactions, chama_id):
-    members_daily_transactions = defaultdict(lambda: defaultdict(int))
+    members_daily_transactions = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(int))
+    )
 
     for key, value in members_weekly_transactions.items():
         member_name = get_user_full_name("member", key)
         for item in value:
             day = extract_date_time(item["date_of_transaction"])["day"]
             amount = item["amount"]
-            expected_contribution = get_member_expected_contribution(key, chama_id)
-            members_daily_transactions[member_name][day] += amount
+            members_daily_transactions[member_name][key][day] += amount
 
-    print("=====================================")
-    print(members_daily_transactions)
-
-    chama_weekly_activity = organise_activity(members_daily_transactions)
+    chama_weekly_activity = organise_activity(members_daily_transactions, chama_id)
 
     return chama_weekly_activity
 
 
 # organise the weekly transactions by member and every day of the week
-def organise_activity(members_daily_transactions):
+def organise_activity(members_daily_transactions, chama_id):
     days = [
         "Sunday",
         "Monday",
@@ -219,21 +219,32 @@ def organise_activity(members_daily_transactions):
         "Friday",
         "Saturday",
     ]
-    for member_name, daily_transactions in members_daily_transactions.items():
-        for day in days:
-            if day not in daily_transactions:
-                daily_transactions[day] = 0
+    for member_name, member_transactions in members_daily_transactions.items():
+        for member_id, daily_transactions in member_transactions.items():
+            for day in days:
+                if day not in daily_transactions:
+                    daily_transactions[day] = 0
 
-    activity = []
-    for member_name, daily_transactions in members_daily_transactions.items():
-        member_activity = {"member_name": member_name}
-        # add the daily transactions and their amounts to the member_activity dictionary as key value pairs in order of the days of the week (Sunday to Saturday)
-        for day in days:
-            member_activity[day] = daily_transactions[day]
+    weekly_activity = []
+    for member_name, member_transactions in members_daily_transactions.items():
+        for member_id, daily_transactions in member_transactions.items():
+            member_activity = {"member_name": member_name, "member_id": member_id}
+            # add the daily transactions and their amounts to the member_activity dictionary as key value pairs in order of the days of the week (Sunday to Saturday)
+            for day in days:
+                member_activity[day] = daily_transactions[day]
 
-        activity.append(member_activity)
+            weekly_activity.append(member_activity)
 
-    return activity
+    # TODO: make it a bg task and listen for the task to finish then using js update the page
+    for activity in weekly_activity:
+        activity["expected_contribution"] = get_member_expected_contribution(
+            activity["member_id"], chama_id
+        )
+
+    print("=====================================")
+    print(weekly_activity)
+
+    return weekly_activity
 
 
 @tokens_in_cookies("member")

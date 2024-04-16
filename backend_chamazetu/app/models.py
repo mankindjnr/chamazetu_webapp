@@ -49,6 +49,9 @@ class Member(Base):
     is_member = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
 
+    # wallet balance
+    wallet_balance = Column(Integer, nullable=False, default=0)
+
     fines = relationship("Fine", back_populates="member")
 
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
@@ -159,6 +162,9 @@ class Transaction(Base):
     )  # deposit, withdrawal, loan, loan_payment, interest
     is_reversed = Column(Boolean, default=False)
 
+    # from which account did the transaction come from - user_account, user_dynamic_wallet(global)
+    transaction_origin = Column(String, nullable=False)
+
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="transactions")
@@ -233,6 +239,15 @@ class MMF(Base):
     # one to many relationship - one chama can make multiple mmf transactions
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="money_market_fund")
+
+
+# this table will have chama and its next contribution date
+class ChamaContributionDay(Base):
+    __tablename__ = "chama_contribution_day"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    next_contribution_date = Column(DateTime, nullable=False)
 
 
 class chama_blog(Base):

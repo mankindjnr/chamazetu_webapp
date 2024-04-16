@@ -57,3 +57,12 @@ def get_chama_id(chamaname):
         chama = resp.json()
         chama_id = chama["Chama_id"]
         return chama_id
+
+
+def get_chama_contribution_day(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/contribution_day/{chama_id}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        contribution_day = chama["contribution_day"]
+        return contribution_day
+    return "to_be_set"
