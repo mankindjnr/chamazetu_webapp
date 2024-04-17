@@ -4,13 +4,18 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
+from datetime import datetime, date
 from django.contrib import messages
 from collections import defaultdict
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
-from chama.chamas import get_chama_id, get_chama_contribution_day
+from chama.chamas import (
+    get_chama_id,
+    get_chama_contribution_day,
+    get_previous_contribution_date,
+)
 from chama.thread_urls import fetch_data
 from .date_day_time import get_sunday_date, extract_date_time
 from .membermanagement import (
@@ -56,6 +61,7 @@ def view_chama(request, chamaid):
 def access_chama(request, chamaname):
     chama_id = get_chama_id(chamaname)
     chama_members_id = requests.get(f"{config('api_url')}/chamas/members/{chama_id}")
+    current_user = request.COOKIES.get("current_member")
 
     urls = [
         (f"{config('api_url')}/chamas/chama_name", {"chamaname": chamaname}),
@@ -89,7 +95,7 @@ def access_chama(request, chamaname):
             request,
             "member/chamadashboard.html",
             {
-                "current_user": request.COOKIES.get("current_member"),
+                "current_user": current_user,
                 "role": "member",
                 "chama": results.get("chama"),
                 "recent_transactions": results.get("recent_transactions"),
@@ -126,25 +132,31 @@ def access_chama_threads(urls, headers):
     investment_activity = []
     members_weekly_transactions = []
 
+    print("==========results==========")
+    print(results)
+
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
         chama_id = get_chama_id(chama["chama_name"])
-        chama["chama_day"] = get_chama_contribution_day(chama_id)
-        if results[urls[1][0]]["status"] == 200:
+        contribution_day_details = get_chama_contribution_day(chama_id)
+        chama["contribution_day"] = contribution_day_details["contribution_day"]
+        chama["contribution_date"] = contribution_day_details["contribution_date"]
+
+        if urls[1][0] in results and results[urls[1][0]]["status"] == 200:
             if len(results[urls[1][0]]["data"]) > 0:
                 recent_activity = recent_transactions(results[urls[1][0]]["data"])
-        if results[urls[2][0]]["status"] == 200:
+        if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
             members_weekly_transactions = chama_weekly_contribution_activity(
                 results[urls[2][0]]["data"], chama_id
             )
-        if results[urls[3][0]]["status"] == 200:
+        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
             chama["account_balance"] = results[urls[3][0]]["data"]["account_balance"]
-        if results[urls[4][0]]["status"] == 200:
+        if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
             chama["today_deposits"] = results[urls[4][0]]["data"]["today_deposits"]
-        if results[urls[5][0]]["status"] == 200:
+        if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
             chama["investment_balance"] = results[urls[5][0]]["data"]["amount_invested"]
-        if results[urls[6][0]]["status"] == 200:
+        if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
             investment_activity = investment_activities(results[urls[6][0]]["data"])
 
     # return the processed results chama, transactions, members
@@ -240,6 +252,9 @@ def organise_activity(members_daily_transactions, chama_id):
         activity["expected_contribution"] = get_member_expected_contribution(
             activity["member_id"], chama_id
         )
+        activity["member_contribution_so_far"] = get_member_contribution_so_far(
+            chama_id, activity["member_id"]
+        )
 
     print("=====================================")
     print(weekly_activity)
@@ -280,3 +295,27 @@ def join_chama(request):
             )
 
     return HttpResponseRedirect(reverse("chama:chamas", args={"role": "member"}))
+
+
+def get_member_contribution_so_far(chama_id, member_id):
+    upcoming_contribution_datetime = get_chama_contribution_day(chama_id)[
+        "contribution_date"
+    ]
+    upcoming_contribution_date = (
+        datetime.strptime(upcoming_contribution_datetime, "%d-%B-%Y")
+    ).strftime("%d-%m-%Y")
+    previous_contribution_date = get_previous_contribution_date(chama_id)
+
+    data = {
+        "chama_id": chama_id,
+        "member_id": member_id,
+        "upcoming_contribution_date": upcoming_contribution_date,
+        "previous_contribution_date": previous_contribution_date,
+    }
+    resp = requests.get(
+        f"{config('api_url')}/members/member_contribution_so_far", json=data
+    )
+    if resp.status_code == 200:
+        return resp.json()["member_contribution"]
+
+    return 0

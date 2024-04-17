@@ -30,69 +30,11 @@
 
         <li class="nav-item dropdown">
 
-          <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-chat-left-text"></i>
-            <span class="badge bg-success badge-number">3</span>
-          </a><!-- End Messages Icon -->
+          <a class="nav-icon">
+            <button class="btn btn-dark bi bi-wallet"> ksh 15000</button>
+          </a><!-- End Wallet Icon -->
 
-          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow messages">
-            <li class="dropdown-header">
-              You have 3 new messages
-              <a href="#"><span class="badge rounded-pill bg-primary p-2 ms-2">View all</span></a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li class="message-item">
-              <a href="#">
-                <img src="{% static 'chama/img/messages-1.jpg' %}" alt="" class="rounded-circle">
-                <div>
-                  <h4>Maria Hudson</h4>
-                  <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
-                  <p>4 hrs. ago</p>
-                </div>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li class="message-item">
-              <a href="#">
-                <img src="{% static 'chama/img/messages-2.jpg' %}" alt="" class="rounded-circle">
-                <div>
-                  <h4>Anna Nelson</h4>
-                  <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
-                  <p>6 hrs. ago</p>
-                </div>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li class="message-item">
-              <a href="#">
-                <img src="{% static 'chama/img/messages-3.jpg' %}" alt="" class="rounded-circle">
-                <div>
-                  <h4>David Muldon</h4>
-                  <p>Velit asperiores et ducimus soluta repudiandae labore officia est ut...</p>
-                  <p>8 hrs. ago</p>
-                </div>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li class="dropdown-footer">
-              <a href="#">Show all messages</a>
-            </li>
-
-          </ul><!-- End Messages Dropdown Items -->
-
-        </li><!-- End Messages Nav -->
+        </li><!-- End Wallet Nav -->
 
         <li class="nav-item dropdown pe-3">
 
@@ -196,52 +138,21 @@
         </div>
         {% endif %}
       <!-- end messages -->
+      <div class="ml-auto">
+        <!-- Button trigger wallet deposit modal -->
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
+          Deposit from wallet
+        </button>
+        <!-- wallet deposit Modal -->
+        {% include 'member/modals/wallet_deposit_modal.html' %}
 
-      <!-- Button trigger modal -->
-      <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#depositModal">
-        Deposit
-      </button>
-
-      <!-- deposit Modal -->
-      <div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="depositModalLabel">Deposit to {{ chama.chama_name }}</h1>
-              <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-              <form action="{% url 'member:deposit' %}" method="POST">
-                {% csrf_token %}
-                <div class="mb-3">
-                  <label for="amount" class="form-label">Amount</label>
-                  <div class="input-group">
-                    <span class="input-group-text" id="basic-addon1">Ksh:</span>
-                    <input type="number" class="form-control" id="amount" name="amount" min="1" required>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                  <label for="phonenumber" class="form-label">Phone number</label>
-                  <div class="input-group">
-                    <span class="input-group-text" id="basic-addon1">+254</span>
-                    <input type="number" class="form-control" id="phonenumber" name="phonenumber" maxlength="9" placeholder="712345678" required>
-                  </div>
-                </div>
-
-                <div class="mb-3" style="display: none;">
-                  <label for="chamaname" class="form-label">chamaname</label>
-                  <input type="text" class="form-control" id="chamaname" name="chamaname" value="{{ chama.chama_name}}" readonly required>
-                </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
-            </div>
-            </form>
-          </div>
+        <!-- Button trigger direct deposit modal -->
+        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
+          Direct Deposit
+        </button>
+        <!-- direct deposit Modal -->
+        {% include 'member/modals/direct_deposit_modal.html' %}
         </div>
-      </div>
 
     </div><!-- End Page Title -->
 
@@ -328,13 +239,17 @@
 
                 <div class="card-body">
                   <h5 class="card-title">chama activity <span>| contributions in Ksh</span></h5>
+                  <div>
+                    <hr>
+                    <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ chama.contribution_date}}</button>
+                  </div>
 
                   <table class="table">
                     <thead>
                       <tr>
                         <th scope="col">members</th>
                         <th scope="col">expected</th>
-                        <th scope="col">{{ chama.chama_day }}</th>
+                        <th scope="col">contributed</th>
                         <th scope="col">sunday</th>
                         <th scope="col">monday</th>
                         <th scope="col">tuesday</th>
@@ -350,7 +265,7 @@
                       <tr>
                         <th scope="row">{{ transaction.member_name }}</th>
                         <td>{{ transaction.expected_contribution }}</td>
-                        <td><span class="badge bg-success">paid so far</span></td>
+                        <td>{{ transaction.member_contribution_so_far }}</td>
                         <td>{{ transaction.Sunday }} </td>
                         <td>{{ transaction.Monday }} </td>
                         <td>{{ transaction.Tuesday }} </td>

@@ -10,6 +10,11 @@ urlpatterns = [
     path("create_chama", views.create_chama, name="create_chama"),
     path("chama/<str:key>", views.chama, name="chama"),
     path("join_status", views.chama_join_status, name="join_status"),
+    path(
+        "activate_deactivate_chama",
+        views.activate_deactivate_chama,
+        name="activate_deactivate_chama",
+    ),
     path("invest", views.invest, name="invest"),
     path(
         "withdraw_investment",

@@ -11,7 +11,7 @@ from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
-from chama.chamas import get_chama_id
+from chama.chamas import get_chama_id, get_chama_number_of_members
 from member.member_chama import access_chama_threads, recent_transactions
 
 
@@ -39,6 +39,16 @@ def dashboard(request):
     chamas = dict(chamas)
     print(chamas)
     print()
+    list_of_chamas = []
+    for item in chamas:
+        chama = {}
+        chama["chama_name"] = item
+        chama["is_active"] = chamas[item]
+        chama["number_of_members"] = get_chama_number_of_members(get_chama_id(item))
+        list_of_chamas.append(chama)
+
+    chamas = list_of_chamas
+
     return render(
         request,
         "manager/dashboard.html",
@@ -76,6 +86,7 @@ def create_chama(request):
             contribution_day = request.POST.get("monthly_day")
 
         if accepting_members == "on":
+            is_active = True
             accepting_members = True
         else:
             accepting_members = False
@@ -102,12 +113,9 @@ def create_chama(request):
             "contribution_day": contribution_day,
             "start_cycle": start_date.strftime("%Y-%m-%d %H:%M:%S"),
             "restart": False,
+            "is_active": is_active,
             "manager_id": manager_id,
         }
-        print("nolimit", no_limit)
-        print("members_allowed", members_allowed)
-        print("--------------create chama details---------------")
-        print(data)
 
         headers = {
             "Content-type": "application/json",
@@ -118,10 +126,6 @@ def create_chama(request):
             json=data,
             headers=headers,
         )
-        print("---------chama creation response---------")
-        print(response.status_code)
-        print()
-        print(response)
 
         if response.status_code == 201:
             messages.success(request, "Chama created successfully.")
@@ -156,6 +160,7 @@ def chama(request, key):
             f"{config('api_url')}/investments/chamas/account_balance/{chama_id}",
             None,
         ),  # investment balance
+        (f"{config('api_url')}/chamas/members_count/{chama_id}", None),  # members count
     )
     # ===================================
 
@@ -209,6 +214,10 @@ def chama_threads(urls, headers):
             recent_activity = recent_transactions(results[urls[3][0]]["data"])
         if results[urls[4][0]]["status"] == 200:
             chama["investment_balance"] = results[urls[4][0]]["data"]["amount_invested"]
+        if results[urls[5][0]]["status"] == 200:
+            chama["number_of_members"] = results[urls[5][0]]["data"][
+                "number_of_members"
+            ]
 
     return {"chama": chama, "recent_activity": recent_activity}
 
@@ -255,5 +264,40 @@ def chama_join_status(request):
         return redirect(reverse("manager:dashboard"))
 
 
-def restart_pause_stop_chama(request):
+def activate_deactivate_chama(request):
+    if request.method == "POST":
+        chama_id = get_chama_id(request.POST.get("chama_name"))
+        is_active = request.POST.get("activate_chama")
+
+        if is_active == "on":
+            is_active = True
+        else:
+            is_active = False
+
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+        }
+        data = {"chama_id": chama_id, "is_active": is_active}
+        response = requests.put(
+            "http://chamazetu_backend:9400/chamas/activate_deactivate",
+            json=data,
+            headers=headers,
+        )
+
+        if response.status_code == 200:
+            messages.success(request, "Chama activated/deactivated successfully.")
+            return redirect(
+                reverse("manager:chama", args=[request.POST.get("chama_name")])
+            )
+        else:
+            messages.error(request, "Error activating/deactivating chama.")
+            return redirect(
+                reverse("manager:chama", args=[request.POST.get("chama_name")])
+            )
+    else:
+        return redirect(reverse("manager:dashboard"))
+
+
+def restart_pause_stop_chama(request):  # changes the is_active status of the chama
     pass

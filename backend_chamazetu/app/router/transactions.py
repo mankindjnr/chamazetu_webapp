@@ -27,6 +27,8 @@ async def create_deposit_transaction(
         transaction_dict["transaction_type"] = "deposit"
         transaction_dict["member_id"] = current_user.id
         transaction_dict["transaction_completed"] = True
+        transaction_dict["date_of_transaction"] = datetime.now()
+        transaction_dict["updated_at"] = datetime.now()
         transaction_dict["transaction_code"] = uuid4().hex
 
         new_transaction = models.Transaction(**transaction_dict)
@@ -34,8 +36,6 @@ async def create_deposit_transaction(
         db.commit()
         db.refresh(new_transaction)
 
-        print("------new transaction--------")
-        print(new_transaction)
         return new_transaction
 
     except Exception as e:

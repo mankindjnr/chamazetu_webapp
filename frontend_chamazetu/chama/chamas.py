@@ -4,6 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from decouple import config
+from datetime import timedelta, datetime
 
 from .rawsql import execute_sql
 
@@ -62,7 +63,38 @@ def get_chama_id(chamaname):
 def get_chama_contribution_day(chama_id):
     resp = requests.get(f"{config('api_url')}/chamas/contribution_day/{chama_id}")
     if resp.status_code == 200:
-        chama = resp.json()
-        contribution_day = chama["contribution_day"]
-        return contribution_day
+        contribution_details = resp.json()
+        return contribution_details
     return "to_be_set"
+
+
+def get_previous_contribution_date(chama_id):
+    upcoming_contribution_date = get_chama_contribution_day(chama_id)[
+        "contribution_date"
+    ]
+    # if the contribution day has not been set, return a default date
+    if upcoming_contribution_date == "to_be_set":  # fetch from the db
+        upcoming_contribution_date = get_chama_contribution_day(chama_id)[
+            "contribution_date"
+        ]
+    else:
+        # Subtract a week
+        upcoming_contribution_date = datetime.strptime(
+            upcoming_contribution_date, "%d-%B-%Y"
+        )
+        previous_contribution_date = upcoming_contribution_date - timedelta(days=7)
+        print(
+            "Previous contribution date (a week before):",
+            previous_contribution_date.strftime("%d-%m-%Y"),
+        )
+
+    return previous_contribution_date.strftime("%d-%m-%Y")
+
+
+def get_chama_number_of_members(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/members_count/{chama_id}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        number_of_members = chama["number_of_members"]
+        return number_of_members
+    return 0

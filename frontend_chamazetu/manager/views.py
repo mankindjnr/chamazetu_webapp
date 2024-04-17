@@ -7,6 +7,7 @@ from .managing import (
     profile,
     chama,
     chama_join_status,
+    activate_deactivate_chama,
 )
 
 from .chama_investments import invest, withdraw_from_investment

@@ -22,6 +22,7 @@ def deposit_to_chama(request):
         chama_id = get_chama_id(request.POST.get("chamaname"))
         phone_number = request.POST.get("phonenumber")
         transaction_type = "deposit"
+        transaction_origin = request.POST.get("transaction_origin")
 
         url = f"{config('api_url')}/transactions/deposit"
         headers = {
@@ -32,6 +33,7 @@ def deposit_to_chama(request):
             "amount": amount,
             "chama_id": chama_id,
             "phone_number": f"254{phone_number}",
+            "transaction_origin": transaction_origin,
         }
         response = requests.post(url, headers=headers, json=data)
 

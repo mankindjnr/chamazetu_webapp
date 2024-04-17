@@ -1,0 +1,26 @@
+<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="statusModalLabel">chama status</h1>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{% url 'manager:join_status' %}">
+            {% csrf_token %}
+            <div id="accepting_members_div">
+              <input type="checkbox" id="accepting_members" name="accepting_members" {% if chama.accepting_members %} checked {% endif %}>
+              <label for="accepting_members" id="accepting_members_label">Accepting members</label>
+            </div>
+            <div>
+              <input type="hidden" name="chama_name" value="{{ chama.chama_name }}">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-outline-success btn-sm">confirm</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>

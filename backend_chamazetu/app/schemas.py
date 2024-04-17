@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 from pydantic.types import conint
 from decouple import config
@@ -73,6 +73,7 @@ class ChamaBase(BaseModel):
     contribution_day: str
     start_cycle: datetime
     restart: bool
+    is_active: bool
     manager_id: int
 
     class Config:
@@ -87,11 +88,20 @@ class ChamaResp(BaseModel):
         orm_mode = True
 
 
+class ChamaActivateDeactivate(BaseModel):
+    chama_id: int
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+
+
 # ============== transaction =================
 class TransactionBase(BaseModel):
     amount: int
     chama_id: int
     phone_number: str
+    transaction_origin: str
 
     class Config:
         orm_mode = True
@@ -189,3 +199,21 @@ class UpdateInvestmentAccountBase(BaseModel):
     investment_type: str
     transaction_type: str
     chama_id: int
+
+
+# ============ members ==========================
+class MemberContributionBase(BaseModel):
+    chama_id: int
+    member_id: int
+    upcoming_contribution_date: str
+    previous_contribution_date: str
+
+    class Config:
+        orm_mode = True
+
+
+class MemberContributionResp(BaseModel):
+    member_contribution: int
+
+    class Config:
+        orm_mode = True

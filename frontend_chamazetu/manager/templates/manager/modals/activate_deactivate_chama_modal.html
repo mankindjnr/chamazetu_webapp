@@ -1,0 +1,26 @@
+<div class="modal fade" id="activeModal" tabindex="-1" aria-labelledby="activeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="activeModalLabel">activate or deactivate chama</h1>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{% url 'manager:activate_deactivate_chama' %}">
+            {% csrf_token %}
+            <div id="activate_deactivate_chama">
+              <input type="checkbox" id="activate_chama" name="activate_chama" {% if chama.is_active %} checked {% endif %}>
+              <label for="activate_chama" id="activate_chama">activate chama</label>
+            </div>
+            <div>
+              <input type="hidden" name="chama_name" value="{{ chama.chama_name }}">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-outline-success btn-sm">confirm</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>

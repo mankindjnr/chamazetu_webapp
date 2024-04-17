@@ -245,9 +245,9 @@
         </a>
         <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
           {% if chamas %}
-          {% for key in chamas.keys %}
+          {% for chama in chamas %}
           <li>
-              <a href="{% url 'manager:chama' key %}">
+              <a href="{% url 'manager:chama' chama.chama_name %}">
               <i class="bi bi-circle"></i><span>{{ key }}</span>
             </a>
           </li>
@@ -426,22 +426,21 @@
 
             <!-- chama Card -->
             {% if chamas %}
-            {% for key, value in chamas.items %}
+            {% for chama in chamas %}
             
             <div class="col-xxl-4 col-md-6">
-              <a href="{% url 'manager:chama' key %}" style="text-decoration: none; color: inherit;">
+              <a href="{% url 'manager:chama' chama.chama_name %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">{{ key }} <span>| {% if value %} active {% else %} not active {% endif %} </span></h5>
+                  <h5 class="card-title">{{ chama.chama_name }} <span>| {% if chama.is_active %} active {% else %} not active {% endif %} </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-cart"></i>
+                      <i class="bi bi-people-fill"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>no of members</h6>
-                      <span class="text-success small pt-1 fw-bold">ksh</span> <span class="text-muted small pt-2 ps-1">40,000</span>
+                      <h6>{{ chama.number_of_members }} members</h6>
 
                     </div>
                   </div>

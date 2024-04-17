@@ -431,11 +431,45 @@ async def get_chama_contrbution_day(
         raise HTTPException(status_code=404, detail="Chama contribution day not found")
     return {
         "contribution_day": contribution.next_contribution_date.strftime("%A"),
-        "contribution_date": contribution.next_contribution_date,
+        "contribution_date": contribution.next_contribution_date.strftime("%d-%B-%Y"),
     }
 
 
-# get the number of members in a given chama by chama id
+# count the number of members in a certain chama
+@router.get(
+    "/members_count/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_members_count(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    chama_members_query = db.query(models.members_chamas_association).filter(
+        models.members_chamas_association.c.chama_id == chama_id
+    )
+    number_of_members = chama_members_query.count()
+    if not chama_members_query:
+        raise HTTPException(
+            status_code=404, detail="could not retrieve chama members count"
+        )
+    return {"number_of_members": number_of_members}
+
+
+# activate and deactivate chama
+@router.put("/activate_deactivate", status_code=status.HTTP_200_OK)
+async def activate_chama(
+    chama: schemas.ChamaActivateDeactivate = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    chama_dict = chama.dict()
+    chama_id = chama_dict["chama_id"]
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    chama.is_active = chama_dict["is_active"]
+    db.commit()
+    return {"message": "Chama activated/deactivated successfully"}
 
 
 # TODO: retrieve manager recent transactions and display beneath recent activity
