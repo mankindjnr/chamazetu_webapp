@@ -54,6 +54,9 @@ class Member(Base):
 
     fines = relationship("Fine", back_populates="member")
 
+    # one to many with wallet transactions
+    wallet_transactions = relationship("Wallet_Transaction", back_populates="member")
+
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
     transactions = relationship("Transaction", back_populates="member")
     # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
@@ -239,6 +242,22 @@ class MMF(Base):
     # one to many relationship - one chama can make multiple mmf transactions
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="money_market_fund")
+
+
+# members wallet transactions
+class Wallet_Transaction(Base):
+    __tablename__ = "wallet_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    amount = Column(Integer, nullable=False)
+    transaction_type = Column(String, nullable=False)  # moved, deposited, withdrawn
+    transaction_date = Column(DateTime, default=datetime.now(timezone.utc))
+    transaction_completed = Column(Boolean, default=False)
+    transaction_code = Column(String, nullable=False)
+    transaction_destination = Column(Integer, nullable=False)  # wallet, chama
+    # one to many relationship - one member can make multiple wallet transactions
+    member_id = Column(Integer, ForeignKey("members.id"))
+    member = relationship("Member", back_populates="wallet_transactions")
 
 
 # this table will have chama and its next contribution date

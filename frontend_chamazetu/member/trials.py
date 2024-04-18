@@ -1,9 +1,15 @@
-from datetime import datetime, timedelta
+from decouple import config
 
-# Current date
-current_date = datetime.strptime("17-February-2024", "%d-%B-%Y")
+urls = [
+    (f"{config('api_url')}/chamas/my_chamas", {}),
+    (f"{config('api_url')}/members/recent_transactions", {"member_id": 2}),
+    (f"{config('api_url')}/members/wallet_balance", None),
+]
 
-# Subtract a week
-contrib_date = current_date - timedelta(days=7)
 
-print("Contributed date (a week before):", contrib_date.strftime("%d-%m-%Y"))
+def is_empty_dict(item):
+    return isinstance(item, dict) and len(item) == 0
+
+
+for url, payload in urls:
+    print(is_empty_dict(payload))

@@ -32,7 +32,7 @@
         <li class="nav-item dropdown">
 
           <a class="nav-icon">
-            <button class="btn btn-dark bi bi-wallet"> ksh 15000</button>
+            <button class="btn btn-dark bi bi-wallet"> Ksh: {{ wallet_activity.wallet_balance }}</button>
           </a><!-- End Wallet Icon -->
 
         </li><!-- End Wallet Nav -->
@@ -188,28 +188,39 @@
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">My Recent Transactions <span>|</span></h5>
-
+                  <h5 class="card-title">My Recent Chama Transactions <span>|</span></h5>
+                  {% if my_recent_transactions %}
                   <table class="table">
                     <thead>
                       <tr>
-                        <th scope="col">chama</th>
-                        <th scope="col">date</th>
-                        <th scope="col">time</th>
-                        <th scope="col">amount</th>
-                        <th scope="col">status</th>
+                        <th scope="col">Chama</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Origin</th>
+                        <th scope="col">Status</th>
                       </tr>
                     </thead>
+                    {% for transaction in my_recent_transactions %}
                     <tbody>
                       <tr>
-                        <th scope="row"><a href="#">#2457</a></th>
-                        <td>Brandon Jacob</td>
-                        <td>At praesentium minu</td>
-                        <td>$64</td>
-                        <td><span class="badge bg-success">Approved</span></td>
+                        <th scope="row">{{ transaction.chama_name }}</th>
+                        <td>{{ transaction.amount }}</td>
+                        <td>{{ transaction.transaction_type }}</td>
+                        <td>{{ transaction.date }}</td>
+                        <td>{{ transaction.time }}</td>
+                        <td>{{ transaction.transaction_origin }}</td>
+                        {% if transaction.status == 'Completed' %}
+                        <td><span class="badge bg-success">{{ transaction.status}}</span></td>
+                        {% else %}
+                        <td><span class="badge bg-danger">{{ transaction.status}}</span></td>
+                        {% endif %}
                       </tr>
                     </tbody>
+                    {% endfor %}
                   </table>
+                  {% endif %}
 
                 </div>
 
@@ -225,25 +236,45 @@
           <!-- News & Updates Traffic -->
           <div class="card">
 
-            <div class="card-body pb-0">
-              <h5 class="card-title">Updates &amp; new products <span>|</span></h5>
+            <div class="card-body">
+              <h5 class="card-title">Wallet activity <span>|</span></h5>
+              {% if investment_activity %}
+              <div class="activity">
+                {% for activity in investment_activity %}
 
-              <div class="news">
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-1.jpg' %}" alt="">
-                  <h4><a href="#">Nihil blanditiis at in nihil autem</a></h4>
-                  <p>Sit recusandae non aspernatur laboriosam. Quia enim eligendi sed ut harum...</p>
+                <div class="activity-item d-flex">
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{% if activity.transaction_type == 'deposit' %} Invested {% else %} Withdrew {% endif %} Ksh: {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
+                  </div>
                 </div>
-
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-2.jpg' %}" alt="">
-                  <h4><a href="#">Quidem autem et impedit</a></h4>
-                  <p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
-                </div>
-
-              </div><!-- End sidebar recent posts-->
+                {% endfor %}
+              </div>
+              {% endif %}
 
             </div>
+          </div>
+
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">new products & features <span>|</span></h5>
+              {% if investment_activity %}
+              <div class="activity">
+                {% for activity in investment_activity %}
+
+                <div class="activity-item d-flex">
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{% if activity.transaction_type == 'deposit' %} Invested {% else %} Withdrew {% endif %} Ksh: {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
           </div><!-- End News & Updates -->
 
         </div><!-- End Right side columns -->

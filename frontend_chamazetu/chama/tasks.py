@@ -29,7 +29,7 @@ def sending_email(subject, message, from_email, to_email):
 @shared_task
 def update_contribution_days():
     """
-    Update the contribution days for the chamas
+    Update the next contribution day for chamas
     """
     response = requests.put(f"{config('api_url')}/chamas/update_contribution_days")
 

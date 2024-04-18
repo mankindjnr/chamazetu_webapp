@@ -18,10 +18,11 @@ from chama.chamas import (
 )
 from chama.thread_urls import fetch_data
 from .date_day_time import get_sunday_date, extract_date_time
-from .membermanagement import (
+from .members import (
+    get_member_expected_contribution,
     get_user_full_name,
     get_user_id,
-    get_member_expected_contribution,
+    get_member_contribution_so_far,
 )
 from .tasks import update_shares_number_for_member
 from chama.tasks import update_contribution_days
@@ -91,6 +92,7 @@ def access_chama(request, chamaname):
     results = access_chama_threads(urls, headers)
 
     if results.get("chama"):
+        update_contribution_days.delay()
         return render(
             request,
             "member/chamadashboard.html",
@@ -131,9 +133,6 @@ def access_chama_threads(urls, headers):
     recent_activity = []
     investment_activity = []
     members_weekly_transactions = []
-
-    print("==========results==========")
-    print(results)
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
@@ -295,27 +294,3 @@ def join_chama(request):
             )
 
     return HttpResponseRedirect(reverse("chama:chamas", args={"role": "member"}))
-
-
-def get_member_contribution_so_far(chama_id, member_id):
-    upcoming_contribution_datetime = get_chama_contribution_day(chama_id)[
-        "contribution_date"
-    ]
-    upcoming_contribution_date = (
-        datetime.strptime(upcoming_contribution_datetime, "%d-%B-%Y")
-    ).strftime("%d-%m-%Y")
-    previous_contribution_date = get_previous_contribution_date(chama_id)
-
-    data = {
-        "chama_id": chama_id,
-        "member_id": member_id,
-        "upcoming_contribution_date": upcoming_contribution_date,
-        "previous_contribution_date": previous_contribution_date,
-    }
-    resp = requests.get(
-        f"{config('api_url')}/members/member_contribution_so_far", json=data
-    )
-    if resp.status_code == 200:
-        return resp.json()["member_contribution"]
-
-    return 0

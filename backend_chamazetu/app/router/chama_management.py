@@ -16,7 +16,6 @@ async def create_chama(
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
 
-    print("-------backend current user\n", current_user)
     try:
         chama_dict = chama.dict()
         chama_dict["manager_id"] = current_user.id
@@ -81,7 +80,6 @@ async def update_contribution_days(
                 chama_id=chama_id, next_contribution_date=upcoming_contribution_date
             )
             db.add(new_record)
-            print(f"Chama {chama_id} contribution day created")
 
     db.commit()
 
@@ -102,7 +100,7 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
     }
     next_contribution_date = None
     if contribution_interval == "daily":
-        next_contribution_date = today + timedelta(days=1)
+        next_contribution_date = today  # + timedelta(days=1)  #
     elif contribution_interval == "weekly":
         today_index = today.weekday()
         contribution_day_index_value = contribution_day_index[
@@ -303,6 +301,19 @@ async def get_chama_id(
     return {"Chama_id": chama.id}
 
 
+# get chamas name from id
+@router.get("/chama_name/{chama_id}", status_code=status.HTTP_200_OK)
+async def get_chama_name(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama_name": chama.chama_name}
+
+
 # retrieving all member ids of a chama
 @router.get("/members/{chama_id}", status_code=status.HTTP_200_OK)
 async def get_chama_members(
@@ -432,6 +443,24 @@ async def get_chama_contrbution_day(
     return {
         "contribution_day": contribution.next_contribution_date.strftime("%A"),
         "contribution_date": contribution.next_contribution_date.strftime("%d-%B-%Y"),
+    }
+
+
+# get chama contribution interval
+@router.get(
+    "/contribution_interval/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_contrbution_interval(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {
+        "contribution_interval": chama.contribution_interval,
+        "contribution_day": chama.contribution_day,
     }
 
 

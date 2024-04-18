@@ -108,6 +108,30 @@ class TransactionBase(BaseModel):
         # from_attributes = True
 
 
+class WalletTransactionBase(BaseModel):
+    amount: int
+    transaction_destination: int
+
+    class Config:
+        orm_mode = True
+
+
+class MemberWalletBalanceResp(BaseModel):
+    wallet_balance: int
+
+    class Config:
+        orm_mode = True
+
+
+class UpdateWalletBase(BaseModel):
+    transaction_destination: int
+    amount: int
+    transaction_type: str
+
+    class Config:
+        orm_mode = True
+
+
 class TransactionResp(BaseModel):
     id: int
     amount: int
@@ -129,6 +153,22 @@ class RecentTransactionResp(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class MemberRecentTransactionBase(BaseModel):
+    member_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class MemberRecentTransactionResp(BaseModel):
+    amount: int
+    chama_id: int
+    transaction_type: str
+    date_of_transaction: datetime
+    transaction_origin: str
+    transaction_completed: bool
 
 
 # ============== chama account =================

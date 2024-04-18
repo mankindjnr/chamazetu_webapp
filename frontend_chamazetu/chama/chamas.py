@@ -13,11 +13,9 @@ from .rawsql import execute_sql
 # members can request to join/ be invited to join/ waitlist
 def get_all_chamas(request, role=None):
     # TODO: replace this with a call to the backend
-    query = "SELECT manager_id, chama_type, chama_name, id FROM chamas WHERE accepting_members = %s"
-    params = [True]
+    query = "SELECT manager_id, chama_type, chama_name, id FROM chamas WHERE accepting_members = %s and is_active = %s"
+    params = [True, True]
     chamas = execute_sql(query, params)
-    print("---------public chamas---------")
-    print(chamas)
     return render(
         request,
         "chama/allchamas.html",
@@ -60,6 +58,14 @@ def get_chama_id(chamaname):
         return chama_id
 
 
+def get_chama_name(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/chama_name/{chama_id}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        chama_name = chama["Chama_name"]
+        return chama_name
+
+
 def get_chama_contribution_day(chama_id):
     resp = requests.get(f"{config('api_url')}/chamas/contribution_day/{chama_id}")
     if resp.status_code == 200:
@@ -68,25 +74,69 @@ def get_chama_contribution_day(chama_id):
     return "to_be_set"
 
 
+def get_chama_contribution_interval(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/contribution_interval/{chama_id}")
+    if resp.status_code == 200:
+        contribution_interval = resp.json()
+        return contribution_interval
+    return "to_be_set"
+
+
 def get_previous_contribution_date(chama_id):
     upcoming_contribution_date = get_chama_contribution_day(chama_id)[
         "contribution_date"
     ]
+    previous_contribution_date = "to_be_set"
     # if the contribution day has not been set, return a default date
     if upcoming_contribution_date == "to_be_set":  # fetch from the db
         upcoming_contribution_date = get_chama_contribution_day(chama_id)[
             "contribution_date"
         ]
     else:
-        # Subtract a week
-        upcoming_contribution_date = datetime.strptime(
-            upcoming_contribution_date, "%d-%B-%Y"
-        )
-        previous_contribution_date = upcoming_contribution_date - timedelta(days=7)
-        print(
-            "Previous contribution date (a week before):",
-            previous_contribution_date.strftime("%d-%m-%Y"),
-        )
+        interval, day = get_chama_contribution_interval(chama_id).values()
+        if interval == "monthly":
+            day = int(day)
+            # Subtract a month if interval is monthly
+            upcoming_contribution_date = datetime.strptime(
+                upcoming_contribution_date, "%d-%B-%Y"
+            )
+            # extract the month and day from upcoming_contribution_date
+            upcoming_day = upcoming_contribution_date.day
+            upcoming_month = upcoming_contribution_date.month
+
+            # determine the previous month
+            previous_month = upcoming_month - 1 if upcoming_month > 1 else 12
+
+            # determine the previous year
+            previous_year = upcoming_contribution_date.year
+            if previous_month == 12 and upcoming_month == 1:
+                previous_year -= 1
+
+            # calculate the previous contribution date using the current stored day and the previous month
+            if upcoming_day >= day:
+                previous_contribution_date = datetime(
+                    previous_year, previous_month, day
+                )
+            else:
+                # if upcoming day is less than the stored day, go to the previous month
+                previous_day = day
+                # might have to handle leap years
+                previous_contribution_date = datetime(
+                    previous_year, previous_month, previous_day
+                )
+        elif interval == "weekly":
+            # Subtract a week if interval is weekly
+            upcoming_contribution_date = datetime.strptime(
+                upcoming_contribution_date, "%d-%B-%Y"
+            )
+            previous_contribution_date = upcoming_contribution_date - timedelta(days=7)
+        elif interval == "daily":
+            # Subtract a day if interval is daily
+            upcoming_contribution_date = datetime.strptime(
+                upcoming_contribution_date, "%d-%B-%Y"
+            )
+            # get yesterday's date
+            previous_contribution_date = upcoming_contribution_date - timedelta(days=1)
 
     return previous_contribution_date.strftime("%d-%m-%Y")
 

@@ -44,6 +44,39 @@ async def create_deposit_transaction(
         raise HTTPException(status_code=400, detail="Failed to create transaction")
 
 
+# create a deposit transaction from wallet to chama
+@router.post(
+    "/deposit_from_wallet",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.TransactionResp,
+)
+async def create_deposit_transaction_from_wallet(
+    transaction: schemas.WalletTransactionBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+
+    try:
+        transaction_dict = transaction.dict()
+        transaction_dict["transaction_type"] = "moved_to_chama"
+        transaction_dict["member_id"] = current_user.id
+        transaction_dict["transaction_completed"] = True
+        transaction_dict["transaction_date"] = datetime.now()
+        transaction_dict["transaction_code"] = uuid4().hex
+
+        new_transaction = models.Transaction(**transaction_dict)
+        db.add(new_transaction)
+        db.commit()
+        db.refresh(new_transaction)
+
+        return new_transaction
+
+    except Exception as e:
+        print("------error--------")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
 # fetch transactions for a certain chama
 @router.get(
     "/{chamaname}",
