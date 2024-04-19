@@ -35,15 +35,35 @@ def update_shares_number_for_member(chama_id, num_of_shares, headers):
 def update_wallet_balance(headers, amount, chama_id, transaction_type):
     url = f"{config('api_url')}/members/update_wallet_balance"
 
-    if transaction_type == "move_to_wallet" or transaction_type == "deposit_to_wallet":
+    if (
+        transaction_type == "moved_to_wallet"
+        or transaction_type == "deposited_to_wallet"
+    ):
         transaction_destination = 0  # default value for wallet
-    else:
+    elif (
+        transaction_type == "withdrawn_from_wallet"
+        or transaction_type == "moved_to_chama"
+    ):
         transaction_destination = chama_id
 
     data = {
         "transaction_destination": int(transaction_destination),
         "amount": int(amount),
         "transaction_type": transaction_type,
+    }
+
+    response = requests.put(url, json=data, headers=headers)
+    return None
+
+
+@shared_task
+def wallet_deposit(headers, amount, member_id):
+    url = f"{config('api_url')}/members/update_wallet_balance"
+
+    data = {
+        "transaction_destination": 0,
+        "amount": amount,
+        "transaction_type": "deposited_to_wallet",
     }
 
     response = requests.put(url, json=data, headers=headers)

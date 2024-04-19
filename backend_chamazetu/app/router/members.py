@@ -163,7 +163,6 @@ async def update_member_wallet_balance(
 
     try:
         print("===========wallet update===========")
-        print(wallet_data)
         wallet_dict = wallet_data.dict()
         amount = wallet_dict["amount"]
         transaction_type = wallet_dict["transaction_type"]
@@ -171,8 +170,6 @@ async def update_member_wallet_balance(
         wallet_dict["transaction_completed"] = True
         wallet_dict["transaction_date"] = datetime.now()
         wallet_dict["transaction_code"] = uuid4().hex
-
-        print(wallet_dict)
 
         member = (
             db.query(models.Member).filter(models.Member.id == current_user.id).first()
@@ -182,15 +179,15 @@ async def update_member_wallet_balance(
             raise HTTPException(status_code=404, detail="Member not found")
 
         if (
-            transaction_type == "deposit_to_wallet"
-            or transaction_type == "move_to_wallet"
+            transaction_type == "deposited_to_wallet"
+            or transaction_type == "moved_to_wallet"
         ):
             new_wallet_balance = member.wallet_balance + amount
         elif (
-            transaction_type == "withdraw_from_wallet"
-            or transaction_type == "move_to_chama"
+            transaction_type == "withdrawn_from_wallet"
+            or transaction_type == "moved_to_chama"
         ):
-            new_wallet_balance = member.wallet_balance + amount
+            new_wallet_balance = member.wallet_balance - amount
         else:
             raise HTTPException(status_code=400, detail="Invalid transaction type")
 
@@ -233,4 +230,48 @@ async def get_member_wallet_balance(
         print(e)
         raise HTTPException(
             status_code=400, detail="Failed to get members wallet balance"
+        )
+
+
+# retrieve wallet activity for a member, latest 7 transactions
+@router.get(
+    "/recent_wallet_activity",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.WalletTransactionResp],
+)
+async def get_recent_wallet_activity(
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+
+    try:
+        wallet_activity = (
+            db.query(models.Wallet_Transaction)
+            .filter(models.Wallet_Transaction.member_id == current_user.id)
+            .order_by(desc(models.Wallet_Transaction.transaction_date))
+            .limit(5)
+            .all()
+        )
+
+        if not wallet_activity:
+            raise HTTPException(
+                status_code=404, detail="No wallet activity for this member"
+            )
+
+        return [
+            schemas.WalletTransactionResp(
+                amount=activity.amount,
+                transaction_type=activity.transaction_type,
+                transaction_completed=activity.transaction_completed,
+                transaction_date=activity.transaction_date,
+                transaction_destination=activity.transaction_destination,
+            )
+            for activity in wallet_activity
+        ]
+
+    except Exception as e:
+        print("========error getting recent wallet activity========")
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to get members recent wallet activity"
         )

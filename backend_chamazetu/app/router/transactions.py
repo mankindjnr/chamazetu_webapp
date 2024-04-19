@@ -48,33 +48,60 @@ async def create_deposit_transaction(
 @router.post(
     "/deposit_from_wallet",
     status_code=status.HTTP_201_CREATED,
-    response_model=schemas.TransactionResp,
+    response_model=schemas.WalletTransactionResp,
 )
 async def create_deposit_transaction_from_wallet(
-    transaction: schemas.WalletTransactionBase = Body(...),
+    wallet_transaction: schemas.WalletTransactionBase = Body(...),
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
 
     try:
-        transaction_dict = transaction.dict()
-        transaction_dict["transaction_type"] = "moved_to_chama"
-        transaction_dict["member_id"] = current_user.id
-        transaction_dict["transaction_completed"] = True
-        transaction_dict["transaction_date"] = datetime.now()
-        transaction_dict["transaction_code"] = uuid4().hex
+        wallet_transaction_dict = wallet_transaction.dict()
+        wallet_transaction_dict["transaction_type"] = "moved_to_chama"
+        wallet_transaction_dict["member_id"] = current_user.id
+        wallet_transaction_dict["transaction_completed"] = True
+        wallet_transaction_dict["transaction_date"] = datetime.now()
+        wallet_transaction_dict["transaction_code"] = uuid4().hex
+
+        print("===========wallet transaction dict===========")
+        print(wallet_transaction_dict)
+
+        new_wallet_transaction = models.Wallet_Transaction(**wallet_transaction_dict)
+        db.add(new_wallet_transaction)
+        db.commit()
+        db.refresh(new_wallet_transaction)
+
+        # add record to transactions table
+        transaction_dict = {
+            "amount": new_wallet_transaction.amount,
+            "phone_number": generateWalletNumber(current_user.id),
+            "chama_id": wallet_transaction.transaction_destination,
+            "transaction_type": "deposit",
+            "transaction_origin": "wallet_deposit",
+            "member_id": current_user.id,
+            "transaction_completed": True,
+            "date_of_transaction": new_wallet_transaction.transaction_date,
+            "updated_at": new_wallet_transaction.transaction_date,
+            "transaction_code": new_wallet_transaction.transaction_code,
+        }
 
         new_transaction = models.Transaction(**transaction_dict)
         db.add(new_transaction)
         db.commit()
-        db.refresh(new_transaction)
 
-        return new_transaction
+        return new_wallet_transaction
 
     except Exception as e:
-        print("------error--------")
+        print("------deposit from wallet error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+def generateWalletNumber(member_id):
+    prefix = "94" + str(member_id)
+    wallet_number = prefix.zfill(12)
+    return wallet_number
 
 
 # fetch transactions for a certain chama

@@ -52,21 +52,19 @@ def dashboard(request):
         (f"{config('api_url')}/chamas/my_chamas", {"chamaids": chama_ids}),
         (f"{config('api_url')}/members/recent_transactions", {"member_id": member_id}),
         (f"{config('api_url')}/members/wallet_balance", {}),
+        (f"{config('api_url')}/members/recent_wallet_activity", {}),
     ]
 
     results = member_dashboard_threads(urls, headers)
     print("=========================")
-    print(results["wallet_activity"])
 
     if results["chamas"]:
-        chamas = results["chamas"]
-
         return render(
             request,
             "member/dashboard.html",
             {
-                "current_user": current_user,
-                "chamas": chamas,
+                "current_user": {"current_user": current_user, "member_id": member_id},
+                "chamas": results["chamas"],
                 "my_recent_transactions": results["member_recent_transactions"],
                 "wallet_activity": results["wallet_activity"],
             },
@@ -110,6 +108,10 @@ def member_dashboard_threads(urls, headers):
             )
         if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
             wallet_activity = results[urls[2][0]]["data"]
+        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
+            wallet_activity["recent_wallet_activity"] = organise_wallet_activity(
+                results[urls[3][0]]["data"]
+            )
 
     return {
         "chamas": chamas,
@@ -119,7 +121,6 @@ def member_dashboard_threads(urls, headers):
 
 
 def organise_members_recent_transactions(recent_transactions):
-    print(recent_transactions)
     for transaction in recent_transactions:
         transaction["chama_name"] = get_chama_name(transaction["chama_id"])
         transaction["amount"] = f"Ksh {transaction['amount']}"
@@ -135,6 +136,20 @@ def organise_members_recent_transactions(recent_transactions):
             transaction["status"] = "not completed"
 
     return recent_transactions
+
+
+def organise_wallet_activity(wallet_activity):
+    for activity in wallet_activity:
+        activity["amount"] = f"Ksh: {activity['amount']}"
+        activity["date"] = extract_date_time(activity["transaction_date"])["date"]
+        activity["time"] = extract_date_time(activity["transaction_date"])["time"]
+        if activity["transaction_completed"] == True:
+            activity["status"] = "Completed"
+        else:
+            activity["status"] = "not completed"
+        activity["transaction_type"] = (activity["transaction_type"]).replace("_", " ")
+
+    return wallet_activity
 
 
 @tokens_in_cookies("member")

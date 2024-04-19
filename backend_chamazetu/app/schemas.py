@@ -123,6 +123,17 @@ class MemberWalletBalanceResp(BaseModel):
         orm_mode = True
 
 
+class WalletTransactionResp(BaseModel):
+    amount: int
+    transaction_type: str
+    transaction_completed: bool
+    transaction_date: datetime
+    transaction_destination: int
+
+    class Config:
+        orm_mode = True
+
+
 class UpdateWalletBase(BaseModel):
     transaction_destination: int
     amount: int

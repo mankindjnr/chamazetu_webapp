@@ -11,4 +11,8 @@ urlpatterns = [
     path("chama/<int:chamaid>", views.view_chama, name="chama"),
     path("join", views.join_chama, name="join"),
     path("deposit", views.deposit_to_chama, name="deposit"),
+    path("deposit_to_wallet", views.deposit_to_wallet, name="deposit_to_wallet"),
+    path(
+        "withdraw_from_wallet", views.withdraw_from_wallet, name="withdraw_from_wallet"
+    ),
 ]

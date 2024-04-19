@@ -11,7 +11,11 @@ from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from .members import get_user_id
 from chama.chamas import get_chama_id
-from .tasks import update_chama_account_balance, update_wallet_balance
+from .tasks import (
+    update_chama_account_balance,
+    update_wallet_balance,
+    wallet_deposit,
+)
 from .members import (
     get_wallet_balance,
     get_member_expected_contribution,
@@ -37,53 +41,27 @@ def deposit_to_chama(request):
 
         # check if the amount deposited so far, and amount expected, if the the deposit is more than the difference, split the amount, excess to wallet the rest to chama
         if deposit_is_greater_than_difference(amount, member_id, chama_id):
-            transaction_type = "move_to_wallet"
+            transaction_type = "moved_to_wallet"
             # split the amount between the wallet and the chama - excess to wallet and the rest to chama
             excess_to_wallet = amount - difference_btwn_contributed_and_expected(
                 member_id, chama_id
             )
-            update_wallet_balance.delay(
-                headers, excess_to_wallet, chama_id, transaction_type
-            )
-            messages.success(request, "Excess amount deposited to wallet.")
+            if transaction_origin == "direct_deposit":
+                update_wallet_balance.delay(
+                    headers, excess_to_wallet, chama_id, transaction_type
+                )
+                messages.success(request, "Excess amount deposited to wallet.")
             amount = amount - excess_to_wallet  # what remains to be deposited to chama
-
-        if transaction_origin == "direct_deposit":
-            url = f"{config('api_url')}/transactions/deposit"
-            data = {
-                "amount": amount,
-                "chama_id": chama_id,
-                "phone_number": f"254{phone_number}",
-                "transaction_origin": transaction_origin,
-            }
-            # we can run a simple check to see if the amount is a number and the number is a safaricom number
-            response = requests.post(url, headers=headers, json=data)
-
-            if response.status_code == 201:
-                # call the background task function to update the chama account balance
-                update_chama_account_balance.delay(chama_id, amount, transaction_type)
-                messages.success(
-                    request, f"Deposit to {request.POST.get('chamaname')} successful"
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        "member:access_chama", args=(request.POST.get("chamaname"),)
-                    )
-                )
-            else:
-                messages.error(request, "Failed to deposit, please try again.")
-                return HttpResponseRedirect(
-                    reverse(
-                        "member:access_chama", args=(request.POST.get("chamaname"),)
-                    )
-                )
-        elif transaction_origin == "wallet_deposit":
-            if float(amount) <= get_wallet_balance(request):
-                url = f"{config('api_url')}/transactions/deposit_from_wallet"
+        if amount > 0:
+            if transaction_origin == "direct_deposit":
+                url = f"{config('api_url')}/transactions/deposit"
                 data = {
                     "amount": amount,
-                    "transaction_destination": chama_id,
+                    "chama_id": chama_id,
+                    "phone_number": f"254{phone_number}",
+                    "transaction_origin": transaction_origin,
                 }
+                # we can run a simple check to see if the amount is a number and the number is a safaricom number
                 response = requests.post(url, headers=headers, json=data)
 
                 if response.status_code == 201:
@@ -95,23 +73,66 @@ def deposit_to_chama(request):
                         request,
                         f"Deposit to {request.POST.get('chamaname')} successful",
                     )
-                    return redirect(
+                    return HttpResponseRedirect(
                         reverse(
                             "member:access_chama", args=(request.POST.get("chamaname"),)
                         )
                     )
                 else:
                     messages.error(request, "Failed to deposit, please try again.")
-                    return redirect(
+                    return HttpResponseRedirect(
                         reverse(
                             "member:access_chama", args=(request.POST.get("chamaname"),)
                         )
                     )
-            else:
-                messages.error(request, "Insufficient funds in your wallet.")
-                return redirect(
-                    reverse("member:access_chama", args=[request.POST.get("chamaname")])
-                )
+            elif transaction_origin == "wallet_deposit":
+                if float(amount) <= get_wallet_balance(request):
+                    url = f"{config('api_url')}/transactions/deposit_from_wallet"
+                    data = {
+                        "amount": amount,
+                        "transaction_destination": chama_id,
+                    }
+                    response = requests.post(url, headers=headers, json=data)
+
+                    if response.status_code == 201:
+                        # call the background task function to update the chama account balance
+                        update_chama_account_balance.delay(
+                            chama_id, amount, transaction_type
+                        )
+                        update_wallet_balance.delay(
+                            headers, amount, chama_id, "moved_to_chama"
+                        )
+                        messages.success(
+                            request,
+                            f"Deposit to {request.POST.get('chamaname')} successful",
+                        )
+                        return redirect(
+                            reverse(
+                                "member:access_chama",
+                                args=(request.POST.get("chamaname"),),
+                            )
+                        )
+                    else:
+                        messages.error(
+                            request, "Failed to deposit from wallet, please try again."
+                        )
+                        return redirect(
+                            reverse(
+                                "member:access_chama",
+                                args=(request.POST.get("chamaname"),),
+                            )
+                        )
+                else:
+                    messages.error(request, "Insufficient funds in your wallet.")
+                    return redirect(
+                        reverse(
+                            "member:access_chama", args=[request.POST.get("chamaname")]
+                        )
+                    )
+        else:
+            return redirect(
+                reverse("member:access_chama", args=[request.POST.get("chamaname")])
+            )
 
     return redirect(reverse("member:dashboard"))
 
@@ -132,3 +153,31 @@ def deposit_is_greater_than_difference(amount, member_id, chama_id):
 
 
 # deposit to wallet
+def deposit_to_wallet(request):
+    if request.method == "POST":
+        amount = request.POST.get("amount")
+        phonenumber = request.POST.get("phonenumber")
+        member_id = request.POST.get("member_id")
+        chama_name = ""
+        if request.POST.get("chama_name"):
+            chama_name = request.POST.get("chama_name")
+
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        }
+
+        wallet_deposit.delay(headers, amount, member_id)
+        # messages.success(request, "Deposit to wallet successful.")
+        if chama_name:
+            return redirect(
+                reverse("member:access_chama", args=[request.POST.get("chama_name")])
+            )
+        else:
+            return redirect(reverse("member:dashboard"))
+
+    return redirect(reverse("member:dashboard"))
+
+
+def withdraw_from_wallet(request):
+    pass

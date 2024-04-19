@@ -1,0 +1,44 @@
+<div class="modal fade" id="walletModal" tabindex="-1" aria-labelledby="walletLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="walletModalLabel">Deposit to your wallet</h1>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{% url 'member:deposit_to_wallet' %}" method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="amount" class="form-label">Amount</label>
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                <input type="number" class="form-control" id="amount" name="amount" min="1" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="phonenumber" class="form-label">Phone number</label>
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon1">+254</span>
+                <input type="number" class="form-control" id="phonenumber" name="phonenumber" minlength="9" maxlength="9" placeholder="712345678" required>
+              </div>
+            </div>
+
+            <div class="mb-3" style="display: none;">
+              <label for="member" class="form-label">member</label>
+              <input type="text" class="form-control" id="member_id" name="member_id" value="{{ current_user.member_id }}" readonly required>
+            </div>
+            {% if chama %}
+            <div class="mb-3" style="display: none;">
+              <label for="member" class="form-label">chamaname</label>
+              <input type="text" class="form-control" id="chama_name" name="chama_name" value="{{ chama.chama_name }}" required readonly>
+            </div>
+            {% endif %}
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>

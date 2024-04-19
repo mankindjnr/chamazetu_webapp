@@ -24,6 +24,7 @@ from .members import (
     get_user_id,
     get_member_contribution_so_far,
 )
+from .membermanagement import is_empty_dict
 from .tasks import update_shares_number_for_member
 from chama.tasks import update_contribution_days
 
@@ -63,6 +64,7 @@ def access_chama(request, chamaname):
     chama_id = get_chama_id(chamaname)
     chama_members_id = requests.get(f"{config('api_url')}/chamas/members/{chama_id}")
     current_user = request.COOKIES.get("current_member")
+    role = "member"
 
     urls = [
         (f"{config('api_url')}/chamas/chama_name", {"chamaname": chamaname}),
@@ -82,6 +84,8 @@ def access_chama(request, chamaname):
         (f"{config('api_url')}/chamas/today_deposits/{chama_id}", None),
         (f"{config('api_url')}/investments/chamas/account_balance/{chama_id}", None),
         (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
+        (f"{config('api_url')}/members/wallet_balance", {}),
+        (f"{config('api_url')}/users/{role}/{current_user}", None),
     ]
 
     headers = {
@@ -90,6 +94,7 @@ def access_chama(request, chamaname):
     }
 
     results = access_chama_threads(urls, headers)
+    print("=====================================")
 
     if results.get("chama"):
         update_contribution_days.delay()
@@ -97,12 +102,16 @@ def access_chama(request, chamaname):
             request,
             "member/chamadashboard.html",
             {
-                "current_user": current_user,
+                "current_user": {
+                    "current_user": current_user,
+                    "member_id": results.get("wallet")["member_id"],
+                },
                 "role": "member",
                 "chama": results.get("chama"),
                 "recent_transactions": results.get("recent_transactions"),
                 "activity": results.get("activity"),
                 "investment_activity": results.get("investment_activity"),
+                "wallet": results.get("wallet"),
             },
         )
     else:
@@ -119,6 +128,10 @@ def access_chama_threads(urls, headers):
             thread = threading.Thread(
                 target=fetch_data, args=(url, results, payload, headers)
             )
+        elif is_empty_dict(payload):
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, {}, headers)
+            )
         else:
             thread = threading.Thread(target=fetch_data, args=(url, results))
 
@@ -133,6 +146,7 @@ def access_chama_threads(urls, headers):
     recent_activity = []
     investment_activity = []
     members_weekly_transactions = []
+    wallet = []
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
@@ -157,6 +171,10 @@ def access_chama_threads(urls, headers):
             chama["investment_balance"] = results[urls[5][0]]["data"]["amount_invested"]
         if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
             investment_activity = investment_activities(results[urls[6][0]]["data"])
+        if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
+            wallet = results[urls[7][0]]["data"]
+        if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
+            wallet["member_id"] = results[urls[8][0]]["data"]["User_id"]
 
     # return the processed results chama, transactions, members
     return {
@@ -164,6 +182,7 @@ def access_chama_threads(urls, headers):
         "recent_transactions": recent_activity,
         "activity": members_weekly_transactions,
         "investment_activity": investment_activity,
+        "wallet": wallet,
     }
 
 

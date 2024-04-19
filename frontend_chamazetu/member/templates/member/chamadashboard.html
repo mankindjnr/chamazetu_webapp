@@ -28,13 +28,18 @@
           </a>
         </li><!-- End Search Icon-->
 
+        <!-- wallet trigger button - the modal body is in main section to avoid conflicts -->
+        <!-- TODO: see if removing this would be good, only display the amount but deposit funcionality to be kept in main dashboard -->
         <li class="nav-item dropdown">
 
           <a class="nav-icon">
-            <button class="btn btn-dark bi bi-wallet"> ksh {{ wallet_activity.wallet_balance }}</button>
-          </a><!-- End Wallet Icon -->
+            <button type="button" class="btn btn-dark bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletModal">
+              Ksh: {{ wallet.wallet_balance }}
+          </button>
+          </a>
 
-        </li><!-- End Wallet Nav -->
+        </li>
+        <!-- End Wallet Nav -->
 
         <li class="nav-item dropdown pe-3">
 
@@ -45,7 +50,7 @@
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>{{ current_user }}</h6>
+              <h6>{{ current_user.current_user }}</h6>
               <span>{{ role }}</span>
             </li>
             <li>
@@ -152,7 +157,7 @@
         </button>
         <!-- direct deposit Modal -->
         {% include 'member/modals/direct_deposit_modal.html' %}
-        </div>
+      </div>
 
     </div><!-- End Page Title -->
 
@@ -346,7 +351,8 @@
       <p class="mb-0">Click <a href="{% url 'manager:createchama' %}">here</a> to create a chama.</p>
     </div>
     {% endif %}
-
+    <!-- wallet Modal -->
+      {% include 'member/modals/wallet_modal.html' %}
   </main><!-- End #main -->
 
   <script>
