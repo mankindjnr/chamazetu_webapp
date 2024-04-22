@@ -104,23 +104,30 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
+        <a class="nav-link collapsed" href="{% url 'member:members_tracker' chama.chama_name %}">
           <i class="bi bi-grid"></i>
-          <span>members tracker</span>
+          <span>Members Tracker</span>
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>Investment performance</span> 
+          <span>Investment Performance</span> 
         </a>
       </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>About chama</span> 
+          <span>Members List</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#">
+          <i class="bi bi-grid"></i>
+          <span>About Chama</span> 
         </a>
       </li><!-- End about Page Nav -->
 
@@ -243,13 +250,13 @@
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">chama activity <span>| contributions in Ksh</span></h5>
+                  <h5 class="card-title">chama weekly activity <span>| contributions in Ksh</span></h5>
                   <div>
                     <hr>
                     <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ chama.contribution_date}}</button>
                   </div>
 
-                  <table class="table">
+                  <table class="table table-success table-striped-columns">
                     <thead>
                       <tr>
                         <th scope="col">members</th>

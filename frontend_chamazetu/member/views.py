@@ -4,7 +4,9 @@ from django.shortcuts import render
 from .membermanagement import dashboard, profile
 from .member_chama import view_chama, join_chama, access_chama
 from .member_transactions import (
-    deposit_to_chama,
+    direct_deposit_to_chama,
+    from_wallet_to_chama,
     deposit_to_wallet,
     withdraw_from_wallet,
 )
+from .members_activity import members_tracker

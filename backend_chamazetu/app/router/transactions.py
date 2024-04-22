@@ -13,7 +13,7 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 # create deposit transaction for a logged in member to chama
 @router.post(
-    "/deposit",
+    "/direct_deposit",
     status_code=status.HTTP_201_CREATED,
     response_model=schemas.TransactionResp,
 )

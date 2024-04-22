@@ -141,6 +141,49 @@ def get_previous_contribution_date(chama_id):
     return previous_contribution_date.strftime("%d-%m-%Y")
 
 
+def get_members_daily_contribution_in_given_month(chama_id, prev_4th_contribution_date):
+    url = f"{config('api_url')}/members_tracker/members_daily_monthly_contribution/{chama_id}"
+    data = {"contribution_back_date": prev_4th_contribution_date}
+    resp = requests.get(url, json=data)
+    if resp.status_code == 200:
+        return resp.json()
+
+
+def fourth_contribution_date_from_the_upcoming(chama_id, interval):
+    # we will use the upcoming date to determine the fourth previous contribution date, we will use the interval as well
+    upcoming_contribution_date = get_chama_contribution_day(chama_id)[
+        "contribution_date"
+    ]
+    # if the contribution day has not been set, return a default date -14 days
+    prev_fourth_contribution_date = datetime.now() - timedelta(days=14)
+    if interval == "daily":
+        # the the previous 4th contribution date will be 4 days before the upcoming contribution date
+        prev_fourth_contribution_date = datetime.strptime(
+            upcoming_contribution_date, "%d-%B-%Y"
+        ) - timedelta(days=4)
+    elif interval == "weekly":
+        # the the previous 4th contribution date will be 4 weeks before the upcoming contribution date
+        prev_fourth_contribution_date = datetime.strptime(
+            upcoming_contribution_date, "%d-%B-%Y"
+        ) - timedelta(weeks=4)
+    elif interval == "monthly":
+        # the the previous 4th contribution date will be 4 months before the upcoming contribution date
+        prev_fourth_contribution_date = datetime.strptime(
+            upcoming_contribution_date, "%d-%B-%Y"
+        ) - timedelta(weeks=16)
+
+    return prev_fourth_contribution_date.strftime("%d-%m-%Y")
+
+
+def get_chama_creation_date(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/creation_date/{chama_id}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        creation_date = chama["creation_date"]
+        return creation_date
+    return None
+
+
 def get_chama_number_of_members(chama_id):
     resp = requests.get(f"{config('api_url')}/chamas/members_count/{chama_id}")
     if resp.status_code == 200:

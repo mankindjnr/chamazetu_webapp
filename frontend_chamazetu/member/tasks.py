@@ -68,3 +68,17 @@ def wallet_deposit(headers, amount, member_id):
 
     response = requests.put(url, json=data, headers=headers)
     return None
+
+
+@shared_task
+def wallet_withdrawal(headers, amount, member_id):
+    url = f"{config('api_url')}/members/update_wallet_balance"
+
+    data = {
+        "transaction_destination": 0,  # should be the phone number of the member, where the money is being withdrawn to
+        "amount": amount,
+        "transaction_type": "withdrawn_from_wallet",
+    }
+
+    response = requests.put(url, json=data, headers=headers)
+    return None

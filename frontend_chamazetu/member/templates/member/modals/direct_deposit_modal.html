@@ -6,7 +6,7 @@
           <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form action="{% url 'member:deposit' %}" method="POST">
+          <form action="{% url 'member:direct_deposit_to_chama' %}" method="POST">
             {% csrf_token %}
             <div class="mb-3">
               <label for="amount" class="form-label">Amount</label>

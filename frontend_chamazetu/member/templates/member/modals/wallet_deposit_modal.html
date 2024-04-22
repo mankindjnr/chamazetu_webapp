@@ -6,7 +6,7 @@
           <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form action="{% url 'member:deposit' %}" method="POST">
+          <form action="{% url 'member:from_wallet_to_chama' %}" method="POST">
             {% csrf_token %}
             <div class="mb-3">
               <label for="amount" class="form-label">Amount</label>
@@ -14,14 +14,6 @@
                 <span class="input-group-text" id="basic-addon1">Ksh:</span>
                 <input type="number" class="form-control" id="amount" name="amount" min="1" required>
                 </div>
-            </div>
-
-            <div class="mb-3">
-              <label for="phonenumber" class="form-label">Phone number</label>
-              <div class="input-group">
-                <span class="input-group-text" id="basic-addon1">+254</span>
-                <input type="number" class="form-control" id="phonenumber" name="phonenumber" maxlength="9" placeholder="712345678" required>
-              </div>
             </div>
 
             <div class="mb-3" style="display: none;">
