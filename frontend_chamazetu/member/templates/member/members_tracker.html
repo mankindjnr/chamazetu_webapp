@@ -153,9 +153,47 @@
         <!-- Left side columns -->
         <div class="col-lg-12">
           <div class="row">
+
+            <!-- chama days tracker -->
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">contribution days tracker <span>| periodical contributions in Ksh</span></h5>
+
+                  <table class="table table-success table-striped">
+                    <thead>
+                      <tr>
+                        <th scope="col">members</th>
+                        {% for date, inner_dict in chama_days_tracker.items %}
+                        <th scope="col" style="white-space: nowrap;" >{{ date }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for date, values in chama_days_tracker.items %}
+                      {% for member_name, transaction in values.items %}
+                      {% for contribution_date, contribution in transaction.items %}
+                      <tr>
+                        <th scope="row">{{ member_name }}</th>
+                        <!-- <td>{{ contribution_date }} {{ contribution }} </td> -->
+                        <td>{{ contribution }}</td>
+                      </tr>
+                      {% endfor %}
+                      {% endfor %}
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                </div>
+
+              </div>
+            </div>
+
+            <!-- end chama days tracker -->
           
 
-            <!-- performance monthly -->
+            <!-- members activityy tracker -->
             <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
@@ -188,7 +226,7 @@
                 </div>
 
               </div>
-            </div><!-- End fund performance -->
+            </div><!-- End members tracker performance -->
 
           </div>
         </div><!-- End Left side columns -->

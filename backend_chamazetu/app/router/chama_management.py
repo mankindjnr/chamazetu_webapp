@@ -517,4 +517,20 @@ async def get_chama_creation_date(
     return {"creation_date": chama.date_created.strftime("%d-%m-%Y")}
 
 
+# get chamas start date
+@router.get(
+    "/start_date/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_start_date(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+
+    return {"start_date": chama.start_cycle.strftime("%d-%m-%Y")}
+
+
 # TODO: retrieve manager recent transactions and display beneath recent activity

@@ -1,4 +1,4 @@
-import requests, jwt, json
+import requests, jwt, json, calendar
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
@@ -182,6 +182,54 @@ def get_chama_creation_date(chama_id):
         creation_date = chama["creation_date"]
         return creation_date
     return None
+
+
+def get_chama_start_date(chama_id):
+    resp = requests.get(f"{config('api_url')}/chamas/start_date/{chama_id}")
+    if resp.status_code == 200:
+        chama = resp.json()
+        start_date = chama["start_date"]
+        return start_date
+    return None
+
+
+def get_chamas_last_four_contribution_days(chama_id):
+    interval_detail = get_chama_contribution_interval(chama_id)
+    interval = interval_detail["contribution_interval"]
+    contribution_day = interval_detail["contribution_day"]
+
+    ahead_date = datetime.strptime(
+        get_chama_contribution_day(chama_id)["contribution_date"], "%d-%B-%Y"
+    )
+    chama_start_date = datetime.strptime(get_chama_start_date(chama_id), "%d-%m-%Y")
+
+    dates = []
+    if interval == "daily":
+        while chama_start_date <= ahead_date:
+            dates.append(ahead_date)
+            ahead_date -= timedelta(days=1)
+    elif interval == "weekly":
+        while chama_start_date <= ahead_date:
+            dates.append(ahead_date)
+            ahead_date -= timedelta(weeks=1)
+    elif interval == "monthly":
+        while chama_start_date <= ahead_date:
+            dates.append(ahead_date)
+            prev_month = ahead_date.month - 1 if ahead_date.month > 1 else 12
+            prev_year = ahead_date.year if prev_month != 12 else ahead_date.year - 1
+            if calendar.isleap(prev_year) and prev_month == 2:
+                ahead_date = ahead_date.replace(
+                    day=min(int(contribution_day), 29), month=prev_month, year=prev_year
+                )
+            else:
+                ahead_date = ahead_date.replace(
+                    day=int(contribution_day), month=prev_month, year=prev_year
+                )
+
+    latest_four_dates = []
+    for date in dates:
+        latest_four_dates.append(date.strftime("%d-%m-%Y"))
+    return latest_four_dates
 
 
 def get_chama_number_of_members(chama_id):
