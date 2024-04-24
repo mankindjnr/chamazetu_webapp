@@ -57,7 +57,7 @@ def members_tracker(request, chama_name):
             "chama_name": chama_name,
             "monthly_tracker_data": monthly_tracker_data["transactions_organised"],
             "dates": monthly_tracker_data["dates"],
-            "chama_days_tracker": chama_days_tracker["chama_days_tracker"],
+            "members_tracker": chama_days_tracker["members_tracker"],
             "contribution_dates": chama_days_tracker["latest_four_dates"],
         },
     )
@@ -127,8 +127,10 @@ def chama_days_contribution_tracker(request, chama_id, interval):
     for date in latest_four_dates:
         data = {}  # due to python's handling of mutable objects
         data["upto_date"] = datetime.strptime(date, "%d-%m-%Y")
+        print("==the data==")
+        print(data)
         if interval == "daily":
-            data["from_date"] = get_the_from_dates(data["upto_date"])
+            data["from_date"] = get_the_from_dates("daily", data["upto_date"])
         elif interval == "weekly":
             data["from_date"] = get_the_from_dates("weekly", data["upto_date"])
         elif interval == "monthly":
@@ -155,7 +157,7 @@ def chama_days_contribution_tracker(request, chama_id, interval):
     )
 
     return {
-        "chama_days_tracker": organised_chama_days_tracker,
+        "members_tracker": organised_chama_days_tracker,
         "latest_four_dates": latest_four_dates,
     }
 
@@ -201,17 +203,14 @@ def chama_contribution_days_threads(urls, headers):
             if activity["chama_contribution"]:
                 chama_days_activity.append(activity["chama_contribution"])
 
+    print("===chama activity===")
+    print(chama_days_activity)
+
     return chama_days_activity
 
 
 # arrange the  contributions according to their contribution dates
 def chama_days_contribution_tracker_organised(responses, dates, interval):
-    """
-    responses = [{'2': {'18-04-2024': 230}, '1': {'22-04-2024': 230}, '3': {'23-04-2024': 230}}]
-    """
-    """
-    periodical_dates = [{'from_date': '17-04-2024', 'upto_date': '24-04-2024'}, {'from_date': '10-04-2024', 'upto_date': '17-04-2024'}, {'from_date': '03-04-2024', 'upto_date': '10-04-2024'}]
-    """
     periodical_dates = []
     for date in dates:
         periodical_dates.append(
@@ -224,6 +223,8 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
         )
     print("-preiodical dates------")
     print(periodical_dates)
+    print("----the responses----")
+    print(responses)
     # we are goin to categorize the contributions according to their dates,
     # the contribution will be organized in that its date is > from_date and <= upto_date
 
@@ -232,18 +233,53 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
         contributions[date["upto_date"]] = {}
         for response in responses:
             for member_id, member_contribution in response.items():
-                if (
-                    date["from_date"]
-                    < list(member_contribution.keys())[0]
-                    <= date["upto_date"]
-                ):
+                print("***************")
+                print("from_date:", date["from_date"], "upto_date:", date["upto_date"])
+                print()
+                member_date = datetime.strptime(
+                    list(member_contribution.keys())[0], "%d-%m-%Y"
+                )
+                from_date = datetime.strptime(date["from_date"], "%d-%m-%Y")
+                upto_date = datetime.strptime(date["upto_date"], "%d-%m-%Y")
+                if (member_date > from_date) and (member_date <= upto_date):
+                    print("=====its in the range=====")
                     contributions[date["upto_date"]][
                         get_user_full_name("member", member_id)
                     ] = member_contribution
 
+    print("---the contributions----")
+    print(contributions)
+
+    dates = sorted(contributions.keys(), reverse=True)
+    members = set()
+
+    for date, transactions in contributions.items():
+        for member in transactions:
+            members.add(member)
+    for date, transactions in contributions.items():
+        for member in members:
+            if member not in transactions:
+                contributions[date][member] = {date: 0}
+
     print("==the contributions==")
     print(contributions)
-    return contributions
+
+    chama_days_tracker_data = {}
+    for member in members:
+        member_contributions = {}
+        for date in dates:
+            if member in contributions[date]:
+                for transaction_date, transaction_amount in contributions[date][
+                    member
+                ].items():
+                    member_contributions[transaction_date] = transaction_amount
+            else:
+                member_contributions[date] = 0
+
+        chama_days_tracker_data[member] = member_contributions
+    print("==the tracker==")
+    print(chama_days_tracker_data)
+    return chama_days_tracker_data
 
 
 # a function that gets the from_date

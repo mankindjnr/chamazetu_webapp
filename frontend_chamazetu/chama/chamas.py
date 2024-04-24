@@ -201,18 +201,26 @@ def get_chamas_last_four_contribution_days(chama_id):
     ahead_date = datetime.strptime(
         get_chama_contribution_day(chama_id)["contribution_date"], "%d-%B-%Y"
     )
+    print("======upcoming date")
+    print(ahead_date)
     chama_start_date = datetime.strptime(get_chama_start_date(chama_id), "%d-%m-%Y")
+    print("======chama start date")
+    print(chama_start_date)
 
     dates = []
     if interval == "daily":
+        print("===daily===")
         while chama_start_date <= ahead_date:
             dates.append(ahead_date)
             ahead_date -= timedelta(days=1)
     elif interval == "weekly":
+        print("===weekly===")
         while chama_start_date <= ahead_date:
+            print("times")
             dates.append(ahead_date)
             ahead_date -= timedelta(weeks=1)
     elif interval == "monthly":
+        print("===monthly===")
         while chama_start_date <= ahead_date:
             dates.append(ahead_date)
             prev_month = ahead_date.month - 1 if ahead_date.month > 1 else 12

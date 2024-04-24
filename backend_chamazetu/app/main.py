@@ -11,6 +11,7 @@ from .router import (
     chama_investment,
     members,
     members_tracker,
+    search_functionality,
 )
 
 app = FastAPI()
@@ -33,6 +34,7 @@ app.include_router(transactions.router)
 app.include_router(chama_investment.router)
 app.include_router(members.router)
 app.include_router(members_tracker.router)
+app.include_router(search_functionality.router)
 
 
 @app.get("/")

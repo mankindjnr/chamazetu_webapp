@@ -16,6 +16,8 @@ def fetch_queued_data(url, queue, data=None, headers=None):
     else:
         response = requests.get(url)
 
+    # print("===queued data===")
+    # print(response.json())
     queue.put({url: {"data": response.json(), "status": response.status_code}})
 
 
