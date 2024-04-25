@@ -57,7 +57,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'member:profile' current_user.member_id %}">
                 <i class="bi bi-person"></i>
                 <span>My Profile</span>
               </a>
@@ -66,16 +66,6 @@
               <hr class="dropdown-divider">
             </li>
 
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
-                <i class="bi bi-question-circle"></i>
-                <span>Need Help?</span>
-              </a>
-            </li>
             <li>
               <hr class="dropdown-divider">
             </li>
@@ -105,11 +95,21 @@
           <i class="bi bi-menu-button-wide"></i><span>chamazangu</span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          {% if chamas %}
+          {% for chama in chamas %}
           <li>
-            <a href="components-alerts.html">
-              <i class="bi bi-circle"></i><span>Alerts</span>
+              <a href="{% url 'member:access_chama' chama.chama_name %}">
+              <i class="bi bi-circle"></i><span>{{ chama.chama_name }}</span>
             </a>
           </li>
+          {% endfor %}
+          {% else %}
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>no chamas available</span>
+            </a>
+          </li>
+          {% endif %}
         </ul>
       </li><!-- End Components Nav -->
 

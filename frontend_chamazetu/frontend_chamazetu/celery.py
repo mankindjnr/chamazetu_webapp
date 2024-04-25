@@ -21,7 +21,12 @@ app.conf.beat_schedule = {
     "update-contribution-days": {
         "task": "chama.tasks.update_contribution_days",
         "schedule": crontab(minute=0, hour=0),  # executed at midnight everyday
-    }
+    },
+    # every 10 minutes
+    "run_every_10_minutes": {
+        "task": "chama.tasks.calaculate_daily_mmf_interests",
+        "schedule": crontab(minute="*/5"),
+    },
 }
 
 app.autodiscover_tasks()

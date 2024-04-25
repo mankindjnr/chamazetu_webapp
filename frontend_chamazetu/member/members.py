@@ -48,23 +48,58 @@ def get_member_expected_contribution(member_id, chama_id):
     url = f"{config('api_url')}/members/expected_contribution"
     data = {"member_id": member_id, "chama_id": chama_id}
     resp = requests.get(url, json=data)
-    return resp.json()["member_expected_contribution"]
+    if resp.status_code == 200:
+        return resp.json()["member_expected_contribution"]
+    return None
 
 
 def get_user_id(role, email):
     url = f"{config('api_url')}/users/{role}/{email}"
     resp = requests.get(url)
-    user = resp.json()
-    user_id = user["User_id"]
-    return user_id
+    if resp.status_code == 200:
+        user = resp.json()
+        user_id = user["User_id"]
+        return user_id
+    return None
 
 
 def get_user_full_name(role, id):
     url = f"{config('api_url')}/users/names/{role}/{id}"
     resp = requests.get(url)
-    user = resp.json()
-    full_name = f"{user['first_name']} {user['last_name']}"
-    return full_name
+    if resp.status_code == 200:
+        user = resp.json()
+        full_name = f"{user['first_name']} {user['last_name']}"
+        return full_name
+    return None
+
+
+def get_user_email(role, id):
+    url = f"{config('api_url')}/users/email/{role}/{id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        user = resp.json()
+        email = user["email"]
+        return email
+    return None
+
+
+def get_user_phone_number(role, id):
+    url = f"{config('api_url')}/users/phone_number/{role}/{id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        user = resp.json()
+        phone_number = user["phone_number"]
+        return phone_number
+    return None
+
+
+def get_user_full_profile(role, id):
+    url = f"{config('api_url')}/users/full_profile/{role}/{id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        user = resp.json()
+        return user
+    return None
 
 
 def get_member_contribution_so_far(chama_id, member_id):

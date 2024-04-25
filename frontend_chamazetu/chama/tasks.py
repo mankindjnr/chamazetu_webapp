@@ -34,3 +34,16 @@ def update_contribution_days():
     response = requests.put(f"{config('api_url')}/chamas/update_contribution_days")
 
     return None
+
+
+# calculate daily interests for the chamas
+@shared_task
+def calaculate_daily_mmf_interests():
+    """
+    Calculate daily interests for the chamas
+    """
+    response = requests.put(
+        f"{config('api_url')}/investments/chamas/calculate_daily_mmf_interests"
+    )
+
+    return None

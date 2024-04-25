@@ -200,3 +200,33 @@ print(response.status_code)
 The `verify=False` option allows requests to make insecure connections, which is necessary because you're using a self-signed certificate.
 
 Please note that these methods are for testing purposes only. You should not use the `-k` or `--insecure` options or the `verify=False` option in a production environment. In a production environment, you should use a certificate issued by a trusted Certificate Authority (CA), and you should always verify the server's SSL certificate.
+
+# CELERY BEAT SCHEDULER
+
+The error message you're seeing indicates that the table `django_celery_beat_periodictask` does not exist in your database. This table is created by the Django Celery Beat library, which is used for scheduling tasks in Django projects.
+
+If you've just added Django Celery Beat to your project, you may need to apply its migrations to create the necessary database tables. You can do this by running the following command in your terminal:
+
+```bash
+python manage.py migrate
+```
+
+If you've already run this command and are still seeing the error, it's possible that there's an issue with your database connection, or that the migrations were not applied correctly. You may want to check your database settings and consider re-running the migrations.
+
+- after adding the `celery_beat_scheduler` service to your `docker-compose.yml` file and running `docker-compose up`, the Celery beat scheduler should start running in a separate Docker container. It will start scheduling the tasks defined in your Celery configuration at the specified intervals.
+
+You can monitor the logs of the `celery_beat_scheduler` service to see when it schedules tasks. You can do this by running the following command in a terminal:
+
+```bash
+docker-compose logs -f celery_beat_scheduler
+```
+
+This command will show the logs of the `celery_beat_scheduler` service and follow the log output (`-f` stands for "follow"). When the beat scheduler schedules a task, it will output a log message, so you can see when each task is scheduled.
+
+You can also monitor the logs of the `celery_worker` service to see when it executes tasks. You can do this by running the following command in a terminal:
+
+```bash
+docker-compose logs -f celery_worker
+```
+
+This command will show the logs of the `celery_worker` service. When the worker executes a task, it will output a log message, so you can see when each task is executed.

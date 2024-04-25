@@ -26,7 +26,7 @@ chama_investment_association = Table(
     "chama_investment",
     Base.metadata,
     Column("chama_id", Integer, ForeignKey("chamas.id")),
-    Column("investment_id", Integer, ForeignKey("investments.id")),
+    Column("available_investment_id", Integer, ForeignKey("available_investments.id")),
 )
 
 
@@ -38,6 +38,13 @@ class Member(Base):
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     email_verified = Column(Boolean, default=False)
+    # later, have a field for the member's profile picture
+    # for kyc purposes id number(cmpared against phone num reg details)
+    phone_number = Column(String(12), nullable=True)
+    twitter = Column(String, nullable=True)
+    facebook = Column(String, nullable=True)
+    linkedin = Column(String, nullable=True)
+
     password = Column(String, nullable=False)
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
@@ -116,8 +123,10 @@ class Chama(Base):
         "Member", secondary=members_chamas_association, back_populates="chamas"
     )
     # Define the many-to-many relationship between chamas and investments one chama can have many investments and one investment can belong to many chamas
-    investments = relationship(
-        "Investment", secondary=chama_investment_association, back_populates="chamas"
+    available_investments = relationship(
+        "Available_Investment",
+        secondary=chama_investment_association,
+        back_populates="chamas",
     )
 
 
@@ -130,6 +139,12 @@ class Manager(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     email_verified = Column(Boolean, default=False)
+
+    phone_number = Column(String(12), nullable=True)
+    twitter = Column(String, nullable=True)
+    facebook = Column(String, nullable=True)
+    linkedin = Column(String, nullable=True)
+
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -186,8 +201,8 @@ class Chama_Account(Base):
 
 # this table carries the investments available to chamas
 # access limited to admins of chamazetu to create products for customers
-class Investment(Base):
-    __tablename__ = "investments"
+class Available_Investment(Base):
+    __tablename__ = "available_investments"
 
     id = Column(Integer, primary_key=True, index=True)
     investment_name = Column(String, nullable=False)
@@ -211,7 +226,9 @@ class Investment(Base):
 
     # Define the many-to-many relationship between chamas and investments
     chamas = relationship(
-        "Chama", secondary=chama_investment_association, back_populates="investments"
+        "Chama",
+        secondary=chama_investment_association,
+        back_populates="available_investments",
     )
 
 
@@ -224,7 +241,10 @@ class Investment_Performance(Base):
     investment_start_date = Column(DateTime, nullable=False)
     investment_name = Column(String, nullable=False)
     investment_type = Column(String, nullable=False)
-    interest_earned = Column(Float, nullable=False)
+    total_interest_earned = Column(Float, nullable=False)  # overtime
+    weekly_interest = Column(Float, nullable=False)
+    daily_interest = Column(Float, nullable=False)
+    monthly_interest = Column(Float, nullable=False)
     # one to many relationship - one chama can have many investment performances(multiple investment-mmf/reits)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="investments_performance")
@@ -237,7 +257,7 @@ class MMF(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
     transaction_type = Column(String, nullable=False)
-    current_int_rate = Column(Integer, nullable=False)
+    current_int_rate = Column(Float, nullable=False)
     transaction_date = Column(DateTime, default=datetime.now(timezone.utc))
     # one to many relationship - one chama can make multiple mmf transactions
     chama_id = Column(Integer, ForeignKey("chamas.id"))

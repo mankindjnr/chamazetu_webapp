@@ -59,6 +59,18 @@ services:
     environment:
       - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
 
+  celery_beat_scheduler:
+    build:
+      context: ./frontend_chamazetu
+    command: celery -A frontend_chamazetu.celery beat -l INFO
+    volumes:
+      - ./frontend_chamazetu:/app/frontend/
+    depends_on:
+      - chamazetu_database
+      - message_broker
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
+
 volumes:
   chamazetu_data:
   redis_data:

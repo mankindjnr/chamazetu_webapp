@@ -13,6 +13,7 @@ from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_id, get_chama_number_of_members
 from member.member_chama import access_chama_threads, recent_transactions
+from member.members import get_user_full_profile, get_user_id
 
 
 from chama.usermanagement import (
@@ -37,8 +38,6 @@ def dashboard(request):
     chamas = execute_sql(query, params)
 
     chamas = dict(chamas)
-    print(chamas)
-    print()
     list_of_chamas = []
     for item in chamas:
         chama = {}
@@ -54,6 +53,7 @@ def dashboard(request):
         "manager/dashboard.html",
         {
             "current_user": current_user,
+            "manager_id": manager_id,
             "chamas": chamas,
         },
     )
@@ -142,6 +142,7 @@ def chama(request, key):
     chama_name = key
     chama_id = get_chama_id(chama_name)
     current_user = request.COOKIES.get("current_manager")
+    manager_id = get_user_id("manager", current_user)
     headers = {
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
@@ -165,7 +166,6 @@ def chama(request, key):
     # ===================================
 
     results = chama_threads(urls, headers)
-    print("===========results thread=============")
 
     if results["chama"]:
         return render(
@@ -173,6 +173,7 @@ def chama(request, key):
             "manager/chamadashboard.html",
             {
                 "current_user": current_user,
+                "manager_id": manager_id,
                 "chama_name": chama_name,
                 "chama": results["chama"],
                 "recent_transactions": results["recent_activity"],
@@ -224,9 +225,46 @@ def chama_threads(urls, headers):
 
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
-def profile(request, role="manager"):
-    page = f"manager/profile.html"
-    return render(request, page)
+def profile(request, manager_id):
+    full_profile = get_user_full_profile("manager", manager_id)
+    return render(request, "manager/profile.html", {"profile": full_profile})
+
+
+@tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
+def change_password(request, manager_id):
+    if request.method == "POST":
+        role = request.POST.get("role")
+        current_password = request.POST.get("password")
+        new_password = request.POST.get("newpassword")
+        confirm_password = request.POST.get("renewpassword")
+
+        if new_password != confirm_password:
+            messages.error(request, "Passwords do not match")
+            return redirect(reverse(f"{role}:profile", args=[manager_id]))
+
+        url = f"{config('api_url')}/users/{role}/change_password"
+        data = {
+            "user_id": manager_id,
+            "old_password": current_password,
+            "new_password": new_password,
+        }
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get(f'{role}_access_token')}",
+        }
+        response = requests.put(url, json=data, headers=headers)
+
+        if response.status_code == 201:
+            messages.success(request, "Password changed successfully")
+            return redirect(reverse(f"{role}:profile", args=[manager_id]))
+        else:
+            messages.error(
+                request, "An error occurred or the current password is wrong"
+            )
+            return redirect(reverse(f"{role}:profile", args=[manager_id]))
+
+    return redirect(reverse(f"{role}:profile", args=[manager_id]))
 
 
 @tokens_in_cookies("manager")

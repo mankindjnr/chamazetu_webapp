@@ -94,7 +94,6 @@ def access_chama(request, chamaname):
     }
 
     results = access_chama_threads(urls, headers)
-    print("=====================================")
 
     if results.get("chama"):
         update_contribution_days.delay()
@@ -273,9 +272,6 @@ def organise_activity(members_daily_transactions, chama_id):
         activity["member_contribution_so_far"] = get_member_contribution_so_far(
             chama_id, activity["member_id"]
         )
-
-    print("=====================================")
-    print(weekly_activity)
 
     return weekly_activity
 

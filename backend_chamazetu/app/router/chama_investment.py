@@ -19,9 +19,12 @@ async def make_an_investment(
     try:
         print("============investing in mmfs==========")
         invest_dict = invest_data.dict()
-        invest_dict["current_int_rate"] = 12
-        # get_current_investment_details(invest_dict["investment_type"], db)
+        invest_dict["current_int_rate"] = get_current_investment_rate(
+            invest_dict["investment_type"], db
+        )
         invest_dict["transaction_date"] = datetime.now(timezone.utc)
+        del invest_dict["investment_type"]
+        print(invest_dict)
 
         investment_deposit = models.MMF(**invest_dict)
         db.add(investment_deposit)
@@ -32,28 +35,25 @@ async def make_an_investment(
         raise HTTPException(status_code=400, detail="investment deposit failed")
 
 
-def get_current_investment_details(
+def get_current_investment_rate(
     investment_type: str, db: Session = Depends(database.get_db)
 ):
     try:
+        print("========gettingthe investment rate===========")
+        investment_type = investment_type.upper()
         investment_object = (
-            db.query(models.Investment)
-            .filter(models.Investment.investment_type == investment_type)
+            db.query(models.Available_Investment)
+            .filter(models.Available_Investment.investment_type == investment_type)
             .first()
         )
-        details = {
-            "rate": investment_object.investment_rate,
-            "minimum_deposit": investment_object.min_invest_ammount,
-            "investment_name": investment_object.investment_name,
-        }
     except Exception as e:
         print(e)
         raise HTTPException(
-            status_code=400, detail="could not retrieve investment detail"
+            status_code=400, detail="could not retrieve current investment rate"
         )
-    print("==========invst details============")
-    print(details)
-    return details
+    print("==========invst rate============")
+    print(investment_object.investment_rate)
+    return investment_object.investment_rate
 
 
 # get investment details
@@ -161,6 +161,37 @@ async def get_investments_recent_activity(
         )
 
     return recent_invst_activity
+
+
+# calculating daily mmf interests
+@router.put("/calculate_daily_mmf_interests", status_code=status.HTTP_200_OK)
+def calculate_daily_mmf_interests(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============calculating daily interests==========")
+        investments = db.query(models.Investment_Performance).filter(
+            models.Investment_Performance.investment_type == "mmf"
+        )
+
+        for investment in investments:
+            interest_rate = get_current_investment_rate(
+                (investment.investment_type).upper(), db
+            )
+            interest_earned = investment.amount_invested * (interest_rate / 100) / 360
+            investment.daily_interest = interest_earned
+            investment.weekly_interest += interest_earned
+            investment.monthly_interest += interest_earned
+            investment.total_interest_earned += interest_earned
+            db.commit()
+            db.refresh(investment)
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="calculating daily interests failed"
+        )
 
 
 # interest earned on a certain investment by a certain chama

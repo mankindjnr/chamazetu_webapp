@@ -38,6 +38,7 @@ def invest(request):
             "chama_id": chama_id,
             "amount": investment_amt,
             "transaction_type": transaction_type,
+            "investment_type": investment_type,
         }
 
         headers = {
@@ -67,7 +68,9 @@ def invest(request):
                     reverse("manager:chama", args=(chama_name,))
                 )
             else:
-                messages.error(request, "The deposit failed, please try again.")
+                messages.error(
+                    request, "The deposit failed, please try again in a few."
+                )
                 return HttpResponseRedirect(
                     reverse("manager:chama", args=(chama_name,))
                 )

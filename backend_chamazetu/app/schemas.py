@@ -232,11 +232,18 @@ class UpdatePasswordBase(BaseModel):
     updated_password: str
 
 
+class ChangePasswordBase(BaseModel):
+    user_id: int
+    old_password: str
+    new_password: str
+
+
 # =========== invest ===========================
 class InvestBase(BaseModel):
     chama_id: int
     amount: int
     transaction_type: str
+    investment_type: str
 
 
 class InvestmentPerformanceResp(BaseModel):

@@ -6,7 +6,10 @@ app_name = "member"
 
 urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
-    path("profile", views.profile, name="profile"),
+    path("profile/<int:member_id>", views.profile, name="profile"),
+    path(
+        "change_password/<int:user_id>", views.change_password, name="change_password"
+    ),
     path("access_chama/<str:chamaname>", views.access_chama, name="access_chama"),
     path("chama/<int:chamaid>", views.view_chama, name="chama"),
     path(
