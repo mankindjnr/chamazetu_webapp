@@ -40,24 +40,24 @@
         <div class="row portfolio-container" data-aos="fade-up">
           {% if chamas %}
           {% for chama in chamas %}
-          <div class="col-lg-4 col-md-6 portfolio-item filter-{{ chama.1 }}">
+          <div class="col-lg-4 col-md-6 portfolio-item filter-{{ chama.chama_type }}">
             {% if role %}
-            <a href="{% url 'member:chama' chama.3 %}" style="text-decoration: none; color: inherit;">
+            <a href="{% url 'member:chama' chama.id %}" style="text-decoration: none; color: inherit;">
             {% else %}
             <!-- for unathenticated users -->
-            <a href="{% url 'chama:chama' chama.3 %}" style="text-decoration: none; color: inherit;">
+            <a href="{% url 'chama:chama' chama.id %}" style="text-decoration: none; color: inherit;">
             {% endif %}
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title"><span>| {{ chama.1 }} </span></h5>
+                  <h5 class="card-title"><span>| {{ chama.chama_type }} </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <i class="bi bi-cart"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>{{ chama.2 }}</h6>
+                      <h6>{{ chama.chama_name }}</h6>
                       <span class="text-success small pt-1 fw-bold">no of</span> <span class="text-muted small pt-2 ps-1">members</span>
 
                     </div>

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from sqlalchemy import func, update, and_, table, column
+from typing import List
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -31,7 +32,35 @@ async def create_chama(
         raise HTTPException(status_code=400, detail="Failed to create chama")
 
 
-# set contribution day for a chama during creation by checkign the start date, interval and day
+# retrive chama accepting chamas and are active
+@router.get(
+    "/active_accepting_members_chamas",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.ActivelyAcceptingMembersChamas],
+)
+async def get_active_chamas(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chamas = (
+            db.query(models.Chama).filter(
+                and_(
+                    models.Chama.is_active == True,
+                    models.Chama.accepting_members == True,
+                )
+            )
+        ).all()
+
+        if not chamas:
+            raise HTTPException(status_code=404, detail="No active chamas found")
+
+        return chamas
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to retrieve active chamas")
+
+
+# TODO: set contribution day for a chama during creation by checkign the start date, interval and day
 
 
 # updating contribution days for chamas
@@ -531,6 +560,3 @@ async def get_chama_start_date(
         raise HTTPException(status_code=404, detail="Chama not found")
 
     return {"start_date": chama.start_cycle.strftime("%d-%m-%Y")}
-
-
-# TODO: retrieve manager recent transactions and display beneath recent activity

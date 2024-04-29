@@ -13,6 +13,7 @@ from .router import (
     members_tracker,
     search_functionality,
     member_profile,
+    managers,
 )
 
 app = FastAPI()
@@ -37,6 +38,7 @@ app.include_router(members.router)
 app.include_router(members_tracker.router)
 app.include_router(search_functionality.router)
 app.include_router(member_profile.router)
+app.include_router(managers.router)
 
 
 @app.get("/")

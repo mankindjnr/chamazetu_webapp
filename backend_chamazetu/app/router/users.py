@@ -2,7 +2,7 @@ import logging, uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from typing import Union
-
+from sqlalchemy import func, update, and_, table, column, desc
 
 from .. import schemas, utils, oauth2, models
 from ..database import get_db
@@ -52,6 +52,54 @@ async def create_user(
             }
         ]
     }
+
+
+# update member email to true after email verification
+@router.put("/member_email_verification/{uid}")
+async def update_email_verification(
+    uid: int,
+    user_email: schemas.UserEmailActvationBase = Body(...),
+    db: Session = Depends(get_db),
+):
+    email = user_email.dict()["user_email"]
+    user = (
+        db.query(models.Member)
+        .filter(and_(models.Member.id == uid, models.Member.email == email))
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.email_verified = True
+    db.commit()
+    db.refresh(user)
+    return {"message": "Email verified successfully"}
+
+
+# update manager email to true after email verification
+@router.put("/manager_email_verification/{uid}")
+async def update_email_verification(
+    uid: int,
+    user_email: schemas.UserEmailActvationBase = Body(...),
+    db: Session = Depends(get_db),
+):
+    email = user_email.dict()["user_email"]
+    user = (
+        db.query(models.Manager)
+        .filter(
+            and_(
+                models.Manager.id == uid, models.Manager.email == user_email.user_email
+            )
+        )
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.email_verified = True
+    db.commit()
+    db.refresh(user)
+    return {"message": "Email verified successfully"}
 
 
 @router.get("/member")

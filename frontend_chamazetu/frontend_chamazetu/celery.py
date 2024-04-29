@@ -3,6 +3,7 @@ import os
 
 from celery import Celery
 from django.conf import settings
+from datetime import timedelta
 from celery.schedules import crontab
 
 
@@ -22,10 +23,20 @@ app.conf.beat_schedule = {
         "task": "chama.tasks.update_contribution_days",
         "schedule": crontab(minute=0, hour=0),  # executed at midnight everyday
     },
-    # every 10 minutes
-    "run_every_10_minutes": {
+    # every day - midnight - calculate daily mmf interests
+    "run_daily": {
         "task": "chama.tasks.calaculate_daily_mmf_interests",
-        "schedule": crontab(minute="*/5"),
+        "schedule": crontab(minute="*/10"),
+    },
+    # every week - resets weekly interests and adds the weekly interests to the principal
+    "run_weekly": {
+        "task": "chama.tasks.reset_and_move_weekly_mmf_interests",
+        "schedule": crontab(minute="*/30"),  # every sat at midnight
+    },
+    # every month - resets monthly interests
+    "run_monthly": {
+        "task": "chama.tasks.reset_monthly_mmf_interests",
+        "schedule": timedelta(hours=1),  # every 1st of the month
     },
 }
 

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy import func, desc, and_
+from typing import Union, List
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -132,9 +133,26 @@ async def get_investment_account_balance(
         .first()
     )
 
+    interest_rate = get_current_investment_rate("MMF", db)
+
     if not investment_account_balance:
         raise HTTPException(status_code=404, detail="Getting investment balance failed")
-    return investment_account_balance
+
+    investment_performance_dict = investment_account_balance.__dict__
+    investment_performance_dict["investment_rate"] = "{:.2f}".format(interest_rate)
+    investment_performance_dict["daily_interest"] = "{:.2f}".format(
+        investment_performance_dict["daily_interest"]
+    )
+    investment_performance_dict["weekly_interest"] = "{:.2f}".format(
+        investment_performance_dict["weekly_interest"]
+    )
+    investment_performance_dict["monthly_interest"] = "{:.2f}".format(
+        investment_performance_dict["monthly_interest"]
+    )
+    investment_performance_dict["total_interest_earned"] = "{:.2f}".format(
+        investment_performance_dict["total_interest_earned"]
+    )
+    return schemas.InvestmentPerformanceResp(**investment_performance_dict)
 
 
 # retrieve recent investment activity
@@ -186,6 +204,16 @@ def calculate_daily_mmf_interests(
             investment.total_interest_earned += interest_earned
             db.commit()
             db.refresh(investment)
+
+            # add this daily interest record to the daily interest table
+            daily_interest = models.Daily_Interest(
+                chama_id=investment.chama_id,
+                interest_earned=interest_earned,
+                date_earned=datetime.now(timezone.utc),
+            )
+            db.add(daily_interest)
+            db.commit()
+            db.refresh(daily_interest)
     except Exception as e:
         db.rollback()
         print(e)
@@ -194,5 +222,148 @@ def calculate_daily_mmf_interests(
         )
 
 
-# interest earned on a certain investment by a certain chama
 # when we move interest to principal, we should reset the interest, monthly
+# and weekly interest to zero
+@router.put(
+    "/reset_and_move_weekly_mmf_interest_to_principal", status_code=status.HTTP_200_OK
+)
+async def reset_and_move_weekly_interest_to_principal(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print(
+            "============resetting and moving weekly interests to principal=========="
+        )
+        investments = db.query(models.Investment_Performance).filter(
+            models.Investment_Performance.investment_type == "mmf"
+        )
+
+        for investment in investments:
+            investment.amount_invested += investment.weekly_interest
+            investment.weekly_interest = 0.0
+            db.commit()
+            db.refresh(investment)
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="resetting and moving weekly interests failed"
+        )
+
+
+# reset the monthly interest to zero
+@router.put("/reset_monthly_mmf_interest", status_code=status.HTTP_200_OK)
+async def reset_monthly_interest(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============resetting monthly interests==========")
+        investments = db.query(models.Investment_Performance).filter(
+            models.Investment_Performance.investment_type == "mmf"
+        )
+
+        for investment in investments:
+            # record this monthly interest to the monthly interest table
+            monthly_interest = models.Monthly_Interest(
+                chama_id=investment.chama_id,
+                interest_earned=investment.monthly_interest,
+                month=datetime.now(timezone.utc).month,
+                year=datetime.now(timezone.utc).year,
+                total_amount_invested=investment.amount_invested,
+            )
+            db.add(monthly_interest)
+            db.commit()
+            db.refresh(monthly_interest)
+
+            investment.monthly_interest = 0.0
+            db.commit()
+            db.refresh(investment)
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="resetting monthly interests failed"
+        )
+
+
+# get daily interests for the last specified days
+# default is 30 days
+@router.get(
+    "/daily_interests/{chama_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.DailyInterestResp],
+)
+async def get_daily_interests(
+    chama_id: int,
+    limit: schemas.Limit = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        limit = limit.dict()["limit"]
+        print("============getting daily interests==========")
+        daily_interests = (
+            db.query(models.Daily_Interest)
+            .filter(models.Daily_Interest.chama_id == chama_id)
+            .order_by(desc(models.Daily_Interest.id))
+            .limit(limit)
+            .all()
+        )
+
+        if not daily_interests:
+            raise HTTPException(
+                status_code=404, detail="could not fetch daily interests"
+            )
+
+        return [
+            schemas.DailyInterestResp.from_orm(interest) for interest in daily_interests
+        ]
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="getting daily interests failed")
+
+
+# get monthly interests for the last specified months
+# default is 3 months
+@router.get(
+    "/monthly_interests/{chama_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.MonthlyInterestResp],
+)
+async def get_monthly_interests(
+    chama_id: int,
+    limit: schemas.Limit = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        limit = limit.dict()["limit"]
+        print("============getting monthly interests==========")
+        monthly_interests = (
+            db.query(models.Monthly_Interest)
+            .filter(models.Monthly_Interest.chama_id == chama_id)
+            .order_by(desc(models.Monthly_Interest.id))
+            .limit(limit)
+            .all()
+        )
+
+        if not monthly_interests:
+            raise HTTPException(
+                status_code=404, detail="could not fetch monthly interests"
+            )
+
+        return [
+            schemas.MonthlyInterestResp.from_orm(interest)
+            for interest in monthly_interests
+        ]
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="getting monthly interests failed")

@@ -86,6 +86,10 @@ def access_chama(request, chamaname):
         (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
         (f"{config('api_url')}/members/wallet_balance", {}),
         (f"{config('api_url')}/users/{role}/{current_user}", None),
+        (
+            f"{config('api_url')}/investments/chamas/monthly_interests/{chama_id}",
+            {"limit": 3},
+        ),
     ]
 
     headers = {
@@ -110,6 +114,7 @@ def access_chama(request, chamaname):
                 "recent_transactions": results.get("recent_transactions"),
                 "activity": results.get("activity"),
                 "investment_activity": results.get("investment_activity"),
+                "fund_performance": results.get("monthly_interests"),
                 "wallet": results.get("wallet"),
             },
         )
@@ -146,6 +151,7 @@ def access_chama_threads(urls, headers):
     investment_activity = []
     members_weekly_transactions = []
     wallet = []
+    monthly_interests = None
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
@@ -174,6 +180,10 @@ def access_chama_threads(urls, headers):
             wallet = results[urls[7][0]]["data"]
         if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
             wallet["member_id"] = results[urls[8][0]]["data"]["User_id"]
+        if urls[9][0] in results and results[urls[9][0]]["status"] == 200:
+            monthly_interests = organise_monthly_performance(
+                results[urls[9][0]]["data"]
+            )
 
     # return the processed results chama, transactions, members
     return {
@@ -181,6 +191,7 @@ def access_chama_threads(urls, headers):
         "recent_transactions": recent_activity,
         "activity": members_weekly_transactions,
         "investment_activity": investment_activity,
+        "monthly_interests": monthly_interests,
         "wallet": wallet,
     }
 
@@ -276,6 +287,19 @@ def organise_activity(members_daily_transactions, chama_id):
     return weekly_activity
 
 
+def organise_monthly_performance(monthly_performance):
+    monthly_interests = []
+    for performance in monthly_performance:
+        performance["month"] = datetime(
+            performance["year"], performance["month"], 1
+        ).strftime("%B")
+        performance["interest_earned"] = f"Ksh: {(performance['interest_earned']):,.2f}"
+        del performance["year"]
+        monthly_interests.append(performance)
+
+    return monthly_interests
+
+
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def join_chama(request):
@@ -309,3 +333,26 @@ def join_chama(request):
             )
 
     return HttpResponseRedirect(reverse("chama:chamas", args={"role": "member"}))
+
+
+@tokens_in_cookies("member")
+@validate_and_refresh_token("member")
+def view_chama_members(request, chama_name):
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+    }
+
+    chama_id = get_chama_id(chama_name)
+    chama_members = requests.get(
+        f"{config('api_url')}/members_tracker/chama_members/{chama_id}", headers=headers
+    )
+    print(chama_members.json())
+    return render(
+        request,
+        "member/list_members.html",
+        {
+            "chama_members": chama_members.json(),
+            "chama_name": chama_name,
+        },
+    )

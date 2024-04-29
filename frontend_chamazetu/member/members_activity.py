@@ -119,16 +119,13 @@ def get_dates_from_back_to_upcoming(back_date, upcoming_date):
 def chama_days_contribution_tracker(request, chama_id, interval):
     # retrieve the last four contribution dates from the upcoming date
     latest_four_dates = get_chamas_last_four_contribution_days(chama_id)
-    print("==latest four dates==")
-    print(latest_four_dates)
 
     urls = []
 
     for date in latest_four_dates:
         data = {}  # due to python's handling of mutable objects
         data["upto_date"] = datetime.strptime(date, "%d-%m-%Y")
-        print("==the data==")
-        print(data)
+
         if interval == "daily":
             data["from_date"] = get_the_from_dates("daily", data["upto_date"])
         elif interval == "weekly":
@@ -203,9 +200,6 @@ def chama_contribution_days_threads(urls, headers):
             if activity["chama_contribution"]:
                 chama_days_activity.append(activity["chama_contribution"])
 
-    print("===chama activity===")
-    print(chama_days_activity)
-
     return chama_days_activity
 
 
@@ -221,10 +215,7 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
                 "upto_date": date,
             }
         )
-    print("-preiodical dates------")
-    print(periodical_dates)
-    print("----the responses----")
-    print(responses)
+
     # we are goin to categorize the contributions according to their dates,
     # the contribution will be organized in that its date is > from_date and <= upto_date
 
@@ -233,22 +224,15 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
         contributions[date["upto_date"]] = {}
         for response in responses:
             for member_id, member_contribution in response.items():
-                print("***************")
-                print("from_date:", date["from_date"], "upto_date:", date["upto_date"])
-                print()
                 member_date = datetime.strptime(
                     list(member_contribution.keys())[0], "%d-%m-%Y"
                 )
                 from_date = datetime.strptime(date["from_date"], "%d-%m-%Y")
                 upto_date = datetime.strptime(date["upto_date"], "%d-%m-%Y")
                 if (member_date > from_date) and (member_date <= upto_date):
-                    print("=====its in the range=====")
                     contributions[date["upto_date"]][
                         get_user_full_name("member", member_id)
                     ] = member_contribution
-
-    print("---the contributions----")
-    print(contributions)
 
     dates = sorted(contributions.keys(), reverse=True)
     members = set()
@@ -260,9 +244,6 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
         for member in members:
             if member not in transactions:
                 contributions[date][member] = {date: 0}
-
-    print("==the contributions==")
-    print(contributions)
 
     chama_days_tracker_data = {}
     for member in members:
@@ -277,8 +258,7 @@ def chama_days_contribution_tracker_organised(responses, dates, interval):
                 member_contributions[date] = 0
 
         chama_days_tracker_data[member] = member_contributions
-    print("==the tracker==")
-    print(chama_days_tracker_data)
+
     return chama_days_tracker_data
 
 

@@ -110,15 +110,15 @@
         </a>
       </li>
 
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
           <span>Investment Performance</span> 
         </a>
-      </li>
+      </li> -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
+        <a class="nav-link collapsed" href="{% url 'member:view_chama_members' chama.chama_name %}">
           <i class="bi bi-grid"></i>
           <span>Members List</span> 
         </a>
@@ -245,7 +245,7 @@
             </div><!-- End investments Card -->
           
 
-            <!-- performance monthly -->
+            <!-- actitvity weekly -->
             <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
@@ -289,6 +289,47 @@
                       {% endfor %}
                     </tbody>
                     {% endif %}
+                  </table>
+
+                </div>
+
+              </div>
+            </div><!-- End weekly activity -->
+
+
+            <!-- performance monthly -->
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">Fund performance <span>|monthly</span></h5>
+
+                  <table class="table">
+                    <thead>
+                      <!-- TODO: they will become buttons that users can select to see monthly performance -->
+                      <!-- <tr>
+                        <th scope="col">3 months</th>
+                        <th scope="col">6 months</th>
+                        <th scope="col">12 months</th>
+                      </tr> -->
+                      <tr>
+                        <th scope="col">month</th>
+                        <th scope="col">interest earned</th>
+                        <th scope="col">Total investment</th>
+                      </tr>
+                      
+                    </thead>
+                    <tbody>
+                      {% if fund_performance %}
+                      {% for performance in fund_performance %}
+                      <tr>
+                        <td>{{ performance.month }}</td>
+                        <td class="text-primary">{{ performance.interest_earned}}</td>
+                        <td>Ksh {{ performance.total_amount_invested }}</td>
+                      </tr>
+                      {% endfor %}
+                      {% endif %}
+                    </tbody>
                   </table>
 
                 </div>

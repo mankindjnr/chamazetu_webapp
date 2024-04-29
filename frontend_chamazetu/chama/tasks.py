@@ -47,3 +47,27 @@ def calaculate_daily_mmf_interests():
     )
 
     return None
+
+
+@shared_task
+def reset_and_move_weekly_mmf_interests():
+    """
+    Reset and add weekly mmf interests to the principal
+    """
+    response = requests.put(
+        f"{config('api_url')}/investments/chamas/reset_and_move_weekly_mmf_interest_to_principal"
+    )
+
+    return None
+
+
+@shared_task
+def reset_monthly_mmf_interests():
+    """
+    Reset monthly mmf interests
+    """
+    response = requests.put(
+        f"{config('api_url')}/investments/chamas/reset_monthly_mmf_interest"
+    )
+
+    return None

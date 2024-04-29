@@ -119,6 +119,10 @@ class Chama(Base):
     manager_id = Column(Integer, ForeignKey("managers.id"))
     manager = relationship("Manager", back_populates="chamas")
     # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
+
+    daily_interest = relationship("Daily_Interest", back_populates="chama")
+    monthly_interest = relationship("Monthly_Interest", back_populates="chama")
+
     members = relationship(
         "Member", secondary=members_chamas_association, back_populates="chamas"
     )
@@ -250,6 +254,32 @@ class Investment_Performance(Base):
     chama = relationship("Chama", back_populates="investments_performance")
 
 
+# # this table keeps track of a chamas daily interest for mmf investments
+class Daily_Interest(Base):
+    __tablename__ = "daily_mmf_interest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    interest_earned = Column(Float, nullable=False)
+    date_earned = Column(DateTime, default=datetime.now(timezone.utc))
+
+    chama = relationship("Chama", back_populates="daily_interest")
+
+
+# this table keeps track of monthly interest for all chamas
+class Monthly_Interest(Base):
+    __tablename__ = "monthly_mmf_interest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    interest_earned = Column(Float, nullable=False)
+    total_amount_invested = Column(Float, nullable=False)
+    month = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
+
+    chama = relationship("Chama", back_populates="monthly_interest")
+
+
 # all mmf's transactions by chamas
 class MMF(Base):
     __tablename__ = "money_market_fund"
@@ -332,3 +362,12 @@ class Faq(Base):
     question = Column(String, nullable=False)
     answer = Column(String, nullable=False)
     chama = relationship("Chama", back_populates="faqs")
+
+
+class Manager_Update_Feature(Base):
+    __tablename__ = "manager_updates_and_features"
+
+    id = Column(Integer, primary_key=True, index=True)
+    feature_title = Column(String(40), nullable=False)
+    description = Column(String(250), nullable=False)
+    feature_date = Column(DateTime, default=datetime.now(timezone.utc))

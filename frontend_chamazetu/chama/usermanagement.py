@@ -73,6 +73,16 @@ def refresh_token(request, role):
         return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
+def get_user_email(role, id):
+    url = f"{config('api_url')}/users/email/{role}/{id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        user = resp.json()
+        email = user["email"]
+        return email
+    return None
+
+
 def signin(request, role):
     if request.method == "POST":
         data = {
@@ -224,28 +234,34 @@ def verify_signup_token(request, token, role):
 
 # the activation link sent to the user's email
 def activate(request, role, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uidb64 to user id
-
-        query = f"SELECT email FROM {role}s WHERE id = %s"
-        params = [uid]
-        user = execute_sql(query, params)
-
-        user = user[0][0]
-    except (TypeError, ValueError, OverflowError, SyntaxError, Exception) as e:
-        user = None
+    uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uidb64 to user id
+    user = get_user_email(role, uid)
 
     if user is not None and verify_signup_token(
         request, token, role
     ):  # validate the jwt token here
         # activate user and redirect to home page
 
-        query = f"UPDATE {role}s SET email_verified = True, is_active = True WHERE id = %s RETURNING *"
-        params = [uid]
-        execute_sql(query, params)
+        email_verified_resp = None
+        if role == "manager":
+            email_verified_resp = requests.put(
+                f"{config('api_url')}/users/manager_email_verfication/{uid}",
+                json={"user_email": user},
+            )
+        elif role == "member":
+            email_verified_resp = requests.put(
+                f"{config('api_url')}/users/member_email_verfication/{uid}",
+                json={"user_email": user},
+            )
 
-        messages.success(request, "Account activated successfully. You can now login.")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        if email_verified_resp.status_code == 200:
+            messages.success(
+                request, "Account activated successfully. You can now login."
+            )
+            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        else:
+            messages.error(request, "Account activation failed")
+            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
     else:
         # if the token has expired, send another one - checking if the user is thne database and unverified
         return HttpResponse("Activation link is has expired!")

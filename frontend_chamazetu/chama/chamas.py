@@ -12,10 +12,11 @@ from .rawsql import execute_sql
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist
 def get_all_chamas(request, role=None):
-    # TODO: replace this with a call to the backend
-    query = "SELECT manager_id, chama_type, chama_name, id FROM chamas WHERE accepting_members = %s and is_active = %s"
-    params = [True, True]
-    chamas = execute_sql(query, params)
+    chamas = (
+        requests.get(f"{config('api_url')}/chamas/active_accepting_members_chamas")
+    ).json()
+    print(chamas)
+
     return render(
         request,
         "chama/allchamas.html",
@@ -33,9 +34,7 @@ def get_chama(request, chamaid):
     resp = requests.get(f"{config('api_url')}/chamas/public_chama", json=data)
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
-        print("---------public details---------")
-        print(chama)
-        print()
+
         for detail in chama:
             print(detail, ":", chama[detail])
 

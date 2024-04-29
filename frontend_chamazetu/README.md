@@ -99,6 +99,14 @@ MIDDLEWARE = [
 
 Remember to replace 'yourapp.middleware.TokenRefreshMiddleware' with the actual Python import path of your middleware class, and 'https://your-api-url/refresh' with the actual URL of your API's token refresh endpoint.
 
+# secrets in docker-compose
+
+In Docker, secrets such as environment variables are typically stored in a `.env` file in the same directory as your `docker-compose.yml` file. This file is not included in version control systems like Git for security reasons.
+
+To view the secrets, you can open the `.env` file in your text editor.
+
+Please note that you should never share this file or its contents as it contains sensitive information. If you can't find the `.env` file, the secrets might be set in another way, such as directly in the shell or through a secrets management tool.
+
 ## COOKIES INSIDE CONTAINERS
 
 mankindjnr: can container affect how cookies are set?

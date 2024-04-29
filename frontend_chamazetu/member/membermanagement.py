@@ -30,26 +30,8 @@ from chama.usermanagement import (
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def dashboard(request):
-    # backend validation of token
     current_user = request.COOKIES.get("current_member")
     member_id = int(get_user_id("member", current_user))
-
-    # TODO: replace this with a call to the backend
-    # get the current users id
-    try:
-        query = "SELECT id FROM members WHERE email = %s"
-        params = [current_user]
-        member_id = (execute_sql(query, params))[0][0]
-        # use the id to get the chama the user is in from the associate table
-        query = "SELECT chama_id FROM members_chamas WHERE member_id = %s"
-        params = [member_id]
-        chama_ids = execute_sql(query, params)
-    except Exception as e:
-        print(e)
-        chama_ids = None
-
-    chamas_gen = (chama[0] for chama in chama_ids)
-    chama_ids = list(chamas_gen)
 
     headers = {
         "Content-type": "application/json",
@@ -57,7 +39,7 @@ def dashboard(request):
     }
 
     urls = [
-        (f"{config('api_url')}/chamas/my_chamas", {"chamaids": chama_ids}),
+        (f"{config('api_url')}/members/chamas", {}),
         (f"{config('api_url')}/members/recent_transactions", {"member_id": member_id}),
         (f"{config('api_url')}/members/wallet_balance", {}),
         (f"{config('api_url')}/members/recent_wallet_activity", {}),
@@ -114,7 +96,7 @@ def member_dashboard_threads(urls, headers):
     new_products_features = None
 
     if results[urls[0][0]]["status"] == 200:
-        chamas = results[urls[0][0]]["data"]["Chama"]
+        chamas = results[urls[0][0]]["data"]
         if urls[1][0] in results and results[urls[1][0]]["status"] == 200:
             member_recent_transactions = organise_members_recent_transactions(
                 results[urls[1][0]]["data"]

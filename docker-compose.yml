@@ -20,6 +20,18 @@ services:
     volumes:
       - redis_data:/data
 
+  chamazetu_frontend_database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${FRONTEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FRONTEND_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FRONTEND_POSTGRES_DB}
+    volumes:
+      - frontend_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
   chamazetu_frontend:
     build:
       context: ./frontend_chamazetu
@@ -30,9 +42,9 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - chamazetu_database
+      - chamazetu_frontend_database
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
   chamazetu_backend:
     build:
@@ -45,7 +57,7 @@ services:
     depends_on:
       - chamazetu_database
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/${POSTGRES_DB}
 
   celery_worker:
     build:
@@ -54,10 +66,10 @@ services:
     volumes:
       - ./frontend_chamazetu:/app/frontend/
     depends_on:
-      - chamazetu_database
+      - chamazetu_frontend_database
       - message_broker
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
   celery_beat_scheduler:
     build:
@@ -66,13 +78,14 @@ services:
     volumes:
       - ./frontend_chamazetu:/app/frontend/
     depends_on:
-      - chamazetu_database
+      - chamazetu_frontend_database
       - message_broker
     environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/postgres
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
 volumes:
   chamazetu_data:
   redis_data:
+  frontend_data:
 
     # i will introduce queue manager (separate redis instance) or flower/celery/redis for monitoring fastapi

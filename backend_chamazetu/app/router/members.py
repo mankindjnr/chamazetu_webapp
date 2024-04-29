@@ -10,6 +10,35 @@ from .. import schemas, database, utils, oauth2, models
 router = APIRouter(prefix="/members", tags=["members"])
 
 
+# get all chamas a member is connected to using member id
+@router.get(
+    "/chamas",
+    status_code=status.HTTP_200_OK,
+    response_model=List[schemas.MemberChamasResp],
+)
+async def get_member_chamas(
+    current_user: models.Member = Depends(oauth2.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        member_chamas = (
+            db.query(models.Chama)
+            .join(
+                models.members_chamas_association,
+                models.Chama.id == models.members_chamas_association.c.chama_id,
+            )
+            .filter(models.members_chamas_association.c.member_id == current_user.id)
+            .all()
+        )
+
+        return [schemas.MemberChamasResp.from_orm(chama) for chama in member_chamas]
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to get member chamas")
+
+
 # get members number of shares in a certain chama
 @router.get(
     "/expected_contribution",

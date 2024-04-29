@@ -17,6 +17,11 @@ urlpatterns = [
         views.members_tracker,
         name="members_tracker",
     ),
+    path(
+        "view_chama_members/<str:chama_name>",
+        views.view_chama_members,
+        name="view_chama_members",
+    ),
     path("join", views.join_chama, name="join"),
     path(
         "direct_deposit_to_chama",

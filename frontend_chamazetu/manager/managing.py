@@ -14,6 +14,8 @@ from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_id, get_chama_number_of_members
 from member.member_chama import access_chama_threads, recent_transactions
 from member.members import get_user_full_profile, get_user_id
+from member.membermanagement import is_empty_dict
+from member.date_day_time import extract_date_time
 
 
 from chama.usermanagement import (
@@ -26,27 +28,19 @@ from chama.usermanagement import (
 @validate_and_refresh_token("manager")
 def dashboard(request):
     current_user = request.COOKIES.get("current_manager")
-
     # get the id of the current mananger
-    query = "SELECT id FROM managers WHERE email = %s"
-    params = [current_user]
-    manager_id = (execute_sql(query, params))[0][0]
+    manager_id = get_user_id("manager", current_user)
 
-    # get the chamas connected to id of the current user
-    query = "SELECT chama_name, is_active FROM chamas WHERE manager_id = %s"
-    params = [manager_id]
-    chamas = execute_sql(query, params)
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+    }
 
-    chamas = dict(chamas)
-    list_of_chamas = []
-    for item in chamas:
-        chama = {}
-        chama["chama_name"] = item
-        chama["is_active"] = chamas[item]
-        chama["number_of_members"] = get_chama_number_of_members(get_chama_id(item))
-        list_of_chamas.append(chama)
-
-    chamas = list_of_chamas
+    urls = (
+        (f"{config('api_url')}/managers/chamas", {}),
+        (f"{config('api_url')}/managers/updates_and_features", None),
+    )
+    dashboard_results = manager_dashboard_threads(urls, headers)
 
     return render(
         request,
@@ -54,9 +48,55 @@ def dashboard(request):
         {
             "current_user": current_user,
             "manager_id": manager_id,
-            "chamas": chamas,
+            "chamas": dashboard_results["chamas"],
+            "updates_and_features": dashboard_results["updates_and_features"],
         },
     )
+
+
+def manager_dashboard_threads(urls, headers):
+    results = {}
+    threads = []
+
+    for url, payload in urls:
+        if payload:
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, payload, headers)
+            )
+        elif is_empty_dict(payload):
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, {}, headers)
+            )
+        else:
+            thread = threading.Thread(target=fetch_data, args=(url, results))
+
+        threads.append(thread)
+        thread.start()
+
+    # wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    chamas = None
+    updates_and_features = None
+
+    if results[urls[0][0]]["status"] == 200:
+        manager_chamas = results[urls[0][0]]["data"]
+        list_of_chamas = []
+        for item in manager_chamas:
+            item["number_of_members"] = get_chama_number_of_members(
+                get_chama_id(item["chama_name"])
+            )
+            list_of_chamas.append(item)
+
+        chamas = list_of_chamas
+    if results[urls[1][0]]["status"] == 200:
+        updates_and_features = results[urls[1][0]]["data"]
+
+    return {
+        "chamas": chamas,
+        "updates_and_features": updates_and_features,
+    }
 
 
 @tokens_in_cookies("manager")
@@ -93,10 +133,7 @@ def create_chama(request):
         # check if start_date is less than end_date and if start date is today and change the is_active to True
 
         chama_manager = request.COOKIES.get("current_manager")
-
-        query = "SELECT id FROM managers WHERE email = %s"
-        params = [chama_manager]
-        manager_id = (execute_sql(query, params))[0][0]
+        manager_id = get_user_id("manager", chama_manager)
 
         # Convert start_date and end_date to datetime objects and get current time
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -162,6 +199,11 @@ def chama(request, key):
             None,
         ),  # investment balance
         (f"{config('api_url')}/chamas/members_count/{chama_id}", None),  # members count
+        (
+            f"{config('api_url')}/investments/chamas/monthly_interests/{chama_id}",
+            {"limit": 3},
+        ),
+        (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
     )
     # ===================================
 
@@ -176,6 +218,11 @@ def chama(request, key):
                 "manager_id": manager_id,
                 "chama_name": chama_name,
                 "chama": results["chama"],
+                "investment_data": results["investment_data"]["investment_data"],
+                "investment_activity": results["investment_data"][
+                    "investment_activity"
+                ],
+                "fund_performance": results["fund_performance"],
                 "recent_transactions": results["recent_activity"],
             },
         )
@@ -192,6 +239,10 @@ def chama_threads(urls, headers):
             thread = threading.Thread(
                 target=fetch_data, args=(url, results, payload, headers)
             )
+        elif is_empty_dict(payload):
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, {}, headers)
+            )
         else:
             thread = threading.Thread(target=fetch_data, args=(url, results))
 
@@ -204,6 +255,8 @@ def chama_threads(urls, headers):
 
     chama = None
     recent_activity = []
+    investment_data = {}
+    fund_performance = None
     # append investment_balance, and account_balance
     if results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
@@ -214,13 +267,55 @@ def chama_threads(urls, headers):
         if results[urls[3][0]]["status"] == 200:
             recent_activity = recent_transactions(results[urls[3][0]]["data"])
         if results[urls[4][0]]["status"] == 200:
-            chama["investment_balance"] = results[urls[4][0]]["data"]["amount_invested"]
+            investment_data["investment_data"] = results[urls[4][0]]["data"]
         if results[urls[5][0]]["status"] == 200:
             chama["number_of_members"] = results[urls[5][0]]["data"][
                 "number_of_members"
             ]
+        if results[urls[6][0]]["status"] == 200:
+            fund_performance = organise_monthly_performance(results[urls[6][0]]["data"])
+        if results[urls[7][0]]["status"] == 200:
+            investment_data["investment_activity"] = organise_investment_activity(
+                results[urls[7][0]]["data"]
+            )
+    print(investment_data)
+    return {
+        "chama": chama,
+        "recent_activity": recent_activity,
+        "investment_data": investment_data,
+        "fund_performance": fund_performance,
+    }
 
-    return {"chama": chama, "recent_activity": recent_activity}
+
+def organise_monthly_performance(monthly_performance):
+    monthly_interests = []
+    for performance in monthly_performance:
+        performance["month"] = datetime(
+            performance["year"], performance["month"], 1
+        ).strftime("%B")
+        performance["interest_earned"] = f"Ksh: {(performance['interest_earned']):,.2f}"
+        del performance["year"]
+        monthly_interests.append(performance)
+
+    return monthly_interests
+
+
+def organise_investment_activity(investment_activity):
+    organised_investment_activity = []
+    for activity in investment_activity:
+        activity["amount"] = f"Ksh: {activity['amount']}"
+        activity["time"] = extract_date_time(activity["transaction_date"])["time"]
+        activity["date"] = extract_date_time(activity["transaction_date"])["date"]
+        if activity["transaction_type"] == "deposit":
+            activity["transaction_type"] = "Invested"
+        elif activity["transaction_type"] == "withdraw":
+            activity["transaction_type"] = "Withdrew"
+        del activity["transaction_date"]
+        del activity["id"]
+        del activity["current_int_rate"]
+        organised_investment_activity.append(activity)
+
+    return organised_investment_activity
 
 
 @tokens_in_cookies("manager")
@@ -270,8 +365,6 @@ def change_password(request, manager_id):
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
 def chama_join_status(request):
-    print("---------chama join path---------")
-    print(request.path)
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
         status = request.POST.get("accepting_members")

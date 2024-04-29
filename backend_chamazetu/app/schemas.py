@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Union
 from pydantic.types import conint
 from decouple import config
 
@@ -23,6 +23,14 @@ class UserBase(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class UserEmailActvationBase(BaseModel):
+    email: EmailStr
 
     class Config:
         orm_mode = True
@@ -94,6 +102,17 @@ class ChamaActivateDeactivate(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ActivelyAcceptingMembersChamas(BaseModel):
+    manager_id: int
+    chama_type: str
+    chama_name: str
+    id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
 
 
 # ============== transaction =================
@@ -249,6 +268,11 @@ class InvestBase(BaseModel):
 class InvestmentPerformanceResp(BaseModel):
     chama_id: int
     amount_invested: int
+    daily_interest: float
+    weekly_interest: float
+    monthly_interest: float
+    total_interest_earned: float
+    investment_rate: float
 
 
 # ============ update investment account =========
@@ -260,6 +284,16 @@ class UpdateInvestmentAccountBase(BaseModel):
 
 
 # ============ members ==========================
+class MemberChamasResp(BaseModel):
+    chama_name: str
+    chama_type: str
+    contribution_interval: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
 class MemberContributionBase(BaseModel):
     chama_id: int
     member_id: int
@@ -275,3 +309,51 @@ class MemberContributionResp(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ChamaMembersList(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    twitter: Union[str, None]
+    facebook: Union[str, None]
+    linkedin: Union[str, None]
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+# ============= manager =========================
+class ManagerChamasResp(BaseModel):
+    chama_name: str
+    is_active: bool
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+# ============ INterests =========================
+class Limit(BaseModel):
+    limit: int
+
+
+class DailyInterestResp(BaseModel):
+    daily_interest: float
+    date_earned: datetime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class MonthlyInterestResp(BaseModel):
+    interest_earned: float
+    month: int
+    year: int
+    total_amount_invested: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

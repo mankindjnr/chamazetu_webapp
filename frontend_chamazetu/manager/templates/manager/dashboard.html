@@ -345,23 +345,20 @@
           <!-- News & Updates Traffic -->
           <div class="card">
 
-            <div class="card-body pb-0">
+            <div class="card-body">
               <h5 class="card-title">Updates &amp; new products <span>| Latest</span></h5>
-
-              <div class="news">
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-1.jpg' %}" alt="">
-                  <h4><a href="#">Nihil blanditiis at in nihil autem</a></h4>
-                  <p>Sit recusandae non aspernatur laboriosam. Quia enim eligendi sed ut harum...</p>
+              {% if updates_and_features %}
+              <div class="activity">
+                {% for update in updates_and_features %}
+                <div class="activity-item d-flex">
+                  <i class='bi bi-grid activity-badge text-danger align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark"><b>{{ update.feature_title }}:</b> {{ update.description }} </p>
+                  </div>
                 </div>
-
-                <div class="post-item clearfix">
-                  <img src="{% static 'chama/img/news-2.jpg' %}" alt="">
-                  <h4><a href="#">Quidem autem et impedit</a></h4>
-                  <p>Illo nemo neque maiores vitae officiis cum eum turos elan dries werona nande...</p>
-                </div>
-
-              </div><!-- End sidebar recent posts-->
+                {% endfor %}
+              </div>
+              {% endif %}
 
             </div>
           </div><!-- End News & Updates -->
