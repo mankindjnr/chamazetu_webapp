@@ -54,6 +54,7 @@ def members_tracker(request, chama_name):
         request,
         "member/members_tracker.html",
         {
+            "role": "member",
             "chama_name": chama_name,
             "monthly_tracker_data": monthly_tracker_data["transactions_organised"],
             "dates": monthly_tracker_data["dates"],

@@ -14,6 +14,7 @@ from .router import (
     search_functionality,
     member_profile,
     managers,
+    azure_blob_uploads,
 )
 
 app = FastAPI()
@@ -39,6 +40,7 @@ app.include_router(members_tracker.router)
 app.include_router(search_functionality.router)
 app.include_router(member_profile.router)
 app.include_router(managers.router)
+app.include_router(azure_blob_uploads.router)
 
 
 @app.get("/")

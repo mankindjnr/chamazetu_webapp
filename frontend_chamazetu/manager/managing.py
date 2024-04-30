@@ -369,9 +369,6 @@ def chama_join_status(request):
         chama_name = request.POST.get("chama_name")
         status = request.POST.get("accepting_members")
 
-        print()
-        print(chama_name)
-        print(status)
         if status == "on":
             status = True
         else:
@@ -382,8 +379,7 @@ def chama_join_status(request):
             "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
         }
         data = {"chama_name": chama_name, "accepting_members": status}
-        print()
-        print(data)
+
         response = requests.put(
             "http://chamazetu_backend:9400/chamas/join_status",
             json=data,
@@ -428,6 +424,30 @@ def activate_deactivate_chama(request):
             )
     else:
         return redirect(reverse("manager:dashboard"))
+
+
+@tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
+def view_chama_members(request, chama_name):
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+    }
+
+    chama_id = get_chama_id(chama_name)
+    chama_members = requests.get(
+        f"{config('api_url')}/members_tracker/chama_members/{chama_id}", headers=headers
+    )
+    print(chama_members.json())
+    return render(
+        request,
+        "manager/view_members_list.html",
+        {
+            "chama_members": chama_members.json(),
+            "chama_name": chama_name,
+            "chama_id": chama_id,
+        },
+    )
 
 
 def restart_pause_stop_chama(request):  # changes the is_active status of the chama

@@ -287,3 +287,200 @@ async def change_password(
         print("===============password change error================")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to change password")
+
+
+# update members table with new phone number
+@router.put(
+    "/{role}/update_phone_number",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.SuccessBase,
+)
+async def update_member_phone_number(
+    role: str,
+    phone_number_data: schemas.PhoneNumberBase = Body(...),
+    db: Session = Depends(get_db),
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        phone_number_dict = phone_number_data.dict()
+        new_phone_number = phone_number_dict["phone_number"]
+
+        user = None
+
+        if role == "member":
+            user = (
+                db.query(models.Member)
+                .filter(models.Member.id == current_user.id)
+                .first()
+            )
+        elif role == "manager":
+            user = (
+                db.query(models.Manager)
+                .filter(models.Manager.id == current_user.id)
+                .first()
+            )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        user.phone_number = new_phone_number
+        db.commit()
+        db.refresh(user)
+
+        return {"message": "Phone number updated successfully"}
+
+    except Exception as e:
+        print(e)
+        db.rollback()
+        raise HTTPException(
+            status_code=400, detail="Failed to update members phone number"
+        )
+
+
+# update members table with twitter
+@router.put(
+    "/{role}/update_twitter_handle",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.SuccessBase,
+)
+async def update_twitter(
+    role: str,
+    twitter_data: schemas.TwitterBase = Body(...),
+    db: Session = Depends(get_db),
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        twitter_dict = twitter_data.dict()
+        new_twitter = twitter_dict["twitter"]
+
+        user = None
+        if role == "member":
+            user = (
+                db.query(models.Member)
+                .filter(models.Member.id == current_user.id)
+                .first()
+            )
+        elif role == "manager":
+            user = (
+                db.query(models.Manager)
+                .filter(models.Manager.id == current_user.id)
+                .first()
+            )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        user.twitter = new_twitter
+        db.commit()
+        db.refresh(user)
+
+        return {"message": "Twitter updated successfully"}
+
+    except Exception as e:
+        print(e)
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to update user's twitter")
+
+
+# update members table with facebook
+@router.put(
+    "/{role}/update_facebook_handle",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.SuccessBase,
+)
+async def update_member_facebook(
+    role: str,
+    facebook_data: schemas.FacebookBase = Body(...),
+    db: Session = Depends(get_db),
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        facebook_dict = facebook_data.dict()
+        new_facebook = facebook_dict["facebook"]
+
+        user = None
+
+        if role == "member":
+            user = (
+                db.query(models.Member)
+                .filter(models.Member.id == current_user.id)
+                .first()
+            )
+        elif role == "manager":
+            user = (
+                db.query(models.Manager)
+                .filter(models.Manager.id == current_user.id)
+                .first()
+            )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        user.facebook = new_facebook
+        db.commit()
+        db.refresh(user)
+
+        return {"message": "Facebook updated successfully"}
+
+    except Exception as e:
+        print(e)
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to update user's facebook")
+
+
+# update members table with linkedin
+@router.put(
+    "/{role}/update_linkedin_handle",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.SuccessBase,
+)
+async def update_member_linkedin(
+    role: str,
+    linkedin_data: schemas.LinkedinBase = Body(...),
+    db: Session = Depends(get_db),
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+):
+
+    try:
+        linkedin_dict = linkedin_data.dict()
+        new_linkedin = linkedin_dict["linkedin"]
+
+        user = None
+
+        if role == "member":
+            user = (
+                db.query(models.Member)
+                .filter(models.Member.id == current_user.id)
+                .first()
+            )
+        elif role == "manager":
+            user = (
+                db.query(models.Manager)
+                .filter(models.Manager.id == current_user.id)
+                .first()
+            )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+
+        user.linkedin = new_linkedin
+        db.commit()
+        db.refresh(user)
+
+        return {"message": "Linkedin updated successfully"}
+
+    except Exception as e:
+        print(e)
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to update user's linkedin")

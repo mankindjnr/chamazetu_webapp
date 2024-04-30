@@ -357,3 +357,55 @@ class MonthlyInterestResp(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+# ============ users profile update =========================
+class SuccessBase(BaseModel):
+    message: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class PhoneNumberBase(BaseModel):
+    phone_number: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class TwitterBase(BaseModel):
+    twitter: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class FacebookBase(BaseModel):
+    facebook: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class LinkedinBase(BaseModel):
+    linkedin: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ProfileUpdateBase(BaseModel):
+    phone_number: str
+    twitter: str
+    facebook: str
+    linkedin: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

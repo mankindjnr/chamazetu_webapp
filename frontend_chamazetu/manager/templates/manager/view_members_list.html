@@ -12,8 +12,8 @@
 
         <nav id="navbar" class="navbar order-last order-lg-0">
             <ul>
-                <li><a href="{% url 'member:dashboard' %}">Home</a></li>
-                <li><a href="{% url 'member:access_chama' chama_name %}" class="active">chama dashboard</a></li>
+                <li><a href="{% url 'manager:dashboard' %}">Home</a></li>
+                <li><a href="{% url 'manager:chama' chama_name %}" class="active">chama dashboard</a></li>
             </ul>
     <i class="bi bi-list mobile-nav-toggle"></i>
   </nav><!-- .navbar -->
@@ -39,24 +39,29 @@
       <p>here is a list of all the members</p>
     </div>
 
-    <div class="row">
-      {% for member in chama_members %}
-      <div class="card border-success mb-3 ms-5" style="max-width: 18rem;">
-        
-        <div>
-          <div class="icon-box">
-            <i class="bi bi-person" style="color: #ffbb2c;"></i>
-            <h3>{{ member.first_name }} {{ member.last_name }}</h3>
-          </div>
-        </div>   
-        <div class="card-footer bg-transparent border-success">
-          <p class="bi bi-twitter-x">{% if member.twitter != None %} {{ member.twitter }} {% endif %}</p>
-          <p class="bi bi-facebook">{% if member.facebook != None %} {{ member.facebook }} {% endif %}</p>
-          <p class="bi bi-linkedin">{% if member.linkedin != None %} {{ member.linkedin }} {% endif %}</p>
+<!-- ============================================== -->
+<!-- TODO: managers to get buttons to remove members/suspend them and other member control features -->
+
+  <div class="row container">
+    {% for member in chama_members %}
+    <div class="card border-success mb-3 ms-2" style="max-width: 20rem;">
+      
+      <div>
+        <div class="icon-box">
+          <i class="bi bi-person" style="color: #ffbb2c;"></i>
+          <h3>{{ member.first_name }} {{ member.last_name }}</h3>
         </div>
+      </div>   
+      <div class="card-footer bg-transparent border-success">
+        <p class="bi bi-twitter-x">{% if member.twitter != None %} {{ member.twitter }} {% endif %}</p>
+        <p class="bi bi-facebook">{% if member.facebook != None %} {{ member.facebook }} {% endif %}</p>
+        <p class="bi bi-linkedin">{% if member.linkedin != None %} {{ member.linkedin }} {% endif %}</p>
       </div>
-      {% endfor %}
     </div>
+    {% endfor %}
+  </div>
+
+  <!-- ================================================ -->
 
   </div>
 </section><!-- End Features Section -->

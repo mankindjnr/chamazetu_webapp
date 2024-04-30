@@ -91,9 +91,16 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
+        <a class="nav-link collapsed" href="{% url 'manager:members_tracker' chama.chama_name %}">
           <i class="bi bi-grid"></i>
-          <span>members tracker</span> 
+          <span>Members Tracker</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:view_chama_members' chama.chama_name %}">
+          <i class="bi bi-grid"></i>
+          <span>members list</span> 
         </a>
       </li>
 

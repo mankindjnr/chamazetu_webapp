@@ -10,3 +10,4 @@ from .member_transactions import (
     withdraw_from_wallet,
 )
 from .members_activity import members_tracker
+from .profile_update import profile_updater
