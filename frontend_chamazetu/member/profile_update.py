@@ -47,7 +47,7 @@ def profile_updater(request, role):
         if new_profile_image:
             print("====updating profile image============")
             new_profile_image = request.FILES["profile_image"]
-            url = f"{config('api_url')}/uploads/{role}/update_profile_image/"
+            url = f"{config('api_url')}/uploads/{role}/uploads/"
             files = {"file": new_profile_image}
             response = requests.put(url, files=files)
             if response.status_code == 200:
