@@ -88,7 +88,10 @@ async def update_investment_account(
                 chama_id=chama_id,
                 amount_invested=new_amount,
                 investment_type=investment_type,
-                interest_earned=0.0,
+                total_interest_earned=0.0,
+                daily_interest=0.0,
+                weekly_interest=0.0,
+                monthly_interest=0.0,
                 investment_name=investment_name,
                 investment_start_date=datetime.now(timezone.utc),
             )
@@ -127,32 +130,40 @@ async def get_investment_account_balance(
     db: Session = Depends(database.get_db),
 ):
 
-    investment_account_balance = (
-        db.query(models.Investment_Performance)
-        .filter(models.Investment_Performance.chama_id == chama_id)
-        .first()
-    )
+    try:
+        print("============getting investment balance==========")
+        investment_account_balance = (
+            db.query(models.Investment_Performance)
+            .filter(models.Investment_Performance.chama_id == chama_id)
+            .first()
+        )
 
-    interest_rate = get_current_investment_rate("MMF", db)
+        interest_rate = get_current_investment_rate("MMF", db)
 
-    if not investment_account_balance:
-        raise HTTPException(status_code=404, detail="Getting investment balance failed")
+        if not investment_account_balance:
+            raise HTTPException(
+                status_code=404, detail="Getting investment balance failed"
+            )
 
-    investment_performance_dict = investment_account_balance.__dict__
-    investment_performance_dict["investment_rate"] = "{:.2f}".format(interest_rate)
-    investment_performance_dict["daily_interest"] = "{:.2f}".format(
-        investment_performance_dict["daily_interest"]
-    )
-    investment_performance_dict["weekly_interest"] = "{:.2f}".format(
-        investment_performance_dict["weekly_interest"]
-    )
-    investment_performance_dict["monthly_interest"] = "{:.2f}".format(
-        investment_performance_dict["monthly_interest"]
-    )
-    investment_performance_dict["total_interest_earned"] = "{:.2f}".format(
-        investment_performance_dict["total_interest_earned"]
-    )
-    return schemas.InvestmentPerformanceResp(**investment_performance_dict)
+        investment_performance_dict = investment_account_balance.__dict__
+        investment_performance_dict["investment_rate"] = "{:.2f}".format(interest_rate)
+        investment_performance_dict["daily_interest"] = "{:.2f}".format(
+            investment_performance_dict["daily_interest"]
+        )
+        investment_performance_dict["weekly_interest"] = "{:.2f}".format(
+            investment_performance_dict["weekly_interest"]
+        )
+        investment_performance_dict["monthly_interest"] = "{:.2f}".format(
+            investment_performance_dict["monthly_interest"]
+        )
+        investment_performance_dict["total_interest_earned"] = "{:.2f}".format(
+            investment_performance_dict["total_interest_earned"]
+        )
+        return schemas.InvestmentPerformanceResp(**investment_performance_dict)
+    except Exception as e:
+        print("============getting investment balance failed==========")
+        print(e)
+        raise HTTPException(status_code=400, detail="Getting investment balance failed")
 
 
 # retrieve recent investment activity

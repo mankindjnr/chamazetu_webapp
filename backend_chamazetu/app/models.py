@@ -38,12 +38,12 @@ class Member(Base):
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     email_verified = Column(Boolean, default=False)
-    # later, have a field for the member's profile picture
     # for kyc purposes id number(cmpared against phone num reg details)
     phone_number = Column(String(12), nullable=True)
     twitter = Column(String, nullable=True)
     facebook = Column(String, nullable=True)
     linkedin = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
 
     password = Column(String, nullable=False)
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
@@ -148,6 +148,7 @@ class Manager(Base):
     twitter = Column(String, nullable=True)
     facebook = Column(String, nullable=True)
     linkedin = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
 
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
@@ -325,10 +326,12 @@ class chama_blog(Base):
     id = Column(Integer, primary_key=True, index=True)
     manager_id = Column(Integer, ForeignKey("managers.id"))
     chama_id = Column(Integer, ForeignKey("chamas.id"))
-    paybill_number = Column(Integer, nullable=False)
+    paybill_account_number = Column(Integer, nullable=False)
     twitter = Column(String, nullable=True)
     facebook = Column(String, nullable=True)
     linkedin = Column(String, nullable=True)
+    mission = Column(String(500), nullable=True)
+    vision = Column(String(500), nullable=True)
 
 
 class Rule(Base):
@@ -366,6 +369,15 @@ class Faq(Base):
 
 class Manager_Update_Feature(Base):
     __tablename__ = "manager_updates_and_features"
+
+    id = Column(Integer, primary_key=True, index=True)
+    feature_title = Column(String(40), nullable=False)
+    description = Column(String(250), nullable=False)
+    feature_date = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class Member_Update_Features(Base):
+    __tablename__ = "member_updates_and_features"
 
     id = Column(Integer, primary_key=True, index=True)
     feature_title = Column(String(40), nullable=False)

@@ -54,3 +54,31 @@ async def get_updates_and_features(
             status_code=404, detail="No updates and features found for managers"
         )
     return updates_and_features
+
+
+# get manager profile image
+@router.get(
+    "/profile_picture",
+    status_code=status.HTTP_200_OK,
+)
+async def get_manager_profile_image(
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        manager = (
+            db.query(models.Manager)
+            .filter(models.Manager.id == current_user.id)
+            .first()
+        )
+
+        if not manager:
+            raise HTTPException(status_code=404, detail="Manager not found")
+
+        return manager.profile_picture
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to get manager profile image"
+        )

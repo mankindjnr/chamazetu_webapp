@@ -70,18 +70,32 @@
         {% endif %}
 
         <div class="row">
-          <div class="col-lg-6">
+          
+          <div class="card" style="width: 18rem;">
             <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">
+            <div class="card-body">
+              <h5 class="card-title">manager name</h5>
+              <!-- <p class="card-text">small description</p> will see if necessary later -->
+              <!-- <a href="#" class="btn btn-primary">all chamas they manage</a> -->
+            </div>
           </div>
+
+          <!-- <div class="col-lg-6">
+            <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">
+          </div> -->
+
           <div class="col-lg-6 pt-4 pt-lg-0">
-            <h3>{{ chama.chama_name }} | {{ chama.num_of_members_allowed }} </h3>
+            <h3>{{ chama.chama_name }}</h3>
             <p class="fst-italic">
               chama overview.
             </p>
             <ul>
-              <li><i class="bx bx-check-double"></i>Registration fee: {{ chama.registration_fee }}</li>
-              <li><i class="bx bx-check-double"></i>Contribution per share: {{ chama.contribution_amount }} </li>
-              <li><i class="bx bx-check-double"></i>Contribution intervals: {{ chama.contribution_interval }} </li>
+              <li>Number of members: {% if chama.num_of_members_allowed == 'infinite' %}no limit {% else %} {{ chama.num_of_members_allowed }} {% endif %} </li>
+              <li>Registration fee: {{ chama.registration_fee }}</li>
+              <li>Contribution per share: {{ chama.contribution_amount }} </li>
+              <li>Contribution intervals: {{ chama.contribution_interval }} </li>
+              <li>Chama contribution day: {{ chama.contribution_day }} </li>
+              <li>Chama type: {{ chama.chama_type }} </li>
             </ul>
             <p>
               {{ chama.description }}

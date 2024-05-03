@@ -20,6 +20,8 @@ async def create_chama(
     try:
         chama_dict = chama.dict()
         chama_dict["manager_id"] = current_user.id
+        chama_dict["date_created"] = datetime.now()
+        chama_dict["updated_at"] = datetime.now()
 
         new_chama = models.Chama(**chama_dict)
         db.add(new_chama)

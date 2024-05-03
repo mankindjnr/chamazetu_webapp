@@ -90,6 +90,7 @@ def access_chama(request, chamaname):
             f"{config('api_url')}/investments/chamas/monthly_interests/{chama_id}",
             {"limit": 3},
         ),
+        (f"{config('api_url')}/members/profile_picture", {}),
     ]
 
     headers = {
@@ -100,7 +101,6 @@ def access_chama(request, chamaname):
     results = access_chama_threads(urls, headers)
 
     if results.get("chama"):
-        update_contribution_days.delay()
         return render(
             request,
             "member/chamadashboard.html",
@@ -115,7 +115,9 @@ def access_chama(request, chamaname):
                 "activity": results.get("activity"),
                 "investment_activity": results.get("investment_activity"),
                 "fund_performance": results.get("monthly_interests"),
+                "investment_data": results.get("investment_data"),
                 "wallet": results.get("wallet"),
+                "user_profile": results.get("user_profile"),
             },
         )
     else:
@@ -152,12 +154,16 @@ def access_chama_threads(urls, headers):
     members_weekly_transactions = []
     wallet = []
     monthly_interests = None
+    user_profile = {}
+    investment_data = None
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
         chama_id = get_chama_id(chama["chama_name"])
         contribution_day_details = get_chama_contribution_day(chama_id)
+        print("=====day details======")
+        print(contribution_day_details)
         chama["contribution_day"] = contribution_day_details["contribution_day"]
         chama["contribution_date"] = contribution_day_details["contribution_date"]
 
@@ -173,7 +179,7 @@ def access_chama_threads(urls, headers):
         if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
             chama["today_deposits"] = results[urls[4][0]]["data"]["today_deposits"]
         if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
-            chama["investment_balance"] = results[urls[5][0]]["data"]["amount_invested"]
+            investment_data = results[urls[5][0]]["data"]
         if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
             investment_activity = investment_activities(results[urls[6][0]]["data"])
         if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
@@ -184,6 +190,8 @@ def access_chama_threads(urls, headers):
             monthly_interests = organise_monthly_performance(
                 results[urls[9][0]]["data"]
             )
+        if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
+            user_profile["profile_image"] = results[urls[10][0]]["data"]
 
     # return the processed results chama, transactions, members
     return {
@@ -192,7 +200,9 @@ def access_chama_threads(urls, headers):
         "activity": members_weekly_transactions,
         "investment_activity": investment_activity,
         "monthly_interests": monthly_interests,
+        "investment_data": investment_data,
         "wallet": wallet,
+        "user_profile": user_profile,
     }
 
 

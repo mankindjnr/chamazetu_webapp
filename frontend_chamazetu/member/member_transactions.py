@@ -190,13 +190,17 @@ def from_wallet_to_chama(request):
 
 # deposit to wallet
 def deposit_to_wallet(request):
+    print("=======deposting to wallet===")
     if request.method == "POST":
         amount = request.POST.get("amount")
         phonenumber = request.POST.get("phonenumber")
         member_id = request.POST.get("member_id")
-        chama_name = ""  # helps is we are depositng from insde a chama to redirect back to the chama
+        chama_name = ""  # helps if we are depositng from insde a chama to redirect back to the chama
         if request.POST.get("chama_name"):
             chama_name = request.POST.get("chama_name")
+        if len(phonenumber) != 9:
+            messages.error(request, "Invalid phone number")
+            return redirect(reverse("member:dashboard"))
 
         headers = {
             "Content-type": "application/json",
@@ -204,6 +208,7 @@ def deposit_to_wallet(request):
         }
 
         if int(amount) > 0:
+            print("=======deposting to delay===")
             wallet_deposit.delay(headers, amount, member_id)
             # messages.success(request, "Deposit to wallet successful.") - callbakc function will handle this
             if chama_name:
@@ -214,7 +219,7 @@ def deposit_to_wallet(request):
                 )
             else:
                 return redirect(reverse("member:dashboard"))
-
+    print("=======not a post wallet===")
     return redirect(reverse("member:dashboard"))
 
 

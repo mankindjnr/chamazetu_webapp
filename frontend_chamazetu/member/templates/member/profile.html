@@ -20,7 +20,7 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{% static 'chama/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle">
+            <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
@@ -51,18 +51,18 @@
       <div class="card">
         <div class="card-body profile-card pt-4 d-flex flex-column align-items-center">
 
-          <img src="https://chamatrial.blob.core.windows.net/chamazetu-uploads-test/amos.jpg" alt="Profile" class="rounded-circle">
+          <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
           <span>{{profile.email}}</span>
           <small>member</small>
           <div class="social-links mt-2">
             {% if profile.twitter_handle != 'N/A' %}
-            <a href="{{profile.twitter_handle}}" class="twitter"><i class="bi bi-twitter"></i></a>
+            <a href="https://twitter.com/{{profile.twitter_handle}}" target="_blank" class="twitter"><i class="bi bi-twitter"></i></a>
             {% endif %}
             {% if profile.facebook_handle != 'N/A' %}
-            <a href="{{profile.facebook_handle}}" class="facebook"><i class="bi bi-facebook"></i></a>
+            <a href="https://facebook.com/{{profile.facebook_handle}}" target="_blank" class="facebook"><i class="bi bi-facebook"></i></a>
             {% endif %}
             {% if profile.linkedin_handle != 'N/A' %}
-            <a href="{{profile.linkedin_handle}}" class="linkedin"><i class="bi bi-linkedin"></i></a>
+            <a href="https://linkedin.com/in/{{profile.linkedin_handle}}" target="_blank" class="linkedin"><i class="bi bi-linkedin"></i></a>
             {% endif %}
           </div>
         </div>
@@ -132,7 +132,7 @@
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Phone</div>
-                    <div class="col-lg-9 col-md-8">+254{{ profile.phone_number }}</div>
+                    <div class="col-lg-9 col-md-8">{% if profile.phone_number != 'N/A' %} +254{{ profile.phone_number }} {% endif %} </div>
                   </div>
 
                   <div class="row">
@@ -142,17 +142,17 @@
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Twitter</div>
-                    <div class="col-lg-9 col-md-8">{{ profile.twitter_handle }}</div>
+                    <div class="col-lg-9 col-md-8">{% if profile.twitter_handle != 'N/A' %} https://twitter.com/{{ profile.twitter_handle }} {% endif %}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Facebook</div>
-                    <div class="col-lg-9 col-md-8">{{ profile.facebook_handle }}</div>
+                    <div class="col-lg-9 col-md-8"> {% if profile.facebook_handle != 'N/A' %} https://facebook.com/{{ profile.facebook_handle }} {% endif %}</div>
                   </div>
 
                   <div class="row">
                     <div class="col-lg-3 col-md-4 label">Linkedin</div>
-                    <div class="col-lg-9 col-md-8">{{ profile.linkedin_handle }}</div>
+                    <div class="col-lg-9 col-md-8">{% if profile.linkedin_handle != 'N/A' %} https://linkedin.com/in/{{ profile.linkedin_handle }} {% endif %}</div>
                   </div>
 
                 </div>
@@ -165,10 +165,9 @@
                     <div class="row mb-3">
                       <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
                       <div class="col-md-8 col-lg-9">
-                        <img src="https://chamatrial.blob.core.windows.net/chamazetu-uploads-test/amos.jpg" alt="User Profile Picture">
+                        <img src="{{ profile.profile_image }}" alt="User Profile Picture" class="img-fluid">
                         <div class="pt-2">
                           <input type="file" name="profile_image" id="profile_image" class="btn btn-outline-primary btn-sm">
-                          <a href="#" class="btn btn-danger btn-sm" title="Remove my profile image"><i class="bi bi-trash"></i></a>
                         </div>
                       </div>
                     </div>
@@ -183,14 +182,14 @@
                     <div class="row mb-3">
                       <label for="Phone" class="col-md-4 col-lg-3 col-form-label">Phone</label>
                       <div class="col-md-8 col-lg-9">
-                        <div class="input-group mb-3">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text bg-light text-muted">+254</span>
-                            </div>
-                            <input name="phone" type="number" class="form-control" id="Phone" minlength="9" maxlength="9" value="{{profile.phone_number}}">
+                        <div class="input-group">
+                          <span class="input-group-text" id="basic-addon1">+254</span>
+                          <input name="phone" type="number" class="form-control" id="Phone" minlength="9"  maxlength="9" value="{{profile.phone_number}}">
                         </div>
+                      </div>
                     </div>
-                    </div>
+
+                    
 
                     <div class="row mb-3">
                       <label for="Email" class="col-md-4 col-lg-3 col-form-label">Email</label>

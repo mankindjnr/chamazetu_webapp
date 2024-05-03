@@ -44,14 +44,15 @@
 
   <div class="row container">
     {% for member in chama_members %}
-    <div class="card border-success mb-3 ms-2" style="max-width: 20rem;">
+    <div class="card border-success mb-3 ms-5" style="max-width: 18rem;">
       
       <div>
         <div class="icon-box">
           <i class="bi bi-person" style="color: #ffbb2c;"></i>
           <h3>{{ member.first_name }} {{ member.last_name }}</h3>
         </div>
-      </div>   
+      </div>
+      <img src="{{ member.profile_picture }}" style="height: 150px; object-fit: cover;" class="card-img-top img-fluid" alt="profile">
       <div class="card-footer bg-transparent border-success">
         <p class="bi bi-twitter-x">{% if member.twitter != None %} {{ member.twitter }} {% endif %}</p>
         <p class="bi bi-facebook">{% if member.facebook != None %} {{ member.facebook }} {% endif %}</p>

@@ -31,7 +31,7 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{% static 'chama/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle">
+            <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
@@ -142,7 +142,7 @@
       <div class="ml-auto">
         <!-- chama join status trigger modal -->
         <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal">
-          accepting members status
+          accepting members
         </button>
         <!-- chama join status Modal -->
         {% include 'manager/modals/join_status_modal.html' %}
@@ -216,17 +216,17 @@
                   <div class="card-body">
                       <h5 class="card-title">MMF <span>| investment</span></h5>
                       <div class="d-flex align-items-center justify-content-center">
-                        <h6>Ksh: {{ investment_data.amount_invested }}</h6>
+                        <h6>Ksh: {{ investment_account.amount_invested }}</h6>
                     </div>
                       <div class="ps-3">
                           <div class="d-flex justify-content-between align-items-start">
                               <div>
                                   <!--head--><span class="text-muted small">Int earned yesterday</span><br>
-                                  <!--child--><span class="text-danger small fw-bold">Ksh: {{ investment_data.daily_interest }} </span>
+                                  <!--child--><span class="text-danger small fw-bold">Ksh: {{ investment_account.daily_interest }} </span>
                               </div>
                               <div class="text-end">
                                   <!--head--><span class="text-muted small">Interest rate</span><br>
-                                  <!--child--><span class="text-danger small fw-bold">{{ investment_data.investment_rate }}%</span>
+                                  <!--child--><span class="text-danger small fw-bold">{{ investment_account.investment_rate }}%</span>
                               </div>
                           </div>
                           <hr>

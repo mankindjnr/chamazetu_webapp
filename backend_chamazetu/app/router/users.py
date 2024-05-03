@@ -55,7 +55,7 @@ async def create_user(
 
 
 # update member email to true after email verification
-@router.put("/member_email_verification/{uid}")
+@router.put("/member_email_verification/{uid}", status_code=status.HTTP_200_OK)
 async def update_email_verification(
     uid: int,
     user_email: schemas.UserEmailActvationBase = Body(...),
@@ -71,13 +71,14 @@ async def update_email_verification(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.email_verified = True
+    user.is_active = True
     db.commit()
     db.refresh(user)
     return {"message": "Email verified successfully"}
 
 
 # update manager email to true after email verification
-@router.put("/manager_email_verification/{uid}")
+@router.put("/manager_email_verification/{uid}", status_code=status.HTTP_200_OK)
 async def update_email_verification(
     uid: int,
     user_email: schemas.UserEmailActvationBase = Body(...),
@@ -97,6 +98,7 @@ async def update_email_verification(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     user.email_verified = True
+    user.is_active = True
     db.commit()
     db.refresh(user)
     return {"message": "Email verified successfully"}
@@ -126,6 +128,7 @@ async def get_user_by_email(
     email: str,
     db: Session = Depends(get_db),
 ):
+    user = None
     if role == "member":
         user = db.query(models.Member).filter(models.Member.email == email).first()
     elif role == "manager":
@@ -133,7 +136,7 @@ async def get_user_by_email(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"User_id": user.id}
+    return {"User_id": user.id, "profile_picture": user.profile_picture}
 
 
 # get member names by id
@@ -230,7 +233,7 @@ async def update_users_password(
 
 
 # get users full_profile
-@router.get("/full_profile/{role}/{id}")
+@router.get("/full_profile/{role}/{id}", status_code=status.HTTP_200_OK)
 async def get_user_full_profile(
     role: str,
     id: int,
@@ -244,6 +247,7 @@ async def get_user_full_profile(
         raise HTTPException(status_code=404, detail="User not found")
     return {
         "user_id": user.id,
+        "profile_image": user.profile_picture,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,

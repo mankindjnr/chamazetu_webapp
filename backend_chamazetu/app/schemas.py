@@ -30,7 +30,7 @@ class UserLogin(BaseModel):
 
 
 class UserEmailActvationBase(BaseModel):
-    email: EmailStr
+    user_email: EmailStr
 
     class Config:
         orm_mode = True
@@ -318,6 +318,7 @@ class ChamaMembersList(BaseModel):
     twitter: Union[str, None]
     facebook: Union[str, None]
     linkedin: Union[str, None]
+    profile_picture: Union[str, None]
 
     class Config:
         orm_mode = True
@@ -394,6 +395,14 @@ class FacebookBase(BaseModel):
 
 class LinkedinBase(BaseModel):
     linkedin: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ProfilePicture(BaseModel):
+    profile_picture_name: str
 
     class Config:
         orm_mode = True

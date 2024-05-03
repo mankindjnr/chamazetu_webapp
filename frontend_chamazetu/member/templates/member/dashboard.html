@@ -43,7 +43,7 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{% static 'chama/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle">
+            <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Image Icon -->
 
@@ -118,6 +118,15 @@
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">
+
+    {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
 
     <div class="pagetitle d-flex justify-content-between align-items-center">
       <h1>Home</h1>

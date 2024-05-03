@@ -56,7 +56,8 @@ def refresh_token(request, role):
         )
         refresh_data = refresh_access.json()
         new_access_token = refresh_data["new_access_token"]
-        response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
+        # response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
+        response = HttpResponseRedirect(request.path)
         response.set_cookie(
             f"{role}_access_token",
             f"Bearer {new_access_token}",
@@ -156,6 +157,7 @@ def signup(request, role):
         confirm_password = request.POST["password2"]
 
         if password != confirm_password:
+            messages.error(request, "passwords do not match")
             return render(request, f"chama/{role}signup.html")
 
         data = {
@@ -168,8 +170,6 @@ def signup(request, role):
             "role": role,
         }
 
-        print("---------signup role---------")
-        print(data)
         headers = {"Content-type": "application/json"}
         response = requests.post(
             f"{config('api_url')}/users",
@@ -242,15 +242,19 @@ def activate(request, role, uidb64, token):
     ):  # validate the jwt token here
         # activate user and redirect to home page
 
+        print("---------activating_user---------")
+        print(uid)
         email_verified_resp = None
         if role == "manager":
+            print("---------activating_manager---------")
             email_verified_resp = requests.put(
-                f"{config('api_url')}/users/manager_email_verfication/{uid}",
+                f"{config('api_url')}/users/manager_email_verification/{uid}",
                 json={"user_email": user},
             )
         elif role == "member":
+            print("---------activating_member---------")
             email_verified_resp = requests.put(
-                f"{config('api_url')}/users/member_email_verfication/{uid}",
+                f"{config('api_url')}/users/member_email_verification/{uid}",
                 json={"user_email": user},
             )
 
@@ -263,8 +267,9 @@ def activate(request, role, uidb64, token):
             messages.error(request, "Account activation failed")
             return HttpResponseRedirect(reverse("chama:signin", args=[role]))
     else:
-        # if the token has expired, send another one - checking if the user is thne database and unverified
-        return HttpResponse("Activation link is has expired!")
+        # TODO: if the token has expired, send another one - checking if the user is thne database and unverified
+        messages.error(request, "Activation link has expired!")
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
 def forgot_password(request, role):

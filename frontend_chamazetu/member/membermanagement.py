@@ -43,6 +43,7 @@ def dashboard(request):
         (f"{config('api_url')}/members/recent_transactions", {"member_id": member_id}),
         (f"{config('api_url')}/members/wallet_balance", {}),
         (f"{config('api_url')}/members/recent_wallet_activity", {}),
+        (f"{config('api_url')}/users/member/{current_user}", None),
     ]
 
     results = member_dashboard_threads(urls, headers)
@@ -56,6 +57,7 @@ def dashboard(request):
                 "chamas": results["chamas"],
                 "my_recent_transactions": results["member_recent_transactions"],
                 "wallet_activity": results["wallet_activity"],
+                "user_profile": results["user_profile"],
             },
         )
     else:
@@ -64,6 +66,8 @@ def dashboard(request):
             "member/dashboard.html",
             {
                 "current_user": {"current_user": current_user, "member_id": member_id},
+                "user_profile": results["user_profile"],
+                "wallet_activity": results["wallet_activity"],
             },
         )
 
@@ -94,6 +98,7 @@ def member_dashboard_threads(urls, headers):
     member_recent_transactions = None
     wallet_activity = {}
     new_products_features = None
+    user_profile = {}
 
     if results[urls[0][0]]["status"] == 200:
         chamas = results[urls[0][0]]["data"]
@@ -107,11 +112,15 @@ def member_dashboard_threads(urls, headers):
             wallet_activity["recent_wallet_activity"] = organise_wallet_activity(
                 results[urls[3][0]]["data"]
             )
-
+        if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
+            user_profile["profile_image"] = results[urls[4][0]]["data"][
+                "profile_picture"
+            ]
     return {
         "chamas": chamas,
         "member_recent_transactions": member_recent_transactions,
         "wallet_activity": wallet_activity,
+        "user_profile": user_profile,
     }
 
 

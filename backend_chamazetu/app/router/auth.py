@@ -19,6 +19,7 @@ async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db),
 ):
+    print("user_credentials: ", user_credentials)
     user = (
         db.query(models.Member)
         .filter(models.Member.email == user_credentials.username)

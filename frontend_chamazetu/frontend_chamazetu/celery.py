@@ -21,7 +21,7 @@ app.config_from_object(settings, namespace="CELERY")
 app.conf.beat_schedule = {
     "update-contribution-days": {
         "task": "chama.tasks.update_contribution_days",
-        "schedule": crontab(minute=0, hour=0),  # executed at midnight everyday
+        "schedule": crontab(minute="*/10"),  # executed at midnight everyday
     },
     # every day - midnight - calculate daily mmf interests
     "run_daily": {

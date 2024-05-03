@@ -12,17 +12,23 @@ from datetime import datetime, timedelta
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from .members import get_user_id
+from .tasks import update_users_profile_image
 
 
+@tokens_in_cookies("member")
+@validate_and_refresh_token("member")
 def profile_updater(request, role):
+    print("======profile_updater======")
     if request.method == "POST":
         headers = {
-            "Content-Type": "application/json",
+            "Content-type": "application/json",
             "Authorization": f"Bearer {request.COOKIES.get(f'{role}_access_token')}",
         }
 
         new_number = (
-            request.POST.get("phone") if request.POST.get("phone") != "N/A" else None
+            request.POST.get("phone")
+            if request.POST.get("phone") != "N/A" and request.POST.get("phone") != ""
+            else None
         )
         new_twitter = (
             request.POST.get("twitter")
@@ -45,13 +51,16 @@ def profile_updater(request, role):
             else None
         )
         if new_profile_image:
-            print("====updating profile image============")
             new_profile_image = request.FILES["profile_image"]
-            url = f"{config('api_url')}/uploads/{role}/uploads/"
+            url = f"{config('api_url')}/uploads/{role}/update_profile_image/"
             files = {"file": new_profile_image}
             response = requests.put(url, files=files)
-            if response.status_code == 200:
-                print("====profile image updated============")
+            if response.status_code == 201:
+                print("======return from update profile image=====")
+                print(response.json())
+                update_users_profile_image.delay(
+                    headers, role, response.json()["file_name"]
+                )
                 messages.success(request, "Profile image updated successfully")
             else:
                 messages.error(request, "Failed to update profile image")
@@ -130,9 +139,7 @@ def update_facebook_handle(request, new_facebook_handle, headers, user_id, role)
 
 def update_linkedin_handle(request, new_linkedin_handle, headers, user_id, role):
     if len(new_linkedin_handle) > 0:
-        new_linkedin_handle = (
-            f"https://linkedin.com/in/{new_linkedin_handle}"
-        ).replace(" ", "")
+        new_linkedin_handle = new_linkedin_handle.replace(" ", "")
         url = f"{config('api_url')}/users/{role}/update_linkedin_handle"
         data = {"linkedin": new_linkedin_handle}
         response = requests.put(url, json=data, headers=headers)

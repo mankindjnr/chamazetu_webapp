@@ -82,3 +82,15 @@ def wallet_withdrawal(headers, amount, member_id):
 
     response = requests.put(url, json=data, headers=headers)
     return None
+
+
+@shared_task
+def update_users_profile_image(headers, role, new_profile_image_name):
+    url = f"{config('api_url')}/uploads/{role}/update_profile_picture"
+
+    data = {
+        "profile_picture_name": new_profile_image_name,
+    }
+
+    response = requests.put(url, json=data, headers=headers)
+    return None

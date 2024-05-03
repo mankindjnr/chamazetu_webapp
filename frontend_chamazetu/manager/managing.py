@@ -16,6 +16,7 @@ from member.member_chama import access_chama_threads, recent_transactions
 from member.members import get_user_full_profile, get_user_id
 from member.membermanagement import is_empty_dict
 from member.date_day_time import extract_date_time
+from chama.tasks import update_contribution_days
 
 
 from chama.usermanagement import (
@@ -39,6 +40,7 @@ def dashboard(request):
     urls = (
         (f"{config('api_url')}/managers/chamas", {}),
         (f"{config('api_url')}/managers/updates_and_features", None),
+        (f"{config('api_url')}/managers/profile_picture", {}),
     )
     dashboard_results = manager_dashboard_threads(urls, headers)
 
@@ -48,6 +50,7 @@ def dashboard(request):
         {
             "current_user": current_user,
             "manager_id": manager_id,
+            "profile_picture": dashboard_results["profile_picture"],
             "chamas": dashboard_results["chamas"],
             "updates_and_features": dashboard_results["updates_and_features"],
         },
@@ -79,6 +82,7 @@ def manager_dashboard_threads(urls, headers):
 
     chamas = None
     updates_and_features = None
+    profile_picture = None
 
     if results[urls[0][0]]["status"] == 200:
         manager_chamas = results[urls[0][0]]["data"]
@@ -92,10 +96,13 @@ def manager_dashboard_threads(urls, headers):
         chamas = list_of_chamas
     if results[urls[1][0]]["status"] == 200:
         updates_and_features = results[urls[1][0]]["data"]
+    if results[urls[2][0]]["status"] == 200:
+        profile_picture = results[urls[2][0]]["data"]
 
     return {
         "chamas": chamas,
         "updates_and_features": updates_and_features,
+        "profile_picture": profile_picture,
     }
 
 
@@ -165,6 +172,7 @@ def create_chama(request):
         )
 
         if response.status_code == 201:
+            update_contribution_days.delay()
             messages.success(request, "Chama created successfully.")
             return redirect(reverse("manager:dashboard"))
 
@@ -204,6 +212,7 @@ def chama(request, key):
             {"limit": 3},
         ),
         (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
+        (f"{config('api_url')}/managers/profile_picture", {}),
     )
     # ===================================
 
@@ -218,10 +227,8 @@ def chama(request, key):
                 "manager_id": manager_id,
                 "chama_name": chama_name,
                 "chama": results["chama"],
-                "investment_data": results["investment_data"]["investment_data"],
-                "investment_activity": results["investment_data"][
-                    "investment_activity"
-                ],
+                "investment_account": results["investment_account"],
+                "investment_activity": results["investment_activity"],
                 "fund_performance": results["fund_performance"],
                 "recent_transactions": results["recent_activity"],
             },
@@ -258,31 +265,44 @@ def chama_threads(urls, headers):
     investment_data = {}
     fund_performance = None
     # append investment_balance, and account_balance
-    if results[urls[0][0]]["status"] == 200:
+    if urls[0][0] in results and results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
-        if results[urls[1][0]]["status"] == 200:
+        if urls[1][0] in results and results[urls[1][0]]["status"] == 200:
             chama["account_balance"] = results[urls[1][0]]["data"]["account_balance"]
-        if results[urls[2][0]]["status"] == 200:
+        if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
             chama["today_deposits"] = results[urls[2][0]]["data"]["today_deposits"]
-        if results[urls[3][0]]["status"] == 200:
+        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
             recent_activity = recent_transactions(results[urls[3][0]]["data"])
-        if results[urls[4][0]]["status"] == 200:
-            investment_data["investment_data"] = results[urls[4][0]]["data"]
-        if results[urls[5][0]]["status"] == 200:
+        if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
+            investment_data["investment_data_mmf"] = results[urls[4][0]]["data"]
+        if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
             chama["number_of_members"] = results[urls[5][0]]["data"][
                 "number_of_members"
             ]
-        if results[urls[6][0]]["status"] == 200:
+        if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
             fund_performance = organise_monthly_performance(results[urls[6][0]]["data"])
-        if results[urls[7][0]]["status"] == 200:
+        if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
             investment_data["investment_activity"] = organise_investment_activity(
                 results[urls[7][0]]["data"]
             )
-    print(investment_data)
+        if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
+            chama["manager_profile_picture"] = results[urls[8][0]]["data"]
+
+    investment_account = (
+        investment_data["investment_data_mmf"]
+        if "investment_data_mmf" in investment_data
+        else None
+    )
+    investment_activty = (
+        investment_data["investment_activity"]
+        if "investment_activity" in investment_data
+        else None
+    )
     return {
         "chama": chama,
         "recent_activity": recent_activity,
-        "investment_data": investment_data,
+        "investment_account": investment_account,
+        "investment_activity": investment_activty,
         "fund_performance": fund_performance,
     }
 

@@ -44,7 +44,7 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{% static 'chama/img/profile-img.jpg' %}" alt="Profile" class="rounded-circle">
+            <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
@@ -225,17 +225,17 @@
                   <div class="card-body">
                       <h5 class="card-title">MMF <span>| Investment</span></h5>
                       <div class="d-flex align-items-center justify-content-center">
-                        <h6>Ksh: {{chama.investment_balance }}</h6>
+                        <h6>Ksh: {{investment_data.amount_invested }}</h6>
                     </div>
                       <div class="ps-3">
                           <div class="d-flex justify-content-between align-items-start">
                               <div>
-                                  <!--head--><span class="text-muted small">Interest earned</span><br>
-                                  <!--child--><span class="text-danger small fw-bold">Ksh:</span>
+                                  <!--head--><span class="text-muted small">Int earned yesterday</span><br>
+                                  <!--child--><span class="text-danger small fw-bold">Ksh: {{ investment_data.daily_interest }} </span>
                               </div>
                               <div class="text-end">
                                   <!--head--><span class="text-muted small">Int rate (last 24hrs)</span><br>
-                                  <!--child--><span class="text-danger small fw-bold">12%</span>
+                                  <!--child--><span class="text-danger small fw-bold">{{ investment_data.investment_rate }} </span>
                               </div>
                           </div>
                           <hr>

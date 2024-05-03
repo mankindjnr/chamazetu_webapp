@@ -253,6 +253,9 @@ async def get_member_wallet_balance(
             db.query(models.Member).filter(models.Member.id == current_user.id).first()
         )
 
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
         return {"wallet_balance": member.wallet_balance}
 
     except Exception as e:
