@@ -22,7 +22,8 @@ DEBUG = (
     "PRODUCTION" not in os.environ
 )  # result is True if PRODUCTION is not in os.environ
 
-ALLOWED_HOSTS = ["chamazetu.com", "192.168.100.7"]
+# ALLOWED_HOSTS = ["chamazetu.com", "192.168.100.7"]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
