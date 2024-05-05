@@ -1,10 +1,10 @@
-import requests, jwt, json
+import requests, jwt, json, os
+from dotenv import load_dotenv
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
-from decouple import config
 
-from .rawsql import execute_sql
+load_dotenv()
 
 # User management
 from .usermanagement import (

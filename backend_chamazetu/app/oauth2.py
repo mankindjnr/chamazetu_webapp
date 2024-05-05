@@ -1,20 +1,22 @@
-import logging
+import logging, os
+from dotenv import load_dotenv
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from decouple import config
 
 from . import schemas, database, models
 
+load_dotenv()
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-SECRET_KEY = config("JWT_SECRET")
-ALGORITHM = config("JWT_ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(config("JWT_EXPIRE_MINUTES"))
-JWT_REFRESH_EXPIRE_DAYS = int(config("JWT_REFRESH_EXPIRE_DAYS"))
+SECRET_KEY = os.getenv("JWT_SECRET")
+ALGORITHM = os.getenv("JWT_ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES"))
+JWT_REFRESH_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_EXPIRE_DAYS"))
 
 
 async def create_access_token(data: dict):

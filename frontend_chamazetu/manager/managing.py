@@ -1,9 +1,9 @@
-import requests, jwt, json, threading
+import requests, jwt, json, threading, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from django.contrib import messages
 from datetime import datetime
 
@@ -24,6 +24,8 @@ from chama.usermanagement import (
     refresh_token,
 )
 
+load_dotenv()
+
 
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
@@ -38,9 +40,9 @@ def dashboard(request):
     }
 
     urls = (
-        (f"{config('api_url')}/managers/chamas", {}),
-        (f"{config('api_url')}/managers/updates_and_features", None),
-        (f"{config('api_url')}/managers/profile_picture", {}),
+        (f"{os.getenv('api_url')}/managers/chamas", {}),
+        (f"{os.getenv('api_url')}/managers/updates_and_features", None),
+        (f"{os.getenv('api_url')}/managers/profile_picture", {}),
     )
     dashboard_results = manager_dashboard_threads(urls, headers)
 
@@ -166,7 +168,7 @@ def create_chama(request):
             "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
         }
         response = requests.post(
-            f"{config('api_url')}/chamas",
+            f"{os.getenv('api_url')}/chamas",
             json=data,
             headers=headers,
         )
@@ -195,24 +197,27 @@ def chama(request, key):
 
     # ===================================
     urls = (
-        (f"{config('api_url')}/chamas", {"chama_name": chama_name}),  # chama
+        (f"{os.getenv('api_url')}/chamas", {"chama_name": chama_name}),  # chama
         (
-            f"{config('api_url')}/chamas/account_balance/{chama_id}",
+            f"{os.getenv('api_url')}/chamas/account_balance/{chama_id}",
             None,
         ),  # account_balance
-        (f"{config('api_url')}/chamas/today_deposits/{chama_id}", None),
-        (f"{config('api_url')}/transactions/{chama_name}", {"chama_id": chama_id}),
+        (f"{os.getenv('api_url')}/chamas/today_deposits/{chama_id}", None),
+        (f"{os.getenv('api_url')}/transactions/{chama_name}", {"chama_id": chama_id}),
         (
-            f"{config('api_url')}/investments/chamas/account_balance/{chama_id}",
+            f"{os.getenv('api_url')}/investments/chamas/account_balance/{chama_id}",
             None,
         ),  # investment balance
-        (f"{config('api_url')}/chamas/members_count/{chama_id}", None),  # members count
         (
-            f"{config('api_url')}/investments/chamas/monthly_interests/{chama_id}",
+            f"{os.getenv('api_url')}/chamas/members_count/{chama_id}",
+            None,
+        ),  # members count
+        (
+            f"{os.getenv('api_url')}/investments/chamas/monthly_interests/{chama_id}",
             {"limit": 3},
         ),
-        (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
-        (f"{config('api_url')}/managers/profile_picture", {}),
+        (f"{os.getenv('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
+        (f"{os.getenv('api_url')}/managers/profile_picture", {}),
     )
     # ===================================
 
@@ -358,7 +363,7 @@ def change_password(request, manager_id):
             messages.error(request, "Passwords do not match")
             return redirect(reverse(f"{role}:profile", args=[manager_id]))
 
-        url = f"{config('api_url')}/users/{role}/change_password"
+        url = f"{os.getenv('api_url')}/users/{role}/change_password"
         data = {
             "user_id": manager_id,
             "old_password": current_password,
@@ -456,7 +461,8 @@ def view_chama_members(request, chama_name):
 
     chama_id = get_chama_id(chama_name)
     chama_members = requests.get(
-        f"{config('api_url')}/members_tracker/chama_members/{chama_id}", headers=headers
+        f"{os.getenv('api_url')}/members_tracker/chama_members/{chama_id}",
+        headers=headers,
     )
     print(chama_members.json())
     return render(

@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from decouple import config
-import requests
+import requests, os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @shared_task
 def update_chama_account_balance(chama_id, amount, transaction_type):
-    url = f"{config('api_url')}/chamas/update_account"
+    url = f"{os.getenv('api_url')}/chamas/update_account"
 
     data = {
         "chama_id": chama_id,
@@ -20,7 +22,7 @@ def update_chama_account_balance(chama_id, amount, transaction_type):
 
 @shared_task
 def update_shares_number_for_member(chama_id, num_of_shares, headers):
-    url = f"{config('api_url')}/chamas/update_shares"
+    url = f"{os.getenv('api_url')}/chamas/update_shares"
 
     data = {
         "chama_id": chama_id,
@@ -33,7 +35,7 @@ def update_shares_number_for_member(chama_id, num_of_shares, headers):
 
 @shared_task
 def update_wallet_balance(headers, amount, chama_id, transaction_type):
-    url = f"{config('api_url')}/members/update_wallet_balance"
+    url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
     if (
         transaction_type == "moved_to_wallet"
@@ -58,7 +60,7 @@ def update_wallet_balance(headers, amount, chama_id, transaction_type):
 
 @shared_task
 def wallet_deposit(headers, amount, member_id):
-    url = f"{config('api_url')}/members/update_wallet_balance"
+    url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
     data = {
         "transaction_destination": 0,
@@ -72,7 +74,7 @@ def wallet_deposit(headers, amount, member_id):
 
 @shared_task
 def wallet_withdrawal(headers, amount, member_id):
-    url = f"{config('api_url')}/members/update_wallet_balance"
+    url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
     data = {
         "transaction_destination": 0,  # should be the phone number of the member, where the money is being withdrawn to
@@ -86,7 +88,7 @@ def wallet_withdrawal(headers, amount, member_id):
 
 @shared_task
 def update_users_profile_image(headers, role, new_profile_image_name):
-    url = f"{config('api_url')}/uploads/{role}/update_profile_picture"
+    url = f"{os.getenv('api_url')}/uploads/{role}/update_profile_picture"
 
     data = {
         "profile_picture_name": new_profile_image_name,

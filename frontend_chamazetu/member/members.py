@@ -1,21 +1,23 @@
-import requests, jwt, json
+import requests, jwt, json, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.contrib import messages
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from datetime import datetime, timedelta
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.chamas import get_chama_contribution_day, get_previous_contribution_date
 
+load_dotenv()
+
 
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def get_member_recent_transactions(request):
-    url = f"{config('api_url')}/members/recent_transactions"
+    url = f"{os.getenv('api_url')}/members/recent_transactions"
     headers = {
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
@@ -30,7 +32,7 @@ def get_member_recent_transactions(request):
 
 
 def get_wallet_balance(request):
-    url = f"{config('api_url')}/members/wallet_balance"
+    url = f"{os.getenv('api_url')}/members/wallet_balance"
     headers = {
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
@@ -45,7 +47,7 @@ def get_wallet_balance(request):
 
 
 def get_member_expected_contribution(member_id, chama_id):
-    url = f"{config('api_url')}/members/expected_contribution"
+    url = f"{os.getenv('api_url')}/members/expected_contribution"
     data = {"member_id": member_id, "chama_id": chama_id}
     resp = requests.get(url, json=data)
     if resp.status_code == 200:
@@ -54,7 +56,7 @@ def get_member_expected_contribution(member_id, chama_id):
 
 
 def get_user_id(role, email):
-    url = f"{config('api_url')}/users/{role}/{email}"
+    url = f"{os.getenv('api_url')}/users/{role}/{email}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -64,7 +66,7 @@ def get_user_id(role, email):
 
 
 def get_user_full_name(role, id):
-    url = f"{config('api_url')}/users/names/{role}/{id}"
+    url = f"{os.getenv('api_url')}/users/names/{role}/{id}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -74,7 +76,7 @@ def get_user_full_name(role, id):
 
 
 def get_user_email(role, id):
-    url = f"{config('api_url')}/users/email/{role}/{id}"
+    url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -84,7 +86,7 @@ def get_user_email(role, id):
 
 
 def get_user_phone_number(role, id):
-    url = f"{config('api_url')}/users/phone_number/{role}/{id}"
+    url = f"{os.getenv('api_url')}/users/phone_number/{role}/{id}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -94,7 +96,7 @@ def get_user_phone_number(role, id):
 
 
 def get_user_full_profile(role, id):
-    url = f"{config('api_url')}/users/full_profile/{role}/{id}"
+    url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -118,7 +120,7 @@ def get_member_contribution_so_far(chama_id, member_id):
         "previous_contribution_date": previous_contribution_date,
     }
     resp = requests.get(
-        f"{config('api_url')}/members/member_contribution_so_far", json=data
+        f"{os.getenv('api_url')}/members/member_contribution_so_far", json=data
     )
     if resp.status_code == 200:
         return resp.json()["member_contribution"]

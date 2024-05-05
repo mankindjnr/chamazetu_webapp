@@ -1,9 +1,9 @@
-import requests, jwt, json, threading
+import requests, jwt, json, threading, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from django.contrib import messages
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
@@ -26,6 +26,8 @@ from chama.usermanagement import (
     refresh_token,
 )
 
+load_dotenv()
+
 
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
@@ -39,11 +41,14 @@ def dashboard(request):
     }
 
     urls = [
-        (f"{config('api_url')}/members/chamas", {}),
-        (f"{config('api_url')}/members/recent_transactions", {"member_id": member_id}),
-        (f"{config('api_url')}/members/wallet_balance", {}),
-        (f"{config('api_url')}/members/recent_wallet_activity", {}),
-        (f"{config('api_url')}/users/member/{current_user}", None),
+        (f"{os.getenv('api_url')}/members/chamas", {}),
+        (
+            f"{os.getenv('api_url')}/members/recent_transactions",
+            {"member_id": member_id},
+        ),
+        (f"{os.getenv('api_url')}/members/wallet_balance", {}),
+        (f"{os.getenv('api_url')}/members/recent_wallet_activity", {}),
+        (f"{os.getenv('api_url')}/users/member/{current_user}", None),
     ]
 
     results = member_dashboard_threads(urls, headers)
@@ -169,7 +174,7 @@ def change_password(request, user_id):
             messages.error(request, "Passwords do not match")
             return redirect(reverse(f"{role}:profile", args=[user_id]))
 
-        url = f"{config('api_url')}/users/{role}/change_password"
+        url = f"{os.getenv('api_url')}/users/{role}/change_password"
         data = {
             "user_id": user_id,
             "old_password": current_password,

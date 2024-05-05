@@ -1,10 +1,10 @@
-import requests, jwt, json
+import requests, jwt, json, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from django.contrib import messages
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -21,6 +21,8 @@ from .members import (
     get_member_expected_contribution,
     get_member_contribution_so_far,
 )
+
+load_dotenv()
 
 
 # ==========================================================
@@ -73,7 +75,7 @@ def direct_deposit_to_chama(request):
                 amount = amount_to_deposit
 
             # deposit the amount to chama
-            url = f"{config('api_url')}/transactions/direct_deposit"
+            url = f"{os.getenv('api_url')}/transactions/direct_deposit"
             data = {
                 "amount": amount,
                 "chama_id": chama_id,
@@ -149,7 +151,7 @@ def from_wallet_to_chama(request):
                 amount = amount_to_deposit
 
             # move from wallet to chama
-            url = f"{config('api_url')}/transactions/deposit_from_wallet"
+            url = f"{os.getenv('api_url')}/transactions/deposit_from_wallet"
             data = {
                 "amount": amount,
                 "transaction_destination": chama_id,
@@ -256,7 +258,7 @@ def withdraw_from_wallet(request):
             "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
         }
 
-        url = f"{config('api_url')}/members/update_wallet_balance"
+        url = f"{os.getenv('api_url')}/members/update_wallet_balance"
         data = {
             "transaction_destination": 0,
             "amount": amount,

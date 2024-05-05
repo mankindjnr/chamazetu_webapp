@@ -17,6 +17,8 @@ app.conf.update(timezone="Africa/Nairobi")
 # app.config_from_object('django.conf:settings', namespace='CELERY')
 app.config_from_object(settings, namespace="CELERY")
 
+app.conf.accept_content = ["json", "pickle"]
+
 # celery Beat settings
 app.conf.beat_schedule = {
     "update-contribution-days": {

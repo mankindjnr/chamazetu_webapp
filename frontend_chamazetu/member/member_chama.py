@@ -1,9 +1,9 @@
-import requests, jwt, json, threading
+import requests, jwt, json, threading, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from datetime import datetime, date
 from django.contrib import messages
 from collections import defaultdict
@@ -33,6 +33,8 @@ from chama.usermanagement import (
     refresh_token,
 )
 
+load_dotenv()
+
 
 # viewing a chamas in the public dashboard where users can join
 @tokens_in_cookies("member")
@@ -43,7 +45,9 @@ def view_chama(request, chamaid):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
     }
-    resp = requests.get(f"{config('api_url')}/chamas/chama", json=data, headers=headers)
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/chama", json=data, headers=headers
+    )
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
 
@@ -62,35 +66,34 @@ def view_chama(request, chamaid):
 @validate_and_refresh_token("member")
 def access_chama(request, chamaname):
     chama_id = get_chama_id(chamaname)
-    chama_members_id = requests.get(f"{config('api_url')}/chamas/members/{chama_id}")
+    chama_members_id = requests.get(f"{os.getenv('api_url')}/chamas/members/{chama_id}")
     current_user = request.COOKIES.get("current_member")
     role = "member"
 
     urls = [
-        (f"{config('api_url')}/chamas/chama_name", {"chamaname": chamaname}),
+        (f"{os.getenv('api_url')}/chamas/chama_name", {"chamaname": chamaname}),
         (
-            f"{config('api_url')}/transactions/{chamaname}",
+            f"{os.getenv('api_url')}/transactions/{chamaname}",
             {"chama_id": chama_id},
         ),  # recent transactions
         (
-            f"{config('api_url')}/transactions/{chamaname}/members",
+            f"{os.getenv('api_url')}/transactions/{chamaname}/members",
             {
                 "chama_id": chama_id,
                 "members_ids": chama_members_id.json()["Members"],
                 "date_of_transaction": get_sunday_date().strftime("%Y-%m-%d"),
             },
         ),  # chama weekly activity
-        (f"{config('api_url')}/chamas/account_balance/{chama_id}", None),
-        (f"{config('api_url')}/chamas/today_deposits/{chama_id}", None),
-        (f"{config('api_url')}/investments/chamas/account_balance/{chama_id}", None),
-        (f"{config('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
-        (f"{config('api_url')}/members/wallet_balance", {}),
-        (f"{config('api_url')}/users/{role}/{current_user}", None),
+        (f"{os.getenv('api_url')}/chamas/account_balance/{chama_id}", None),
+        (f"{os.getenv('api_url')}/chamas/today_deposits/{chama_id}", None),
+        (f"{os.getenv('api_url')}/investments/chamas/account_balance/{chama_id}", None),
+        (f"{os.getenv('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
+        (f"{os.getenv('api_url')}/members/wallet_balance", {}),
+        (f"{os.getenv('api_url')}/users/{role}/{current_user}", None),
         (
-            f"{config('api_url')}/investments/chamas/monthly_interests/{chama_id}",
+            f"{os.getenv('api_url')}/investments/chamas/monthly_interests/{chama_id}",
             {"limit": 3},
         ),
-        (f"{config('api_url')}/members/profile_picture", {}),
     ]
 
     headers = {
@@ -162,8 +165,6 @@ def access_chama_threads(urls, headers):
         chama = results[urls[0][0]]["data"]["Chama"][0]
         chama_id = get_chama_id(chama["chama_name"])
         contribution_day_details = get_chama_contribution_day(chama_id)
-        print("=====day details======")
-        print(contribution_day_details)
         chama["contribution_day"] = contribution_day_details["contribution_day"]
         chama["contribution_date"] = contribution_day_details["contribution_date"]
 
@@ -186,14 +187,18 @@ def access_chama_threads(urls, headers):
             wallet = results[urls[7][0]]["data"]
         if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
             wallet["member_id"] = results[urls[8][0]]["data"]["User_id"]
+            wallet["profile_image"] = (
+                results[urls[8][0]]["data"]["profile_picture"]
+                if "profile_picture" in results[urls[8][0]]["data"]
+                else ""
+            )
         if urls[9][0] in results and results[urls[9][0]]["status"] == 200:
             monthly_interests = organise_monthly_performance(
                 results[urls[9][0]]["data"]
             )
-        if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
-            user_profile["profile_image"] = results[urls[10][0]]["data"]
 
     # return the processed results chama, transactions, members
+    user_profile["profile_image"] = wallet["profile_image"]
     return {
         "chama": chama,
         "recent_transactions": recent_activity,
@@ -323,7 +328,7 @@ def join_chama(request):
             "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
         }
         resp = requests.post(
-            f"{config('api_url')}/chamas/join", json=data, headers=headers
+            f"{os.getenv('api_url')}/chamas/join", json=data, headers=headers
         )
         if resp.status_code == 201:
             update_shares_number_for_member.delay(
@@ -355,7 +360,8 @@ def view_chama_members(request, chama_name):
 
     chama_id = get_chama_id(chama_name)
     chama_members = requests.get(
-        f"{config('api_url')}/members_tracker/chama_members/{chama_id}", headers=headers
+        f"{os.getenv('api_url')}/members_tracker/chama_members/{chama_id}",
+        headers=headers,
     )
     print(chama_members.json())
     return render(

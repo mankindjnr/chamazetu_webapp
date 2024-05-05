@@ -1,9 +1,9 @@
-import requests, jwt, json
+import requests, jwt, json, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -13,8 +13,9 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib import messages
 from frontend_chamazetu import settings
 
-from .rawsql import execute_sql
 from .tasks import sending_email
+
+load_dotenv()
 
 
 def validate_token(request, role=None):
@@ -23,7 +24,7 @@ def validate_token(request, role=None):
         print(request.COOKIES.get(f"{role}_access_token"))
         jwt.decode(
             request.COOKIES.get(f"{role}_access_token").split(" ")[1],
-            config("JWT_SECRET"),
+            os.getenv("JWT_SECRET"),
             algorithms=["HS256"],
         )
         print("---------valid_token---------")
@@ -39,7 +40,7 @@ def refresh_token(request, role):
         refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
-            refresh_token, config("JWT_SECRET"), algorithms=["HS256"]
+            refresh_token, os.getenv("JWT_SECRET"), algorithms=["HS256"]
         )
         # If the refresh token is valid, generate a new access token
         email_claim = decoded_token.get("sub")
@@ -50,7 +51,7 @@ def refresh_token(request, role):
 
         headers = {"Content-type": "application/json"}
         refresh_access = requests.post(
-            f"{config('api_url')}/auth/refresh",
+            f"{os.getenv('api_url')}/auth/refresh",
             data=json.dumps(data),
             headers=headers,
         )
@@ -75,7 +76,7 @@ def refresh_token(request, role):
 
 
 def get_user_email(role, id):
-    url = f"{config('api_url')}/users/email/{role}/{id}"
+    url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
     resp = requests.get(url)
     if resp.status_code == 200:
         user = resp.json()
@@ -99,7 +100,9 @@ def signin(request, role):
         #         if
         # TODO: include a try and retry mechanism for the auth route call
         # send the data to the auth server for verification and login
-        response = requests.post(f"{config('api_url')}/auth/{role}s/login/", data=data)
+        response = requests.post(
+            f"{os.getenv('api_url')}/auth/{role}s/login/", data=data
+        )
 
         if response.status_code == 200:
             access_tokens = {}
@@ -172,7 +175,7 @@ def signup(request, role):
 
         headers = {"Content-type": "application/json"}
         response = requests.post(
-            f"{config('api_url')}/users",
+            f"{os.getenv('api_url')}/users",
             data=json.dumps(data),
             headers=headers,
         )
@@ -226,7 +229,7 @@ def signout(request, role):
 # validation of the signup jwt token (15 min lifespan)
 def verify_signup_token(request, token, role):
     try:
-        jwt.decode(token, config("JWT_SECRET"), algorithms=["HS256"])
+        jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
         return True
     except InvalidTokenError as e:
         return HttpResponseRedirect(reverse("chama:signin", args=[role]))
@@ -248,13 +251,13 @@ def activate(request, role, uidb64, token):
         if role == "manager":
             print("---------activating_manager---------")
             email_verified_resp = requests.put(
-                f"{config('api_url')}/users/manager_email_verification/{uid}",
+                f"{os.getenv('api_url')}/users/manager_email_verification/{uid}",
                 json={"user_email": user},
             )
         elif role == "member":
             print("---------activating_member---------")
             email_verified_resp = requests.put(
-                f"{config('api_url')}/users/member_email_verification/{uid}",
+                f"{os.getenv('api_url')}/users/member_email_verification/{uid}",
                 json={"user_email": user},
             )
 
@@ -276,7 +279,7 @@ def forgot_password(request, role):
     if request.method == "POST":
         email = (request.POST["email"]).strip()
 
-        user_resp = requests.get(f"{config('api_url')}/users/{role}/{email}")
+        user_resp = requests.get(f"{os.getenv('api_url')}/users/{role}/{email}")
         if user_resp.status_code == 200:
             # TODO: call backend url to create an activation token and send email i;e signup
             return render(
@@ -305,7 +308,7 @@ def update_forgotten_password(request, role):
 
         data = {"email": email, "updated_password": password}
         updated_resp = requests.put(
-            f"{config('api_url')}/users/{role}/update_password", json=data
+            f"{os.getenv('api_url')}/users/{role}/update_password", json=data
         )
         if updated_resp.status_code == 200:
             messages.success(request, "password has been successfully updated")

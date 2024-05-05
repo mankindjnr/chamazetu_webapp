@@ -11,17 +11,18 @@ from fastapi import (
 from typing import Union
 from PIL import Image
 import io, os
+from dotenv import load_dotenv
 from uuid import uuid4
 from sqlalchemy.orm import Session
-from decouple import config
 from .. import schemas, database, utils, oauth2, models
 
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
+load_dotenv()
 
-connection_string = config("AZURE_STORAGE_CONNECTION_STRING_1")
+connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING_1")
 
 
 # Create a unique name for the container
@@ -91,7 +92,7 @@ async def update_profile_picture(
     ),
 ):
     print("===update profile picture===")
-    profile_picture_url = f"https://{config('AZURE_PROFILE_STORAGE_ACCOUNT_NAME')}.blob.core.windows.net/{profile_container_name}/{profile.profile_picture_name}"
+    profile_picture_url = f"https://{os.getenv('AZURE_PROFILE_STORAGE_ACCOUNT_NAME')}.blob.core.windows.net/{profile_container_name}/{profile.profile_picture_name}"
     user = None
     if role == "member":
         user = db.query(models.Member).filter_by(id=current_user.id).first()

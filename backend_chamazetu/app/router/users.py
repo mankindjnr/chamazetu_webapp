@@ -262,6 +262,32 @@ async def get_user_full_profile(
     # "profile_picture": user.profile_picture,
 
 
+# retrive a users profile picture
+@router.get("/profile_picture/{role}", status_code=status.HTTP_200_OK)
+async def get_user_profile_picture(
+    role: str,
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+    db: Session = Depends(get_db),
+):
+    user = None
+    if role == "member":
+        user = (
+            db.query(models.Member).filter(models.Member.id == current_user.id).first()
+        )
+    elif role == "manager":
+        user = (
+            db.query(models.Manager)
+            .filter(models.Manager.id == current_user.id)
+            .first()
+        )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return {"profile_picture": user.profile_picture}
+
+
 # changing password
 @router.put("/{role}/change_password", status_code=status.HTTP_201_CREATED)
 async def change_password(

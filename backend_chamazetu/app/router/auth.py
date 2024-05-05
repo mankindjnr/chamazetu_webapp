@@ -3,13 +3,15 @@ from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from pydantic import BaseModel, Field
-import logging
-from decouple import config
+import logging, os
+from dotenv import load_dotenv
 from jose import jwt
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+load_dotenv()
 
 
 # TODO: Introduce try and catch for all the functions or other error handling methods
@@ -94,7 +96,7 @@ async def login(
     )
 
     print("----access payload")
-    payload = jwt.decode(access_token, config("JWT_SECRET"), algorithms="HS256")
+    payload = jwt.decode(access_token, os.getenv("JWT_SECRET"), algorithms="HS256")
     print(payload)
 
     return {

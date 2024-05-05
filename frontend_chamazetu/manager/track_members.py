@@ -1,9 +1,9 @@
-import calendar, requests, jwt, json, threading
+import calendar, requests, jwt, json, threading, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from datetime import datetime, date, timedelta
 from django.contrib import messages
 from collections import defaultdict
@@ -35,6 +35,8 @@ from chama.usermanagement import (
     validate_token,
     refresh_token,
 )
+
+load_dotenv()
 
 
 @tokens_in_cookies("manager")

@@ -1,9 +1,9 @@
-import requests, jwt, json, threading
+import requests, jwt, json, threading, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from django.contrib import messages
 from datetime import datetime
 
@@ -21,6 +21,8 @@ from chama.usermanagement import (
     validate_token,
     refresh_token,
 )
+
+load_dotenv()
 
 
 # invest to an investment
@@ -48,7 +50,7 @@ def invest(request):
         # check if amount invested is more than the account balance before making requests
         if amount_is_within_balance(chama_id, investment_amt, "invest"):
             response = requests.post(
-                f"{config('api_url')}/investments/chamas/{investment_type}",
+                f"{os.getenv('api_url')}/investments/chamas/{investment_type}",
                 json=data,
                 headers=headers,
             )
@@ -105,7 +107,7 @@ def withdraw_from_investment(request):
         # check if the withdrawal amt is above the investment bal
         if amount_is_within_balance(chama_id, withdraw_amount, "withdraw"):
             response = requests.post(
-                f"{config('api_url')}/investments/chamas/{investment_type}",
+                f"{os.getenv('api_url')}/investments/chamas/{investment_type}",
                 json=data,
                 headers=headers,
             )
@@ -142,7 +144,7 @@ def withdraw_from_investment(request):
 def amount_is_within_balance(chama_id, amount, type):
     if type == "invest":  # check current acct bal
         investment_resp = requests.get(
-            f"{config('api_url')}/chamas/account_balance/{chama_id}"
+            f"{os.getenv('api_url')}/chamas/account_balance/{chama_id}"
         )
         if investment_resp.status_code == 200:
             current_bal = investment_resp.json()["account_balance"]
@@ -150,7 +152,7 @@ def amount_is_within_balance(chama_id, amount, type):
                 return True
     elif type == "withdraw":  # check invest acc bal
         withdraw_resp = requests.get(
-            f"{config('api_url')}/investments/chamas/account_balance/{chama_id}"
+            f"{os.getenv('api_url')}/investments/chamas/account_balance/{chama_id}"
         )
         if withdraw_resp.status_code == 200:
             current_invest_bal = withdraw_resp.json()["amount_invested"]

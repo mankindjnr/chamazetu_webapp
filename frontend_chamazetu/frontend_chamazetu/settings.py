@@ -1,25 +1,28 @@
 import os
+from dotenv import load_dotenv
 from pathlib import Path
-from decouple import config
 
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 EMAIL_USE_TLS = True
-EMAIL_HOST = config("EMAIL_HOST")
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-EMAIL_PORT = config("EMAIL_PORT", cast=int)
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("DJANGO_SECRET")
+SECRET_KEY = os.getenv("DJANGO_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = "RENDER" not in os.environ
+DEBUG = (
+    "PRODUCTION" not in os.environ
+)  # result is True if PRODUCTION is not in os.environ
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["chamazetu.com", "192.168.100.7"]
 
 
 # Application definition
@@ -54,10 +57,12 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://chamazetu_frontend:8000",
+    "https://chamazetu-frontend.8000",
 ]
 
 CORS_TRUSTED_ORIGINS = [
     "http://chamazetu_frontend:8000",
+    "https://chamazetu-frontend.8000",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
@@ -86,11 +91,11 @@ WSGI_APPLICATION = "frontend_chamazetu.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -141,7 +146,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Celery settings
-CELERY_BROKER_URL = "redis://message_broker:6379"
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -150,7 +155,7 @@ CELERY_TIMEZONE = "Africa/Nairobi"
 # monitor celery tasks
 # CELERY_RESULT_BACKEND = "django-db"  # YOU CAN USE REDIS AS WELL
 # using redis as the result backend
-CELERY_RESULT_BACKEND = "redis://message_broker:6379"
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
 # celery beat settings
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULER = os.getenv("CELERY_BEAT_SCHEDULER")

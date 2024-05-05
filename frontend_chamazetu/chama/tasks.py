@@ -1,8 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 from django.core.mail import send_mail
-from decouple import config
-import requests
+import requests, os
+from dotenv import load_dotenv
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -11,6 +11,8 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib import messages
 from frontend_chamazetu import settings
+
+load_dotenv()
 
 
 @shared_task
@@ -31,7 +33,7 @@ def update_contribution_days():
     """
     Update the next contribution day for chamas
     """
-    response = requests.put(f"{config('api_url')}/chamas/update_contribution_days")
+    response = requests.put(f"{os.getenv('api_url')}/chamas/update_contribution_days")
 
     return None
 
@@ -43,7 +45,7 @@ def calaculate_daily_mmf_interests():
     Calculate daily interests for the chamas
     """
     response = requests.put(
-        f"{config('api_url')}/investments/chamas/calculate_daily_mmf_interests"
+        f"{os.getenv('api_url')}/investments/chamas/calculate_daily_mmf_interests"
     )
 
     return None
@@ -55,7 +57,7 @@ def reset_and_move_weekly_mmf_interests():
     Reset and add weekly mmf interests to the principal
     """
     response = requests.put(
-        f"{config('api_url')}/investments/chamas/reset_and_move_weekly_mmf_interest_to_principal"
+        f"{os.getenv('api_url')}/investments/chamas/reset_and_move_weekly_mmf_interest_to_principal"
     )
 
     return None
@@ -67,7 +69,7 @@ def reset_monthly_mmf_interests():
     Reset monthly mmf interests
     """
     response = requests.put(
-        f"{config('api_url')}/investments/chamas/reset_monthly_mmf_interest"
+        f"{os.getenv('api_url')}/investments/chamas/reset_monthly_mmf_interest"
     )
 
     return None

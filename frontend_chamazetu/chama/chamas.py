@@ -1,19 +1,22 @@
 import requests, jwt, json, calendar
+import os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from datetime import timedelta, datetime
 
-from .rawsql import execute_sql
+from manager.managers import get_user_full_profile
+
+load_dotenv()
 
 
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist
 def get_all_chamas(request, role=None):
     chamas_resp = requests.get(
-        f"{config('api_url')}/chamas/active_accepting_members_chamas"
+        f"{os.getenv('api_url')}/chamas/active_accepting_members_chamas"
     )
     chamas = None
     if chamas_resp.status_code == 200:
@@ -33,12 +36,10 @@ def get_all_chamas(request, role=None):
 def get_chama(request, chamaid):
     data = {"chamaid": chamaid}
 
-    resp = requests.get(f"{config('api_url')}/chamas/public_chama", json=data)
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
-
-        for detail in chama:
-            print(detail, ":", chama[detail])
+        manager_profile = get_user_full_profile("manager", chama["manager_id"])
 
         return render(
             request,
@@ -52,7 +53,7 @@ def get_chama(request, chamaid):
 
 
 def get_chama_id(chamaname):
-    resp = requests.get(f"{config('api_url')}/chamas/chama_id/{chamaname}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/chama_id/{chamaname}")
     if resp.status_code == 200:
         chama = resp.json()
         chama_id = chama["Chama_id"]
@@ -60,7 +61,7 @@ def get_chama_id(chamaname):
 
 
 def get_chama_name(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/chama_name/{chama_id}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/chama_name/{chama_id}")
     if resp.status_code == 200:
         chama = resp.json()
         chama_name = chama["Chama_name"]
@@ -68,7 +69,7 @@ def get_chama_name(chama_id):
 
 
 def get_chama_contribution_day(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/contribution_day/{chama_id}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/contribution_day/{chama_id}")
     if resp.status_code == 200:
         contribution_details = resp.json()
         return contribution_details
@@ -76,7 +77,9 @@ def get_chama_contribution_day(chama_id):
 
 
 def get_chama_contribution_interval(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/contribution_interval/{chama_id}")
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/contribution_interval/{chama_id}"
+    )
     if resp.status_code == 200:
         contribution_interval = resp.json()
         return contribution_interval
@@ -143,7 +146,7 @@ def get_previous_contribution_date(chama_id):
 
 
 def get_members_daily_contribution_in_given_month(chama_id, prev_4th_contribution_date):
-    url = f"{config('api_url')}/members_tracker/members_daily_monthly_contribution/{chama_id}"
+    url = f"{os.getenv('api_url')}/members_tracker/members_daily_monthly_contribution/{chama_id}"
     data = {"contribution_back_date": prev_4th_contribution_date}
     resp = requests.get(url, json=data)
     if resp.status_code == 200:
@@ -177,7 +180,7 @@ def fourth_contribution_date_from_the_upcoming(chama_id, interval):
 
 
 def get_chama_creation_date(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/creation_date/{chama_id}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/creation_date/{chama_id}")
     if resp.status_code == 200:
         chama = resp.json()
         creation_date = chama["creation_date"]
@@ -186,7 +189,7 @@ def get_chama_creation_date(chama_id):
 
 
 def get_chama_start_date(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/start_date/{chama_id}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/start_date/{chama_id}")
     if resp.status_code == 200:
         chama = resp.json()
         start_date = chama["start_date"]
@@ -242,7 +245,7 @@ def get_chamas_last_four_contribution_days(chama_id):
 
 
 def get_chama_number_of_members(chama_id):
-    resp = requests.get(f"{config('api_url')}/chamas/members_count/{chama_id}")
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/members_count/{chama_id}")
     if resp.status_code == 200:
         chama = resp.json()
         number_of_members = chama["number_of_members"]

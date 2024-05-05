@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task
-from decouple import config
-import requests
+import requests, os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @shared_task
 def update_investment_account(chama_id, amount, investment_type, transaction_type):
-    url = f"{config('api_url')}/investments/chamas/update_investment_account"
+    url = f"{os.getenv('api_url')}/investments/chamas/update_investment_account"
     data = {
         "amount_invested": amount,
         "investment_type": investment_type,

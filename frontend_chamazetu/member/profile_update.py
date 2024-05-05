@@ -1,4 +1,5 @@
 import requests, jwt, json, os
+from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
@@ -6,13 +7,14 @@ from django.contrib import messages
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from decouple import config
 from datetime import datetime, timedelta
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from .members import get_user_id
 from .tasks import update_users_profile_image
+
+load_dotenv()
 
 
 @tokens_in_cookies("member")
@@ -52,7 +54,7 @@ def profile_updater(request, role):
         )
         if new_profile_image:
             new_profile_image = request.FILES["profile_image"]
-            url = f"{config('api_url')}/uploads/{role}/update_profile_image/"
+            url = f"{os.getenv('api_url')}/uploads/{role}/update_profile_image/"
             files = {"file": new_profile_image}
             response = requests.put(url, files=files)
             if response.status_code == 201:
@@ -88,7 +90,7 @@ def profile_updater(request, role):
 def update_phone_number(request, new_phone_number, headers, user_id, role):
     if len(new_phone_number) == 9:
         new_phone_number = new_phone_number.replace(" ", "")
-        url = f"{config('api_url')}/users/{role}/update_phone_number"
+        url = f"{os.getenv('api_url')}/users/{role}/update_phone_number"
         data = {"phone_number": new_phone_number}
         response = requests.put(url, json=data, headers=headers)
         if response.status_code == 200:
@@ -106,7 +108,7 @@ def update_phone_number(request, new_phone_number, headers, user_id, role):
 def update_twitter_handle(request, new_twitter_handle, headers, user_id, role):
     if len(new_twitter_handle) > 0:
         new_twitter_handle = new_twitter_handle.replace(" ", "")
-        url = f"{config('api_url')}/users/{role}/update_twitter_handle"
+        url = f"{os.getenv('api_url')}/users/{role}/update_twitter_handle"
         data = {"twitter": new_twitter_handle}
         response = requests.put(url, json=data, headers=headers)
         if response.status_code == 200:
@@ -123,7 +125,7 @@ def update_twitter_handle(request, new_twitter_handle, headers, user_id, role):
 def update_facebook_handle(request, new_facebook_handle, headers, user_id, role):
     if len(new_facebook_handle) > 0:
         new_facebook_handle = new_facebook_handle.replace(" ", "")
-        url = f"{config('api_url')}/users/{role}/update_facebook_handle"
+        url = f"{os.getenv('api_url')}/users/{role}/update_facebook_handle"
         data = {"facebook": new_facebook_handle}
         response = requests.put(url, json=data, headers=headers)
         if response.status_code == 200:
@@ -140,7 +142,7 @@ def update_facebook_handle(request, new_facebook_handle, headers, user_id, role)
 def update_linkedin_handle(request, new_linkedin_handle, headers, user_id, role):
     if len(new_linkedin_handle) > 0:
         new_linkedin_handle = new_linkedin_handle.replace(" ", "")
-        url = f"{config('api_url')}/users/{role}/update_linkedin_handle"
+        url = f"{os.getenv('api_url')}/users/{role}/update_linkedin_handle"
         data = {"linkedin": new_linkedin_handle}
         response = requests.put(url, json=data, headers=headers)
         if response.status_code == 200:
