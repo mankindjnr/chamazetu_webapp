@@ -87,5 +87,3 @@ volumes:
   chamazetu_data:
   redis_data:
   frontend_data:
-
-    # i will introduce queue manager (separate redis instance) or flower/celery/redis for monitoring fastapi

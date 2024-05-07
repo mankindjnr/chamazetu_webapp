@@ -26,7 +26,7 @@ connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING_1")
 
 
 # Create a unique name for the container
-profile_container_name = "chamazetu-profiles"
+profile_container_name = "profiles-chamazetu"
 
 
 @router.put("/{role}/update_profile_image/", status_code=status.HTTP_201_CREATED)

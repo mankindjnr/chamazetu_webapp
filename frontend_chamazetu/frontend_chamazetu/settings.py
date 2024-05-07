@@ -92,11 +92,11 @@ WSGI_APPLICATION = "frontend_chamazetu.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "NAME": os.getenv("FRONT_DB_NAME"),
+        "USER": os.getenv("FRONT_DB_USER"),
+        "PASSWORD": os.getenv("FRONT_DB_PASSWORD"),
+        "HOST": os.getenv("FRONT_DB_HOST"),
+        "PORT": os.getenv("FRONT_DB_PORT"),
     }
 }
 
