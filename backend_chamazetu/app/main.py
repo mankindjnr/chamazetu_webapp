@@ -15,6 +15,7 @@ from .router import (
     member_profile,
     managers,
     azure_blob_uploads,
+    daraja_api,
 )
 
 app = FastAPI()
@@ -41,6 +42,7 @@ app.include_router(search_functionality.router)
 app.include_router(member_profile.router)
 app.include_router(managers.router)
 app.include_router(azure_blob_uploads.router)
+app.include_router(daraja_api.router)
 
 
 @app.get("/")

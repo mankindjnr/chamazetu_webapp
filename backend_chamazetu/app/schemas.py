@@ -418,3 +418,13 @@ class ProfileUpdateBase(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+# ============ Daraja =========================
+class StkPushBase(BaseModel):
+    phone_number: str
+    amount: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

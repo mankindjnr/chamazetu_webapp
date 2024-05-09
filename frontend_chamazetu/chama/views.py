@@ -20,6 +20,7 @@ from .usermanagement import (
 )
 
 from .chamas import get_all_chamas, get_chama
+from .callback import call_back_url
 
 
 # Create your views here.

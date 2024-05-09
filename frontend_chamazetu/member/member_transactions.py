@@ -43,7 +43,19 @@ def direct_deposit_to_chama(request):
         }
 
         if amount > 0:
-            # check if amount beind deposited is more than expected contribution by subtracting contributed amount from expected amount
+            # check if amount being deposited is more than expected contribution by subtracting contributed amount from expected amount
+            # get the money from mpesa, then run the following code
+            # stkpush call with the phone number and amount
+            depostinfo = {
+                "amount": amount,
+                "phone_number": phone_number,
+            }
+
+            deposit_resp = requests.post(
+                f"{os.getenv('api_url')}/mobile_money/mpesa/stkpush", json=depostinfo
+            )
+            print("-----direct froom mpesa----")
+            print(deposit_resp.json())
             expected_difference = difference_btwn_contributed_and_expected(
                 member_id, chama_id
             )
