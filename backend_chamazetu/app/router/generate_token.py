@@ -30,6 +30,9 @@ def generate_access_token():
 
         # Check for errors and return the access token
         if "access_token" in response:
+            print("++++++++++++++++++++")
+            print(response["access_token"])
+            print()
             print(response)
             return response["access_token"]
         else:

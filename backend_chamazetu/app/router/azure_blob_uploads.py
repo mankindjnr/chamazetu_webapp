@@ -120,7 +120,8 @@ async def update_profile_picture(
                 container=profile_container_name,
                 blob=os.path.basename(user.profile_picture),
             )
-            blob_client.delete_blob()
+            if blob_client.exists():
+                blob_client.delete_blob()
 
         user.profile_picture = profile_picture_url
         db.commit()

@@ -198,7 +198,7 @@ async def update_member_wallet_balance(
         wallet_dict["member_id"] = current_user.id
         wallet_dict["transaction_completed"] = True
         wallet_dict["transaction_date"] = datetime.now()
-        wallet_dict["transaction_code"] = uuid4().hex
+        wallet_dict["transaction_code"] = wallet_dict["transaction_code"]
 
         member = (
             db.query(models.Member).filter(models.Member.id == current_user.id).first()

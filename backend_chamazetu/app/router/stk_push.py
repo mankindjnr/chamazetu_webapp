@@ -7,7 +7,7 @@ from .generate_token import generate_access_token
 load_dotenv()
 
 
-def sendStkPush(phone_number, amount):
+def sendStkPush(phone_number, amount, recipient, description):
     print("---------stk calling---------")
     print(phone_number)
     print(type(phone_number))
@@ -34,11 +34,11 @@ def sendStkPush(phone_number, amount):
         "TransactionType": "CustomerPayBillOnline",  # till "CustomerBuyGoodsOnline"
         "Amount": amount,
         "PartyA": phone_number,
-        "PartyB": shortCode,
+        "PartyB": shortCode,  # paybill
         "PhoneNumber": phone_number,
         "CallBackURL": "https://chamas.southafricanorth.cloudapp.azure.com:8000/chama/callback",
-        "AccountReference": "account",  # the chamas account receiving the payment
-        "TransactionDesc": "test",
+        "AccountReference": recipient,  # the chamas account receiving the payment
+        "TransactionDesc": description,
     }
 
     try:
@@ -48,3 +48,4 @@ def sendStkPush(phone_number, amount):
         return response.json()
     except Exception as e:
         print("Error:", str(e))
+        raise Exception("Failed to send stk push: " + str(e))

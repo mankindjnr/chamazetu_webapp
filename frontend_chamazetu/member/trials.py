@@ -1,17 +1,24 @@
-contributions = {
-    "23-05-2024": {
-        "kispo zimlu": {"24-04-2024": 15670},
-        "vukko zopsi": {"23-05-2024": 0},
-    },
-    "23-04-2024": {
-        "vukko zopsi": {"22-04-2024": 1357756},
-        "kispo zimlu": {"23-04-2024": 520070},
-    },
-}
+import requests, os
+from dotenv import load_dotenv
 
-for key, value in contributions.items():
-    print("===", key)
-    for name, contribution in value.items():
-        print(name)
-        for date, amount in contribution.items():
-            print(date, amount)
+load_dotenv()
+
+
+def stk_push_status(checkoutrequestid):
+    """
+    Check the status of the stk push
+    """
+    data = {"checkout_request_id": checkoutrequestid}
+    response = requests.get(
+        f"192.168.100.7:9400/mobile_money/mpesa/stkpush/status/{checkoutrequestid}",
+    )
+
+    print("-----stk push status----")
+    if response.status_code == 200:
+        print("-------scceeded-----")
+        print(response.json())
+    print(response.json())
+    return None
+
+
+stk_push_status("ws_CO_09052024162348667113638169")

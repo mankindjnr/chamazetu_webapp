@@ -1,7 +1,8 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
+from celery import shared_task, current_task
+from celery.exceptions import MaxRetriesExceededError
 from django.core.mail import send_mail
-import requests, os
+import requests, os, time
 from dotenv import load_dotenv
 
 from django.core.mail import EmailMultiAlternatives

@@ -15,12 +15,15 @@ from .tasks import (
     update_chama_account_balance,
     update_wallet_balance,
     wallet_deposit,
+    stk_push_status,
+    after_succesful_chama_deposit,
 )
 from .members import (
     get_wallet_balance,
     get_member_expected_contribution,
     get_member_contribution_so_far,
 )
+from .transaction_code import generate_transaction_code
 
 load_dotenv()
 
@@ -33,7 +36,12 @@ def direct_deposit_to_chama(request):
         amount = int(request.POST.get("amount"))
         chama_id = get_chama_id(request.POST.get("chamaname"))
         member_id = get_user_id("member", request.COOKIES.get("current_member"))
-        phone_number = request.POST.get("phonenumber")
+        phone_number = (
+            request.POST.get("phonenumber")
+            if len(request.POST.get("phonenumber")) == 9
+            and request.POST.get("phonenumber").isdigit()
+            else None
+        )
         transaction_type = "deposit"
         transaction_origin = request.POST.get("transaction_origin")
 
@@ -42,13 +50,15 @@ def direct_deposit_to_chama(request):
             "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
         }
 
-        if amount > 0:
+        if amount > 0 and phone_number is not None:
             # check if amount being deposited is more than expected contribution by subtracting contributed amount from expected amount
             # get the money from mpesa, then run the following code
             # stkpush call with the phone number and amount
             depostinfo = {
                 "amount": amount,
                 "phone_number": phone_number,
+                "recipient": request.POST.get("chamaname"),
+                "description": "chamadeposit",
             }
 
             deposit_resp = requests.post(
@@ -56,52 +66,29 @@ def direct_deposit_to_chama(request):
             )
             print("-----direct froom mpesa----")
             print(deposit_resp.json())
-            expected_difference = difference_btwn_contributed_and_expected(
-                member_id, chama_id
-            )
-            if expected_difference == 0:
-                update_wallet_balance.delay(
-                    headers, amount, chama_id, "moved_to_wallet"
-                )
-                messages.error(
-                    request,
-                    f"Excess amount of Ksh: {amount} deposited to wallet. You have already contributed the expected amount for this contribution interval.",
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        "member:access_chama", args=(request.POST.get("chamaname"),)
-                    )
+            # if the stk push was successfully sent
+            if (
+                deposit_resp.status_code == 201
+                and "CheckoutRequestID" in deposit_resp.json()
+            ):
+                # all this function will depend on the result of the backend tasks -will listen to it and execute
+                checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
+                stk_push_status.apply_async(
+                    args=[
+                        checkoutrequestid,
+                        member_id,
+                        chama_id,
+                        amount,
+                        phone_number,
+                        transaction_origin,
+                        headers,
+                    ],
+                    link=after_succesful_chama_deposit.s(),
                 )
 
-            if deposit_is_greater_than_difference(amount, member_id, chama_id):
-                excess_amount = amount - expected_difference
-                amount_to_deposit = expected_difference
-                update_wallet_balance.delay(
-                    headers, excess_amount, chama_id, "moved_to_wallet"
-                )
                 messages.success(
                     request,
-                    f"Excess amount of Ksh: {excess_amount} deposited to wallet.",
-                )
-
-                amount = amount_to_deposit
-
-            # deposit the amount to chama
-            url = f"{os.getenv('api_url')}/transactions/direct_deposit"
-            data = {
-                "amount": amount,
-                "chama_id": chama_id,
-                "phone_number": f"254{phone_number}",
-                "transaction_origin": transaction_origin,
-            }
-
-            response = requests.post(url, headers=headers, json=data)
-            if response.status_code == 201:
-                # call the background task function to update the chama account balance
-                update_chama_account_balance.delay(chama_id, amount, transaction_type)
-                messages.success(
-                    request,
-                    f"Deposit of Khs: {amount} to {request.POST.get('chamaname')} successful",
+                    f"mpesa stkpush sent to {phone_number} for Ksh: {amount}.",
                 )
                 return HttpResponseRedirect(
                     reverse(
@@ -109,16 +96,20 @@ def direct_deposit_to_chama(request):
                     )
                 )
             else:
-                messages.error(request, "Failed to deposit, please try again.")
+                messages.error(request, "Failed to send stkpush, please try again.")
                 return HttpResponseRedirect(
                     reverse(
                         "member:access_chama", args=(request.POST.get("chamaname"),)
                     )
                 )
         else:
-            messages.error(
-                request, "amount has to be greater or equal to one shilling."
-            )
+            if amount <= 0:
+                messages.error(
+                    request, "amount has to be greater or equal to one shilling."
+                )
+            if phone_number is None:
+                messages.error(request, "Invalid phone number.")
+
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
@@ -134,7 +125,9 @@ def from_wallet_to_chama(request):
         chama_id = get_chama_id(request.POST.get("chamaname"))
         member_id = get_user_id("member", request.COOKIES.get("current_member"))
         transaction_type = "deposit"
-        transaction_origin = request.POST.get("transaction_origin")
+        transaction_code = generate_transaction_code(
+            transaction_type, "wallet", "chama", member_id
+        )
 
         headers = {
             "Content-type": "application/json",
@@ -173,7 +166,13 @@ def from_wallet_to_chama(request):
             if response.status_code == 201:
                 # call the background task function to update the chama account balance
                 update_chama_account_balance.delay(chama_id, amount, transaction_type)
-                update_wallet_balance.delay(headers, amount, chama_id, "moved_to_chama")
+                update_wallet_balance.delay(
+                    headers,
+                    amount,
+                    chama_id,
+                    "moved_to_chama",
+                    transaction_code,
+                )
                 messages.success(
                     request,
                     f"Moved Khs: {amount} from wallet to {request.POST.get('chamaname')} successfully",
@@ -209,6 +208,7 @@ def deposit_to_wallet(request):
         amount = request.POST.get("amount")
         phonenumber = request.POST.get("phonenumber")
         member_id = request.POST.get("member_id")
+        transaction_origin = "direct_deposit"
         chama_name = ""  # helps if we are depositng from insde a chama to redirect back to the chama
         if request.POST.get("chama_name"):
             chama_name = request.POST.get("chama_name")
@@ -223,8 +223,39 @@ def deposit_to_wallet(request):
 
         if int(amount) > 0:
             print("=======deposting to delay===")
-            wallet_deposit.delay(headers, amount, member_id)
-            # messages.success(request, "Deposit to wallet successful.") - callbakc function will handle this
+            depostinfo = {
+                "amount": amount,
+                "phone_number": phonenumber,
+                "recipient": "wallet",
+                "description": "walletdeposit",
+            }
+
+            deposit_resp = requests.post(
+                f"{os.getenv('api_url')}/mobile_money/mpesa/stkpush", json=depostinfo
+            )
+            if (
+                deposit_resp.status_code == 201
+                and "CheckoutRequestID" in deposit_resp.json()
+            ):
+                checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
+
+                stk_push_status.apply_async(
+                    args=[
+                        checkoutrequestid,
+                        member_id,
+                        "wallet",
+                        amount,
+                        phonenumber,
+                        transaction_origin,
+                        headers,
+                    ],
+                    link=wallet_deposit.s(),
+                )
+
+                messages.success(request, "mpesa request sent")
+            else:
+                messages.error(request, "Failed to send stkpush, please try again.")
+
             if chama_name:
                 return redirect(
                     reverse(
@@ -233,6 +264,7 @@ def deposit_to_wallet(request):
                 )
             else:
                 return redirect(reverse("member:dashboard"))
+
     print("=======not a post wallet===")
     return redirect(reverse("member:dashboard"))
 

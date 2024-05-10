@@ -157,6 +157,7 @@ class UpdateWalletBase(BaseModel):
     transaction_destination: int
     amount: int
     transaction_type: str
+    transaction_code: str
 
     class Config:
         orm_mode = True
@@ -420,10 +421,20 @@ class ProfileUpdateBase(BaseModel):
         from_attributes = True
 
 
-# ============ Daraja =========================
+# ============ Daraja API=========================
 class StkPushBase(BaseModel):
     phone_number: str
     amount: int
+    recipient: str
+    description: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class StkPushStatusBase(BaseModel):
+    checkout_request_id: str
 
     class Config:
         orm_mode = True
