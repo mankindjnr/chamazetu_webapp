@@ -91,3 +91,30 @@ def stk_push_status(
     except json.JSONDecodeError as e:
         print("Error decoding JSON:", str(e))
         raise HTTPException(status_code=400, detail="Failed to query stk push status")
+
+
+@router.post("/c2b/callback", status_code=status.HTTP_201_CREATED)
+def c2b_callback(call_back_data):
+    print(
+        "---===================================---c2b callback-=====================================---"
+    )
+    print(call_back_data.dict())
+    return {"message": "c2b callback"}
+
+
+# @router.post("/mpesa/c2b/validation")
+
+
+# @router.post("/mpesa/c2b/confirmation")
+
+
+# @router.post("/mpesa/b2c")
+
+
+# @router.post("/mpesa/b2b")
+
+
+# @router.post("/mpesa/reversal")
+
+
+# @router.post("/mpesa/accountbalance")

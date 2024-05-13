@@ -439,3 +439,23 @@ class StkPushStatusBase(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+class CallbackData(BaseModel):
+    Body: str
+    TransactionType: str
+    TransID: str
+    TransTime: str
+    TransAmount: str
+    BusinessShortCode: str
+    BillRefNumber: str
+    InvoiceNumber: str
+    OrgAccountBalance: str
+    ThirdPartyTransID: str
+    MSISDN: str
+    FirstName: str
+    MiddleName: str
+    LastName: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

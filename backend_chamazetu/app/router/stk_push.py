@@ -36,15 +36,13 @@ def sendStkPush(phone_number, amount, recipient, description):
         "PartyA": phone_number,
         "PartyB": shortCode,  # paybill
         "PhoneNumber": phone_number,
-        "CallBackURL": "https://chamas.southafricanorth.cloudapp.azure.com:8000/chama/callback",
+        "CallBackURL": "https://69b2-102-213-49-14.ngrok-free.app/callback",  # test when on production change to your callback url
         "AccountReference": recipient,  # the chamas account receiving the payment
         "TransactionDesc": description,
     }
 
     try:
         response = requests.post(url, json=requestBody, headers=headers)
-        # the route that call this function should the use the response to call the callback url
-        print(response.json())
         return response.json()
     except Exception as e:
         print("Error:", str(e))

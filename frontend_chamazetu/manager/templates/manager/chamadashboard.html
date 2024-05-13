@@ -214,7 +214,7 @@
             <div class="col-xxl-4 col-xl-12">
               <div class="card info-card customers-card">
                   <div class="card-body">
-                      <h5 class="card-title">MMF <span>| investment</span></h5>
+                      <h5 class="card-title">MMF <span>| {% if not investment_account.investment_rate %} closed {% else %} investment {% endif %} </span></h5>
                       <div class="d-flex align-items-center justify-content-center">
                         <h6>Ksh: {{ investment_account.amount_invested }}</h6>
                     </div>
@@ -233,9 +233,12 @@
                           <div class="d-flex justify-content-between align-items-start">
                             <div>
                               <!-- invest trigger modal -->
+                              {% if investment_account.investment_rate %} <!-- if an mmf rate does not exist, then there is no investment to make. TODO: improve the checking-->
                               <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#investModal">
                                 Invest
                               </button>
+                              {% endif %}
+
 
                               <!-- invest Modal -->
                               <div class="modal fade" id="investModal" tabindex="-1" aria-labelledby="investModalLabel" aria-hidden="true">
@@ -270,9 +273,11 @@
                             </div>
                             <div class="text-end">
                               <!-- withdraw from investment trigger modal -->
+                              {% if investment_account.investment_rate %}
                               <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawModal">
                                 Withdraw
                               </button>
+                              {% endif %}
 
                               <!-- withdraw from investment Modal -->
                               <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">

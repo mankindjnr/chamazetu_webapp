@@ -22,7 +22,16 @@ urlpatterns = [
         views.view_chama_members,
         name="view_chama_members",
     ),
-    path("profile_updater/<str:role>", views.profile_updater, name="profile_updater"),
+    path(
+        "member_profile_updater/<str:role>",
+        views.member_profile_updater,
+        name="member_profile_updater",
+    ),
+    path(
+        "manager_profile_updater/<str:role>",
+        views.manager_profile_updater,
+        name="manager_profile_updater",
+    ),
     path("join", views.join_chama, name="join"),
     path(
         "direct_deposit_to_chama",

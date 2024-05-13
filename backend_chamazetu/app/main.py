@@ -16,6 +16,8 @@ from .router import (
     managers,
     azure_blob_uploads,
     daraja_api,
+    call_back,
+    b2c,
 )
 
 app = FastAPI()
@@ -43,6 +45,8 @@ app.include_router(member_profile.router)
 app.include_router(managers.router)
 app.include_router(azure_blob_uploads.router)
 app.include_router(daraja_api.router)
+app.include_router(call_back.router)
+app.include_router(b2c.router)
 
 
 @app.get("/")

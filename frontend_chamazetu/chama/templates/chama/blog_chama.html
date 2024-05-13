@@ -13,7 +13,7 @@
       <h5>{{ chama.chama_name }} | {{chama.chama_type }}</h5>
       {% if role %}
       <!-- Button trigger modal -->
-      <button type="button" class="btn" data-bs-toggle="modal" data-bs-target="#joinChamaModal">
+      <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#joinChamaModal">
         join {{ chama.chama_name }}
       </button>
 
@@ -48,7 +48,7 @@
         </div>
       </div>
       {% else %}
-      <button type="button" class="btn">Login to join</a>
+      <a type="button" href="{% url 'chama:signin' 'member' %}" class="btn btn-dark">Login to join</a>
 
       {% endif %}
     </div>
@@ -72,11 +72,14 @@
         <div class="row">
           
           <div class="card" style="width: 18rem;">
-            <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">
+            <img src="{{ manager.profile_image }}" class="img-fluid" alt="">
             <div class="card-body">
-              <h5 class="card-title">manager name</h5>
-              <!-- <p class="card-text">small description</p> will see if necessary later -->
-              <!-- <a href="#" class="btn btn-primary">all chamas they manage</a> -->
+              <h5 class="card-title">manager: {{ manager.first_name }} {{ manager.last_name }}</h5>
+              <p class="bi bi-twitter-x">{% if manager.twitter_handle != 'N/A' %} {{ manager.twitter_handle }} {% endif %}</p>
+              <p class="bi bi-facebook">{% if manager.facebook_handle != 'N/A' %} {{ memmanagerber.facebook_handle }} {% endif %}</p>
+              <p class="bi bi-linkedin">{% if manager.linkedin_handle != 'N/A' %} {{ manager.linkedin_handle }} {% endif %}</p>
+              
+              <!-- <a href="#" class="btn btn-primary">all chamas they manage</a> for now we will let users search the all chamas page by manager -->
             </div>
           </div>
 

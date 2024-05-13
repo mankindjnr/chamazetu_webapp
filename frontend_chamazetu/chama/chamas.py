@@ -34,6 +34,7 @@ def get_all_chamas(request, role=None):
 
 # public chama access
 def get_chama(request, chamaid):
+    print("++++++++++++++++++++++++++")
     data = {"chamaid": chamaid}
 
     resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
@@ -41,11 +42,14 @@ def get_chama(request, chamaid):
         chama = resp.json()["Chama"][0]
         manager_profile = get_user_full_profile("manager", chama["manager_id"])
 
+        print(chama)
+
         return render(
             request,
             "chama/blog_chama.html",
             {
                 "chama": chama,
+                "manager": manager_profile,
             },
         )
     # if the chama is not found, return a 404 page or refresh the page
