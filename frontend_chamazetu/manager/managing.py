@@ -12,7 +12,11 @@ from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_id, get_chama_number_of_members
-from member.member_chama import access_chama_threads, recent_transactions
+from member.member_chama import (
+    access_chama_threads,
+    recent_transactions,
+    chama_details_organised,
+)
 from member.members import get_user_full_profile, get_user_id
 from member.membermanagement import is_empty_dict
 from member.date_day_time import extract_date_time
@@ -106,6 +110,41 @@ def manager_dashboard_threads(urls, headers):
         "updates_and_features": updates_and_features,
         "profile_picture": profile_picture,
     }
+
+
+@tokens_in_cookies("manager")
+@validate_and_refresh_token("manager")
+def get_about_chama(request, chama_name):
+    chama_id = get_chama_id(chama_name)
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+    }
+    chama_data = requests.get(
+        f"{os.getenv('api_url')}/chamas/about_chama/{chama_id}",
+        headers=headers,
+    )
+    print("===================================")
+    if chama_data.status_code == 200:
+        chama = chama_details_organised(chama_data.json().get("chama"))
+        rules = chama_data.json().get("rules")
+        about = chama_data.json().get("about")
+        faqs = chama_data.json().get("faqs")
+
+        return render(
+            request,
+            "chama/about_chama.html",
+            {
+                "role": "manager",
+                "chama": chama,
+                "rules": rules,
+                "about": about,
+                "faqs": faqs,
+            },
+        )
+    else:
+        print(chama_data.status_code)
+        return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies("manager")
@@ -389,70 +428,6 @@ def change_password(request, manager_id):
 
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
-def chama_join_status(request):
-    if request.method == "POST":
-        chama_name = request.POST.get("chama_name")
-        status = request.POST.get("accepting_members")
-
-        if status == "on":
-            status = True
-        else:
-            status = False
-
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
-        }
-        data = {"chama_name": chama_name, "accepting_members": status}
-
-        response = requests.put(
-            "http://chamazetu_backend:9400/chamas/join_status",
-            json=data,
-            headers=headers,
-        )
-
-        return redirect(reverse("manager:dashboard"))
-    else:
-        return redirect(reverse("manager:dashboard"))
-
-
-def activate_deactivate_chama(request):
-    if request.method == "POST":
-        chama_id = get_chama_id(request.POST.get("chama_name"))
-        is_active = request.POST.get("activate_chama")
-
-        if is_active == "on":
-            is_active = True
-        else:
-            is_active = False
-
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
-        }
-        data = {"chama_id": chama_id, "is_active": is_active}
-        response = requests.put(
-            "http://chamazetu_backend:9400/chamas/activate_deactivate",
-            json=data,
-            headers=headers,
-        )
-
-        if response.status_code == 200:
-            messages.success(request, "Chama activated/deactivated successfully.")
-            return redirect(
-                reverse("manager:chama", args=[request.POST.get("chama_name")])
-            )
-        else:
-            messages.error(request, "Error activating/deactivating chama.")
-            return redirect(
-                reverse("manager:chama", args=[request.POST.get("chama_name")])
-            )
-    else:
-        return redirect(reverse("manager:dashboard"))
-
-
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
 def view_chama_members(request, chama_name):
     headers = {
         "Content-type": "application/json",
@@ -474,7 +449,3 @@ def view_chama_members(request, chama_name):
             "chama_id": chama_id,
         },
     )
-
-
-def restart_pause_stop_chama(request):  # changes the is_active status of the chama
-    pass

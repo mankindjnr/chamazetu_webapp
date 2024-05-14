@@ -23,6 +23,11 @@ urlpatterns = [
         name="view_chama_members",
     ),
     path(
+        "get_about_chama/<str:chama_name>",
+        views.get_about_chama,
+        name="get_about_chama",
+    ),
+    path(
         "member_profile_updater/<str:role>",
         views.member_profile_updater,
         name="member_profile_updater",

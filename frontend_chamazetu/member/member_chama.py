@@ -23,6 +23,7 @@ from .members import (
     get_user_full_name,
     get_user_id,
     get_member_contribution_so_far,
+    get_user_full_profile,
 )
 from .membermanagement import is_empty_dict
 from .tasks import update_shares_number_for_member
@@ -50,6 +51,7 @@ def view_chama(request, chamaid):
     )
     if resp.status_code == 200:
         chama = resp.json()["Chama"][0]
+        manager_profile = get_user_full_profile("manager", chama["manager_id"])
 
         return render(
             request,
@@ -57,6 +59,7 @@ def view_chama(request, chamaid):
             {
                 "role": "member",
                 "chama": chama,
+                "manager": manager_profile,
             },
         )
 
@@ -372,3 +375,87 @@ def view_chama_members(request, chama_name):
             "chama_name": chama_name,
         },
     )
+
+
+@tokens_in_cookies("member")
+@validate_and_refresh_token("member")
+def get_about_chama(request, chama_name):
+    chama_id = get_chama_id(chama_name)
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+    }
+    chama_data = requests.get(
+        f"{os.getenv('api_url')}/chamas/about_chama/{chama_id}",
+        headers=headers,
+    )
+    print("===================================")
+    if chama_data.status_code == 200:
+        chama = chama_details_organised(chama_data.json().get("chama"))
+        rules = chama_data.json().get("rules")
+        about = chama_data.json().get("about")
+        faqs = chama_data.json().get("faqs")
+
+        return render(
+            request,
+            "chama/about_chama.html",
+            {
+                "role": "member",
+                "chama": chama,
+                "rules": rules,
+                "about": about,
+                "faqs": faqs,
+            },
+        )
+    else:
+        print(chama_data.status_code)
+        return redirect(reverse("member:dashboard"))
+
+
+def chama_details_organised(chama_details):
+    chama_details["number_of_members_allowed"] = (
+        "No Limit"
+        if chama_details["num_of_members_allowed"] == "infinite"
+        else chama_details["num_of_members_allowed"]
+    )
+    chama_details["description"] = chama_details["description"]
+    chama_details["chama_type"] = chama_details["chama_type"].capitalize()
+    chama_details["account_name"] = (
+        (chama_details["chama_name"]).replace("_", "").lower()
+    )
+    chama_details["registration_fee"] = (
+        f"Ksh: {(chama_details['registration_fee']):,.2f}"
+    )
+    chama_details["contribution_amount"] = (
+        f"Ksh: {(chama_details['contribution_amount']):,.2f}"
+    )
+    chama_details["contribution_interval"] = chama_details[
+        "contribution_interval"
+    ].capitalize()
+    chama_details["contribution_day"] = chama_details["contribution_day"].capitalize()
+    # chama_details["fine_per_share"] = f"Ksh: {(chama_details['fine_per_share']):,.2f}"
+    chama_details["chama_created_on"] = extract_date_time(
+        chama_details["date_created"]
+    )["date"]
+    # chama_details["chama_start_date"] = extract_date_time(chama_details["start_cycle"])[
+    #     "date"
+    # ]
+    chama_details["chama_is_active"] = (
+        "Active" if chama_details["is_active"] else "Inactive"
+    )
+    chama_details["manager_number"] = chama_details["manager_id"]
+    chama_details["accepting_new_members"] = (
+        "Accepting Members"
+        if chama_details["accepting_members"]
+        else "Not Accepting Members"
+    )
+    del chama_details["num_of_members_allowed"]
+    del chama_details["date_created"]
+    del chama_details["start_cycle"]
+    del chama_details["updated_at"]
+    del chama_details["restart"]
+    del chama_details["is_deleted"]
+    del chama_details["manager_id"]
+    del chama_details["is_active"]
+    del chama_details["accepting_members"]
+    return chama_details

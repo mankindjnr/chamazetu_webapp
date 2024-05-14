@@ -1,0 +1,362 @@
+{% extends "chama/loginBase.html" %}
+{% load static %}
+{% load filters %}
+
+{% block content %}
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="header fixed-top d-flex align-items-center">
+
+    <div class="d-flex align-items-center justify-content-between">
+      {% if role == 'manager' %}
+      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
+        {% elif role == 'member' %}
+        <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
+          {% endif %}
+        <img src="{% static 'chama/img/logo.png' %}" alt="">
+        <span class="d-none d-lg-block">Home</span>
+      </a>
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div><!-- End Logo -->
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+
+        <li class="nav-item dropdown pe-3">
+
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+            <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a><!-- End Profile Iamge Icon -->
+
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+            </li>
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' role %}">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+
+          </ul><!-- End Profile Dropdown Items -->
+        </li><!-- End Profile Nav -->
+
+      </ul>
+    </nav><!-- End Icons Navigation -->
+
+  </header><!-- End Header -->
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar" style="display: none;"  >
+
+    <div class="col-xl-4">
+
+      <div class="card">
+        <div class="card-body profile-card pt-4 d-flex flex-column align-items-center">
+
+          <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
+          <span>{{profile.email}}</span>
+          <small>manager</small>
+          <div class="social-links mt-2">
+            {% if profile.twitter_handle != 'N/A' %}
+            <a href="{{profile.twitter_handle}}" class="twitter"><i class="bi bi-twitter"></i></a>
+            {% endif %}
+            {% if profile.facebook_handle != 'N/A' %}
+            <a href="{{profile.facebook_handle}}" class="facebook"><i class="bi bi-facebook"></i></a>
+            {% endif %}
+            {% if profile.linkedin_handle != 'N/A' %}
+            <a href="{{profile.linkedin_handle}}" class="linkedin"><i class="bi bi-linkedin"></i></a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </aside><!--End Sidebar -->
+
+  <main id="main" class="main">
+
+    {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+
+    <div class="pagetitle">
+      <h1>about {{chama.chama_name}}</h1>
+      <nav>
+        <ol class="breadcrumb">
+          {% if role == 'manager' %}
+          <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'manager:dashboard' %}">Home</a></li>
+          {% elif role == 'member' %}
+          <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'member:dashboard' %}">Home</a></li>
+          {% endif %}
+          <li class="breadcrumb-item">{{role}}</li>
+          <li class="breadcrumb-item active">about chama</li>
+        </ol>
+      </nav>
+    </div><!-- End Page Title -->
+
+    <section class="section profile">
+      <div class="row">
+        <div class="col-xl-12">
+
+          <div class="card">
+            <div class="card-body pt-3">
+              <!-- Bordered Tabs -->
+              <ul class="nav nav-tabs nav-tabs-bordered">
+
+                <li class="nav-item">
+                  <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#chama-connect">Overview</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-description">Description</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-mission">Mission</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-vision">Vision</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-rules">Rules</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-faqs">Faqs</button>
+                </li>
+
+                {% if role == 'manager' %}
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-description">Update description</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-mission">Update mission</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-vision">Update vision</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#add-rules">Add rules</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#add-faqs">Add faqs</button>
+                </li>
+                {% endif %}
+
+              </ul>
+
+              <div class="tab-content pt-2">
+
+                <div class="tab-pane fade show active chama-connect" id="chama-connect">
+                  <h5 class="card-title">chama details</h5>
+                  
+                  {% for key, value in chama.items %}
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">{{ key|replace:"_, " }}</div>
+                    <div class="col-lg-9 col-md-8">{{ value }} </div>
+                  </div>
+                  {% endfor %}
+
+                </div>
+
+                <div class="tab-pane fade chama-description pt-3" id="chama-description">
+                  <h5 class="card-title">Description</h5>
+                  <div class="row mb-3">
+                    <div class="col-lg-9 col-md-8">{{ chama.description }} </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade chama-mission pt-3" id="chama-mission">
+                  <h5 class="card-title">mission</h5>
+                  <div class="row mb-3">
+                    <div class="col-lg-9 col-md-8">{{ about.mission }} </div>
+                    </div>
+                </div>
+
+
+                <div class="tab-pane fade chama-vision pt-3" id="chama-vision">
+                  <h5 class="card-title">vision</h5>
+                  <div class="row mb-3">
+                    <div class="col-lg-9 col-md-8">{{ about.vision }} </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade chama-rules pt-3" id="chama-rules">
+                  <h5 class="card-title">rules</h5>
+                  {% for key, value in rules.items %}
+                  <div class="row mb-3">
+                    <div class="col-lg-9 col-md-8">{{ value }}</div>
+                    {% if role == 'manager' %}
+                    <div class="col-lg-3 col-md-4">
+                      <form method="post" action="{% url 'manager:delete_chama_rule' chama.chama_name key %}">
+                          {% csrf_token %}
+                          <input type="submit" class="btn btn-danger btn-sm" value="Delete">
+                      </form>
+                  </div>
+                    {% endif %}
+                  </div>
+                  {% endfor %}
+                </div>
+
+                <div class="tab-pane fade chama-faqs pt-3" id="chama-faqs">
+                  <h5 class="card-title">faqs</h5>
+                  {% for faq in faqs %}
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">{{ faq.question }}</div>
+                    <div class="col-lg-6 col-md-6">{{ faq.answer }}</div>
+                    {% if role == 'manager' %}
+                    <div class="col-lg-3 col-md-2">
+                      <form method="post" action="{% url 'manager:delete_chama_faq' chama.chama_name faq.id %}">
+                          {% csrf_token %}
+                          <input type="submit" class="btn btn-danger btn-sm" value="Delete">
+                      </form>
+                  </div>
+                    {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+
+                <!-- editing and updating the tabs -->
+                {% if role == 'manager' %}
+                <div class="tab-pane fade edit-description pt-3" id="edit-description">
+                  <!-- update description Form -->
+                  <form action="{% url 'manager:update_chama_description' chama.chama_name %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="description" class="col-md-4 col-lg-3 col-form-label">Current description</label>
+                      <div class="col-md-8 col-lg-9">
+                        <div class="mb-3">{{ chama.description }}</div>
+                        <input name="description" type="text" class="form-control" id="description" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Update Description</button>
+                    </div>
+                  </form>
+
+                </div>
+                
+                <!-- updating chamas mission -->
+                <div class="tab-pane fade edit-mission pt-3" id="edit-mission">
+                  <form action="{% url 'manager:update_chama_mission' chama.chama_name %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="mission" class="col-md-4 col-lg-3 col-form-label">Current mission</label>
+                      <div class="col-md-8 col-lg-9">
+                        <div class="mb-3">{% if about.mission %} {{ about.mission }} {% else %} No mission statement for this chama {% endif %} </div>
+                        <input name="mission" type="text" class="form-control" id="mission" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Update Mission</button>
+                    </div>
+                  </form>
+
+                </div>
+                
+                <!-- updating chamas vision -->
+                <div class="tab-pane fade edit-vision pt-3" id="edit-vision">
+                  <form action="{% url 'manager:update_chama_vision' chama.chama_name %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="vision" class="col-md-4 col-lg-3 col-form-label">Current mission</label>
+                      <div class="col-md-8 col-lg-9">
+                        <div class="mb-3">{% if about.vision %} {{ about.vision }} {% else %} No vision statement for this chama {% endif %} </div>
+                        <input name="vision" type="text" class="form-control" id="vision" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Update Vision</button>
+                    </div>
+                  </form>
+
+                </div>
+
+                <!-- adding rules -->
+                <div class="tab-pane fade add-rules pt-3" id="add-rules">
+                  <form action="{% url 'manager:add_chama_rules' chama.chama_name %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="new_rule" class="col-md-4 col-lg-3 col-form-label">New rule</label>
+                      <div class="col-md-8 col-lg-9">
+                        <input name="rule" type="text" class="form-control" id="rule" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Add Rule</button>
+                    </div>
+                  </form>
+
+                </div>
+
+                <!-- adding faqs -->
+                <div class="tab-pane fade add-faqs pt-3" id="add-faqs">
+                  <form action="{% url 'manager:add_chama_faqs' chama.chama_name %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="question" class="col-md-4 col-lg-3 col-form-label">Question</label>
+                      <div class="col-md-8 col-lg-9">
+                        <input name="question" type="text" class="form-control" id="question" required>
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                      <label for="answer" class="col-md-4 col-lg-3 col-form-label">Answer</label>
+                      <div class="col-md-8 col-lg-9">
+                        <input name="answer" type="text" class="form-control" id="answer" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Add Faq</button>
+                    </div>
+                  </form>
+
+
+              </div><!-- End Bordered Tabs -->
+              {% endif %}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main><!-- End #main -->
+
+{% endblock %}

@@ -20,6 +20,44 @@ urlpatterns = [
         name="view_chama_members",
     ),
     path(
+        "get_about_chama/<str:chama_name>",
+        views.get_about_chama,
+        name="get_about_chama",
+    ),
+    path(
+        "update_chama_description/<str:chama_name>",
+        views.update_chama_description,
+        name="update_chama_description",
+    ),
+    path(
+        "update_chama_mission/<str:chama_name>",
+        views.update_chama_mission,
+        name="update_chama_mission",
+    ),
+    path(
+        "update_chama_vision/<str:chama_name>",
+        views.update_chama_vision,
+        name="update_chama_vision",
+    ),
+    path(
+        "add_chama_faqs/<str:chama_name>", views.add_chama_faqs, name="add_chama_faqs"
+    ),
+    path(
+        "add_chama_rules/<str:chama_name>",
+        views.add_chama_rules,
+        name="add_chama_rules",
+    ),
+    path(
+        "delete_chama_rule/<str:chama_name>/<int:rule_id>",
+        views.delete_chama_rule,
+        name="delete_chama_rule",
+    ),
+    path(
+        "delete_chama_faq/<str:chama_name>/<int:faq_id>",
+        views.delete_chama_faq,
+        name="delete_chama_faq",
+    ),
+    path(
         "members_tracker/<str:chama_name>",
         views.members_tracker,
         name="members_tracker",

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from sqlalchemy import func, update, and_, table, column
-from typing import List
+from typing import List, Union
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -22,6 +22,7 @@ async def create_chama(
         chama_dict["manager_id"] = current_user.id
         chama_dict["date_created"] = datetime.now()
         chama_dict["updated_at"] = datetime.now()
+        chama_dict["account_name"] = chama_dict["chama_name"].replace(" ", "").lower()
 
         new_chama = models.Chama(**chama_dict)
         db.add(new_chama)
@@ -215,13 +216,14 @@ async def get_chama_by_name(
 # getting the chama for a public user - no authentication required
 # TODO: the table being querries should be chama_blog/details and not chama, description should match in both
 @router.get(
-    "/public_chama", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp
+    "/public_chama/{chama_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ChamaResp,
 )
 async def view_chama(
-    chama_id: dict = Body(...),
+    chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama_id = chama_id["chamaid"]
     chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
     # we will use the id to extract the manager details like profile photo
     if not chama:
@@ -562,3 +564,355 @@ async def get_chama_start_date(
         raise HTTPException(status_code=404, detail="Chama not found")
 
     return {"start_date": chama.start_cycle.strftime("%d-%m-%Y")}
+
+
+# get chama about by id from (rules, description, mission, vision, faqs)
+@router.get(
+    "/about_chama/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_about(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
+):
+    print("=============================================")
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
+        chama_rules_dict = {}
+        for rule in chama_rules:
+            chama_rules_dict[rule.id] = rule.rule
+
+        about_chama = (
+            db.query(models.About_Chama)
+            .filter(models.About_Chama.chama_id == chama_id)
+            .first()
+        )
+
+        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id)
+        # id, question, answer
+        chama_faqs_list = [
+            {"id": faq.id, "question": faq.question, "answer": faq.answer}
+            for faq in chama_faqs
+        ]
+
+        return {
+            "chama": chama,
+            "rules": chama_rules_dict,
+            "about": about_chama,
+            "faqs": chama_faqs_list,
+        }
+    except Exception as e:
+        print("=============================================")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama about")
+
+
+# update chama description
+@router.put("/update_description", status_code=status.HTTP_200_OK)
+async def update_chama_description(
+    description: schemas.ChamaDescription = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        description_dict = description.dict()
+        chama_id = description_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        chama.description = description_dict["description"]
+        db.commit()
+
+        return {"message": "Chama description updated successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to update chama description"
+        )
+
+
+# update chama vision
+@router.put("/update_vision", status_code=status.HTTP_200_OK)
+async def update_chama_vision(
+    vision: schemas.ChamaVision = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        vision_dict = vision.dict()
+        chama_id = vision_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        about_chama = (
+            db.query(models.About_Chama)
+            .filter(models.About_Chama.chama_id == chama_id)
+            .first()
+        )
+        print("about_chama", about_chama, chama.id)
+        if chama and not about_chama:
+            print("===chama wtihout about===")
+            new_about_chama = models.About_Chama(
+                chama_id=chama_id,
+                manager_id=chama.manager_id,
+                vision=vision_dict["vision"],
+            )
+            db.add(new_about_chama)
+            db.commit()
+            db.refresh(new_about_chama)
+        elif chama and about_chama:
+            print("===chama with about===")
+            about_chama.vision = vision_dict["vision"]
+            db.commit()
+            db.refresh(about_chama)
+
+        return {"message": "Chama vision updated successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to update chama vision")
+
+
+@router.put("/update_mission", status_code=status.HTTP_200_OK)
+async def update_chama_mission(
+    mission: schemas.ChamaMission = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        print("==================hit====================")
+        mission_dict = mission.dict()
+        chama_id = mission_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        about_chama = (
+            db.query(models.About_Chama)
+            .filter(models.About_Chama.chama_id == chama_id)
+            .first()
+        )
+
+        if chama and not about_chama:
+            new_about_chama = models.About_Chama(
+                chama_id=chama_id,
+                manager_id=chama.manager_id,
+                mission=mission_dict["mission"],
+            )
+            db.add(new_about_chama)
+            db.commit()
+            db.refresh(new_about_chama)
+        elif chama and about_chama:
+            about_chama.mission = mission_dict["mission"]
+            db.commit()
+            db.refresh(about_chama)
+
+        return {"message": "Chama mission updated successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to update chama mission")
+
+
+# add a rule to a chama
+@router.post("/add_rule", status_code=status.HTTP_201_CREATED)
+async def add_rule(
+    rule: schemas.ChamaRuleBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        rule_dict = rule.dict()
+        chama_id = rule_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
+        new_rule = models.Rule(chama_id=chama_id, rule=rule_dict["rule"])
+        db.add(new_rule)
+        db.commit()
+        db.refresh(new_rule)
+
+        return {"message": "Rule added successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to add rule")
+
+
+# edit a rule in a chama
+
+
+# delete a rule in a chama
+@router.delete("/delete_rule", status_code=status.HTTP_200_OK)
+async def delete_rule(
+    rule: schemas.ChamaRuleDeleteBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        rule_dict = rule.dict()
+        chama_id = rule_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        rule_to_delete = (
+            db.query(models.Rule)
+            .filter_by(chama_id=chama_id, id=rule_dict["rule_id"])
+            .first()
+        )
+        if not rule_to_delete:
+            raise HTTPException(status_code=404, detail="Rule not found")
+
+        db.delete(rule_to_delete)
+        db.commit()
+
+        return {"message": "Rule deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to delete rule")
+
+
+# add an faq question snd answer to a faq tbalr
+@router.post("/add_faq", status_code=status.HTTP_201_CREATED)
+async def add_faq(
+    faq: schemas.ChamaFaqBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        faq_dict = faq.dict()
+        chama_id = faq_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id)
+        new_faq = models.Faq(
+            chama_id=chama_id,
+            question=faq_dict["question"],
+            answer=faq_dict["answer"],
+        )
+        db.add(new_faq)
+        db.commit()
+        db.refresh(new_faq)
+
+        return {"message": "Faq added successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to add faq")
+
+
+# delete a faq in a chama
+@router.delete("/delete_faq", status_code=status.HTTP_200_OK)
+async def delete_faq(
+    faq: schemas.ChamaFaqDeleteBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+    try:
+        faq_dict = faq.dict()
+        chama_id = faq_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        faq_to_delete = (
+            db.query(models.Faq)
+            .filter_by(chama_id=chama_id, id=faq_dict["faq_id"])
+            .first()
+        )
+        if not faq_to_delete:
+            raise HTTPException(status_code=404, detail="Faq not found")
+
+        db.delete(faq_to_delete)
+        db.commit()
+
+        return {"message": "Faq deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to delete faq")
+
+
+# get the faqs of a chama
+@router.get(
+    "/faqs/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_faqs(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id)
+        if not chama_faqs:
+            raise HTTPException(status_code=404, detail="Chama faqs not found")
+        return {
+            "faqs": [
+                {"question": faq.question, "answer": faq.answer} for faq in chama_faqs
+            ]
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama faqs")
+
+
+# get the rules of a chama
+@router.get(
+    "/rules/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_rules(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
+        if not chama_rules:
+            raise HTTPException(status_code=404, detail="Chama rules not found")
+        return [rule.rule for rule in chama_rules]
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama rules")
+
+
+# get mission and vision of a chama
+@router.get(
+    "/mission/vision/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_mission_vision(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        about_chama = (
+            db.query(models.About_Chama)
+            .filter(models.About_Chama.chama_id == chama_id)
+            .first()
+        )
+        if not about_chama:
+            raise HTTPException(
+                status_code=404, detail="Chama mission and vision not found"
+            )
+        return {"mission": about_chama.mission, "vision": about_chama.vision}
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama mission and vision"
+        )

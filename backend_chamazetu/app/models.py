@@ -79,7 +79,7 @@ class Chama(Base):
     chama_name = Column(String, index=True, unique=True, nullable=False)
     chama_type = Column(String, nullable=False)  # investment, savings, lending
     num_of_members_allowed = Column(String, nullable=False)
-    description = Column(String, nullable=False)
+    description = Column(String(500), nullable=False)
     date_created = Column(DateTime, default=datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
@@ -102,6 +102,7 @@ class Chama(Base):
     restart = Column(Boolean, default=False)  # chama has restarted
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
+    account_name = Column(String, nullable=False)
 
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
@@ -320,13 +321,12 @@ class ChamaContributionDay(Base):
     next_contribution_date = Column(DateTime, nullable=False)
 
 
-class chama_blog(Base):
-    __tablename__ = "chama_blog"
+class About_Chama(Base):
+    __tablename__ = "about_chama"
 
     id = Column(Integer, primary_key=True, index=True)
     manager_id = Column(Integer, ForeignKey("managers.id"))
     chama_id = Column(Integer, ForeignKey("chamas.id"))
-    paybill_account_number = Column(Integer, nullable=False)
     twitter = Column(String, nullable=True)
     facebook = Column(String, nullable=True)
     linkedin = Column(String, nullable=True)

@@ -1,5 +1,4 @@
-import requests, jwt, json, calendar
-import os
+import requests, jwt, json, calendar, threading, os
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
@@ -8,6 +7,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import timedelta, datetime
 
 from manager.managers import get_user_full_profile
+from .thread_urls import fetch_data
 
 load_dotenv()
 
@@ -37,23 +37,90 @@ def get_chama(request, chamaid):
     print("++++++++++++++++++++++++++")
     data = {"chamaid": chamaid}
 
-    resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
-    if resp.status_code == 200:
-        chama = resp.json()["Chama"][0]
-        manager_profile = get_user_full_profile("manager", chama["manager_id"])
+    urls = [
+        (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/faqs/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/rules/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/mission/vision/{chamaid}", None),
+    ]
 
-        print(chama)
+    results = public_chama_threads(urls)
+
+    # resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
+    if results["public_chama"]:
+        print()
+        print(results["public_chama"])
+        print()
+        print(results["faqs"])
+        print()
+        print(results["rules"])
+        print()
+        print(results["mission"])
+        print()
+        print(results["vision"])
+        manager_profile = get_user_full_profile(
+            "manager", results["public_chama"]["manager_id"]
+        )
+
+        # print(chama)
 
         return render(
             request,
             "chama/blog_chama.html",
             {
-                "chama": chama,
+                "chama": results["public_chama"],
                 "manager": manager_profile,
+                "faqs": results["faqs"],
+                "rules": results["rules"],
+                "mission": results["mission"],
+                "vision": results["vision"],
             },
         )
     # if the chama is not found, return a 404 page or refresh the page
     return HttpResponse("Chama not found")
+
+
+def public_chama_threads(urls):
+    results = {}
+    threads = []
+
+    for url, payload in urls:
+        if payload:
+            thread = threading.Thread(
+                target=fetch_data, args=(url, results, payload, headers)
+            )
+        else:
+            thread = threading.Thread(target=fetch_data, args=(url, results))
+
+        threads.append(thread)
+        thread.start()
+
+    # wait for all threads to complete
+    for thread in threads:
+        thread.join()
+
+    public_chama = None
+    faqs = None
+    rules = None
+    mission_vision = None
+
+    if urls[0][0] in results and results[urls[0][0]]["status"] == 200:
+        public_chama = results[urls[0][0]]["data"]["Chama"][0]
+        if urls[1][0] in results and results[urls[1][0]]["status"] == 200:
+            faqs = results[urls[1][0]]["data"]["faqs"]
+        if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
+            rules = results[urls[2][0]]["data"]
+        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
+            mission = results[urls[3][0]]["data"]["mission"]
+            vision = results[urls[3][0]]["data"]["vision"]
+
+    return {
+        "public_chama": public_chama,
+        "faqs": faqs,
+        "rules": rules,
+        "mission": mission,
+        "vision": vision,
+    }
 
 
 def get_chama_id(chamaname):

@@ -104,6 +104,15 @@ def get_user_full_profile(role, id):
     return None
 
 
+def get_user_profile_image(role, id):
+    url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        user = resp.json()
+        return user.get("profile_image")
+    return None
+
+
 def get_member_contribution_so_far(chama_id, member_id):
     upcoming_contribution_datetime = get_chama_contribution_day(chama_id)[
         "contribution_date"

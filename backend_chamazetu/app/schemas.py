@@ -115,6 +115,70 @@ class ActivelyAcceptingMembersChamas(BaseModel):
         from_attributes = True
 
 
+class ChamaDescription(BaseModel):
+    chama_id: int
+    description: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaVision(BaseModel):
+    chama_id: int
+    vision: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaMission(BaseModel):
+    chama_id: int
+    mission: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaRuleBase(BaseModel):
+    chama_id: int
+    rule: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaRuleDeleteBase(BaseModel):
+    chama_id: int
+    rule_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaFaqBase(BaseModel):
+    chama_id: int
+    question: str
+    answer: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class ChamaFaqDeleteBase(BaseModel):
+    chama_id: int
+    faq_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
 # ============== transaction =================
 class TransactionBase(BaseModel):
     amount: int
@@ -439,6 +503,7 @@ class StkPushStatusBase(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
 
 class CallbackData(BaseModel):
     Body: str
