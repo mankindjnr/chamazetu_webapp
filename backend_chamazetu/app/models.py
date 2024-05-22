@@ -103,6 +103,8 @@ class Chama(Base):
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
     account_name = Column(String, nullable=False)
+    category = Column(String, nullable=False)  # private or public onlyy
+    fine_per_share = Column(Integer, nullable=False)
 
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")

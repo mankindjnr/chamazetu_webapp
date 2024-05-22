@@ -161,6 +161,13 @@ def create_chama(request):
         contribution_frequency = request.POST.get("frequency")
         start_date = request.POST.get("start_date")
 
+        chama_category = request.POST.get("category")
+        fine = request.POST.get("fine_per_share")
+
+        # check if the start_date > today
+        # check if start_date < contribution day - calculate the contribution date
+        # check that the start date is interval away from the contribution day
+
         members_allowed = 0
         if no_limit == "on":
             members_allowed = "infinite"

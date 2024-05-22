@@ -15,6 +15,7 @@ from chama.chamas import (
     get_chama_id,
     get_chama_contribution_day,
     get_previous_contribution_date,
+    public_chama_threads,
 )
 from chama.thread_urls import fetch_data
 from .date_day_time import get_sunday_date, extract_date_time
@@ -46,20 +47,45 @@ def view_chama(request, chamaid):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
     }
-    resp = requests.get(
-        f"{os.getenv('api_url')}/chamas/chama", json=data, headers=headers
-    )
-    if resp.status_code == 200:
-        chama = resp.json()["Chama"][0]
-        manager_profile = get_user_full_profile("manager", chama["manager_id"])
+
+    urls = [
+        (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/faqs/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/rules/{chamaid}", None),
+        (f"{os.getenv('api_url')}/chamas/mission/vision/{chamaid}", None),
+    ]
+
+    results = public_chama_threads(urls)
+
+    # resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
+    if results["public_chama"]:
+        print()
+        print(results["public_chama"])
+        print()
+        print(results["faqs"])
+        print()
+        print(results["rules"])
+        print()
+        print(results["mission"])
+        print()
+        print(results["vision"])
+        manager_profile = get_user_full_profile(
+            "manager", results["public_chama"]["manager_id"]
+        )
+
+        # print(chama)
 
         return render(
             request,
             "chama/blog_chama.html",
             {
-                "role": "member",
-                "chama": chama,
+                "role": "member" if headers else None,
+                "chama": results["public_chama"],
                 "manager": manager_profile,
+                "faqs": results["faqs"],
+                "rules": results["rules"],
+                "mission": results["mission"],
+                "vision": results["vision"],
             },
         )
 

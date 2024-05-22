@@ -35,7 +35,6 @@ def get_all_chamas(request, role=None):
 # public chama access
 def get_chama(request, chamaid):
     print("++++++++++++++++++++++++++")
-    data = {"chamaid": chamaid}
 
     urls = [
         (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
@@ -102,7 +101,8 @@ def public_chama_threads(urls):
     public_chama = None
     faqs = None
     rules = None
-    mission_vision = None
+    mission = None
+    vision = None
 
     if urls[0][0] in results and results[urls[0][0]]["status"] == 200:
         public_chama = results[urls[0][0]]["data"]["Chama"][0]

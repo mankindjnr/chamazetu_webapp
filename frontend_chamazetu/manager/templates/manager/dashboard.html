@@ -169,6 +169,16 @@
                           <label for="chama_type" class="form-label">Chama Type</label>
                           <input type="text" class="form-control" id="chama_type" name="chama_type" placeholder="investment saving merry-go-round" required>
                         </div>
+
+                        <div class="mb-3">
+                          <label for="category" class="form-label">Chama Category</label>
+                          <select class="form-select" id="category" name="category" onchange="showOptions()">
+                              <option value="public">Public</option>
+                              <option value="private">Private</option>
+                          </select>
+                          <!-- helper message -->
+                          <small id="categoryhelp" class="form-text text-muted"></small>
+                        </div>
                         <!--TODO: limit to 500 characters check with javascript and notify the use with small text -->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
@@ -188,6 +198,11 @@
                         <div class="mb-3">
                           <label for="share_price" class="form-label">Share price</label>
                           <input type="number" class="form-control" id="share_price" name="share_price" placeholder="per member contribution" min="1" required>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="fine_per_share" class="form-label">Fine per Share</label>
+                          <input type="number" class="form-control" id="fine_per_share" name="fine_per_share" placeholder="fine for when users miss the deadline" min="1" required>
                         </div>
                         
                         <!-- contribution frequency -->
