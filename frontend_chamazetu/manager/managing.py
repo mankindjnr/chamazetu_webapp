@@ -164,9 +164,8 @@ def create_chama(request):
         chama_category = request.POST.get("category")
         fine = request.POST.get("fine_per_share")
 
-        # check if the start_date > today
-        # check if start_date < contribution day - calculate the contribution date
-        # check that the start date is interval away from the contribution day
+        # check if the start_date > today and should be a atleast a week away from  today, the creation date
+        # check if start_date < contribution day - calculate the contribution date - do this by creating a calculate the first contribution date function
 
         members_allowed = 0
         if no_limit == "on":
@@ -207,6 +206,8 @@ def create_chama(request):
             "restart": False,
             "is_active": is_active,
             "manager_id": manager_id,
+            "category": chama_category,
+            "fine_per_share": fine,
         }
 
         headers = {
@@ -220,7 +221,7 @@ def create_chama(request):
         )
 
         if response.status_code == 201:
-            update_contribution_days.delay()
+            update_contribution_days.delay()  # this will be replaced with a set contribution date background task it will take, interval and start cycle dates
             messages.success(request, "Chama created successfully.")
             return redirect(reverse("manager:dashboard"))
 

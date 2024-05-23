@@ -43,6 +43,3 @@ def generate_access_token():
     except Exception as e:
         print("=======================")
         raise Exception("Failed to get access token: " + str(e))
-
-
-generate_access_token()

@@ -92,7 +92,6 @@ async def update_contribution_days(
         )
 
         if chama_contribution_day:
-            # the chama_id exists - update the contribution day
             if upcoming_contribution_date > datetime.now():
                 chama_contribution_day.next_contribution_date = (
                     upcoming_contribution_date
@@ -107,7 +106,6 @@ async def update_contribution_days(
                     )
                 )
         else:
-            # the chama_id does not exist - create a new record
             new_record = models.ChamaContributionDay(
                 chama_id=chama_id, next_contribution_date=upcoming_contribution_date
             )

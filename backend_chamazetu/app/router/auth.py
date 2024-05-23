@@ -21,7 +21,6 @@ async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db),
 ):
-    print("user_credentials: ", user_credentials)
     user = (
         db.query(models.Member)
         .filter(models.Member.email == user_credentials.username)
@@ -34,7 +33,6 @@ async def login(
         )
 
     if not user.is_active or not user.email_verified:
-        print("User not active or not verified")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="user not active or not verified",

@@ -83,6 +83,8 @@ class ChamaBase(BaseModel):
     restart: bool
     is_active: bool
     manager_id: int
+    category: str
+    fine_per_share: int
 
     class Config:
         orm_mode = True
