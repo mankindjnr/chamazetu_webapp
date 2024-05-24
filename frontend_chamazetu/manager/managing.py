@@ -164,8 +164,8 @@ def create_chama(request):
         chama_category = request.POST.get("category")
         fine = request.POST.get("fine_per_share")
 
-        # check if the start_date > today and should be a atleast a week away from  today, the creation date
-        # check if start_date < contribution day - calculate the contribution date - do this by creating a calculate the first contribution date function
+        # check if the start_date > today
+        # check if start_date < contribution day - compare the selected day(weekly or monthly chamas) if it matches the selected day
 
         members_allowed = 0
         if no_limit == "on":
@@ -221,7 +221,7 @@ def create_chama(request):
         )
 
         if response.status_code == 201:
-            update_contribution_days.delay()  # this will be replaced with a set contribution date background task it will take, interval and start cycle dates
+            update_contribution_days.delay()  # this will be replaced with a set contribution date background task it will take the contribution date provided and set it
             messages.success(request, "Chama created successfully.")
             return redirect(reverse("manager:dashboard"))
 
@@ -265,6 +265,8 @@ def chama(request, key):
         ),
         (f"{os.getenv('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
         (f"{os.getenv('api_url')}/managers/profile_picture", {}),
+        (f"{os.getenv('api_url')}/investments/chamas/available_investments", {}),
+        (f"{os.getenv('api_url')}/investments/chamas/in-house_mmf", {}),
     )
     # ===================================
 
@@ -283,6 +285,8 @@ def chama(request, key):
                 "investment_activity": results["investment_activity"],
                 "fund_performance": results["fund_performance"],
                 "recent_transactions": results["recent_activity"],
+                "available_investments": results["available_investments"],
+                "inhouse_mmf": results["inhouse_mmf"],
             },
         )
     else:
@@ -316,6 +320,8 @@ def chama_threads(urls, headers):
     recent_activity = []
     investment_data = {}
     fund_performance = None
+    available_investments = None
+    inhouse_mmf = None
     # append investment_balance, and account_balance
     if urls[0][0] in results and results[urls[0][0]]["status"] == 200:
         chama = results[urls[0][0]]["data"]["Chama"][0]
@@ -339,12 +345,19 @@ def chama_threads(urls, headers):
             )
         if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
             chama["manager_profile_picture"] = results[urls[8][0]]["data"]
+        if urls[9][0] in results and results[urls[9][0]]["status"] == 200:
+            available_investments = results[urls[9][0]]["data"]
+        if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
+            inhouse_mmf = results[urls[10][0]]["data"]
 
     investment_account = (
         investment_data["investment_data_mmf"]
         if "investment_data_mmf" in investment_data
         else None
     )
+    print("+===============================")
+    print(inhouse_mmf)
+    print()
     investment_activty = (
         investment_data["investment_activity"]
         if "investment_activity" in investment_data
@@ -356,6 +369,8 @@ def chama_threads(urls, headers):
         "investment_account": investment_account,
         "investment_activity": investment_activty,
         "fund_performance": fund_performance,
+        "available_investments": available_investments,
+        "inhouse_mmf": inhouse_mmf,
     }
 
 
@@ -397,6 +412,7 @@ def profile(request, manager_id):
     return render(request, "manager/profile.html", {"profile": full_profile})
 
 
+# updating password from the profile page while logged in
 @tokens_in_cookies("manager")
 @validate_and_refresh_token("manager")
 def change_password(request, manager_id):

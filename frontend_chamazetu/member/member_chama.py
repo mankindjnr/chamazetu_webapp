@@ -59,16 +59,6 @@ def view_chama(request, chamaid):
 
     # resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
     if results["public_chama"]:
-        print()
-        print(results["public_chama"])
-        print()
-        print(results["faqs"])
-        print()
-        print(results["rules"])
-        print()
-        print(results["mission"])
-        print()
-        print(results["vision"])
         manager_profile = get_user_full_profile(
             "manager", results["public_chama"]["manager_id"]
         )

@@ -113,14 +113,14 @@ def member_dashboard_threads(urls, headers):
             )
         if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
             wallet_activity = results[urls[2][0]]["data"]
-        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
-            wallet_activity["recent_wallet_activity"] = organise_wallet_activity(
-                results[urls[3][0]]["data"]
-            )
-        if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
-            user_profile["profile_image"] = results[urls[4][0]]["data"][
-                "profile_picture"
-            ]
+    # TODO: check if pulling them backwards causes issues with new members with 0 chamas
+    if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
+        wallet_activity["recent_wallet_activity"] = organise_wallet_activity(
+            results[urls[3][0]]["data"]
+        )
+    if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
+        user_profile["profile_image"] = results[urls[4][0]]["data"]["profile_picture"]
+
     return {
         "chamas": chamas,
         "member_recent_transactions": member_recent_transactions,
@@ -161,6 +161,7 @@ def organise_wallet_activity(wallet_activity):
     return wallet_activity
 
 
+# updating password while logged in from profile page
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
 def change_password(request, user_id):

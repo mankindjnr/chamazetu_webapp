@@ -275,6 +275,7 @@ def activate(request, role, uidb64, token):
         return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
+# changing password while logged out
 def forgot_password(request, role):
     if request.method == "POST":
         email = (request.POST["email"]).strip()

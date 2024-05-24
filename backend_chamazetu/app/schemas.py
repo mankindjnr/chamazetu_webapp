@@ -350,6 +350,15 @@ class UpdateInvestmentAccountBase(BaseModel):
     chama_id: int
 
 
+class AvailableInvestmentResp(BaseModel):
+    investment_name: str
+    investment_type: str
+    min_invest_amount: int
+    investment_period: int
+    investment_period_unit: str
+    investment_rate: float
+    investment_active: bool
+
 # ============ members ==========================
 class MemberChamasResp(BaseModel):
     chama_name: str

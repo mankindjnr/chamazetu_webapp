@@ -9,6 +9,57 @@ from .. import schemas, database, utils, oauth2, models
 router = APIRouter(prefix="/investments/chamas", tags=["chama_investment"])
 
 
+# retrieve details on the inhouse mmf
+@router.get("/in-house_mmf", status_code=status.HTTP_200_OK)
+async def inhouse_mmf_data(
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+
+    try:
+        print("====inhouse mmf data==========")
+        inhousemmf = (
+            db.query(models.Available_Investment)
+            .filter(models.Available_Investment.investment_type == "MMF")
+            .first()
+        )
+
+        if not inhousemmf:
+            raise HTTPException(status_code=404, detail="inhouse mmf data not found")
+
+        del inhousemmf.__dict__["investment_return"]
+        return inhousemmf.__dict__
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="inhouse mmf data not retrieva")
+
+
+# retrieve available investments
+@router.get(
+    "/available_investments",
+    status_code=status.HTTP_200_OK,
+)
+async def get_available_investments(
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+
+    try:
+        print("=========getting available investments============")
+        available_invst = db.query(models.Available_Investment).all()
+
+        available_investments = []
+
+        if not available_invst:
+            raise HTTPException(status_code=404, detail="no available investments")
+        for investment in available_invst:
+            del investment.__dict__["investment_return"]
+            available_investments.append(investment.__dict__)
+
+        return available_investments
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="retrieval of invsts failed")
+
+
 # invest
 @router.post("/mmf", status_code=status.HTTP_201_CREATED)
 async def make_an_investment(
@@ -204,27 +255,42 @@ def calculate_daily_mmf_interests(
             models.Investment_Performance.investment_type == "mmf"
         )
 
-        for investment in investments:
-            interest_rate = get_current_investment_rate(
-                (investment.investment_type).upper(), db
-            )
-            interest_earned = investment.amount_invested * (interest_rate / 100) / 360
-            investment.daily_interest = interest_earned
-            investment.weekly_interest += interest_earned
-            investment.monthly_interest += interest_earned
-            investment.total_interest_earned += interest_earned
-            db.commit()
-            db.refresh(investment)
+        inhouse_mmf_returns = (
+            db.query(models.Available_Investment)
+            .filter(models.Available_Investment.investment_type == "MMF")
+            .filter(models.Available_Investment.investment_name == "chamazetu_mmf")
+            .first()
+        )
 
-            # add this daily interest record to the daily interest table
-            daily_interest = models.Daily_Interest(
-                chama_id=investment.chama_id,
-                interest_earned=interest_earned,
-                date_earned=datetime.now(timezone.utc),
-            )
-            db.add(daily_interest)
-            db.commit()
-            db.refresh(daily_interest)
+        if inhouse_mmf_returns:
+            for investment in investments:
+                interest_rate = get_current_investment_rate(
+                    (investment.investment_type).upper(), db
+                )
+                interest_earned = (
+                    investment.amount_invested * (interest_rate / 100) / 360
+                )
+                investment.daily_interest = interest_earned
+                investment.weekly_interest += interest_earned
+                investment.monthly_interest += interest_earned
+                investment.total_interest_earned += interest_earned
+                db.commit()
+                db.refresh(investment)
+
+                # this will add all interests earned to the available investments table that shows how much interests have been earned from that particular interests and how much we will be paying out
+                inhouse_mmf_returns.investment_return += interest_earned
+                db.commit()
+                db.refresh(inhouse_mmf_returns)
+
+                # add this daily interest record to the daily interest table
+                daily_interest = models.Daily_Interest(
+                    chama_id=investment.chama_id,
+                    interest_earned=interest_earned,
+                    date_earned=datetime.now(timezone.utc),
+                )
+                db.add(daily_interest)
+                db.commit()
+                db.refresh(daily_interest)
     except Exception as e:
         db.rollback()
         print(e)

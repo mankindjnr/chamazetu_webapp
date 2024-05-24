@@ -250,8 +250,12 @@
                               <label for="start_date" class="form-label">Start Date</label>
                               <input type="date" class="form-control" id="start_date" name="start_date" required>
                           </div>
-                          <!-- we will automatically select a contribution date from the start date -->
-                        <small id="descriptionHelp" class="form-text text-muted">First contribution date will be an interval away from start date</small>
+                          <div class="col-md-6">
+                            <label for="first_contribution_date" class="form-label">First contribution date</label>
+                            <input type="date" class="form-control" id="first_contribution_date" name="first_contribution_date" required>
+                        </div>
+                          <!-- we will automatically select a contribution date from the start date by checking start_date and the contribution day and calculate where the day falls after startdate -->
+                        <small id="descriptionHelp" class="form-text text-muted">First contribution date should be past the start date</small>
 
                         </div>
                         <!-- checkbox -->
