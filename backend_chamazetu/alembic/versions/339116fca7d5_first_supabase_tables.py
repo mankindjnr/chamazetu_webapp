@@ -1,8 +1,8 @@
-"""all new tables
+"""first supabase tables
 
-Revision ID: 74e6b0fe646b
+Revision ID: 339116fca7d5
 Revises: 
-Create Date: 2024-05-03 10:47:49.804449
+Create Date: 2024-05-26 01:04:06.150494
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '74e6b0fe646b'
+revision: str = '339116fca7d5'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -99,7 +99,7 @@ def upgrade() -> None:
     sa.Column('chama_name', sa.String(), nullable=False),
     sa.Column('chama_type', sa.String(), nullable=False),
     sa.Column('num_of_members_allowed', sa.String(), nullable=False),
-    sa.Column('description', sa.String(), nullable=False),
+    sa.Column('description', sa.String(length=500), nullable=False),
     sa.Column('date_created', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('registration_fee', sa.Integer(), nullable=False),
@@ -112,6 +112,9 @@ def upgrade() -> None:
     sa.Column('restart', sa.Boolean(), nullable=True),
     sa.Column('is_deleted', sa.Boolean(), nullable=True),
     sa.Column('verified_chama', sa.Boolean(), nullable=True),
+    sa.Column('account_name', sa.String(), nullable=False),
+    sa.Column('category', sa.String(), nullable=False),
+    sa.Column('fine_per_share', sa.Integer(), nullable=False),
     sa.Column('manager_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['manager_id'], ['managers.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -131,19 +134,10 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_wallet_transactions_id'), 'wallet_transactions', ['id'], unique=False)
-    op.create_table('chama_accounts',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('chama_id', sa.Integer(), nullable=True),
-    sa.Column('account_balance', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['chama_id'], ['chamas.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_chama_accounts_id'), 'chama_accounts', ['id'], unique=False)
-    op.create_table('chama_blog',
+    op.create_table('about_chama',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('manager_id', sa.Integer(), nullable=True),
     sa.Column('chama_id', sa.Integer(), nullable=True),
-    sa.Column('paybill_account_number', sa.Integer(), nullable=False),
     sa.Column('twitter', sa.String(), nullable=True),
     sa.Column('facebook', sa.String(), nullable=True),
     sa.Column('linkedin', sa.String(), nullable=True),
@@ -153,7 +147,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['manager_id'], ['managers.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_chama_blog_id'), 'chama_blog', ['id'], unique=False)
+    op.create_index(op.f('ix_about_chama_id'), 'about_chama', ['id'], unique=False)
+    op.create_table('chama_accounts',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('chama_id', sa.Integer(), nullable=True),
+    sa.Column('account_balance', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['chama_id'], ['chamas.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_chama_accounts_id'), 'chama_accounts', ['id'], unique=False)
     op.create_table('chama_contribution_day',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chama_id', sa.Integer(), nullable=True),
@@ -294,10 +296,10 @@ def downgrade() -> None:
     op.drop_table('chama_investment')
     op.drop_index(op.f('ix_chama_contribution_day_id'), table_name='chama_contribution_day')
     op.drop_table('chama_contribution_day')
-    op.drop_index(op.f('ix_chama_blog_id'), table_name='chama_blog')
-    op.drop_table('chama_blog')
     op.drop_index(op.f('ix_chama_accounts_id'), table_name='chama_accounts')
     op.drop_table('chama_accounts')
+    op.drop_index(op.f('ix_about_chama_id'), table_name='about_chama')
+    op.drop_table('about_chama')
     op.drop_index(op.f('ix_wallet_transactions_id'), table_name='wallet_transactions')
     op.drop_table('wallet_transactions')
     op.drop_index(op.f('ix_chamas_id'), table_name='chamas')

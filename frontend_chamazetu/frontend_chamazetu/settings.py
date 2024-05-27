@@ -56,15 +56,19 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://chamazetu_frontend:8000",
-    "https://chamazetu-frontend.8000",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://chamazetu_frontend:8000",
+#     "https://chamazetu-frontend.8000",
+#     "https://0.0.0.0:8000",
+#     "https://198.199.85.84:8000",
+# ]
 
-CORS_TRUSTED_ORIGINS = [
-    "http://chamazetu_frontend:8000",
-    "https://chamazetu-frontend.8000",
-]
+# CORS_TRUSTED_ORIGINS = [
+#     "http://chamazetu_frontend:8000",
+#     "https://chamazetu-frontend.8000",
+#     "https://0.0.0.0:8000",
+#     "https://198.199.85.84:8000",
+# ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
 
@@ -92,11 +96,11 @@ WSGI_APPLICATION = "frontend_chamazetu.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("FRONT_DB_NAME"),
-        "USER": os.getenv("FRONT_DB_USER"),
-        "PASSWORD": os.getenv("FRONT_DB_PASSWORD"),
-        "HOST": os.getenv("FRONT_DB_HOST"),
-        "PORT": os.getenv("FRONT_DB_PORT"),
+        "NAME": os.getenv("SUPA_DB_NAME"),
+        "USER": os.getenv("SUPA_DB_USER"),
+        "PASSWORD": os.getenv("SUPA_DB_PASSWORD"),
+        "HOST": os.getenv("SUPA_DB_HOST"),
+        "PORT": os.getenv("SUPA_DB_PORT"),
     }
 }
 
