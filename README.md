@@ -1,8 +1,8 @@
-# chamaZetu
+# <a href="https://198.199.85.84:8000">chamaZetu</a>
 
 ---
 
-chamaZetu is a comprehensive digital solution designed to revolutionize the way chamas (community savings groups) in Kenya manage their finances and chama activities.Whether you're a chama manager organizing chama activities or a member actively contributing to savings, this platform provides secure, transparent, and efficient environment for all your financial needs.
+<a href="https://198.199.85.84:8000">chamaZetu</a> is a comprehensive digital solution designed to revolutionize the way chamas (community savings groups) in Kenya manage their finances and chama activities.Whether you're a chama manager organizing chama activities or a member actively contributing to savings, this platform provides secure, transparent, and efficient environment for all your financial needs.
 
 ## Purpose
 
