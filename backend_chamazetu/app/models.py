@@ -91,14 +91,17 @@ class Chama(Base):
     contribution_interval = Column(
         String, nullable=False
     )  # daily, weekly, monthly, custom
-    contribution_day = Column(String, nullable=False)  # tuesday, friday, 1st, 15th
+    contribution_day = Column(
+        String, nullable=False
+    )  # tuesday, friday, 1st, 15th or every first saturday of the month
     is_active = Column(
         Boolean, default=False
     )  # chama is active on start cycle day (auto/manual)
     accepting_members = Column(
         Boolean, nullable=False
     )  # chama is accepting new members
-    start_cycle = Column(DateTime, nullable=False)
+    last_joining_date = Column(DateTime, nullable=False)
+    first_contribution_date = Column(DateTime, nullable=False)
     restart = Column(Boolean, default=False)  # chama has restarted
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager

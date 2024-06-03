@@ -4,6 +4,7 @@ from celery.exceptions import MaxRetriesExceededError
 from django.core.mail import send_mail
 import requests, os, time
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -28,6 +29,30 @@ def sending_email(subject, message, from_email, to_email):
     return None
 
 
+@shared_task
+def set_contribution_date(first_contribution_date, chama_name):
+    """
+    Set the first contribution date for the chama
+    """
+
+    # Convert datetime object to string in ISO 8601 format
+    first_contribution_date = (
+        first_contribution_date.isoformat()
+        if isinstance(first_contribution_date, datetime)
+        else first_contribution_date
+    )
+
+    response = requests.post(
+        f"{os.getenv('api_url')}/chamas/set_first_contribution_date",
+        json={
+            "first_contribution_date": first_contribution_date,
+            "chama_name": chama_name,
+        },
+    )
+
+    return None
+
+
 # update the contribution days for the chamas
 @shared_task
 def update_contribution_days():
@@ -37,6 +62,12 @@ def update_contribution_days():
     response = requests.put(f"{os.getenv('api_url')}/chamas/update_contribution_days")
 
     return None
+
+
+@shared_task
+def check_and_update_accepting_members_status():
+    # we will be checking if today is past the last joining day, if it is we will update the chama to not accepting members
+    pass
 
 
 # calculate daily interests for the chamas

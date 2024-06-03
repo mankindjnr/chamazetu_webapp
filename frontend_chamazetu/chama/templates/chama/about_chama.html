@@ -88,19 +88,39 @@
       </div>
     {% endif %}
 
-    <div class="pagetitle">
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+      <div>
       <h1>about {{chama.chama_name}}</h1>
-      <nav>
-        <ol class="breadcrumb">
-          {% if role == 'manager' %}
-          <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'manager:dashboard' %}">Home</a></li>
-          {% elif role == 'member' %}
-          <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'member:dashboard' %}">Home</a></li>
-          {% endif %}
-          <li class="breadcrumb-item">{{role}}</li>
-          <li class="breadcrumb-item active">about chama</li>
-        </ol>
-      </nav>
+
+        <nav>
+          <ol class="breadcrumb">
+            {% if role == 'manager' %}
+            <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'manager:dashboard' %}">Home</a></li>
+            {% elif role == 'member' %}
+            <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'member:dashboard' %}">Home</a></li>
+            {% endif %}
+            <li class="breadcrumb-item">{{role}}</li>
+            <li class="breadcrumb-item active">about chama</li>
+          </ol>
+        </nav>
+      </div>
+
+      <div class="ml-auto">
+        <!-- chama join status trigger modal -->
+        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal">
+          accepting members
+        </button>
+        <!-- chama join status Modal -->
+        {% include 'manager/modals/join_status_modal.html' %}
+
+        <!-- chama activate/deactivate trigger modal -->
+        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#activeModal">
+          activate/deactivate
+        </button>
+        <!-- activate/deactivate chama modal -->
+        {% include 'manager/modals/activate_deactivate_chama_modal.html' %}
+      </div>
+
     </div><!-- End Page Title -->
 
     <section class="section profile">

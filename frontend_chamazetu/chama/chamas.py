@@ -34,7 +34,6 @@ def get_all_chamas(request, role=None):
 
 # public chama access
 def get_chama(request, chamaid):
-    print("++++++++++++++++++++++++++")
 
     urls = [
         (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
@@ -45,18 +44,7 @@ def get_chama(request, chamaid):
 
     results = public_chama_threads(urls)
 
-    # resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
     if results["public_chama"]:
-        print()
-        print(results["public_chama"])
-        print()
-        print(results["faqs"])
-        print()
-        print(results["rules"])
-        print()
-        print(results["mission"])
-        print()
-        print(results["vision"])
         manager_profile = get_user_full_profile(
             "manager", results["public_chama"]["manager_id"]
         )

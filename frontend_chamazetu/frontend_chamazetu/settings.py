@@ -22,8 +22,13 @@ DEBUG = (
     "PRODUCTION" not in os.environ
 )  # result is True if PRODUCTION is not in os.environ
 
-# ALLOWED_HOSTS = ["chamazetu.com", "192.168.100.7"]
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "localhost",
+    "chamazetu.com",
+    "192.168.242.254",
+    "0.0.0.0",
+]
 
 
 # Application definition
@@ -56,19 +61,20 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://chamazetu_frontend:8000",
-#     "https://chamazetu-frontend.8000",
-#     "https://0.0.0.0:8000",
-#     "https://198.199.85.84:8000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    "https://localhost:8000",
+    "https://chamazetu.com",
+    "https://www.chamazetu.com",
+    "https://0.0.0.0:8000",
+    "https://192.168.242.254:8000",
+]
 
-# CORS_TRUSTED_ORIGINS = [
-#     "http://chamazetu_frontend:8000",
-#     "https://chamazetu-frontend.8000",
-#     "https://0.0.0.0:8000",
-#     "https://198.199.85.84:8000",
-# ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://localhost",
+    "https://127.0.0.1",
+    "https://chamazetu.com",
+    "https://www.chamazetu.com",
+]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
 
