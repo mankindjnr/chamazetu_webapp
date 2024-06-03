@@ -1,4 +1,4 @@
-import requests, jwt, json, threading, os
+import requests, jwt, json, threading, os, calendar
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
@@ -20,7 +20,7 @@ from member.member_chama import (
 from member.members import get_user_full_profile, get_user_id
 from member.membermanagement import is_empty_dict
 from member.date_day_time import extract_date_time
-from chama.tasks import update_contribution_days
+from chama.tasks import update_contribution_days, set_contribution_date
 
 
 from chama.usermanagement import (
@@ -159,13 +159,11 @@ def create_chama(request):
         registration_fee = request.POST.get("registration")
         share_price = request.POST.get("share_price")
         contribution_frequency = request.POST.get("frequency")
-        start_date = request.POST.get("start_date")
+        last_joining_date = request.POST.get("last_joining_date")
+        first_contribution_date = request.POST.get("first_contribution_date")
 
         chama_category = request.POST.get("category")
         fine = request.POST.get("fine_per_share")
-
-        # check if the start_date > today
-        # check if start_date < contribution day - compare the selected day(weekly or monthly chamas) if it matches the selected day
 
         members_allowed = 0
         if no_limit == "on":
@@ -179,53 +177,117 @@ def create_chama(request):
         elif contribution_frequency == "monthly":
             contribution_day = request.POST.get("monthly_day")
 
+        is_active = False
         if accepting_members == "on":
             is_active = True
             accepting_members = True
         else:
             accepting_members = False
-        # check if start_date is less than end_date and if start date is today and change the is_active to True
 
-        chama_manager = request.COOKIES.get("current_manager")
-        manager_id = get_user_id("manager", chama_manager)
+        # final day of joining chama
+        # first contribution date -> should be the day selected on the contribution day
+        # a function that takes in first contrbution date and contribution day and checks if the date matches the day
+        print("=======the dates received===========")
+        print(first_contribution_date)
+        print(contribution_day)
+        print(last_joining_date)
+        print(contribution_frequency)
 
-        # Convert start_date and end_date to datetime objects and get current time
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        # Convert last and first to datetime objects and get current time
+        last_joining_date = datetime.strptime(last_joining_date, "%Y-%m-%d")
+        first_contribution_date = datetime.strptime(first_contribution_date, "%Y-%m-%d")
 
-        data = {
-            "chama_name": chama_name,
-            "chama_type": chama_type,
-            "description": description,
-            "num_of_members_allowed": members_allowed,
-            "accepting_members": accepting_members,
-            "registration_fee": registration_fee,
-            "contribution_amount": share_price,
-            "contribution_interval": contribution_frequency,
-            "contribution_day": contribution_day,
-            "start_cycle": start_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "restart": False,
-            "is_active": is_active,
-            "manager_id": manager_id,
-            "category": chama_category,
-            "fine_per_share": fine,
-        }
+        # check that last day of joining is >= today
+        if last_joining_date < datetime.now():
+            messages.error(request, "Last joining date should be greater than today")
+            return redirect(reverse("manager:dashboard"))
+        if first_contribution_day_valid(
+            first_contribution_date,
+            contribution_day,
+            last_joining_date,
+            contribution_frequency,
+        ):
 
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
-        }
-        response = requests.post(
-            f"{os.getenv('api_url')}/chamas",
-            json=data,
-            headers=headers,
-        )
+            chama_manager = request.COOKIES.get("current_manager")
+            manager_id = get_user_id("manager", chama_manager)
 
-        if response.status_code == 201:
-            update_contribution_days.delay()  # this will be replaced with a set contribution date background task it will take the contribution date provided and set it
+            data = {
+                "chama_name": chama_name,
+                "chama_type": chama_type,
+                "description": description,
+                "num_of_members_allowed": members_allowed,
+                "accepting_members": accepting_members,
+                "registration_fee": registration_fee,
+                "contribution_amount": share_price,
+                "contribution_interval": contribution_frequency,
+                "contribution_day": contribution_day,
+                "last_joining_date": last_joining_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "first_contribution_date": last_joining_date.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+                "restart": False,
+                "is_active": is_active,
+                "manager_id": manager_id,
+                "category": chama_category,
+                "fine_per_share": fine,
+            }
+
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            }
+            response = requests.post(
+                f"{os.getenv('api_url')}/chamas",
+                json=data,
+                headers=headers,
+            )
+
+            if response.status_code == 201:
+                # set the first contribution date as given by user
+                set_contribution_date.delay(first_contribution_date, chama_name)
+                # update_contribution_days.delay()  # this will be replaced with a set contribution date background task it will take the contribution date provided and set it
+                messages.success(request, "Chama created successfully.")
+                return redirect(reverse("manager:dashboard"))
             messages.success(request, "Chama created successfully.")
             return redirect(reverse("manager:dashboard"))
 
+        else:
+            messages.error(
+                request,
+                "First contribution date should be greater than the last joining date and match the contribution day",
+            )
+            return redirect(reverse("manager:dashboard"))
+
     return redirect(reverse("manager:dashboard"))
+
+
+# first contribution date is valid if it is greater than the last joining date and the day of contribution matches the day of contribution
+# if the frequency is weekly, contribution day is a day of the week if its montly, contribution day is a day of the month i.e 20
+# if the frequency is daily, contribution day is not needed
+def first_contribution_day_valid(
+    first_contribution_date, contribution_day, last_joining_date, contribution_frequency
+):
+    if contribution_frequency == "daily":
+        print("=========daily==================")
+        return first_contribution_date > last_joining_date
+    elif contribution_frequency == "weekly":
+        print("=========weekly==================")
+        print(first_contribution_date)
+        return (
+            first_contribution_date > last_joining_date
+            and calendar.day_name[first_contribution_date.weekday()]
+            == contribution_day.capitalize()
+        )
+    elif contribution_frequency == "monthly":
+        print("=========monthly==================")
+        print(first_contribution_date.day)
+        print(contribution_day)
+        print(first_contribution_date > last_joining_date)
+        print(int(first_contribution_date.day) == int(contribution_day))
+
+        return first_contribution_date > last_joining_date and int(
+            first_contribution_date.day
+        ) == int(contribution_day)
 
 
 # it gets the one chama details and displays them
@@ -355,9 +417,7 @@ def chama_threads(urls, headers):
         if "investment_data_mmf" in investment_data
         else None
     )
-    print("+===============================")
-    print(inhouse_mmf)
-    print()
+
     investment_activty = (
         investment_data["investment_activity"]
         if "investment_activity" in investment_data

@@ -63,7 +63,45 @@ async def get_active_chamas(
         raise HTTPException(status_code=400, detail="Failed to retrieve active chamas")
 
 
-# TODO: set contribution day for a chama during creation by checkign the start date, interval and day
+# TODO: set contribution day for a chama during creation using the first contribution date
+@router.post("/set_first_contribution_date", status_code=status.HTTP_201_CREATED)
+async def set_first_contribution_day(
+    date_details: dict = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama = (
+            db.query(models.Chama)
+            .filter(models.Chama.chama_name == date_details["chama_name"])
+            .first()
+        )
+
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        chama_contribution_day = (
+            db.query(models.ChamaContributionDay).filter_by(chama_id=chama.id).first()
+        )
+
+        if chama_contribution_day:
+            chama_contribution_day.next_contribution_date = datetime.strptime(
+                date_details["first_contribution_date"], "%Y-%m-%d"
+            )
+        else:
+            first_contribution_date = datetime.strptime(
+                date_details["first_contribution_date"], "%Y-%m-%dT%H:%M:%S"
+            )
+            new_record = models.ChamaContributionDay(
+                chama_id=chama.id,
+                next_contribution_date=first_contribution_date,
+            )
+            db.add(new_record)
+
+        db.commit()
+        return {"message": "Contribution day set successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to set contribution day")
 
 
 # updating contribution days for chamas
@@ -561,7 +599,7 @@ async def get_chama_start_date(
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
 
-    return {"start_date": chama.start_cycle.strftime("%d-%m-%Y")}
+    return {"start_date": chama.last_joining_date.strftime("%d-%m-%Y")}
 
 
 # get chama about by id from (rules, description, mission, vision, faqs)

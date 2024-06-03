@@ -79,12 +79,13 @@ class ChamaBase(BaseModel):
     contribution_amount: int
     contribution_interval: str
     contribution_day: str
-    start_cycle: datetime
     restart: bool
     is_active: bool
     manager_id: int
     category: str
     fine_per_share: int
+    last_joining_date: datetime
+    first_contribution_date: datetime
 
     class Config:
         orm_mode = True
@@ -358,6 +359,7 @@ class AvailableInvestmentResp(BaseModel):
     investment_period_unit: str
     investment_rate: float
     investment_active: bool
+
 
 # ============ members ==========================
 class MemberChamasResp(BaseModel):

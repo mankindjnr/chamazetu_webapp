@@ -453,7 +453,8 @@ def chama_details_organised(chama_details):
     chama_details["chama_created_on"] = extract_date_time(
         chama_details["date_created"]
     )["date"]
-    # chama_details["chama_start_date"] = extract_date_time(chama_details["start_cycle"])[
+
+    # chama_details["chama_start_date"] = extract_date_time(chama_details["last_joining_date"])[
     #     "date"
     # ]
     chama_details["chama_is_active"] = (
@@ -467,11 +468,12 @@ def chama_details_organised(chama_details):
     )
     del chama_details["num_of_members_allowed"]
     del chama_details["date_created"]
-    del chama_details["start_cycle"]
+    del chama_details["last_joining_date"]
     del chama_details["updated_at"]
     del chama_details["restart"]
     del chama_details["is_deleted"]
     del chama_details["manager_id"]
     del chama_details["is_active"]
     del chama_details["accepting_members"]
+    del chama_details["first_contribution_date"]
     return chama_details

@@ -1,8 +1,8 @@
-# <a href="https://dub.sh/chamazetu">chamaZetu</a>
+# <a href="chamazetu.com">chamaZetu</a>
 
 ---
 
-<a href="https://dub.sh/chamazetu">chamaZetu</a> is a comprehensive digital solution designed to revolutionize the way chamas (community savings groups) in Kenya manage their finances and chama activities.Whether you're a chama manager organizing chama activities or a member actively contributing to savings, this platform provides secure, transparent, and efficient environment for all your financial needs.
+<a href="chamazetu.com">chamaZetu</a> is a comprehensive digital solution designed to revolutionize the way chamas (community savings groups) in Kenya manage their finances and chama activities.Whether you're a chama manager organizing chama activities or a member actively contributing to savings, this platform provides secure, transparent, and efficient environment for all your financial needs.
 
 ## Purpose
 
@@ -76,8 +76,9 @@ The primary purpose of chamaZetu is to empower chamas by offering the following 
 
 - **Backend**: FastAPI
 - **Frontend**: Django
-- **Database**: PostgreSQL (self-hosted)
-- **Deployment**: Azure VM
+- **Database**: PostgreSQL (supabase-hosted)
+- **Deployment**: GCP
+- **Web Server**: Nginx
 - **Message Broker**: Redis
 - **Background Tasks**: Celery and Celery Beat
 - **Payment Solution**: Integrated M-Pesa Daraja API
