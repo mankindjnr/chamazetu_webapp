@@ -57,7 +57,6 @@ def refresh_token(request, role):
         )
         refresh_data = refresh_access.json()
         new_access_token = refresh_data["new_access_token"]
-        # response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
         response = HttpResponseRedirect(request.path)
         response.set_cookie(
             f"{role}_access_token",
@@ -320,3 +319,34 @@ def update_forgotten_password(request, role):
 
     # might have to get a update forgotten password page
     return render(request, "chama/forgot_password_form.html")
+
+
+def join_newsletter(request):
+    if request.method == "POST":
+        email = request.POST["email"]
+        data = {"email": email}
+        response = requests.post(
+            f"{os.getenv('api_url')}/newsletter/subscribe", json=data
+        )
+        if response.status_code == 201:
+            print("---------newsletter_success---------")
+            mail_subject = "chamaZetu Newsletter Subscription."
+            message = render_to_string(
+                "chama/newsletterConfirmation.html",
+                {
+                    "user": response.json()["email"],
+                    "date_subscribed": response.json()["date_subscribed"],
+                },
+            )
+
+            from_email = settings.EMAIL_HOST_USER
+            to_email = [response.json()["email"]]
+
+            sending_email.delay(mail_subject, message, from_email, to_email)
+
+            print(response.json())
+            messages.success(request, "You have successfully joined our newsletter")
+        else:
+            messages.error(request, "Failed to join newsletter")
+
+    return HttpResponseRedirect(reverse("chama:index"))

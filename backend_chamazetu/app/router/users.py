@@ -33,6 +33,11 @@ async def create_user(
     del user_dict[
         "role"
     ]  # remove the role from the dictionary since we don't have it in the model
+    # adding a field
+    user_dict["profile_picture"] = (
+        "https://chamazetu-web.s3.eu-north-1.amazonaws.com/profile_pictures/tree_grow_money.jpg"
+    )
+
     new_user = ModelClass(**user_dict)
     db.add(new_user)
     db.commit()

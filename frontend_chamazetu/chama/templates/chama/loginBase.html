@@ -28,6 +28,12 @@
 
   <!-- Template Main CSS File -->
   <link href="{% static 'chama/css/login_style.css' %}" rel="stylesheet">
+  <style>
+    .error-message {
+      color: red;
+      font-size: 0.9em;
+    }
+  </style>
 
 </head>
 
@@ -56,7 +62,10 @@
   <!-- Template Main JS File -->
   <script src="{% static 'chama/js/login_main.js' %}"></script>
   <script src="{% static 'chama/js/messages_fade.js' %}"></script>
-  <script src="{% static 'chama/js/create_chama_form.js' %}"></script>
+  <!-- <script src="{% static 'chama/js/create_chama_form.js' %}"></script> -->
+  <script src="{% static 'chama/js/signup_validation.js' %}"></script>
+  <script src="{% static 'chama/js/create_chama_validation.js' %}"></script>
+  <script src="{% static 'chama/js/deposit_modals.js' %}"></script>
 </body>
 
 </html>

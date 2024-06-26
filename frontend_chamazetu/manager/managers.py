@@ -17,3 +17,13 @@ def get_user_full_profile(role, id):
         user = resp.json()
         return user
     return None
+
+
+def get_manager_profile_picture(manager_id):
+    url = f"{os.getenv('api_url')}/managers/profile_picture/{manager_id}"
+    resp = requests.get(url)
+    if resp.status_code == 200:
+        print("manager_profile_picture===")
+        print(resp.json())
+        return resp.json()
+    return None

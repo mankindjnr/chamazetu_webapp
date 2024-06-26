@@ -112,6 +112,12 @@ class Chama(Base):
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
     fines = relationship("Fine", back_populates="chama")
+    chama_contribution_day = relationship(
+        "ChamaContributionDay", cascade="all,delete", back_populates="chama"
+    )
+    chama_mmf_withdrawals = relationship(
+        "ChamaMMFWithdrawal", cascade="all,delete", back_populates="chama"
+    )
 
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     transactions = relationship("Transaction", back_populates="chama")
@@ -219,9 +225,10 @@ class Available_Investment(Base):
     investment_name = Column(String, nullable=False)
     investment_type = Column(String, nullable=False)
     min_invest_amount = Column(Integer, nullable=False)
+    min_withdrawal_amount = Column(Integer, nullable=False)
     investment_period = Column(
         Integer, nullable=False
-    )  # number of days, weeks, months, years OR N/A
+    )  # number of days, weeks, months, years OR N/A - how long before allowing withdrawal
     investment_period_unit = Column(
         String, nullable=False
     )  # days, weeks, months, years or N/A
@@ -248,7 +255,7 @@ class Investment_Performance(Base):
     __tablename__ = "investments_performance"
 
     id = Column(Integer, primary_key=True, index=True)
-    amount_invested = Column(Integer, nullable=False)  # bg task
+    amount_invested = Column(Float, nullable=False)  # bg task
     investment_start_date = Column(DateTime, nullable=False)
     investment_name = Column(String, nullable=False)
     investment_type = Column(String, nullable=False)
@@ -322,8 +329,21 @@ class ChamaContributionDay(Base):
     __tablename__ = "chama_contribution_day"
 
     id = Column(Integer, primary_key=True, index=True)
-    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
     next_contribution_date = Column(DateTime, nullable=False)
+    chama = relationship("Chama", back_populates="chama_contribution_day")
+
+
+# this table tracks pending chama withdrawals and their last withdrawal date
+class ChamaMMFWithdrawal(Base):
+    __tablename__ = "chama_mmf_withdrawals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    amount = Column(Integer, nullable=False)
+    chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
+    withdrawal_date = Column(DateTime, nullable=False)
+    withdrawal_completed = Column(Boolean, default=False)
+    chama = relationship("Chama", back_populates="chama_mmf_withdrawals")
 
 
 class About_Chama(Base):
@@ -356,8 +376,12 @@ class Fine(Base):
     member_id = Column(Integer, ForeignKey("members.id"))
     fine = Column(Integer, nullable=False)
     fine_reason = Column(String, nullable=False)
-    fine_date = Column(DateTime, default=datetime.now(timezone.utc))
+    fine_date = Column(DateTime, nullable=False)
     is_paid = Column(Boolean, default=False)
+    paid_date = Column(DateTime, nullable=True)  # date fine was paid in total
+    total_expected_amount = Column(
+        Integer, nullable=False
+    )  # fine + missed contribution + interest if any
     chama = relationship("Chama", back_populates="fines")
     member = relationship("Member", back_populates="fines")
 
@@ -388,3 +412,13 @@ class Member_Update_Features(Base):
     feature_title = Column(String(40), nullable=False)
     description = Column(String(250), nullable=False)
     feature_date = Column(DateTime, default=datetime.now(timezone.utc))
+
+
+class NewsletterSubscription(Base):
+    __tablename__ = "newsletter_subscriptions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, nullable=False)
+    date_subscribed = Column(DateTime, default=datetime.now(timezone.utc))
+    is_subscribed = Column(Boolean, default=True)
+    date_unsubscribed = Column(DateTime, nullable=True)

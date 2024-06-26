@@ -26,8 +26,9 @@ from .members import (
     get_member_contribution_so_far,
     get_user_full_profile,
 )
+from manager.managers import get_manager_profile_picture
 from .membermanagement import is_empty_dict
-from .tasks import update_shares_number_for_member
+from .tasks import update_shares_number_for_member, calculate_missed_contributions_fines
 from chama.tasks import update_contribution_days
 
 from chama.usermanagement import (
@@ -113,6 +114,7 @@ def access_chama(request, chamaname):
             f"{os.getenv('api_url')}/investments/chamas/monthly_interests/{chama_id}",
             {"limit": 3},
         ),
+        (f"{os.getenv('api_url')}/chamas/fines/{chama_id}", None),
     ]
 
     headers = {
@@ -136,6 +138,8 @@ def access_chama(request, chamaname):
                 "recent_transactions": results.get("recent_transactions"),
                 "activity": results.get("activity"),
                 "investment_activity": results.get("investment_activity"),
+                "mmf_withdrawal_activity": results.get("mmf_withdrawal_activity"),
+                "fines": results.get("fines"),
                 "fund_performance": results.get("monthly_interests"),
                 "investment_data": results.get("investment_data"),
                 "wallet": results.get("wallet"),
@@ -173,11 +177,13 @@ def access_chama_threads(urls, headers):
     chama = None
     recent_activity = []
     investment_activity = []
+    mmf_withdrawal_activity = []
     members_weekly_transactions = []
     wallet = []
     monthly_interests = None
     user_profile = {}
     investment_data = None
+    fines = None
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
@@ -201,7 +207,12 @@ def access_chama_threads(urls, headers):
         if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
             investment_data = results[urls[5][0]]["data"]
         if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
-            investment_activity = investment_activities(results[urls[6][0]]["data"])
+            investment_activity = investment_activities(
+                results[urls[6][0]]["data"]["investment_activity"]
+            )
+            mmf_withdrawal_activity = organise_mmf_withdrawal_activity(
+                results[urls[6][0]]["data"]["mmf_withdrawal_activity"]
+            )
         if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
             wallet = results[urls[7][0]]["data"]
         if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
@@ -215,6 +226,8 @@ def access_chama_threads(urls, headers):
             monthly_interests = organise_monthly_performance(
                 results[urls[9][0]]["data"]
             )
+        if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
+            fines = organise_fines(results[urls[10][0]]["data"]["fines"])
 
     # return the processed results chama, transactions, members
     user_profile["profile_image"] = wallet["profile_image"]
@@ -223,10 +236,12 @@ def access_chama_threads(urls, headers):
         "recent_transactions": recent_activity,
         "activity": members_weekly_transactions,
         "investment_activity": investment_activity,
+        "mmf_withdrawal_activity": mmf_withdrawal_activity,
         "monthly_interests": monthly_interests,
         "investment_data": investment_data,
         "wallet": wallet,
         "user_profile": user_profile,
+        "fines": fines,
     }
 
 
@@ -262,6 +277,20 @@ def investment_activities(activities):
             break
 
     return invst_activity
+
+
+def organise_mmf_withdrawal_activity(withdrawal_activity):
+    organised_withdrawal_activity = []
+    for activity in withdrawal_activity:
+        activity["amount"] = f"Ksh: {activity['amount']}"
+        activity["time"] = extract_date_time(activity["withdrawal_date"])["time"]
+        activity["date"] = extract_date_time(activity["withdrawal_date"])["date"]
+        del activity["withdrawal_date"]
+        del activity["id"]
+        del activity["chama_id"]
+        organised_withdrawal_activity.append(activity)
+
+    return organised_withdrawal_activity
 
 
 # retrieve members weekly transactions and arrange them by membe and daily transactions amount
@@ -332,6 +361,18 @@ def organise_monthly_performance(monthly_performance):
         monthly_interests.append(performance)
 
     return monthly_interests
+
+
+def organise_fines(fines):
+    fines_organised = []
+    for fine in fines:
+        fine["member_name"] = get_user_full_name("member", fine["member_id"])
+        fine["fine"] = f"Ksh: {fine['fine']}"
+        fine["total_expected_amount"] = f"Ksh: {fine['total_expected_amount']}"
+        del fine["member_id"]
+        fines_organised.append(fine)
+
+    return fines_organised
 
 
 @tokens_in_cookies("member")
@@ -405,7 +446,7 @@ def get_about_chama(request, chama_name):
         f"{os.getenv('api_url')}/chamas/about_chama/{chama_id}",
         headers=headers,
     )
-    print("===================================")
+    print("===================about================")
     if chama_data.status_code == 200:
         chama = chama_details_organised(chama_data.json().get("chama"))
         rules = chama_data.json().get("rules")
@@ -461,6 +502,9 @@ def chama_details_organised(chama_details):
         "Active" if chama_details["is_active"] else "Inactive"
     )
     chama_details["manager_number"] = chama_details["manager_id"]
+    chama_details["manager_profile_picture"] = get_manager_profile_picture(
+        chama_details["manager_id"]
+    )
     chama_details["accepting_new_members"] = (
         "Accepting Members"
         if chama_details["accepting_members"]

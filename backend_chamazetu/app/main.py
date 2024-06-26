@@ -18,18 +18,27 @@ from .router import (
     daraja_api,
     call_back,
     b2c,
+    s3_buckets,
+    newsletter,
+    fines,
 )
 
 app = FastAPI()
 
 origins = ["*"]
 
+"""
+origins = [
+    "http://localhost:8000",  # frontend service
+    "http://localhost:9400",  # backend service
+]
+"""
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(users.router)
@@ -47,6 +56,9 @@ app.include_router(azure_blob_uploads.router)
 app.include_router(daraja_api.router)
 app.include_router(call_back.router)
 app.include_router(b2c.router)
+app.include_router(s3_buckets.router)
+app.include_router(newsletter.router)
+app.include_router(fines.router)
 
 
 @app.get("/")

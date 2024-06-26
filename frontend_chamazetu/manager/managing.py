@@ -16,6 +16,7 @@ from member.member_chama import (
     access_chama_threads,
     recent_transactions,
     chama_details_organised,
+    organise_mmf_withdrawal_activity,
 )
 from member.members import get_user_full_profile, get_user_id
 from member.membermanagement import is_empty_dict
@@ -143,7 +144,6 @@ def get_about_chama(request, chama_name):
             },
         )
     else:
-        print(chama_data.status_code)
         return redirect(reverse("manager:dashboard"))
 
 
@@ -345,6 +345,7 @@ def chama(request, key):
                 "chama": results["chama"],
                 "investment_account": results["investment_account"],
                 "investment_activity": results["investment_activity"],
+                "mmf_withdrawal_activity": results["mmf_withdrawal_activity"],
                 "fund_performance": results["fund_performance"],
                 "recent_transactions": results["recent_activity"],
                 "available_investments": results["available_investments"],
@@ -381,6 +382,7 @@ def chama_threads(urls, headers):
     chama = None
     recent_activity = []
     investment_data = {}
+    mmf_withdrawal_activity = []
     fund_performance = None
     available_investments = None
     inhouse_mmf = None
@@ -395,6 +397,8 @@ def chama_threads(urls, headers):
             recent_activity = recent_transactions(results[urls[3][0]]["data"])
         if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
             investment_data["investment_data_mmf"] = results[urls[4][0]]["data"]
+            print("========invest mmf========")
+            # print(investment_data["investment_data_mmf"])
         if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
             chama["number_of_members"] = results[urls[5][0]]["data"][
                 "number_of_members"
@@ -403,8 +407,15 @@ def chama_threads(urls, headers):
             fund_performance = organise_monthly_performance(results[urls[6][0]]["data"])
         if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
             investment_data["investment_activity"] = organise_investment_activity(
-                results[urls[7][0]]["data"]
+                results[urls[7][0]]["data"]["investment_activity"]
             )
+            mmf_withdrawal_activity = organise_mmf_withdrawal_activity(
+                results[urls[7][0]]["data"]["mmf_withdrawal_activity"]
+            )
+            print("========mmf withdrawal activity========")
+            print(mmf_withdrawal_activity)
+            print("========investment activity========")
+            print(investment_data["investment_activity"])
         if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
             chama["manager_profile_picture"] = results[urls[8][0]]["data"]
         if urls[9][0] in results and results[urls[9][0]]["status"] == 200:
@@ -428,6 +439,7 @@ def chama_threads(urls, headers):
         "recent_activity": recent_activity,
         "investment_account": investment_account,
         "investment_activity": investment_activty,
+        "mmf_withdrawal_activity": mmf_withdrawal_activity,
         "fund_performance": fund_performance,
         "available_investments": available_investments,
         "inhouse_mmf": inhouse_mmf,

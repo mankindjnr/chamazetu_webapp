@@ -57,6 +57,7 @@ async def create_deposit_transaction_from_wallet(
 ):
 
     try:
+        print("===========hit wallet transaction===========")
         wallet_transaction_dict = wallet_transaction.dict()
         wallet_transaction_dict["transaction_type"] = "moved_to_chama"
         wallet_transaction_dict["member_id"] = current_user.id
@@ -96,6 +97,65 @@ async def create_deposit_transaction_from_wallet(
         print("------deposit from wallet error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+# TODO: above to support fines
+# ============duplicate of the above to repay fines================
+@router.post(
+    "/record_fine_payment",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.WalletTransactionResp,
+)
+async def create_fine_repayment_transaction_from_wallet(
+    wallet_transaction: schemas.WalletTransactionBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+
+    try:
+        print("===========record fine wallet transaction===========")
+        wallet_transaction_dict = wallet_transaction.dict()
+        wallet_transaction_dict["transaction_type"] = "moved_to_chama"
+        wallet_transaction_dict["member_id"] = current_user.id
+        wallet_transaction_dict["transaction_completed"] = True
+        wallet_transaction_dict["transaction_date"] = datetime.now()
+        wallet_transaction_dict["transaction_code"] = uuid4().hex
+
+        print("===========wallet transaction dict===========")
+        print(wallet_transaction_dict)
+
+        new_wallet_transaction = models.Wallet_Transaction(**wallet_transaction_dict)
+        db.add(new_wallet_transaction)
+        db.commit()
+        db.refresh(new_wallet_transaction)
+
+        # add record to transactions table
+        transaction_dict = {
+            "amount": new_wallet_transaction.amount,
+            "phone_number": generateWalletNumber(current_user.id),
+            "chama_id": wallet_transaction.transaction_destination,
+            "transaction_type": "fine_deduction",
+            "transaction_origin": "wallet_deposit",
+            "member_id": current_user.id,
+            "transaction_completed": True,
+            "date_of_transaction": new_wallet_transaction.transaction_date,
+            "updated_at": new_wallet_transaction.transaction_date,
+            "transaction_code": new_wallet_transaction.transaction_code,
+        }
+
+        new_transaction = models.Transaction(**transaction_dict)
+        db.add(new_transaction)
+        db.commit()
+
+        return new_wallet_transaction
+
+    except Exception as e:
+        print("------deposit from wallet error--------")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+# ================================================================
 
 
 def generateWalletNumber(member_id):

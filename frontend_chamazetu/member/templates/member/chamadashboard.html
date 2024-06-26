@@ -110,12 +110,12 @@
         </a>
       </li>
 
-      <!-- <li class="nav-item">
+      <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>Investment Performance</span> 
+          <span>Daily Performance</span> 
         </a>
-      </li> -->
+      </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:view_chama_members' chama.chama_name %}">
@@ -243,14 +243,13 @@
                   </div>
               </div>
             </div><!-- End investments Card -->
-          
 
             <!-- actitvity weekly -->
             <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">chama weekly activity <span>| contributions in Ksh</span></h5>
+                  <h5 class="card-title">chama weekly contributions <span>|Ksh</span></h5>
                   <div>
                     <hr>
                     <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ chama.contribution_date}}</button>
@@ -295,6 +294,53 @@
 
               </div>
             </div><!-- End weekly activity -->
+
+            <!-- contritbution days fines -->
+
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">Incurred Fines <span>|Ksh</span></h5>
+                  <div>
+                    <hr>
+                  </div>
+
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        <th scope="col">members</th>
+                        <th scope="col">Shares</th>
+                        <th scope="col">fine amount</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Fine Date</th>
+                        <th scope="col">Expected Amount</th>
+                        <th scope="col">Cleared</th>
+                      </tr>
+                    </thead>
+                    {% if fines %}
+                    <tbody>
+                      {% for fine in fines %}
+                      <tr>
+                        <th scope="row">{{ fine.member_name }}</th>
+                        <td>{{ fine.num_of_shares }}</td>
+                        <td>{{ fine.fine }}</td>
+                        <td>{{ fine.fine_reason }} </td>
+                        <td>{{ fine.fine_date }} </td>
+                        <td>{{ fine.total_expected_amount }} </td>
+                        <td>{{ fine.cleared }} </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    {% endif %}
+                  </table>
+
+                </div>
+
+              </div>
+            </div>
+
+            <!-- end fine char -->
 
 
             <!-- performance monthly -->
@@ -368,7 +414,7 @@
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">investment activity <span>| chama</span></h5>
+              <h5 class="card-title">investment activity <span>| manager</span></h5>
               {% if investment_activity %}
               <div class="activity">
                 {% for activity in investment_activity %}
@@ -384,7 +430,32 @@
               {% endif %}
 
             </div>
-          </div><!-- End Recent Activity -->
+          </div><!-- End investment Activity -->
+
+          <!-- investment withdrawal activity -->
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">investment withdrawal activity <span>| manager</span></h5>
+              {% if mmf_withdrawal_activity %}
+              <div class="activity">
+                {% for activity in mmf_withdrawal_activity %}
+
+                <div class="activity-item d-flex">
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">Withdrawn Ksh: {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
+                  </div>
+                </div><!-- End activity item-->
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+
+          <!-- end investment withdrawal activity -->
+          
 
         </div><!-- End Right side columns -->
 

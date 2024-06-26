@@ -82,48 +82,63 @@ async def upload_file(
 
 
 # update profile pictre column for member/manager
-@router.put("/{role}/update_profile_picture", status_code=status.HTTP_201_CREATED)
+@router.put("/manager/update_profile_picture", status_code=status.HTTP_201_CREATED)
 async def update_profile_picture(
-    role: str,
     profile: schemas.ProfilePicture,
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
-    print("===update profile picture===")
-    profile_picture_url = f"https://{os.getenv('AZURE_PROFILE_STORAGE_ACCOUNT_NAME')}.blob.core.windows.net/{profile_container_name}/{profile.profile_picture_name}"
-    user = None
-    if role == "member":
-        user = db.query(models.Member).filter_by(id=current_user.id).first()
-    elif role == "manager":
-        user = db.query(models.Manager).filter_by(id=current_user.id).first()
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Role not found",
-        )
+    try:
+        print("===update profile picture===")
+        profile_picture_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/profile_pictures/{profile.profile_picture_name}.jpeg"
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User not found",
-        )
-    else:
-        print("===update profile picture else sector===")
-        # deleting the previous profile picture
-        if user.profile_picture:
-            blob_service_client = BlobServiceClient.from_connection_string(
-                connection_string
+        user = db.query(models.Manager).filter_by(id=current_user.id).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User not found",
             )
-            blob_client = blob_service_client.get_blob_client(
-                container=profile_container_name,
-                blob=os.path.basename(user.profile_picture),
-            )
-            if blob_client.exists():
-                blob_client.delete_blob()
 
         user.profile_picture = profile_picture_url
         db.commit()
         db.refresh(user)
         return user
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Profile picture not updated",
+        )
+
+
+@router.put("/member/update_profile_picture", status_code=status.HTTP_201_CREATED)
+async def update_profile_picture(
+    profile: schemas.ProfilePicture,
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    try:
+        print("===update profile picture===")
+        profile_picture_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/profile_pictures/{profile.profile_picture_name}.jpeg"
+
+        user = db.query(models.Member).filter_by(id=current_user.id).first()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User not found",
+            )
+
+        user.profile_picture = profile_picture_url
+        db.commit()
+        db.refresh(user)
+        return user
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Profile picture not updated",
+        )

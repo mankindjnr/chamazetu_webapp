@@ -40,6 +40,11 @@ app.conf.beat_schedule = {
         "task": "chama.tasks.reset_monthly_mmf_interests",
         "schedule": timedelta(hours=1),  # every 1st of the month
     },
+    # at midnight - calculate missed contributions and update the fines
+    "run_fines": {
+        "task": "member.tasks.calculate_missed_contributions_fines",
+        "schedule": crontab(minute="*/10"),
+    },
 }
 
 app.autodiscover_tasks()

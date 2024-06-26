@@ -8,6 +8,9 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -56,13 +59,31 @@ def manager_profile_updater(request, role):
             else None
         )
         if new_profile_image:
-            new_profile_image = request.FILES["profile_image"]
-            url = f"{os.getenv('api_url')}/uploads/{role}/update_profile_image/"
-            files = {"file": new_profile_image}
-            response = requests.put(url, files=files)
+            # open the image
+            img = Image.open(new_profile_image)
+            if img.mode == "RGBA":
+                img = img.convert("RGB")
+            # resize the image
+            byte_arr = BytesIO()
+            img.save(byte_arr, format="JPEG", quality=20)
+            byte_arr.seek(0)
+
+            # create a new django file-like object to use in your upload
+            updated_profile_image = InMemoryUploadedFile(
+                byte_arr,
+                "image_field",
+                f"{new_profile_image.name}.jpeg",
+                "image/jpeg",
+                byte_arr.getbuffer().nbytes,
+                None,
+            )
+
+            # new_profile_image = request.FILES["profile_image"]
+            current_user = request.COOKIES.get(f"current_{role}")
+            url = f"{os.getenv('api_url')}/bucket-uploads/profile-picture-upload/{current_user}"
+            files = {"file": (updated_profile_image.name, byte_arr, "image/jpeg")}
+            response = requests.post(url, files=files)
             if response.status_code == 201:
-                print("======return from update profile image=====")
-                print(response.json())
                 update_users_profile_image.delay(
                     headers, role, response.json()["file_name"]
                 )
@@ -129,10 +150,31 @@ def member_profile_updater(request, role):
             else None
         )
         if new_profile_image:
-            new_profile_image = request.FILES["profile_image"]
-            url = f"{os.getenv('api_url')}/uploads/{role}/update_profile_image/"
-            files = {"file": new_profile_image}
-            response = requests.put(url, files=files)
+            # open the image
+            img = Image.open(new_profile_image)
+            if img.mode == "RGBA":
+                img = img.convert("RGB")
+            # resize the image
+            byte_arr = BytesIO()
+            img.save(byte_arr, format="JPEG", quality=20)
+            byte_arr.seek(0)
+
+            # create a new django file-like object to use in your upload
+            updated_profile_image = InMemoryUploadedFile(
+                byte_arr,
+                "image_field",
+                f"{new_profile_image.name}.jpeg",
+                "image/jpeg",
+                byte_arr.getbuffer().nbytes,
+                None,
+            )
+
+            # new_profile_image = request.FILES["profile_image"]
+            url = f"{os.getenv('api_url')}/bucket-uploads/profile-picture-upload/{request.COOKIES.get(f'current_{role}')}"
+            files = {"file": (updated_profile_image.name, byte_arr, "image/jpeg")}
+            print("======new_profile_image=====")
+            print(files)
+            response = requests.post(url, files=files)
             if response.status_code == 201:
                 print("======return from update profile image=====")
                 print(response.json())

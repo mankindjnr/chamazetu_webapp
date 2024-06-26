@@ -105,12 +105,12 @@
       </li>
 
       <!-- TODO: Daily performance tracker -->
-      <!-- <li class="nav-item">
+      <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>Investment performance</span> 
+          <span>Daily performance</span> 
         </a>
-      </li> -->
+      </li>
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_about_chama' chama.chama_name %}">
@@ -161,10 +161,10 @@
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-currency-dollar"></i>
+                      <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <h6>Ksh: {{ chama.today_deposits }}</h6>
+                      <h6>{{ chama.today_deposits }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -183,10 +183,10 @@
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-currency-dollar"></i>
+                      <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <h6>Ksh: {{ chama.account_balance }}</h6>
+                      <h6>{{ chama.account_balance }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -396,6 +396,30 @@
             </div>
           </div>
           <!-- End investment Report -->
+
+          <!-- withdrawal report -->
+          <div class="card">
+
+          <div class="card-body">
+            <h5 class="card-title">Investment Withdrawal Activity <span>|</span></h5>
+            {% if mmf_withdrawal_activity %}
+            <div class="activity">
+              {% for activity in mmf_withdrawal_activity %}
+              <div class="activity-item d-flex">
+                <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
+                <div class="activity-content">
+                  <p class="fw-bold text-dark">Withdrawn {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
+                </div>
+              </div>
+              {% endfor %}
+
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+
+          <!-- end withdrawal report -->
 
         </div><!-- End Right side columns -->
 

@@ -20,4 +20,5 @@ urlpatterns = [
     path("chamas/<str:role>", views.get_all_chamas, name="chamas"),
     path("chama/<int:chamaid>", views.get_chama, name="chama"),
     path("callback", views.call_back_url, name="callback"),
+    path("join_newsletter", views.join_newsletter, name="join_newsletter"),
 ]

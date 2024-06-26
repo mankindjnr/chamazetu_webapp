@@ -20,7 +20,7 @@ async def inhouse_mmf_data(
         print("====inhouse mmf data==========")
         inhousemmf = (
             db.query(models.Available_Investment)
-            .filter(models.Available_Investment.investment_type == "MMF")
+            .filter(models.Available_Investment.investment_type == "mmf")
             .first()
         )
 
@@ -28,6 +28,8 @@ async def inhouse_mmf_data(
             raise HTTPException(status_code=404, detail="inhouse mmf data not found")
 
         del inhousemmf.__dict__["investment_return"]
+        print("====inhouse mmf data==========")
+        print(inhousemmf.__dict__)
         return inhousemmf.__dict__
     except Exception as e:
         raise HTTPException(status_code=400, detail="inhouse mmf data not retrieva")
@@ -60,7 +62,7 @@ async def get_available_investments(
         raise HTTPException(status_code=400, detail="retrieval of invsts failed")
 
 
-# invest
+# all mmf investments
 @router.post("/mmf", status_code=status.HTTP_201_CREATED)
 async def make_an_investment(
     invest_data: schemas.InvestBase = Body(...),
@@ -76,6 +78,7 @@ async def make_an_investment(
         )
         invest_dict["transaction_date"] = datetime.now(timezone.utc)
         del invest_dict["investment_type"]
+        print("======invest_dict========")
         print(invest_dict)
 
         investment_deposit = models.MMF(**invest_dict)
@@ -83,6 +86,7 @@ async def make_an_investment(
         db.commit()
         db.refresh(investment_deposit)
     except Exception as e:
+        print("============investment deposit failed==========")
         print(e)
         raise HTTPException(status_code=400, detail="investment deposit failed")
 
@@ -92,13 +96,14 @@ def get_current_investment_rate(
 ):
     try:
         print("========gettingthe investment rate===========")
-        investment_type = investment_type.upper()
+        investment_type = investment_type.lower()
         investment_object = (
             db.query(models.Available_Investment)
             .filter(models.Available_Investment.investment_type == investment_type)
             .first()
         )
     except Exception as e:
+        print("============could not retrieve current investment rate==========")
         print(e)
         raise HTTPException(
             status_code=400, detail="could not retrieve current investment rate"
@@ -126,7 +131,7 @@ async def update_investment_account(
         new_amount = update_dict["amount_invested"]
         update_type = update_dict["transaction_type"]
         investment_type = update_dict["investment_type"]
-        investment_name = f"chamazetu_{investment_type}"
+        investment_name = f"chamazetu_{investment_type.lower()}"
 
         performance = (
             db.query(models.Investment_Performance)
@@ -189,7 +194,7 @@ async def get_investment_account_balance(
             .first()
         )
 
-        interest_rate = get_current_investment_rate("MMF", db)
+        interest_rate = get_current_investment_rate("mmf", db)
 
         if not investment_account_balance:
             raise HTTPException(
@@ -210,6 +215,7 @@ async def get_investment_account_balance(
         investment_performance_dict["total_interest_earned"] = "{:.2f}".format(
             investment_performance_dict["total_interest_earned"]
         )
+        print("====investment_performance_dict====")
         return schemas.InvestmentPerformanceResp(**investment_performance_dict)
     except Exception as e:
         print("============getting investment balance failed==========")
@@ -217,7 +223,7 @@ async def get_investment_account_balance(
         raise HTTPException(status_code=400, detail="Getting investment balance failed")
 
 
-# retrieve recent investment activity
+# retrieve recent investment activity and withdrawals
 @router.get(
     "/recent_activity/{chama_id}",
     status_code=status.HTTP_200_OK,
@@ -226,18 +232,49 @@ async def get_investments_recent_activity(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
+    try:
+        recent_invst_activity = (
+            db.query(models.MMF)
+            .filter(models.MMF.chama_id == chama_id)
+            .order_by(desc(models.MMF.transaction_date))
+            .limit(5)
+            .all()
+        )
 
-    recent_invst_activity = (
-        db.query(models.MMF)
-        .filter(models.MMF.chama_id == chama_id)
-        .order_by(desc(models.MMF.transaction_date))
-        .limit(5)
-        .all()
-    )
+        recent_withdrawal_activity = (
+            db.query(models.ChamaMMFWithdrawal)
+            .filter(models.ChamaMMFWithdrawal.chama_id == chama_id)
+            .filter(models.ChamaMMFWithdrawal.withdrawal_completed == True)
+            .order_by(desc(models.ChamaMMFWithdrawal.withdrawal_date))
+            .limit(5)
+            .all()
+        )
+
+        if not recent_invst_activity:
+            recent_invst_activity = []
+
+        if not recent_withdrawal_activity:
+            recent_withdrawal_activity = []
+
+        return {
+            "investment_activity": recent_invst_activity,
+            "mmf_withdrawal_activity": recent_withdrawal_activity,
+        }
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="could not fetch recent investment activity"
+        )
 
     if not recent_invst_activity:
         raise HTTPException(
             status_code=404, detail="could not fetch recent investment activity"
+        )
+
+    if not recent_withdrawal_activity:
+        raise HTTPException(
+            status_code=404, detail="could not fetch recent withdrawal activity"
         )
 
     return recent_invst_activity
@@ -257,7 +294,7 @@ def calculate_daily_mmf_interests(
 
         inhouse_mmf_returns = (
             db.query(models.Available_Investment)
-            .filter(models.Available_Investment.investment_type == "MMF")
+            .filter(models.Available_Investment.investment_type == "mmf")
             .filter(models.Available_Investment.investment_name == "chamazetu_mmf")
             .first()
         )
@@ -317,7 +354,14 @@ async def reset_and_move_weekly_interest_to_principal(
         )
 
         for investment in investments:
+            print(
+                "============resetting and moving weekly interests to principal=========="
+            )
+            print(investment.weekly_interest)
+            print(investment.amount_invested)
             investment.amount_invested += investment.weekly_interest
+            investment.amount_invested = "{:.2f}".format(investment.amount_invested)
+            print(investment.amount_invested)
             investment.weekly_interest = 0.0
             db.commit()
             db.refresh(investment)
@@ -444,3 +488,134 @@ async def get_monthly_interests(
     except Exception as e:
         print(e)
         raise HTTPException(status_code=400, detail="getting monthly interests failed")
+
+
+# retrieve minimum investment amount from available investments for a certain investment type
+@router.get(
+    "/minimum_investment/{investment_type}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_minimum_investment_amount(
+    investment_type: str,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============getting minimum investment amount==========")
+        investment_type = investment_type.lower()
+        minimum_investment = (
+            db.query(models.Available_Investment)
+            .filter(models.Available_Investment.investment_type == investment_type)
+            .first()
+        )
+
+        if not minimum_investment:
+            raise HTTPException(
+                status_code=404, detail="could not fetch minimum investment amount"
+            )
+
+        return {
+            "minimum_investment": minimum_investment.min_invest_amount,
+            "minimum_withdrawal": minimum_investment.min_withdrawal_amount,
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="getting minimum investment amount failed"
+        )
+
+
+# retrieve investment period from available investments for a certain investment type
+@router.get(
+    "/investment_period/{investment_type}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_investment_period(
+    investment_type: str,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============getting investment period==========")
+        investment_type = investment_type.lower()
+        investment_period = (
+            db.query(models.Available_Investment)
+            .filter(models.Available_Investment.investment_type == investment_type)
+            .first()
+        )
+
+        if not investment_period:
+            raise HTTPException(
+                status_code=404, detail="could not fetch investment period"
+            )
+
+        return {
+            "investment_period": investment_period.investment_period,
+            "investment_period_unit": investment_period.investment_period_unit,
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=400, detail="getting investment period failed")
+
+
+# retrieve the last withdrawl date for a chama
+@router.get(
+    "/last_withdrawal_date/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_last_withdrawal_date(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============getting last withdrawal date==========")
+        # previous withdrawal date from the chamammfwithdrawal table
+        latest_withdrawal = (
+            db.query(models.ChamaMMFWithdrawal)
+            .filter(models.ChamaMMFWithdrawal.chama_id == chama_id)
+            .filter(models.ChamaMMFWithdrawal.withdrawal_completed == True)
+            .order_by(desc(models.ChamaMMFWithdrawal.withdrawal_date))
+            .first()
+        )
+
+        if not latest_withdrawal:
+            return {"status_code": 200, "message": "no withdrawal have been made yet"}
+
+        return {
+            "last_withdrawal_date": latest_withdrawal.withdrawal_date,
+        }
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500, detail="getting last withdrawal date failed"
+        )
+
+
+# add withdrawal request to chama withdrawal table
+@router.post("/withdrawal_requests", status_code=status.HTTP_201_CREATED)
+async def make_a_withdrawal_request(
+    withdraw_data: schemas.WithdrawBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Manager = Depends(oauth2.get_current_user),
+):
+
+    try:
+        print("============withdrawing from mmfs==========")
+        withdraw_dict = withdraw_data.dict()
+        withdraw_dict["withdrawal_date"] = datetime.now(timezone.utc)
+        withdraw_dict["withdrawal_completed"] = True
+
+        print("======withdraw_dict========")
+        print(withdraw_dict)
+
+        withdrawal = models.ChamaMMFWithdrawal(**withdraw_dict)
+        db.add(withdrawal)
+        db.commit()
+        db.refresh(withdrawal)
+        return {"message": "withdrawal request successful"}
+    except Exception as e:
+        db.rollback()
+        print("============withdrawal failed==========")
+        print(e)
+        raise HTTPException(status_code=400, detail="withdrawal failed")

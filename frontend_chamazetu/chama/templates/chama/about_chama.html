@@ -25,8 +25,8 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
-            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+            <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
+            <span class="d-none d-md-block dropdown-toggle ps-2">{{role}}</span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
@@ -56,7 +56,7 @@
       <div class="card">
         <div class="card-body profile-card pt-4 d-flex flex-column align-items-center">
 
-          <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
+          <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
           <span>{{profile.email}}</span>
           <small>manager</small>
           <div class="social-links mt-2">
@@ -103,22 +103,6 @@
             <li class="breadcrumb-item active">about chama</li>
           </ol>
         </nav>
-      </div>
-
-      <div class="ml-auto">
-        <!-- chama join status trigger modal -->
-        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal">
-          accepting members
-        </button>
-        <!-- chama join status Modal -->
-        {% include 'manager/modals/join_status_modal.html' %}
-
-        <!-- chama activate/deactivate trigger modal -->
-        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#activeModal">
-          activate/deactivate
-        </button>
-        <!-- activate/deactivate chama modal -->
-        {% include 'manager/modals/activate_deactivate_chama_modal.html' %}
       </div>
 
     </div><!-- End Page Title -->
@@ -175,6 +159,10 @@
 
                 <li class="nav-item">
                   <button class="nav-link" data-bs-toggle="tab" data-bs-target="#add-faqs">Add faqs</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-controls">Chama Controls</button>
                 </li>
                 {% endif %}
 
@@ -368,6 +356,79 @@
 
 
               </div><!-- End Bordered Tabs -->
+
+              <!-- chama controls, delete/suspend/restart/pause/start -->
+              {% if role == 'manager' %}
+              <div class="tab-pane fade chama-controls pt-3" id="chama-controls">
+                <div class="row mb-3">
+                  <!-- Accepting members -->
+                   {% if chama.accepting_new_members == 'Accepting Members' %}
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will stop accepting new members into the chama.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:new_members' chama_id=chama.id status='block' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="submit" class="btn btn-danger btn-sm" value="Stop Accepting New Members">
+                    </form>
+                  </div>
+                  {% else %}
+                  <!-- accept new members -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will allow new members to join the chama.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:new_members' chama_id=chama.id status='allow' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="submit" class="btn btn-success btn-sm" value="Accept New Members">
+                    </form>
+                  </div>
+                  {% endif %}
+
+                  <!-- Temporarily disable the chama -->
+                   {% if chama.chama_is_active != 'Inactive' %}
+                  <div class="col-lg-8 col-md-7 label mt-3">Suspending this group will halt all activities and interactions within the chama. You can reactivate the group later.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:deactivate_chama' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="chama_id" value="{{ chama.id }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="submit" class="btn btn-danger btn-sm" value="Deactivate Chama">
+                    </form>
+                  </div>
+                  {% else %}
+                  <!-- reactivate disabled chama -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will unsuspend the chama and all activities will continue as scheduled.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:activate_chama' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="chama_id" value="{{ chama.id }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="submit" class="btn btn-success btn-sm" value="Activate Chama">
+                    </form>
+                  </div>
+                  {% endif %}
+
+                  <!-- delete -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action cannot be undone, and all data associated with the group will be lost.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:delete_chama' chama.id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Permanently Delete">
+                    </form>
+                  </div>
+
+                  <!-- restart -->
+                  <!-- <div class="col-lg-8 col-md-7 label mt-3">This action will clear all the current chama data and restart the chama with all current members.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Restart Chama">
+                    </form>
+                  </div> -->
+
+
+                </div>
+                </div>
+              {% endif %}
               {% endif %}
 
             </div>

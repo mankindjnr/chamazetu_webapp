@@ -109,6 +109,7 @@ async def get_member_contribution_so_far(
                     models.Transaction.member_id == member_id,
                     models.Transaction.transaction_completed == True,
                     models.Transaction.is_reversed == False,
+                    models.Transaction.transaction_type == "deposit",
                     func.date(models.Transaction.date_of_transaction)
                     > previous_contribution_date,
                     func.date(models.Transaction.date_of_transaction)
@@ -307,3 +308,122 @@ async def get_recent_wallet_activity(
         raise HTTPException(
             status_code=400, detail="Failed to get members recent wallet activity"
         )
+
+
+# repaying fines for a member in a certain chama - we will pull all the unpaid fines for a member in a chama and loop through the earliest using fine_date, we we use the amout we receive from the member
+# and the total_expected_amount in the fine table for deduction, after every deduction, we update the fine table, with a ew total_expected_amount and proceed to the next fine,
+
+
+# might check on adding headers to the request to make sure the member is the one making the request
+@router.put(
+    "/repay_fines",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.MemberFineResp,
+)
+async def repay_fines(
+    fine_data: schemas.MemberFineBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("===========repaying fines===========")
+        fine_dict = fine_data.dict()
+        chama_id = fine_dict["chama_id"]
+        member_id = fine_dict["member_id"]
+        amount = fine_dict["amount"]
+
+        fines = (
+            db.query(models.Fine)
+            .filter(
+                and_(
+                    models.Fine.chama_id == chama_id,
+                    models.Fine.member_id == member_id,
+                    models.Fine.is_paid == False,
+                )
+            )
+            .order_by(models.Fine.fine_date)
+            .all()
+        )
+
+        if not fines:
+            #  this means the member has no fines to pay so we return the amount to the member fror the transaction to be completed
+            return {"balance_after_fines": amount}
+
+        for fine in fines:
+            print("===========repaying fine===========")
+            print(fine)
+            print()
+            print(fine.total_expected_amount)
+            print("==start:", amount)
+            if amount >= fine.total_expected_amount:
+                amount -= (
+                    fine.total_expected_amount
+                )  # deducting the amount from the fine and updating amount to be used in the next fine
+                fine.is_paid = True
+                fine.paid_date = datetime.now()
+                fine.total_expected_amount = 0
+                print("==end==:", amount)
+            else:
+                print("===========less fine===========")
+                fine.total_expected_amount -= amount
+                amount = 0
+                print(amount)
+                break
+
+        db.commit()  # committing all the changes to the database
+
+        # # reffreshing
+        # for fine in fines:
+        #     db.refresh(fine)
+        print("===========fines repaid===========")
+        print(amount)
+        return {"balance_after_fines": amount}
+
+    except Exception as e:
+        print(e)
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to repay fines")
+
+
+# checking if a member has any fines to pay in a chama
+@router.get(
+    "/fines",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.MemberFinesResp,
+)
+async def check_fines(
+    fine_data: schemas.MemberFines = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        fine_dict = fine_data.dict()
+        chama_id = fine_dict["chama_id"]
+        member_id = fine_dict["member_id"]
+
+        fines = (
+            db.query(models.Fine)
+            .filter(
+                and_(
+                    models.Fine.chama_id == chama_id,
+                    models.Fine.member_id == member_id,
+                    models.Fine.is_paid == False,
+                )
+            )
+            .all()
+        )
+
+        if not fines:
+            # return false if the member has no fines to pay
+            return {"has_fines": False}
+
+        total_fine_amount = 0
+        for fine in fines:
+            total_fine_amount += fine.total_expected_amount
+
+        # return true if the member has fines to pay
+
+        return {"has_fines": total_fine_amount > 0}
+
+    except Exception as e:
+        print("===========error checking fines===========")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to check fines")

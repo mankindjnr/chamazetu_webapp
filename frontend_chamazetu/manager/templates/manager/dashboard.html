@@ -159,15 +159,17 @@
 
                   <div class="card-body">
                     <h5 class="card-title">Create a New Chama</h5>
-                    <form action="{% url 'manager:create_chama' %}" method="post">
+                    <form action="{% url 'manager:create_chama' %}" method="post" id="createChamaForm" novalidate>
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="chama_name" class="form-label">Chama Name</label>
                             <input type="text" class="form-control" id="chama_name" name="chama_name" required>
+                            <small class="error-message"></small>
                         </div>
                         <div class="mb-3">
                           <label for="chama_type" class="form-label">Chama Type</label>
                           <input type="text" class="form-control" id="chama_type" name="chama_type" placeholder="investment saving merry-go-round" required>
+                          <small class="error-message"></small>
                         </div>
 
                         <div class="mb-3">
@@ -184,6 +186,7 @@
                             <label for="description" class="form-label">Description</label>
                             <textarea class="form-control" id="description" name="description" rows="3" maxlength="500" required></textarea>
                             <small id="descriptionHelp" class="form-text text-muted">max 500 characters</small>
+                            <small class="error-message"></small>
                         </div>
 
                         <div class="mb-3">
@@ -193,6 +196,7 @@
                               <input class="form-check-input" type="checkbox" id="noLimit" name="noLimit">
                               <label class="form-check-label" for="noLimit"><b>No limit</b></label>
                             </div>
+                            <small class="error-message"></small>
                         </div>
 
                         <div class="mb-3">
@@ -203,6 +207,7 @@
                         <div class="mb-3">
                           <label for="fine_per_share" class="form-label">Fine per Share</label>
                           <input type="number" class="form-control" id="fine_per_share" name="fine_per_share" placeholder="fine for when users miss the deadline" min="1" required>
+                          <small class="error-message"></small>
                         </div>
                         
                         <!-- contribution frequency -->
@@ -241,6 +246,7 @@
                         <div class="mb-3">
                           <label for="registration" class="form-label">Registration Fee</label>
                           <input type="number" class="form-control" id="registration" name="registration" placeholder="enter 0 if no registration fee" min="0" required>
+                          <small class="error-message"></small>
                         </div>
                         <hr>
 
@@ -254,7 +260,7 @@
                             <label for="first_contribution_date" class="form-label">First contribution date</label>
                             <input type="date" class="form-control" id="first_contribution_date" name="first_contribution_date" required>
                         </div>
-                        <small id="descriptionHelp" class="form-text text-muted">First contribution date should be past the final day of joining</small>
+                        <small id="dateHelp" class="form-text text-muted">First contribution date should be past the final day of joining</small>
 
                         </div>
                         <!-- checkbox -->
