@@ -6,6 +6,15 @@
 
   <!-- ======= Hero Section ======= -->
   <section id="hero">
+    {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+    
     <div id="heroCarousel" data-bs-interval="5000" class="carousel slide carousel-fade" data-bs-ride="carousel">
 
       <div class="carousel-inner" role="listbox">
@@ -34,39 +43,6 @@
 
         <!-- Slide 3 -->
         <div class="carousel-item" style="background-image: url('{% static 'chama/img/slide/tree_grow_money.jpg' %}');">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>chamaZetu members</h2>
-              <p>Providing Chama members with a dynamic platform to participate, contribute, and track their financial progress, promoting personal wealth and communal prosperity.</p>
-              <div class="text-center"><a href="{% url 'chama:signup' 'member' %}" target="_blank" rel="noopener noreferrer" class="btn-get-started">Join a Chama</a></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Slide 4 -->
-        <div class="carousel-item active" style="background-image: url('{% static 'chama/img/slide/grow_ideas.jpg' %}');">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>Welcome to <span>chamaZetu</span></h2>
-              <p>Empowering individuals in Kenya with a user-friendly platform to efficiently manage their Chamas, fostering financial growth and community development.</p>
-              <div class="text-center"><a href="" class="btn-get-started">Read More</a></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Slide 5 -->
-        <div class="carousel-item" style="background-image: url('{% static 'chama/img/slide/together.jpg' %}');">
-          <div class="carousel-container">
-            <div class="carousel-content animate__animated animate__fadeInUp">
-              <h2>chamaZetu managers</h2>
-              <p>Enabling Chama managers with a comprehensive tool to establish, operate, and grow their Chamas, driving financial prosperity and community advancement.</p>
-              <div class="text-center"><a href="{% url 'chama:signup' 'manager' %}" target="_blank" rel="noopener noreferrer" class="btn-get-started">Start Managing a Chama</a></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Slide 6 -->
-        <div class="carousel-item" style="background-image: url('{% static 'chama/img/slide/passion_led_use_here.jpg' %}');">
           <div class="carousel-container">
             <div class="carousel-content animate__animated animate__fadeInUp">
               <h2>chamaZetu members</h2>

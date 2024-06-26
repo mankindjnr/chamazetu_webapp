@@ -6,6 +6,8 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# EMAIL SETTINGS
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
 EMAIL_USE_TLS = True
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
@@ -26,8 +28,10 @@ DEBUG = (
 ALLOWED_HOSTS = [
     "localhost",
     "chamazetu.com",
+    "www.chamazetu.com",
     "192.168.242.254",
     "0.0.0.0",
+    "192.168.100.7",
 ]
 
 
@@ -67,6 +71,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.chamazetu.com",
     "https://0.0.0.0:8000",
     "https://192.168.242.254:8000",
+    "https://192.1680.100.7:8000",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -74,6 +79,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://127.0.0.1",
     "https://chamazetu.com",
     "https://www.chamazetu.com",
+    "https://192.168.100.7",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"

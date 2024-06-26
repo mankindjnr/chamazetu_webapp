@@ -62,9 +62,9 @@
           </nav><!-- .navbar -->
     
           <div class="header-social-links d-flex">
-            <a href="#" class="twitter"><i class="bu bi-twitter"></i></a>
+            <a href="https://x.com/chamazetu" class="twitter"><i class="bu bi-twitter"></i></a>
             <a href="#" class="facebook"><i class="bu bi-facebook"></i></a>
-            <a href="#" class="linkedin"><i class="bu bi-linkedin"></i></i></a>
+            <a href="" class="linkedin"><i class="bu bi-linkedin"></i></i></a>
           </div>
     
         </div>
@@ -87,7 +87,7 @@
                   Kahawa West, Nairobi<br>
                   Kenya <br><br>
                   <strong>Phone:</strong> +254 720090889<br>
-                  <strong>Email:</strong> njorogealpha94@gmail.com<br>
+                  <strong>Email:</strong> support@chamazetu.com<br>
                 </p>
               </div>
     
@@ -96,7 +96,6 @@
                 <ul>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Home</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">About us</a></li>
-                  <li><i class="bx bx-chevron-right"></i> <a href="#">Services</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Terms of service</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Privacy policy</a></li>
                 </ul>
@@ -115,7 +114,8 @@
               <div class="col-lg-4 col-md-6 footer-newsletter">
                 <h4>Join Our Newsletter</h4>
                 <p>Through our application, we strive to empower individuals and communities, driving financial growth and prosperity.</p>
-                <form action="" method="post">
+                <form action="{% url 'chama:join_newsletter' %}" method="post">
+                  {% csrf_token %}
                   <input type="email" name="email"><input type="submit" value="Subscribe">
                 </form>
               </div>
@@ -136,7 +136,7 @@
             </div>
           </div>
           <div class="social-links text-center text-md-right pt-3 pt-md-0">
-            <a href="#" class="twitter"><i class="bx bxl-twitter"></i></a>
+            <a href="https://x.com/chamazetu" class="twitter"><i class="bx bxl-twitter"></i></a>
             <a href="#" class="facebook"><i class="bx bxl-facebook"></i></a>
             <a href="#" class="linkedin"><i class="bx bxl-linkedin"></i></a>
           </div>

@@ -1,0 +1,49 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>chamaZetu Newsletter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        .main {
+            padding: 20px;
+            background-color: white;
+            color: black;
+        }
+        .button {
+            display: inline-block;
+            color: white;
+            background-color: #3498db;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 20px;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main">
+            <h2>You have successfully subscribed to chamazetu newsletter</h2>
+            <p>We're excited to have you on board.</p>
+            <p>Thank you,<br>The chamaZetu Team</p>
+        </div>
+    </div>
+</body>
+</html>
+{% endautoescape %}

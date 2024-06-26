@@ -52,6 +52,7 @@ def members_tracker(request, chama_name):
         chama_id,
     )
     chama_days_tracker = chama_days_contribution_tracker(request, chama_id, interval)
+    fines_table = get_fines_data(chama_id)
     return render(
         request,
         "member/members_tracker.html",
@@ -62,6 +63,7 @@ def members_tracker(request, chama_name):
             "dates": monthly_tracker_data["dates"],
             "members_tracker": chama_days_tracker["members_tracker"],
             "contribution_dates": chama_days_tracker["latest_four_dates"],
+            "fines": fines_table,
         },
     )
 
@@ -143,7 +145,7 @@ def chama_days_contribution_tracker(request, chama_id, interval):
             (
                 f"{os.getenv('api_url')}/members_tracker/chama_days_contribution_tracker/{chama_id}",
                 data,
-            )
+            ),
         )
 
     headers = {
@@ -286,3 +288,20 @@ def get_the_from_dates(interval, upto_date):
                 day=int(the_contribution_day), month=prev_month, year=prev_year
             )
     return from_date
+
+
+# getting all fines data - paid or unpaid
+def get_fines_data(chama_id):
+    url = f"{os.getenv('api_url')}/chamas/all_fines/{chama_id}"
+    response = requests.get(url)
+
+    print("=======fines data==============")
+    all_fines = response.json()["fines"]
+    fines_data = []
+
+    for fine in all_fines:
+        fine["member_name"] = get_user_full_name("member", fine["member_id"])
+        del fine["member_id"]
+        fines_data.append(fine)
+
+    return fines_data

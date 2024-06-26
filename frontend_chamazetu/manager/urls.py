@@ -62,12 +62,20 @@ urlpatterns = [
         views.members_tracker,
         name="members_tracker",
     ),
-    path("join_status", views.chama_join_status, name="join_status"),
     path(
-        "activate_deactivate_chama",
-        views.activate_deactivate_chama,
-        name="activate_deactivate_chama",
+        "new_members/<int:chama_id>/<str:status>", views.new_members, name="new_members"
     ),
+    path(
+        "activate_chama",
+        views.activate_chama,
+        name="activate_chama",
+    ),
+    path(
+        "deactivate_chama",
+        views.deactivate_chama,
+        name="deactivate_chama",
+    ),
+    path("delete_chama/<int:chama_id>", views.delete_chama_by_id, name="delete_chama"),
     path("invest", views.invest, name="invest"),
     path(
         "withdraw_investment",

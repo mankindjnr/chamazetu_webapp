@@ -182,6 +182,14 @@ class ChamaFaqDeleteBase(BaseModel):
         from_attributes = True
 
 
+class ChamaDeleteBase(BaseModel):
+    chama_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
 # ============== transaction =================
 class TransactionBase(BaseModel):
     amount: int
@@ -269,6 +277,14 @@ class MemberRecentTransactionResp(BaseModel):
     transaction_completed: bool
 
 
+class WithdrawBase(BaseModel):
+    chama_id: int
+    amount: int
+
+    class Config:
+        orm_mode = True
+
+
 # ============== chama account =================
 class ChamaAccountBase(BaseModel):
     chama_id: int
@@ -335,7 +351,7 @@ class InvestBase(BaseModel):
 
 class InvestmentPerformanceResp(BaseModel):
     chama_id: int
-    amount_invested: int
+    amount_invested: float
     daily_interest: float
     weekly_interest: float
     monthly_interest: float
@@ -431,7 +447,7 @@ class MonthlyInterestResp(BaseModel):
     interest_earned: float
     month: int
     year: int
-    total_amount_invested: int
+    total_amount_invested: float
 
     class Config:
         orm_mode = True
@@ -498,6 +514,23 @@ class ProfileUpdateBase(BaseModel):
         from_attributes = True
 
 
+class NewsletterSubscription(BaseModel):
+    email: EmailStr
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class NewsletterSubscriptionResp(BaseModel):
+    email: EmailStr
+    date_subscribed: datetime
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
 # ============ Daraja API=========================
 class StkPushBase(BaseModel):
     phone_number: str
@@ -533,6 +566,42 @@ class CallbackData(BaseModel):
     FirstName: str
     MiddleName: str
     LastName: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+# =========== fine ==============
+class MemberFineBase(BaseModel):
+    member_id: int
+    chama_id: int
+    amount: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class MemberFineResp(BaseModel):
+    balance_after_fines: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class MemberFines(BaseModel):
+    member_id: int
+    chama_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class MemberFinesResp(BaseModel):
+    has_fines: bool
 
     class Config:
         orm_mode = True

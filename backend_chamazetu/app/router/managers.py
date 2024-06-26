@@ -82,3 +82,28 @@ async def get_manager_profile_image(
         raise HTTPException(
             status_code=400, detail="Failed to get manager profile image"
         )
+
+
+@router.get(
+    "/profile_picture/{manager_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_manager_profile_picture(
+    manager_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        manager = (
+            db.query(models.Manager).filter(models.Manager.id == manager_id).first()
+        )
+
+        if not manager:
+            raise HTTPException(status_code=404, detail="Manager not found")
+
+        return manager.profile_picture
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to get manager profile image"
+        )

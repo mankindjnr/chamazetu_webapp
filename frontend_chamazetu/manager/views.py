@@ -12,8 +12,10 @@ from .managing import (
 )
 
 from .chama_features_edit import (
-    chama_join_status,
-    activate_deactivate_chama,
+    new_members,
+    activate_chama,
+    deactivate_chama,
+    delete_chama_by_id,
     update_chama_description,
     update_chama_mission,
     update_chama_vision,

@@ -50,4 +50,5 @@ urlpatterns = [
     path(
         "withdraw_from_wallet", views.withdraw_from_wallet, name="withdraw_from_wallet"
     ),
+    path("b2ctrial", views.b2ctrial, name="b2ctrial"),
 ]

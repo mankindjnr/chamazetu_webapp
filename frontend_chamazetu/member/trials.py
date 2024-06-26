@@ -1,24 +1,9 @@
-import requests, os
-from dotenv import load_dotenv
+x = 500 - 1000
 
-load_dotenv()
+print(x)
 
+if x < 0:
+    print("Negative")
 
-def stk_push_status(checkoutrequestid):
-    """
-    Check the status of the stk push
-    """
-    data = {"checkout_request_id": checkoutrequestid}
-    response = requests.get(
-        f"192.168.100.7:9400/mobile_money/mpesa/stkpush/status/{checkoutrequestid}",
-    )
-
-    print("-----stk push status----")
-    if response.status_code == 200:
-        print("-------scceeded-----")
-        print(response.json())
-    print(response.json())
-    return None
-
-
-stk_push_status("ws_CO_09052024162348667113638169")
+if x * -1 > 0:
+    print("Positive")

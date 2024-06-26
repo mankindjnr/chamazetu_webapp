@@ -108,7 +108,7 @@ def wallet_withdrawal(headers, amount, member_id, transaction_code):
 
 @shared_task
 def update_users_profile_image(headers, role, new_profile_image_name):
-    url = f"{os.getenv('api_url')}/uploads/{role}/update_profile_picture"
+    url = f"{os.getenv('api_url')}/bucket-uploads/{role}/update_profile_picture"
 
     data = {
         "profile_picture_name": new_profile_image_name,
@@ -176,6 +176,8 @@ def after_succesful_chama_deposit(mpesa_data):
     transaction_code = mpesa_data["checkoutrequestid"]
     headers = mpesa_data["headers"]
 
+    # TODO: check for fines and update amount onwards but exit only after updaing account balance
+
     expected_difference = difference_btwn_contributed_and_expected(member_id, chama_id)
     if expected_difference == 0:
         update_wallet_balance.delay(
@@ -228,3 +230,16 @@ def deposit_is_greater_than_difference(deposited, member_id, chama_id):
     return int(deposited) > difference_btwn_contributed_and_expected(
         member_id, chama_id
     )
+
+
+# retrieve chamas share price, previous contribution day and one before that
+@shared_task
+def calculate_missed_contributions_fines():
+    url = f"{os.getenv('api_url')}/chamas/share_price_and_prev_two_contribution_dates"
+    response = requests.get(url)
+
+    data = response.json()
+    url = f"{os.getenv('api_url')}/chamas/members_and_contribution_fines"
+    requests.get(url, json=data)
+
+    return None

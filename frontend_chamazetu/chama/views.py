@@ -17,6 +17,7 @@ from .usermanagement import (
     activate,
     forgot_password,
     update_forgotten_password,
+    join_newsletter,
 )
 
 from .chamas import get_all_chamas, get_chama

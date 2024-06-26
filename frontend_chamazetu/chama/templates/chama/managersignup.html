@@ -34,14 +34,14 @@
                     <p class="text-center small">Enter your personal details to create account</p>
                   </div>
 
-                  <form class="row g-3 needs-validation" method="POST" action="{% url 'chama:signup' 'manager' %}">
+                  <form class="row g-3 needs-validation" method="POST" action="{% url 'chama:signup' 'manager' %}" id="signupForm" novalidate>
                     {% csrf_token %}
 
                     <div class="col-12">
                       <label for="first_name" class="form-label">First name</label>
                       <div class="input-group has-validation">
                         <input type="text" name="first_name" class="form-control" id="first_name" required>
-                        <small></small>
+                        <small class="error-message"></small>
                       </div>
                     </div>
 
@@ -49,26 +49,29 @@
                       <label for="last_name" class="form-label">Last name</label>
                       <div class="input-group has-validation">
                         <input type="text" name="last_name" class="form-control" id="last_name" required>
-                        <small></small>
+                        <small class="error-message"></small>
                       </div>
                     </div>
 
                     <div class="col-12">
                       <label for="email" class="form-label">Email</label>
                       <input type="email" name="email" class="form-control" id="email" required>
-                      <div class="invalid-feedback">Please enter a valid Email adddress!</div>
+                      <div class="invalid-feedback"></div>
+                      <small class="error-message"></small>
                     </div>
 
                     <div class="col-12">
                       <label for="password" class="form-label">Password</label>
                       <input type="password" name="password" class="form-control" id="password" required>
-                      <div class="invalid-feedback">Please enter your password!</div>
+                      <div class="invalid-feedback"></div>
+                      <small class="error-message"></small>
                     </div>
 
                     <div class="col-12">
                       <label for="password2" class="form-label">Confirm Password</label>
                       <input type="password" name="password2" class="form-control" id="password2" required>
-                      <div class="invalid-feedback">Confirm your password!</div>
+                      <div class="invalid-feedback"></div>
+                      <small class="error-message"></small>
                     </div>
                     <!-- checker for accepting terms -->
                     <div class="col-12">
