@@ -14,7 +14,6 @@ from .member_transactions import (
     from_wallet_to_chama,
     deposit_to_wallet,
     withdraw_from_wallet,
-    b2ctrial,
 )
-from .members_activity import members_tracker
+from .members_activity import members_tracker, fines_tracker
 from .profile_update import member_profile_updater, manager_profile_updater

@@ -8,6 +8,7 @@ from datetime import datetime, date, timedelta
 from django.contrib import messages
 from collections import defaultdict
 from queue import Queue
+from http import HTTPStatus
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -305,3 +306,33 @@ def get_fines_data(chama_id):
         fines_data.append(fine)
 
     return fines_data
+
+
+def fines_tracker(request, chama_name, role):
+    chama_id = get_chama_id(chama_name)
+    url = f"{os.getenv('api_url')}/chamas/fines/{chama_id}"
+    response = requests.get(url)
+    fines = None
+
+    if response.status_code == HTTPStatus.OK:
+        fines_data = response.json()
+        fines_table = fines_data["fines"]
+        fines = organise_fines(fines_table)
+
+    return render(
+        request,
+        "member/fines_tracker.html",
+        {"role": role, "chama_name": chama_name, "fines": fines},
+    )
+
+
+def organise_fines(fines):
+    fines_organised = []
+    for fine in fines:
+        fine["member_name"] = get_user_full_name("member", fine["member_id"])
+        fine["fine"] = f"Ksh: {fine['fine']}"
+        fine["total_expected_amount"] = f"Ksh: {fine['total_expected_amount']}"
+        del fine["member_id"]
+        fines_organised.append(fine)
+
+    return fines_organised

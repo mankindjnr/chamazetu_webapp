@@ -111,6 +111,13 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:fines_tracker' chama.chama_name 'member' %}">
+          <i class="bi bi-grid"></i>
+          <span>Fines Tracker</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
           <span>Daily Performance</span> 
@@ -187,7 +194,11 @@
                       <small>Ksh:</small>
                     </div>
                     <div class="ps-3">
+                      {% if chama.today_deposits %}
                       <h6>{{ chama.today_deposits }}</h6>
+                      {% else %}
+                      <h6>0</h6>
+                      {% endif %}
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -294,54 +305,6 @@
 
               </div>
             </div><!-- End weekly activity -->
-
-            <!-- contritbution days fines -->
-
-            <div class="col-12">
-              <div class="card recent-sales overflow-auto">
-
-                <div class="card-body">
-                  <h5 class="card-title">Incurred Fines <span>|Ksh</span></h5>
-                  <div>
-                    <hr>
-                  </div>
-
-                  <table class="table table-success table-striped-columns">
-                    <thead>
-                      <tr>
-                        <th scope="col">members</th>
-                        <th scope="col">Shares</th>
-                        <th scope="col">fine amount</th>
-                        <th scope="col">Reason</th>
-                        <th scope="col">Fine Date</th>
-                        <th scope="col">Expected Amount</th>
-                        <th scope="col">Cleared</th>
-                      </tr>
-                    </thead>
-                    {% if fines %}
-                    <tbody>
-                      {% for fine in fines %}
-                      <tr>
-                        <th scope="row">{{ fine.member_name }}</th>
-                        <td>{{ fine.num_of_shares }}</td>
-                        <td>{{ fine.fine }}</td>
-                        <td>{{ fine.fine_reason }} </td>
-                        <td>{{ fine.fine_date }} </td>
-                        <td>{{ fine.total_expected_amount }} </td>
-                        <td>{{ fine.cleared }} </td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                    {% endif %}
-                  </table>
-
-                </div>
-
-              </div>
-            </div>
-
-            <!-- end fine char -->
-
 
             <!-- performance monthly -->
             <div class="col-12">

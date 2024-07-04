@@ -15,12 +15,11 @@ from .router import (
     member_profile,
     managers,
     azure_blob_uploads,
-    daraja_api,
-    call_back,
-    b2c,
     s3_buckets,
     newsletter,
     fines,
+    callback,
+    stk_push,
 )
 
 app = FastAPI()
@@ -53,12 +52,11 @@ app.include_router(search_functionality.router)
 app.include_router(member_profile.router)
 app.include_router(managers.router)
 app.include_router(azure_blob_uploads.router)
-app.include_router(daraja_api.router)
-app.include_router(call_back.router)
-app.include_router(b2c.router)
 app.include_router(s3_buckets.router)
 app.include_router(newsletter.router)
 app.include_router(fines.router)
+app.include_router(callback.router)
+app.include_router(stk_push.router)
 
 
 @app.get("/")

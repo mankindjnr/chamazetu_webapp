@@ -18,28 +18,28 @@ router = APIRouter(prefix="/transactions", tags=["transactions"])
     response_model=schemas.TransactionResp,
 )
 async def create_deposit_transaction(
-    transaction: schemas.TransactionBase = Body(...),
+    transaction: schemas.DirectTransactionBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
 ):
     try:
-        transaction_dict = transaction.dict()
-        transaction_dict["transaction_type"] = "deposit"
-        transaction_dict["member_id"] = current_user.id
-        transaction_dict["transaction_completed"] = True
-        transaction_dict["date_of_transaction"] = datetime.now()
-        transaction_dict["updated_at"] = datetime.now()
-        transaction_dict["transaction_code"] = uuid4().hex
+        with db.begin():
+            transaction_dict = transaction.dict()
+            transaction_dict["transaction_type"] = "deposit"
+            transaction_dict["member_id"] = transaction.member_id
+            transaction_dict["transaction_completed"] = True
+            transaction_dict["date_of_transaction"] = datetime.now()
+            transaction_dict["updated_at"] = datetime.now()
+            transaction_dict["transaction_code"] = transaction.transaction_code
 
-        new_transaction = models.Transaction(**transaction_dict)
-        db.add(new_transaction)
-        db.commit()
-        db.refresh(new_transaction)
+            new_transaction = models.Transaction(**transaction_dict)
+            db.add(new_transaction)
+            db.flush()  # flush to get the id of the transaction and trigger constraints
+            db.refresh(new_transaction)
 
         return new_transaction
 
     except Exception as e:
-        print("------error--------")
+        print("------direct deposit error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to create transaction")
 
@@ -134,7 +134,7 @@ async def create_fine_repayment_transaction_from_wallet(
             "amount": new_wallet_transaction.amount,
             "phone_number": generateWalletNumber(current_user.id),
             "chama_id": wallet_transaction.transaction_destination,
-            "transaction_type": "fine_deduction",
+            "transaction_type": "fine deduction",
             "transaction_origin": "wallet_deposit",
             "member_id": current_user.id,
             "transaction_completed": True,
@@ -151,6 +151,45 @@ async def create_fine_repayment_transaction_from_wallet(
 
     except Exception as e:
         print("------deposit from wallet error--------")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+# =========================mpesa fine repayment recording=========
+@router.post(
+    "/record_fine_payment_from_mpesa",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_fine_repayment_transaction_from_mpesa(
+    mpesa_transaction: schemas.MpesaPayFinesBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("===========record fine mpesa transaction===========")
+
+        # add record to transactions table
+        transaction_dict = {
+            "amount": mpesa_transaction.amount,
+            "phone_number": mpesa_transaction.phone_number,
+            "chama_id": mpesa_transaction.transaction_destination,
+            "transaction_type": "fine deduction",
+            "transaction_origin": "direct_deposit",
+            "member_id": mpesa_transaction.member_id,
+            "transaction_completed": True,
+            "date_of_transaction": datetime.now(),
+            "updated_at": datetime.now(),
+            "transaction_code": mpesa_transaction.transaction_code,
+        }
+
+        new_transaction = models.Transaction(**transaction_dict)
+        db.add(new_transaction)
+        db.commit()
+
+        return
+
+    except Exception as e:
+        print("------deposit from mpesa error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to create transaction")
 

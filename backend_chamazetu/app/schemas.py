@@ -201,6 +201,18 @@ class TransactionBase(BaseModel):
         orm_mode = True
         # from_attributes = True
 
+class DirectTransactionBase(BaseModel):
+    amount: int
+    member_id: int
+    chama_id: int
+    phone_number: str
+    transaction_origin: str
+    transaction_code: str
+
+    class Config:
+        orm_mode = True
+        # from_attributes = True
+
 
 class WalletTransactionBase(BaseModel):
     amount: int
@@ -602,6 +614,26 @@ class MemberFines(BaseModel):
 
 class MemberFinesResp(BaseModel):
     has_fines: bool
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class MpesaPayFinesBase(BaseModel):
+    amount: int
+    transaction_destination: int
+    phone_number: str
+    transaction_code: str
+    member_id: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class TotalFinesResp(BaseModel):
+    total_fines: int
 
     class Config:
         orm_mode = True
