@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from sqlalchemy import func, update, and_, table, column
 from typing import List, Union
+from sqlalchemy.exc import SQLAlchemyError
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -406,43 +407,55 @@ async def update_account_balance(
     account: schemas.ChamaAccountBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
+
+    account_dict = account.dict()
+    chama_id = account_dict["chama_id"]
+    new_amount = account_dict["amount_deposited"]
+    transaction_type = account_dict["transaction_type"]
+
     try:
-        account_dict = account.dict()
-        chama_id = account_dict["chama_id"]
-        new_amount = account_dict["amount_deposited"]
-        transanction_type = account_dict["transaction_type"]
-
-        chama_account = (
-            db.query(models.Chama_Account)
-            .filter(models.Chama_Account.chama_id == chama_id)
-            .first()
-        )
-        account_balance = 0
-        if not chama_account and transanction_type == "deposit":
-            chama_account = models.Chama_Account(
-                chama_id=chama_id, account_balance=new_amount
-            )
-            db.add(chama_account)
-            db.commit()
-            db.refresh(chama_account)
-            return chama_account
-        elif chama_account and transanction_type == "deposit":
-            account_balance = chama_account.account_balance + new_amount
-        elif chama_account and transanction_type == "withdraw":
-            account_balance = chama_account.account_balance - new_amount
-        else:
-            raise HTTPException(
-                status_code=400, detail="Failed to update account balance"
+        print("=====updating account bal=========")
+        with db.begin():
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == chama_id)
+                .first()
             )
 
-        # this is a background task, might not be necessary to return the updated account balance
-        chama_account.account_balance = account_balance
-        db.commit()
-        db.refresh(chama_account)
+            if not chama_account and transaction_type == "deposit":
+                chama_account = models.Chama_Account(
+                    chama_id=chama_id, account_balance=new_amount
+                )
+                db.add(chama_account)
+            elif chama_account and transaction_type == "deposit":
+                chama_account.account_balance += new_amount
+            elif chama_account and transaction_type == "withdraw":
+                if chama_account.account_balance < new_amount:
+                    raise HTTPException(
+                        status_code=400, detail="Insufficient account balance"
+                    )
+                chama_account.account_balance -= new_amount
+            else:
+                raise HTTPException(
+                    status_code=400, detail="Failed to update account balance"
+                )
+
+            db.flush()  # flush the changes to the database ensures that the changes are saved to the database
+            # db.commit() - with db.begin() commits the transaction if all queries are successful, no need to commit manually
+            db.refresh(
+                chama_account
+            )  # needed to refresh the object to get the updated values
+        print("=====account bal updated=========")
         return chama_account
 
+    except SQLAlchemyError as e:
+        db.rollback()
+        print("------update acc error--------")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to update account balance")
     except Exception as e:
-        print("------error--------")
+        db.rollback()
+        print("------update acc error--------")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to update account balance")
 
@@ -1099,12 +1112,12 @@ async def get_members_and_contribution_fines(
                     )
 
                     prev_contribution_datetime = datetime.fromisoformat(
-                            chama_details["prev_contribution_date"]
-                        )
+                        chama_details["prev_contribution_date"]
+                    )
 
                     prev_two_contribution_datetime = datetime.fromisoformat(
-                            chama_details["prev_two_contribution_date"]
-                        )
+                        chama_details["prev_two_contribution_date"]
+                    )
 
                     member_contribution = (
                         db.query(models.Transaction)

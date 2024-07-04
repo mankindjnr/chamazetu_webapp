@@ -29,15 +29,6 @@ from .transaction_code import generate_transaction_code
 load_dotenv()
 
 
-def b2ctrial(request):
-    print("trial b2c")
-    resp = requests.post(f"{os.getenv('api_url')}/businesstocustomer/b2c")
-    print("=============business to customer trial=============")
-    print(resp.json())
-
-    return HttpResponse("b2c trial")
-
-
 # ==========================================================
 @tokens_in_cookies("member")
 @validate_and_refresh_token("member")
@@ -63,8 +54,6 @@ def direct_deposit_to_chama(request):
         if (
             amount > 0 and phone_number is not None
         ):  # update to 10 shillings which is minimum for paybills
-            # check if amount being deposited is more than expected contribution by subtracting contributed amount from expected amount
-            # get the money from mpesa, then run the following code
             # stkpush call with the phone number and amount
             depostinfo = {
                 "amount": amount,
@@ -74,13 +63,13 @@ def direct_deposit_to_chama(request):
             }
 
             deposit_resp = requests.post(
-                f"{os.getenv('api_url')}/mobile_money/mpesa/stkpush", json=depostinfo
+                f"{os.getenv('api_url')}/request/push", json=depostinfo
             )
             print("-----direct froom mpesa----")
             print(deposit_resp.json())
             # if the stk push was successfully sent
             if (
-                deposit_resp.status_code == 201
+                deposit_resp.status_code == HTTPStatus.CREATED
                 and "CheckoutRequestID" in deposit_resp.json()
             ):
                 # all this function will depend on the result of the backend tasks -will listen to it and execute
@@ -151,7 +140,8 @@ def from_wallet_to_chama(request):
         if amount > 0 and amount <= get_wallet_balance(request):
             # we will call our function here to pay fines and whatever we have left will be updated as amount to deposit, if any else return to chama.
             # remember to exit only after updating the account balance
-            print("===============before repaymne==================")
+            print("===============before repayment==================")
+            print(amount)
 
             if member_has_fines_or_missed_contributions(member_id, chama_id):
                 print("=======member has fines====")
@@ -337,6 +327,16 @@ def difference_btwn_contributed_and_expected(member_id, chama_id):
     return expected_difference
 
 
+# retrieve the fines a member has
+def get_member_fines(member_id, chama_id):
+    url = f"{os.getenv('api_url')}/members/total_fines"
+    data = {"member_id": member_id, "chama_id": chama_id}
+    resp = requests.get(url, json=data)
+    if resp.status_code == HTTPStatus.OK:
+        return resp.json().get("total_fines")
+    return 0
+
+
 def deposit_is_greater_than_difference(deposited, member_id, chama_id):
     return int(deposited) > difference_btwn_contributed_and_expected(
         member_id, chama_id
@@ -374,10 +374,28 @@ def balance_after_paying_fines_and_missed_contributions(
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
     }
 
-    # we first move the money from the wallet to the chama if its a success we continue with the repayment
+    # we first move the fine money from the wallet to the chama if its a success we continue with the repayment
     url = f"{os.getenv('api_url')}/transactions/record_fine_payment"
+
+    # get the amount of fines and missed contributions
+    # if amount > fines + missed contributions, we deduct the amount from the fines and missed contributions
+    # if amount <= we return 0 and we use the current amount to clear the fines and missed contributions
+    fines_total = get_member_fines(member_id, chama_id)
+    print("=======fines total===")
+    print(fines_total)
+
+    to_be_paid = 0  # the amount to be paid to clear fines and missed contributions
+    if amount > fines_total:
+        print("----amount > fines total----")
+        amount -= fines_total  # deduct the fines from the amount
+        to_be_paid = fines_total
+    else:
+        print("----amount < fines total----")
+        to_be_paid = amount  # use the whole amount to clear the fines
+        amount = 0
+
     data = {
-        "amount": amount,
+        "amount": to_be_paid,
         "transaction_destination": chama_id,
     }
 
@@ -387,7 +405,7 @@ def balance_after_paying_fines_and_missed_contributions(
         data = {
             "member_id": member_id,
             "chama_id": chama_id,
-            "amount": amount,
+            "amount": to_be_paid,
         }
 
         resp = requests.put(url, json=data)
@@ -396,22 +414,25 @@ def balance_after_paying_fines_and_missed_contributions(
 
         if resp.status_code == HTTPStatus.OK:
             print("======repaying done========")
-            paid_fine = amount - resp.json().get("balance_after_fines")
-            print(paid_fine)
-            update_chama_account_balance.delay(chama_id, paid_fine, "deposit")
+            # paid_fine = amount - resp.json().get("balance_after_fines")
+            print(to_be_paid)
+            update_chama_account_balance.delay(chama_id, to_be_paid, "deposit")
             update_wallet_balance.delay(
                 headers,
-                paid_fine,
+                to_be_paid,
                 chama_id,
                 "moved_to_chama",
                 transaction_code,
             )
             messages.success(
-                request, f"Fines and missed contributions of {paid_fine} deducted."
+                request, f"Fines and missed contributions of {to_be_paid} deducted."
             )
-            return resp.json().get("balance_after_fines")
+            print("=======amount left===")
+            print(amount)
+            return amount  # return the amount left after paying fines
         else:
-            return amount
+            print("=======repaying failed========")
+            return amount  # not sure if to return the amount if repayment fails or to return the initial amount
     else:
         # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
         messages.error(request, "Failed to deposit, please try again later.")

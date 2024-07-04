@@ -65,7 +65,7 @@ def invest(request):
                 headers=headers,
             )
 
-            if response.status_code == 201:
+            if response.status_code == HTTPStatus.CREATED:
                 # update both the investment and account balances after successful investment
                 update_investment_account.delay(
                     chama_id, investment_amt, investment_type, transaction_type
@@ -141,23 +141,17 @@ def withdraw_from_investment(request):
                 headers=headers,
             )
 
-            if response.status_code == 201:
-                # add_chama_withdrawal_request.delay(chama_id, withdraw_amount, headers)
-                update_investment_account.delay(
-                    chama_id, withdraw_amount, investment_type, transaction_type
-                )
-                # a withdrawal from the investment is a deposit to the current account
-                update_chama_account_balance.delay(chama_id, withdraw_amount, "deposit")
+            if response.status_code == HTTPStatus.CREATED:
                 messages.success(
                     request,
-                    f"{transaction_type}al of Ksh: {withdraw_amount} from {chama_name} investment was successful",
+                    f"{transaction_type}al request of Ksh: {withdraw_amount} from {chama_name} investment was successful",
                 )
                 return HttpResponseRedirect(
                     reverse("manager:chama", args=(chama_name,))
                 )
             else:
                 messages.error(
-                    request, "The withdrawal failed, please try again later."
+                    request, "The withdrawal request failed, please try again later."
                 )
                 return HttpResponseRedirect(
                     reverse("manager:chama", args=(chama_name,))
@@ -176,7 +170,7 @@ def amount_is_within_balance(chama_id, amount, transaction_type):
         investment_resp = requests.get(
             f"{os.getenv('api_url')}/chamas/account_balance/{chama_id}"
         )
-        if investment_resp.status_code == 200:
+        if investment_resp.status_code == HTTPStatus.OK:
             current_bal = investment_resp.json()["account_balance"]
             if current_bal >= int(amount):
                 return True
@@ -184,7 +178,7 @@ def amount_is_within_balance(chama_id, amount, transaction_type):
         withdraw_resp = requests.get(
             f"{os.getenv('api_url')}/investments/chamas/account_balance/{chama_id}"
         )
-        if withdraw_resp.status_code == 200:
+        if withdraw_resp.status_code == HTTPStatus.OK:
             current_invest_bal = withdraw_resp.json()["amount_invested"]
             if current_invest_bal >= int(amount):
                 return True

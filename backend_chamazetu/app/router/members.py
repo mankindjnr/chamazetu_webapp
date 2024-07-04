@@ -427,3 +427,48 @@ async def check_fines(
         print("===========error checking fines===========")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to check fines")
+
+
+# retrieve the amount of fines a member has in a chama
+@router.get(
+    "/total_fines",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.TotalFinesResp,
+)
+async def get_total_fines(
+    fine_data: schemas.MemberFines = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        fine_dict = fine_data.dict()
+        chama_id = fine_dict["chama_id"]
+        member_id = fine_dict["member_id"]
+
+        fines = (
+            db.query(models.Fine)
+            .filter(
+                and_(
+                    models.Fine.chama_id == chama_id,
+                    models.Fine.member_id == member_id,
+                    models.Fine.is_paid == False,
+                )
+            )
+            .all()
+        )
+
+        if not fines:
+            # return false if the member has no fines to pay
+            return {"total_fines": 0}
+
+        total_fine_amount = 0
+        for fine in fines:
+            total_fine_amount += fine.total_expected_amount
+
+        # return true if the member has fines to pay
+
+        return {"total_fines": total_fine_amount}
+
+    except Exception as e:
+        print("===========error getting total fines===========")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to get total fines")

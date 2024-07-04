@@ -18,6 +18,11 @@ urlpatterns = [
         name="members_tracker",
     ),
     path(
+        "fines_tracker/<str:chama_name>/<str:role>",
+        views.fines_tracker,
+        name="fines_tracker",
+    ),
+    path(
         "view_chama_members/<str:chama_name>",
         views.view_chama_members,
         name="view_chama_members",
@@ -50,5 +55,4 @@ urlpatterns = [
     path(
         "withdraw_from_wallet", views.withdraw_from_wallet, name="withdraw_from_wallet"
     ),
-    path("b2ctrial", views.b2ctrial, name="b2ctrial"),
 ]

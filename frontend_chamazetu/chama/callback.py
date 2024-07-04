@@ -11,41 +11,25 @@ load_dotenv()
 
 def call_back_url(request):
     print("========call back data========")
-    if request.method != "POST":
-        return HttpResponse(status=405)
+    print("========call back data========")
+    print("========call back data========")
+    print("========call back data========")
+    print("========call back data========")
+    print("========call back data========")
+    print("========call back data========")
+    print("========call back data========")
+    return JsonResponse({"message": "i am callback!"})
 
-    callback_data = json.loads(request.body)
-    print("========cala back data========")
-    print(callback_data)
 
-    result_code = callback_data["Body"]["stkCallback"]["ResultCode"]
-    if result_code != 0:
-        # this is an error
-        error_message = callback_data["Body"]["stkCallback"]["ResultDesc"]
-        response_data = {
-            "ResultCode": result_code,
-            "ResultDesc": error_message,
-        }
-        return response_data
+"""
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-    # else the transaction was successful
-    callback_metadata = callback_data["Body"]["stkCallback"]["CallbackMetadata"]
-    amount = None
-    phone_number = None
-    for item in callback_metadata["Item"]:
-        if item["Name"] == "Amount":
-            amount = item["Value"]
-        if item["Name"] == "PhoneNumber":
-            phone_number = item["Value"]
-    print("------------------------------")
-    print(f"Amount: {amount}, Phone Number: {phone_number}")
-    # save the transaction details to a db
-    # f"{os.getenv('api_url')}/mobile_money/mpesa/callback"
-
-    # send a response to the mpesa api
-    response_data = {
-        "ResultCode": result_code,
-        "ResultDesc": "Success",
-    }
-
-    return response_data
+@csrf_exempt
+@require_http_methods(["POST"])
+def mpesa_callback(request):
+    payload = json.loads(request.body)
+    # Process the callback payload here
+    return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
+"""

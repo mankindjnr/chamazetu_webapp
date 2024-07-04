@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from sqlalchemy import func, desc, and_
+from sqlalchemy.exc import SQLAlchemyError
 from typing import Union, List
+from fastapi.responses import JSONResponse
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -123,56 +125,64 @@ async def update_investment_account(
     db: Session = Depends(database.get_db),
 ):
 
-    try:
-        print("=========updating perfro===============")
-        update_dict = account_update.dict()
-        print(update_dict["investment_type"])
-        chama_id = update_dict["chama_id"]
-        new_amount = update_dict["amount_invested"]
-        update_type = update_dict["transaction_type"]
-        investment_type = update_dict["investment_type"]
-        investment_name = f"chamazetu_{investment_type.lower()}"
+    print("=========updating perfro===============")
+    update_dict = account_update.dict()
+    print(update_dict["investment_type"])
+    chama_id = update_dict["chama_id"]
+    new_amount = update_dict["amount_invested"]
+    update_type = update_dict["transaction_type"]
+    investment_type = update_dict["investment_type"]
+    investment_name = f"chamazetu_{investment_type.lower()}"
 
-        performance = (
-            db.query(models.Investment_Performance)
-            .filter(models.Investment_Performance.chama_id == chama_id)
-            .filter(models.Investment_Performance.investment_type == investment_type)
-            .first()
-        )
-        if not performance and update_type == "deposit":
-            performance = models.Investment_Performance(
-                chama_id=chama_id,
-                amount_invested=new_amount,
-                investment_type=investment_type,
-                total_interest_earned=0.0,
-                daily_interest=0.0,
-                weekly_interest=0.0,
-                monthly_interest=0.0,
-                investment_name=investment_name,
-                investment_start_date=datetime.now(timezone.utc),
+    """
+    Using with db.begin(): ensures that all database operations within the block are treated as a
+    single transaction. If any operation fails, the entire transaction is rolled back.
+    """
+    try:
+        with db.begin():
+            performance = (
+                db.query(models.Investment_Performance)
+                .filter(models.Investment_Performance.chama_id == chama_id)
+                .filter(
+                    models.Investment_Performance.investment_type == investment_type
+                )
+                .first()
             )
-            db.add(performance)
+            if not performance and update_type == "deposit":
+                performance = models.Investment_Performance(
+                    chama_id=chama_id,
+                    amount_invested=new_amount,
+                    investment_type=investment_type,
+                    total_interest_earned=0.0,
+                    daily_interest=0.0,
+                    weekly_interest=0.0,
+                    monthly_interest=0.0,
+                    investment_name=investment_name,
+                    investment_start_date=datetime.now(timezone.utc),
+                )
+                db.add(performance)
+            elif performance and update_type == "deposit":
+                performance.amount_invested += new_amount
+            elif performance and update_type == "withdraw":
+                if performance.amount_invested < new_amount:
+                    raise HTTPException(
+                        status_code=400, detail="insufficient funds to withdraw"
+                    )
+                performance.amount_invested -= new_amount
+            else:
+                raise HTTPException(
+                    status_code=400, detail="you have no investment to withdraw from"
+                )
             db.commit()
             db.refresh(performance)
-        elif performance and update_type == "deposit":
-            amount_invested = performance.amount_invested + new_amount
-            performance.amount_invested = amount_invested
-            db.commit()
-            db.refresh(performance)
-        elif performance and update_type == "withdraw":
-            amount_invested = performance.amount_invested - new_amount
-            performance.amount_invested = amount_invested
-            db.commit()
-            db.refresh(performance)
-        else:
-            raise HTTPException(
-                status_code=400, detail="you have no investment to withdraw from"
-            )
-    except Exception as e:
+    except SQLAlchemyError as e:
+        db.rollback()
         print(e)
         raise HTTPException(
             status_code=400, detail="updating investment account failed"
         )
+
+    return {"message": "investment account updated successfully"}
 
 
 # check investment balance account for a chama
@@ -604,7 +614,8 @@ async def make_a_withdrawal_request(
         print("============withdrawing from mmfs==========")
         withdraw_dict = withdraw_data.dict()
         withdraw_dict["withdrawal_date"] = datetime.now(timezone.utc)
-        withdraw_dict["withdrawal_completed"] = True
+        withdraw_dict["withdrawal_completed"] = False
+        withdraw_dict["withdrawal_status"] = "PENDING"
 
         print("======withdraw_dict========")
         print(withdraw_dict)
@@ -619,3 +630,81 @@ async def make_a_withdrawal_request(
         print("============withdrawal failed==========")
         print(e)
         raise HTTPException(status_code=400, detail="withdrawal failed")
+
+
+# in an acid compliant way, we will look at all pending withdrawals and fulfill them
+# by updating the withdrawal status to completed and withdrawal completed to true and also set the fulfillment date
+@router.put("/fulfill_withdrawal_requests", status_code=status.HTTP_200_OK)
+async def fulfill_withdrawals(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("============fulfilling withdrawals==========")
+        pending_withdrawals = (
+            db.query(models.ChamaMMFWithdrawal)
+            .filter(models.ChamaMMFWithdrawal.withdrawal_status == "PENDING")
+            .with_for_update()  # lock the the selected rows for update and ensure that no other transaction can modify them
+            .all()
+        )
+
+        # when the withdrawals are fulfilled, we neded to update the invst performance table with new amount_invested and update the chama_accounts table with the new account_balance
+
+        # invest performance table
+        for withdrawal in pending_withdrawals:
+            # update the investment performance table
+            investment_performance = (
+                db.query(models.Investment_Performance)
+                .filter(
+                    and_(
+                        models.Investment_Performance.chama_id == withdrawal.chama_id,
+                        models.Investment_Performance.investment_type == "mmf",
+                    )
+                )
+                .first()
+            )
+
+            if not investment_performance:
+                raise HTTPException(
+                    status_code=404, detail="could not find investment performance"
+                )
+
+            investment_performance.amount_invested -= withdrawal.amount
+
+            # update the chama accounts table
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == withdrawal.chama_id)
+                .first()
+            )
+
+            if not chama_account:
+                raise HTTPException(
+                    status_code=404, detail="could not find chama account"
+                )
+
+            chama_account.account_balance += withdrawal.amount
+
+            # update the withdrawal table
+
+            withdrawal.withdrawal_status = "COMPLETED"
+            withdrawal.withdrawal_completed = True
+            withdrawal.fulfilled_date = datetime.now(timezone.utc)
+
+            # stage all the chnages
+            db.add(investment_performance)
+            db.add(chama_account)
+            db.add(withdrawal)
+
+        db.commit()  # commit all the changes as an atomic transaction
+        return JSONResponse(
+            status_code=200, content={"message": "fulfilling withdrawals successful"}
+        )
+    except Exception as e:
+        db.rollback()
+        print("============fulfilling withdrawals failed==========")
+        print(e)
+        raise HTTPException(status_code=400, detail="fulfilling withdrawals failed")
+    finally:
+        db.close()
+        print("============fulfilling withdrawals completed==========")

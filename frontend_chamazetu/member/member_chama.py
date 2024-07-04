@@ -114,7 +114,6 @@ def access_chama(request, chamaname):
             f"{os.getenv('api_url')}/investments/chamas/monthly_interests/{chama_id}",
             {"limit": 3},
         ),
-        (f"{os.getenv('api_url')}/chamas/fines/{chama_id}", None),
     ]
 
     headers = {
@@ -139,7 +138,6 @@ def access_chama(request, chamaname):
                 "activity": results.get("activity"),
                 "investment_activity": results.get("investment_activity"),
                 "mmf_withdrawal_activity": results.get("mmf_withdrawal_activity"),
-                "fines": results.get("fines"),
                 "fund_performance": results.get("monthly_interests"),
                 "investment_data": results.get("investment_data"),
                 "wallet": results.get("wallet"),
@@ -226,8 +224,8 @@ def access_chama_threads(urls, headers):
             monthly_interests = organise_monthly_performance(
                 results[urls[9][0]]["data"]
             )
-        if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
-            fines = organise_fines(results[urls[10][0]]["data"]["fines"])
+        # if urls[10][0] in results and results[urls[10][0]]["status"] == 200:
+        #     fines = organise_fines(results[urls[10][0]]["data"]["fines"])
 
     # return the processed results chama, transactions, members
     user_profile["profile_image"] = wallet["profile_image"]
@@ -241,7 +239,6 @@ def access_chama_threads(urls, headers):
         "investment_data": investment_data,
         "wallet": wallet,
         "user_profile": user_profile,
-        "fines": fines,
     }
 
 

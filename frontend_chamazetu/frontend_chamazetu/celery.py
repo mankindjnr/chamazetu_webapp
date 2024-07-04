@@ -45,6 +45,11 @@ app.conf.beat_schedule = {
         "task": "member.tasks.calculate_missed_contributions_fines",
         "schedule": crontab(minute="*/10"),
     },
+    # at midnight - fulfill pending withdrawal requests and update the chama account balance as well as the investment account
+    "fulfill_pending_withdrawals": {
+        "task": "manager.tasks.fulfill_pending_withdrawal_requests",
+        "schedule": crontab(minute="*/10"),  # every day at midnight
+    },
 }
 
 app.autodiscover_tasks()

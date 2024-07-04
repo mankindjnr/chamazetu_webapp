@@ -98,6 +98,13 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:fines_tracker' chama.chama_name 'manager' %}">
+          <i class="bi bi-grid"></i>
+          <span>Fines Tracker</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:view_chama_members' chama.chama_name %}">
           <i class="bi bi-grid"></i>
           <span>members list</span> 
@@ -164,7 +171,11 @@
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
+                      {% if chama.today_deposits %}
                       <h6>{{ chama.today_deposits }}</h6>
+                      {% else %}
+                      <h6>0</h6>
+                      {% endif %}
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -251,7 +262,7 @@
                                     </div>
                                     <div class="modal-footer">
                                       <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
-                                      <button type="submit" class="btn btn-outline-success btn-sm">Invest</button>
+                                      <button type="submit" class="btn btn-outline-success btn-sm" onclick="this.disabled=true; this.form.submit();">Invest</button>
                                     </div>
                                     </form>
                                   </div>
@@ -290,7 +301,7 @@
                                     </div>
                                     <div class="modal-footer">
                                       <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
-                                      <button type="submit" class="btn btn-outline-success btn-sm">withdraw</button>
+                                      <button type="submit" class="btn btn-outline-success btn-sm" onclick="this.disabled=true; this.form.submit();">withdraw</button>
                                     </div>
                                     </form>
                                   </div>

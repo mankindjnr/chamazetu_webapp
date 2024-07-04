@@ -118,6 +118,9 @@ class Chama(Base):
     chama_mmf_withdrawals = relationship(
         "ChamaMMFWithdrawal", cascade="all,delete", back_populates="chama"
     )
+    chama_accounts = relationship(
+        "Chama_Account", cascade="all,delete", back_populates="chama"
+    )
 
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     transactions = relationship("Transaction", back_populates="chama")
@@ -212,8 +215,10 @@ class Chama_Account(Base):
     __tablename__ = "chama_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
-    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
     account_balance = Column(Integer, nullable=False)
+
+    chama = relationship("Chama", back_populates="chama_accounts")
 
 
 # this table carries the investments available to chamas
@@ -343,6 +348,8 @@ class ChamaMMFWithdrawal(Base):
     chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
     withdrawal_date = Column(DateTime, nullable=False)
     withdrawal_completed = Column(Boolean, default=False)
+    withdrawal_status = Column(String, nullable=False)
+    fulfilled_date = Column(DateTime, nullable=True)
     chama = relationship("Chama", back_populates="chama_mmf_withdrawals")
 
 
