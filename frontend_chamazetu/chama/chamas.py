@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import timedelta, datetime
-
+from http import HTTPStatus
 from manager.managers import get_user_full_profile
 from .thread_urls import fetch_data
 
@@ -19,7 +19,7 @@ def get_all_chamas(request, role=None):
         f"{os.getenv('api_url')}/chamas/active_accepting_members_chamas"
     )
     chamas = None
-    if chamas_resp.status_code == 200:
+    if chamas_resp.status_code == HTTPStatus.OK:
         chamas = chamas_resp.json()
 
     return render(
@@ -48,8 +48,6 @@ def get_chama(request, chamaid):
         manager_profile = get_user_full_profile(
             "manager", results["public_chama"]["manager_id"]
         )
-
-        # print(chama)
 
         return render(
             request,
@@ -102,6 +100,9 @@ def public_chama_threads(urls):
             mission = results[urls[3][0]]["data"]["mission"]
             vision = results[urls[3][0]]["data"]["vision"]
 
+    print("======public chama=====")
+    print(public_chama)
+
     return {
         "public_chama": public_chama,
         "faqs": faqs,
@@ -113,7 +114,7 @@ def public_chama_threads(urls):
 
 def get_chama_id(chamaname):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/chama_id/{chamaname}")
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
         chama_id = chama["Chama_id"]
         return chama_id
@@ -121,7 +122,7 @@ def get_chama_id(chamaname):
 
 def get_chama_name(chama_id):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/chama_name/{chama_id}")
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
         chama_name = chama["Chama_name"]
         return chama_name
@@ -129,7 +130,7 @@ def get_chama_name(chama_id):
 
 def get_chama_contribution_day(chama_id):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/contribution_day/{chama_id}")
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         contribution_details = resp.json()
         return contribution_details
     return "to_be_set"
@@ -139,7 +140,7 @@ def get_chama_contribution_interval(chama_id):
     resp = requests.get(
         f"{os.getenv('api_url')}/chamas/contribution_interval/{chama_id}"
     )
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         contribution_interval = resp.json()
         return contribution_interval
     return "to_be_set"
@@ -208,7 +209,7 @@ def get_members_daily_contribution_in_given_month(chama_id, prev_4th_contributio
     url = f"{os.getenv('api_url')}/members_tracker/members_daily_monthly_contribution/{chama_id}"
     data = {"contribution_back_date": prev_4th_contribution_date}
     resp = requests.get(url, json=data)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         return resp.json()
 
 
@@ -240,7 +241,7 @@ def fourth_contribution_date_from_the_upcoming(chama_id, interval):
 
 def get_chama_creation_date(chama_id):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/creation_date/{chama_id}")
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
         creation_date = chama["creation_date"]
         return creation_date
@@ -249,7 +250,7 @@ def get_chama_creation_date(chama_id):
 
 def get_chama_start_date(chama_id):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/start_date/{chama_id}")
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
         start_date = chama["start_date"]
         return start_date
@@ -304,9 +305,16 @@ def get_chamas_last_four_contribution_days(chama_id):
 
 
 def get_chama_number_of_members(chama_id):
-    resp = requests.get(f"{os.getenv('api_url')}/chamas/members_count/{chama_id}")
-    if resp.status_code == 200:
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/count_members/{chama_id}")
+    if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
         number_of_members = chama["number_of_members"]
         return number_of_members
+    return 0
+
+
+def get_chama_registration_fee(chama_id):
+    resp = requests.get(f"{os.getenv('api_url')}/chamas/registration_fee/{chama_id}")
+    if resp.status_code == HTTPStatus.OK:
+        return resp.json()["registration_fee"]
     return 0

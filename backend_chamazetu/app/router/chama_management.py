@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
 from sqlalchemy import func, update, and_, table, column
 from typing import List, Union
@@ -250,6 +251,21 @@ async def get_chama_by_name(
     return {"Chama": [chama]}
 
 
+# get chama by id for a logged in member
+@router.get(
+    "/{chama_id}", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp
+)
+async def get_chama_by_name(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return {"Chama": [chama]}
+
+
 # getting the chama for a public user - no authentication required
 # TODO: the table being querries should be chama_blog/details and not chama, description should match in both
 @router.get(
@@ -287,30 +303,35 @@ async def change_chama_status(
     return {"message": "Status updated successfully"}
 
 
-# members can join chamas
+# member_to be added to chama on the member_chama_association table
 @router.post("/join", status_code=status.HTTP_201_CREATED)
 async def join_chama(
-    chama_details: dict = Body(...),
+    member_chama: schemas.JoinChamaBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chamaname = chama_details["chamaname"]
-    num_of_shares = chama_details["num_of_shares"]
-    member_id = current_user.id
+    member_chama = member_chama.dict()
+    chama_id = member_chama["chama_id"]
+    member_id = member_chama["member_id"]
+    num_of_shares = member_chama["num_of_shares"]
 
-    chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
+    try:
+        # Check if the member is already part of the chama
 
-    # Check if the current user is already a member of the chama
-    if current_user in chama.members:
-        raise HTTPException(
-            status_code=400, detail="You are already a member of this chama"
-        )
-
-    chama.members.append(current_user)
-    db.commit()
-    return {"message": f"You have successfully joined {chamaname}"}
+        with db.begin():
+            new_member_chama = models.members_chamas_association.insert().values(
+                chama_id=chama_id,
+                member_id=member_id,
+                num_of_shares=num_of_shares,
+                date_joined=datetime.now(),
+                registration_fee_paid=True,
+            )
+            db.execute(new_member_chama)
+            db.flush()
+        return {"message": "Member added to chama successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to add member to chama")
 
 
 # members add the number of shares they want to have in a chama
@@ -469,6 +490,9 @@ async def update_account_balance(
 async def get_chama_account_balance(
     chama_id: int,
     db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
 ):
     chama_account_balance = (
         db.query(models.Chama_Account)
@@ -488,6 +512,9 @@ async def get_chama_account_balance(
 async def get_today_deposit(
     chama_id: int,
     db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
 ):
     today = datetime.now().date()
     transactions = (
@@ -547,9 +574,45 @@ async def get_chama_contrbution_interval(
     }
 
 
+# get chamas registration fee
+@router.get("/registration_fee/{chama_id}", status_code=status.HTTP_200_OK)
+async def get_chama_registration_fee(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+
+    return {"registration_fee": chama.registration_fee}
+
+
 # count the number of members in a certain chama
 @router.get(
     "/members_count/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_members_count(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
+):
+    chama_members_query = db.query(models.members_chamas_association).filter(
+        models.members_chamas_association.c.chama_id == chama_id
+    )
+    number_of_members = chama_members_query.count()
+    if not chama_members_query:
+        raise HTTPException(
+            status_code=404, detail="could not retrieve chama members count"
+        )
+    return {"number_of_members": number_of_members}
+
+
+@router.get(
+    "/count_members/{chama_id}",
     status_code=status.HTTP_200_OK,
 )
 async def get_chama_members_count(

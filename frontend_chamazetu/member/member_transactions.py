@@ -89,7 +89,7 @@ def direct_deposit_to_chama(request):
 
                 messages.success(
                     request,
-                    f"mpesa stkpush sent to {phone_number} for Ksh: {amount}.",
+                    f"mpesa stkpush sent to 0{phone_number} for Ksh: {amount}.",
                 )
                 return HttpResponseRedirect(
                     reverse(

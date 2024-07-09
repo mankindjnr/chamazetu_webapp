@@ -194,6 +194,9 @@ async def update_investment_account(
 async def get_investment_account_balance(
     chama_id: int,
     db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
 ):
 
     try:
@@ -241,13 +244,16 @@ async def get_investment_account_balance(
 async def get_investments_recent_activity(
     chama_id: int,
     db: Session = Depends(database.get_db),
+    current_user: Union[models.Manager, models.Member] = Depends(
+        oauth2.get_current_user
+    ),
 ):
     try:
         recent_invst_activity = (
             db.query(models.MMF)
             .filter(models.MMF.chama_id == chama_id)
             .order_by(desc(models.MMF.transaction_date))
-            .limit(5)
+            .limit(3)
             .all()
         )
 
@@ -256,7 +262,7 @@ async def get_investments_recent_activity(
             .filter(models.ChamaMMFWithdrawal.chama_id == chama_id)
             .filter(models.ChamaMMFWithdrawal.withdrawal_completed == True)
             .order_by(desc(models.ChamaMMFWithdrawal.withdrawal_date))
-            .limit(5)
+            .limit(3)
             .all()
         )
 

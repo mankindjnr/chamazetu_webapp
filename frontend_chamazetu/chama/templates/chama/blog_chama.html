@@ -33,6 +33,18 @@
                   <input type="text" class="form-control" id="chamaname" name="chamaname" value="{{ chama.chama_name}}" readonly required>
                 </div>
                 <div class="mb-3">
+                  <label for="registration_fee" class="form-label">Registration Fee</label>
+                  <input type="number" class="form-control" id="registration_fee" name="registration_fee" value="{{chama.registration_fee}}" required readonly>
+                  <!-- helper message to the user -->
+                  <div id="shares_num" class="form-text">Amount you have to pay to prior to becoming a member</div>
+                </div>
+                <div class="mb-3">
+                  <label for="phone_number" class="form-label">Phone Number</label>
+                  <input type="number" class="form-control" id="phone_number" name="phone_number" minlength="9" maxlength="9" required>
+                  <!-- helper message to the user -->
+                  <div id="shares_num" class="form-text">Phone number to pay from.</div>
+                </div>
+                <div class="mb-3">
                   <label for="shares" class="form-label">Number of shares</label>
                   <input type="number" class="form-control" id="shares_num" name="shares_num" value="1" min="1" required>
                   <!-- helper message to the user -->
@@ -41,7 +53,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-outline-success btn-sm">Become a member</button>
+              <button type="submit" class="btn btn-outline-success btn-sm">pay and join</button>
             </div>
             </form>
           </div>

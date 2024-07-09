@@ -125,10 +125,39 @@ async def get_user(
     return {"email": current_user.email}
 
 
+#      ======================might switch back to email instead of id=======================
 # get member/manager id by email
-# TODO: might have to repurpose to get managers id by email as well
-@router.get("/{role}/{email}")
+@router.get("/{role}/profile_picture")
 async def get_user_by_email(
+    role: str,
+    db: Session = Depends(get_db),
+    current_user: Union[models.Member, models.Manager] = Depends(
+        oauth2.get_current_user
+    ),
+):
+    print("============profile picture============")
+    user = None
+    if role == "member":
+        print("============member============")
+        print(current_user.id)
+        user = (
+            db.query(models.Member).filter(models.Member.id == current_user.id).first()
+        )
+    elif role == "manager":
+        user = (
+            db.query(models.Manager)
+            .filter(models.Manager.id == current_user.id)
+            .first()
+        )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"User_id": user.id, "profile_picture": user.profile_picture}
+
+
+# get user id
+@router.get("/id/{role}/{email}")
+async def get_user_id_by_email(
     role: str,
     email: str,
     db: Session = Depends(get_db),
@@ -141,7 +170,7 @@ async def get_user_by_email(
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return {"User_id": user.id, "profile_picture": user.profile_picture}
+    return {"User_id": user.id}
 
 
 # get member names by id

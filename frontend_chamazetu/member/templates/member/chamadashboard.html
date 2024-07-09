@@ -32,10 +32,14 @@
         <!-- TODO: see if removing this would be good, only display the amount but deposit funcionality to be kept in main dashboard -->
         <li class="nav-item dropdown">
 
-          <a class="nav-icon">
+          <!-- <a class="nav-icon">
             <button type="button" class="btn btn-dark bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletModal">
               Ksh: {{ wallet.wallet_balance }}
-          </button>
+          </button> -->
+          <!-- Button trigger wallet deposit modal -->
+        <button type="button" class="btn btn-success bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
+          Ksh: {{ wallet.wallet_balance }}
+        </button>
           </a>
 
         </li>
@@ -117,12 +121,12 @@
         </a>
       </li>
 
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
           <span>Daily Performance</span> 
         </a>
-      </li>
+      </li> -->
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:view_chama_members' chama.chama_name %}">
@@ -158,10 +162,10 @@
         {% endif %}
       <!-- end messages -->
       <div class="ml-auto">
-        <!-- Button trigger wallet deposit modal -->
+        <!-- Button trigger wallet deposit modal
         <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
           Deposit from wallet
-        </button>
+        </button> -->
         <!-- wallet deposit Modal -->
         {% include 'member/modals/wallet_deposit_modal.html' %}
 

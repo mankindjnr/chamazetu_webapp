@@ -31,7 +31,6 @@ async def generate_access_token():
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
         response.raise_for_status()  # raise exception for non-2xx status codes
-        print("===========past raise status===========")
         return response.json()["access_token"]
 
 
@@ -51,6 +50,11 @@ async def stk_push(
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
     password, timestamp = generate_password()
+    callback_url = (
+        "https://chamazetu.com/callback"
+        if push_data.description != "Registration"
+        else "https://chamazetu.com/callback/registration"
+    )
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -69,23 +73,19 @@ async def stk_push(
         "PartyA": phone_number,
         "PartyB": shortcode,
         "PhoneNumber": phone_number,
-        "CallBackURL": "https://chamazetu.com/callback",
+        "CallBackURL": callback_url,
         "AccountReference": recipient,
         "TransactionDesc": description,
     }
 
     async with httpx.AsyncClient() as client:
-        print("===========stk push request============")
         response = await client.post(url, headers=headers, json=payload)
-        print("===========stk push response============")
-        print(response.json())
         response.raise_for_status()  # raise exception for non-2xx status codes
         return response.json()
 
 
 @router.get("/status/{checkout_request_id}")
 async def stk_push_status(checkout_request_id: str):
-    print("---------stk push status---------")
     query_url = os.getenv("STK_PUSH_QUERY_URL")
 
     password, timestamp = generate_password()
@@ -105,10 +105,6 @@ async def stk_push_status(checkout_request_id: str):
         "Timestamp": timestamp,
         "CheckoutRequestID": checkout_request_id,
     }
-
-    print("---status---")
-    print(query_headers)
-    print(query_payload)
 
     try:
         async with httpx.AsyncClient() as client:

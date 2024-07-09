@@ -1,8 +1,14 @@
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from functools import wraps
+import asyncio
 
 """
 This decorator checks if the access token is in the cookies
+
+modify your tokens_in_cookies decorator to support async views. Here's how you can do it:
+Check if the decorated function is a coroutine.
+If it is, await the coroutine before returning the response.
 """
 
 
@@ -15,6 +21,22 @@ def tokens_in_cookies(role):
             if not access_token or not refresh_token:
                 return HttpResponseRedirect(reverse("chama:signin", args=[role]))
             response = func(request, *args, **kwargs)
+            return response
+
+        return wrapper
+
+    return decorator
+
+
+def async_tokens_in_cookies(role):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(request, *args, **kwargs):
+            access_token = request.COOKIES.get(f"{role}_access_token")
+            refresh_token = request.COOKIES.get(f"{role}_refresh_token")
+            if not access_token or not refresh_token:
+                return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+            response = await func(request, *args, **kwargs)
             return response
 
         return wrapper

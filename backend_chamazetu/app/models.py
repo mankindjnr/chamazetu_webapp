@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     Table,
     Float,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
@@ -16,9 +17,14 @@ from datetime import datetime, timezone
 members_chamas_association = Table(
     "members_chamas",
     Base.metadata,
-    Column("member_id", Integer, ForeignKey("members.id")),
-    Column("chama_id", Integer, ForeignKey("chamas.id")),
-    Column("num_of_shares", Integer, nullable=False, default=1),
+    Column(
+        "member_id", Integer, ForeignKey("members.id"), primary_key=True, index=True
+    ),
+    Column("chama_id", Integer, ForeignKey("chamas.id"), primary_key=True, index=True),
+    Column("num_of_shares", Integer, nullable=False, default=1, index=True),
+    Column("date_joined", DateTime, default=datetime.now(timezone.utc)),
+    Column("registration_fee_paid", Boolean, default=False),
+    UniqueConstraint("member_id", "chama_id", name="unique_member_chama"),
 )
 
 # Define the many-to-many relationship table between chamas and investments one chama can have many investments and one investment can belong to many chamas
@@ -209,6 +215,22 @@ class Transaction(Base):
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
     member_id = Column(Integer, ForeignKey("members.id"))
     member = relationship("Member", back_populates="transactions")
+
+
+class CallbackData(Base):
+    __tablename__ = "callback_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    MerchantRequestID = Column(String, nullable=False)
+    CheckoutRequestID = Column(String, nullable=False)
+    ResultCode = Column(Integer, nullable=False)
+    ResultDesc = Column(String, nullable=False)
+    Amount = Column(Integer, nullable=False)
+    MpesaReceiptNumber = Column(String, nullable=False)
+    TransactionDate = Column(DateTime, nullable=False)
+    PhoneNumber = Column(String(12), nullable=False)
+    Purpose = Column(String, nullable=False)
+    Status = Column(String, nullable=False)
 
 
 class Chama_Account(Base):
