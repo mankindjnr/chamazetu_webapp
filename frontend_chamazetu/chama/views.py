@@ -21,7 +21,7 @@ from .usermanagement import (
 )
 
 from .chamas import get_all_chamas, get_chama
-from .callback import call_back_url
+from .callback import call_back, registration_call_back
 
 
 # Create your views here.

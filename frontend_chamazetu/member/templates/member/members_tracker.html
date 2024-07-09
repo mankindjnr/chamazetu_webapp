@@ -180,47 +180,6 @@
               </div>
             </div><!-- End members tracker performance -->
 
-            <!-- all fines table -->
-
-            <div class="card-body">
-              <h5 class="card-title">All Incurred Fines <span>|Ksh</span></h5>
-              <div>
-                <hr>
-              </div>
-
-              <table class="table table-success table-striped-columns">
-                <thead>
-                  <tr>
-                    <th scope="col">Members</th>
-                    <th scope="col">Shares</th>
-                    <th scope="col">Fine amount</th>
-                    <th scope="col">Reason</th>
-                    <th scope="col">Fine Date</th>
-                    <th scope="col">Expected Amount</th>
-                    <th scope="col">Cleared</th>
-                    <th scope="col">Paid On</th> <!-- TODO: add a button to clear fine -->
-                  </tr>
-                </thead>
-                {% if fines %}
-                <tbody>
-                  {% for fine in fines %}
-                  <tr>
-                    <th scope="row">{{ fine.member_name }}</th>
-                    <td>{{ fine.num_of_shares }}</td>
-                    <td>{{ fine.fine }}</td>
-                    <td>{{ fine.fine_reason }} </td>
-                    <td>{{ fine.fine_date }} </td>
-                    <td>{{ fine.total_expected_amount }} </td>
-                    <td>{{ fine.is_paid }} </td>
-                    <td>{{ fine.paid_date }} </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-                {% endif %}
-              </table>
-
-            </div>
-
             <!--  -->
 
           </div>

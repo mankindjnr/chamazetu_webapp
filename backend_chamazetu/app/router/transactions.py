@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import and_, func, desc
 from uuid import uuid4
 from typing import List
@@ -205,17 +205,15 @@ def generateWalletNumber(member_id):
 
 # fetch transactions for a certain chama
 @router.get(
-    "/{chamaname}",
+    "/recent/{chama_id}",
     status_code=status.HTTP_200_OK,
     response_model=List[schemas.RecentTransactionResp],
 )
 async def get_transactions(
-    chama_id: dict = Body(...),
+    chama_id: int,
     db: Session = Depends(database.get_db),
 ):
     try:
-        chama_id = chama_id["chama_id"]
-
         transactions = (
             db.query(models.Transaction)
             .filter(
@@ -225,7 +223,7 @@ async def get_transactions(
                 )
             )
             .order_by(desc(models.Transaction.date_of_transaction))
-            .limit(5)
+            .limit(3)
             .all()
         )
 
@@ -273,3 +271,55 @@ async def get_transactions_for_members(
         raise HTTPException(
             status_code=400, detail="Failed to fetch members transactions"
         )
+
+
+# above route optimized
+@router.get("/members/{chama_id}", status_code=status.HTTP_200_OK)
+async def get_transactions_for_members(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    try:
+        date_of_transaction = (
+            get_sunday_date().date()
+        )  # Assuming get_sunday_date() returns a datetime object
+
+        # Optimized query to fetch transactions for all members after the specified date
+        transactions = (
+            db.query(models.Transaction)
+            .filter(
+                models.Transaction.chama_id == chama_id,
+                func.date(models.Transaction.date_of_transaction)
+                >= date_of_transaction,
+            )
+            .all()
+        )
+
+        # Organizing transactions by member_id
+        members_transactions = {}
+        for transaction in transactions:
+            if transaction.member_id not in members_transactions:
+                members_transactions[transaction.member_id] = []
+            members_transactions[transaction.member_id].append(transaction)
+
+        return members_transactions
+
+    except Exception as e:
+        print("------extracting members transactions failed--------")
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to fetch members transactions"
+        )
+
+
+def get_sunday_date():
+    today = datetime.now()
+    # calculating the number of days to subtract to get the first day of the week
+    days_to_subtract = (today.weekday() + 1) % 7
+    # subtracting the days to get the first day of the week
+    sunday_date = today - timedelta(days=days_to_subtract)
+    sunday_date = sunday_date.replace(hour=0, minute=0, second=0, microsecond=0)
+    print("------sunday date--------")
+    print(sunday_date)
+    return sunday_date

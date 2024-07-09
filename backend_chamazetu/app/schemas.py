@@ -1,6 +1,6 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Literal
 from pydantic.types import conint
 from decouple import config
 
@@ -201,6 +201,7 @@ class TransactionBase(BaseModel):
         orm_mode = True
         # from_attributes = True
 
+
 class DirectTransactionBase(BaseModel):
     amount: int
     member_id: int
@@ -336,6 +337,37 @@ class MemberSharesBase(BaseModel):
 
 class MemberSharesResp(BaseModel):
     member_expected_contribution: int
+
+    class Config:
+        orm_mode = True
+
+
+class ChamaMembershipBase(BaseModel):
+    chama_id: int
+    member_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class ChamaMembershipResp(BaseModel):
+    is_member: bool
+
+    class Config:
+        orm_mode = True
+
+
+class JoinChamaBase(BaseModel):
+    chama_id: int
+    member_id: int
+    num_of_shares: int
+
+    class Config:
+        orm_mode = True
+
+
+class UpdateCallbackData(BaseModel):
+    checkoutid: str
 
     class Config:
         orm_mode = True
@@ -563,25 +595,30 @@ class StkPushStatusBase(BaseModel):
         from_attributes = True
 
 
-class CallbackData(BaseModel):
-    Body: str
-    TransactionType: str
-    TransID: str
-    TransTime: str
-    TransAmount: str
-    BusinessShortCode: str
-    BillRefNumber: str
-    InvoiceNumber: str
-    OrgAccountBalance: str
-    ThirdPartyTransID: str
-    MSISDN: str
-    FirstName: str
-    MiddleName: str
-    LastName: str
+class CallbackDataBase(BaseModel):
+    MerchantRequestID: str
+    CheckoutRequestID: str
+    ResultCode: int
+    ResultDesc: str
+    Amount: int
+    MpesaReceiptNumber: str
+    TransactionDate: datetime
+    PhoneNumber: str
 
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+class MpesaResponse(BaseModel):
+    MerchantRequestID: str = Field(..., alias="MerchantRequestID")
+    CheckoutRequestID: str = Field(..., alias="CheckoutRequestID")
+    ResultCode: int = Field(..., alias="ResultCode")
+    ResultDesc: str = Field(..., alias="ResultDesc")
+    Amount: float = Field(..., alias="Amount")
+    MpesaReceiptNumber: str = Field(..., alias="MpesaReceiptNumber")
+    TransactionDate: int = Field(..., alias="TransactionDate")
+    PhoneNumber: int = Field(..., alias="PhoneNumber")
 
 
 # =========== fine ==============

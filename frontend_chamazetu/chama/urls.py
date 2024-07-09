@@ -19,6 +19,11 @@ urlpatterns = [
     path("chamas", views.get_all_chamas, name="chamas"),
     path("chamas/<str:role>", views.get_all_chamas, name="chamas"),
     path("chama/<int:chamaid>", views.get_chama, name="chama"),
-    path("callback", views.call_back_url, name="callback"),
+    path("callback", views.call_back, name="callback"),
+    path(
+        "callback/registration",
+        views.registration_call_back,
+        name="registration_callback",
+    ),
     path("join_newsletter", views.join_newsletter, name="join_newsletter"),
 ]

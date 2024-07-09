@@ -9,7 +9,11 @@ from .members import (
     get_wallet_balance,
     get_member_expected_contribution,
     get_member_contribution_so_far,
+    get_user_email,
+    get_user_full_name,
 )
+
+from chama.tasks import sending_email
 
 load_dotenv()
 
@@ -338,3 +342,94 @@ def member_has_fines_or_missed_contributions(member_id, chama_id):
         print(has_fines)
         return has_fines
     return False
+
+
+# check on the status of the registration fee payment
+def registration_fee_status(
+    checkoutrequestid,
+):
+    time.sleep(60)
+    for _ in range(3):
+        try:
+            response = requests.get(
+                f"{os.getenv('api_url')}/request/status/{checkoutrequestid}",
+            )
+            if response.status_code == HTTPStatus.OK:
+                if response.json()["queryResponse"]["ResultCode"] == "0":
+                    return True
+                else:
+                    return False
+            else:
+                time.sleep(30)
+        except Exception as e:
+            try:
+                self.retry(exc=e, countdown=30)
+            except MaxRetriesExceededError:
+                raise Exception("Max retries exceeded")
+
+
+# this will call the backend with member data to add them to chama if the payment is successful
+@shared_task(bind=True, max_retries=3, default_retry_delay=40)
+def add_member_to_chama(
+    self, chama_id, member_id, num_of_shares, registration_fee, checkoutid
+):
+    try:
+        if registration_fee_status(checkoutid):
+            # call a bg task to update the call back data from pending to success
+            update_pending_callback_data.delay(checkoutid)
+            # call the backend to add the member to the chama
+            url = f"{os.getenv('api_url')}/chamas/join"
+            data = {
+                "chama_id": chama_id,
+                "member_id": member_id,
+                "num_of_shares": num_of_shares,
+            }
+
+            response = requests.post(url, json=data)
+            if response.status_code == HTTPStatus.CREATED:
+                pass
+                # send_email_to_new_member(member_id, chama_id) - to the member login page
+                send_email_to_new_chama_member.delay(member_id, chama_id)
+                # bg task to deposit the registration fee to the chama account minus 9.4% transaction fee
+                # TODO: call another bg task to update chamazetu accounts with the 9.4% transaction fee - business account
+                amount = registration_fee - (0.094 * registration_fee)
+                update_chama_account_balance.delay(chama_id, amount, "deposit")
+            else:
+                # if the request was unsuccessful, retry the task
+                raise Exception("Failed to add member to chama")
+    except Exception as e:
+        try:
+            self.retry(exc=e)
+        except MaxRetriesExceededError:
+            raise Exception("Max retries exceeded")
+
+
+@shared_task
+def update_pending_callback_data(checkoutid):
+    url = f"{os.getenv('api_url')}/callback/update_pending_callback_data"
+    data = {"checkoutid": checkoutid}
+    response = requests.put(url, json=data)
+    return None
+
+
+@shared_task
+def send_email_to_new_chama_member(member_id, chama_id):
+    email = get_user_email("member", member_id)
+    user_name = get_user_full_name("member", member_id)
+    if email:
+        direct_to_page = "https://chamazetu.com/signin/member"
+        mail_subject = "You have successfully joined a chama"
+        message = render_to_string(
+            "chama/joinedChamaSuccess.html",
+            {
+                "user": email,
+                "user_name": user_name,
+                "go_to_page": direct_to_page,
+            },
+        )
+
+        from_email = settings.EMAIL_HOST_USER
+        to_email = email
+
+        sending_email.delay(mail_subject, message, from_email, to_email)
+    return None

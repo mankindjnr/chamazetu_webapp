@@ -56,6 +56,9 @@ async def get_member_shares(
         member_id = shares_dict["member_id"]
 
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
         chama_share_price = chama.contribution_amount
 
         member_shares = (
@@ -68,6 +71,9 @@ async def get_member_shares(
             )
             .first()
         )
+
+        if not member_shares:
+            raise HTTPException(status_code=404, detail="Member shares not found")
 
         member_expected_contribution = chama_share_price * member_shares.num_of_shares
 
@@ -97,12 +103,13 @@ async def get_member_contribution_so_far(
         member_id = member_dict["member_id"]
         previous_contribution_date = datetime.strptime(
             member_dict["previous_contribution_date"], "%d-%m-%Y"
-        ).strftime("%Y-%m-%d")
+        ).date()
         upcoming_contribution_date = datetime.strptime(
             member_dict["upcoming_contribution_date"], "%d-%m-%Y"
-        ).strftime("%Y-%m-%d")
-        member_transactions = (
-            db.query(models.Transaction)
+        ).date()
+
+        member_contribution = (
+            db.query(func.sum(models.Transaction.amount))
             .filter(
                 and_(
                     models.Transaction.chama_id == chama_id,
@@ -116,13 +123,11 @@ async def get_member_contribution_so_far(
                     <= upcoming_contribution_date,
                 )
             )
-            .order_by(desc(models.Transaction.date_of_transaction))
-            .all()
+            .scalar()
         )
 
-        member_contribution = 0
-        for transaction in member_transactions:
-            member_contribution += transaction.amount
+        if not member_contribution:
+            member_contribution = 0
 
         return {"member_contribution": member_contribution}
 
@@ -472,3 +477,40 @@ async def get_total_fines(
         print("===========error getting total fines===========")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to get total fines")
+
+
+# check if a member is already joined a chama  using the chama id and member id and the members_chamas_association table
+@router.get(
+    "/member_in_chama",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.ChamaMembershipResp,
+)
+async def check_chama_membership(
+    chama_data: schemas.ChamaMembershipBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_dict = chama_data.dict()
+        chama_id = chama_dict["chama_id"]
+        member_id = chama_dict["member_id"]
+
+        chama_membership = (
+            db.query(models.members_chamas_association)
+            .filter(
+                and_(
+                    models.members_chamas_association.c.chama_id == chama_id,
+                    models.members_chamas_association.c.member_id == member_id,
+                )
+            )
+            .first()
+        )
+
+        if not chama_membership:
+            return {"is_member": False}
+
+        return {"is_member": True}
+
+    except Exception as e:
+        print("===========error checking chama membership===========")
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to check chama membership")

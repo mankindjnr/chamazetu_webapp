@@ -3,7 +3,10 @@ from dotenv import load_dotenv
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from functools import wraps
+from asgiref.sync import sync_to_async
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+import aiohttp
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -74,6 +77,47 @@ def refresh_token(request, role):
         return HttpResponseRedirect(reverse("chama:signin", args=[role]))
 
 
+async def refresh_token_async(request, role):
+    print("---------refresh_token-PATH--------")
+    print(request.path)  # /manager/chama/vuka
+    try:
+        refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
+        print("---------refreshing_token---------")
+        decoded_token = jwt.decode(
+            refresh_token, os.getenv("JWT_SECRET"), algorithms=["HS256"]
+        )
+        # If the refresh token is valid, generate a new access token
+        email_claim = decoded_token.get("sub")
+        data = {
+            "username": email_claim,
+            "role": role,
+        }
+
+        headers = {"Content-type": "application/json"}
+        refresh_access = await sync_to_async(requests.post)(
+            f"{os.getenv('api_url')}/auth/refresh",
+            data=json.dumps(data),
+            headers=headers,
+        )
+        refresh_data = refresh_access.json()
+        new_access_token = refresh_data["new_access_token"]
+        response = HttpResponseRedirect(request.path)
+        response.set_cookie(
+            f"{role}_access_token",
+            f"Bearer {new_access_token}",
+            secure=True,
+            httponly=True,
+            samesite="Strict",
+        )
+        return response
+    except (InvalidTokenError, ExpiredSignatureError) as e:
+        print("---------invalid_token---------")
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+    except Exception as e:
+        print("---------error---------")
+        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+
+
 def get_user_email(role, id):
     url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
     resp = requests.get(url)
@@ -93,12 +137,6 @@ def signin(request, role):
 
         # TODO: check if the user is already logged in and redirect to the dashboard or # remember me
         # TODO: if the user email is not the same as the payload of the token, signout the other user in the background
-        # print("---------signin---path------")
-        # if request.path == "/signin/manager":
-        #     if request.COOKIES.get("manager_access_token"):
-        #         if
-        # TODO: include a try and retry mechanism for the auth route call
-        # send the data to the auth server for verification and login
         response = requests.post(
             f"{os.getenv('api_url')}/auth/{role}s/login/", data=data
         )

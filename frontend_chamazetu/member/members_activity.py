@@ -53,7 +53,6 @@ def members_tracker(request, chama_name):
         chama_id,
     )
     chama_days_tracker = chama_days_contribution_tracker(request, chama_id, interval)
-    fines_table = get_fines_data(chama_id)
     return render(
         request,
         "member/members_tracker.html",
@@ -64,7 +63,6 @@ def members_tracker(request, chama_name):
             "dates": monthly_tracker_data["dates"],
             "members_tracker": chama_days_tracker["members_tracker"],
             "contribution_dates": chama_days_tracker["latest_four_dates"],
-            "fines": fines_table,
         },
     )
 

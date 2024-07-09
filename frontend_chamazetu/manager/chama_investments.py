@@ -13,7 +13,7 @@ from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_id
-from member.member_chama import access_chama_threads, recent_transactions
+from member.member_chama import access_chama_async, recent_transactions
 from .tasks import update_investment_account, add_chama_withdrawal_request
 from member.tasks import update_chama_account_balance
 

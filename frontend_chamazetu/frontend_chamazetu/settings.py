@@ -207,22 +207,22 @@ LOGGING = {
     },
     "loggers": {
         "django": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "level": "DEBUG",
             "propagate": True,
         },
         "chama": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "level": "DEBUG",
             "propagate": True,
         },
         "manager": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "level": "DEBUG",
             "propagate": True,
         },
         "member": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "level": "DEBUG",
             "propagate": True,
         },

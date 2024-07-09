@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib import messages
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
+from http import HTTPStatus
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -24,7 +25,7 @@ def get_member_recent_transactions(request):
     }
     response = requests.get(url, headers=headers)
 
-    if response.status_code == 200:
+    if response.status_code == HTTPStatus.OK:
         member_recent_transactions = response.json()
         return member_recent_transactions
 
@@ -39,7 +40,7 @@ def get_wallet_balance(request):
     }
 
     response = requests.get(url, headers=headers)
-    if response.status_code == 200:
+    if response.status_code == HTTPStatus.OK:
         wallet_balance = response.json()["wallet_balance"]
         return wallet_balance
     else:
@@ -50,15 +51,15 @@ def get_member_expected_contribution(member_id, chama_id):
     url = f"{os.getenv('api_url')}/members/expected_contribution"
     data = {"member_id": member_id, "chama_id": chama_id}
     resp = requests.get(url, json=data)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         return resp.json()["member_expected_contribution"]
     return None
 
 
 def get_user_id(role, email):
-    url = f"{os.getenv('api_url')}/users/{role}/{email}"
+    url = f"{os.getenv('api_url')}/users/id/{role}/{email}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         user_id = user["User_id"]
         return user_id
@@ -68,7 +69,7 @@ def get_user_id(role, email):
 def get_user_full_name(role, id):
     url = f"{os.getenv('api_url')}/users/names/{role}/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         full_name = f"{user['first_name']} {user['last_name']}"
         return full_name
@@ -78,7 +79,7 @@ def get_user_full_name(role, id):
 def get_user_email(role, id):
     url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         email = user["email"]
         return email
@@ -88,7 +89,7 @@ def get_user_email(role, id):
 def get_user_phone_number(role, id):
     url = f"{os.getenv('api_url')}/users/phone_number/{role}/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         phone_number = user["phone_number"]
         return phone_number
@@ -98,7 +99,7 @@ def get_user_phone_number(role, id):
 def get_user_full_profile(role, id):
     url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         return user
     return None
@@ -107,7 +108,7 @@ def get_user_full_profile(role, id):
 def get_user_profile_image(role, id):
     url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         return user.get("profile_image")
     return None
@@ -131,7 +132,15 @@ def get_member_contribution_so_far(chama_id, member_id):
     resp = requests.get(
         f"{os.getenv('api_url')}/members/member_contribution_so_far", json=data
     )
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         return resp.json()["member_contribution"]
 
     return 0
+
+
+def member_already_in_chama(chama_id, member_id):
+    data = {"chama_id": chama_id, "member_id": member_id}
+    resp = requests.get(f"{os.getenv('api_url')}/members/member_in_chama", json=data)
+    if resp.status_code == HTTPStatus.OK:
+        return resp.json()["is_member"]
+    return False

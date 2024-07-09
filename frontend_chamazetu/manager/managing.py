@@ -6,14 +6,18 @@ from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
 from datetime import datetime
+import asyncio, aiohttp
 
-from chama.decorate.tokens_in_cookies import tokens_in_cookies
-from chama.decorate.validate_refresh_token import validate_and_refresh_token
+from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
+from chama.decorate.validate_refresh_token import (
+    validate_and_refresh_token,
+    async_validate_and_refresh_token,
+)
 from chama.rawsql import execute_sql
-from chama.thread_urls import fetch_data
+from chama.thread_urls import fetch_chama_data, fetch_data
 from chama.chamas import get_chama_id, get_chama_number_of_members
 from member.member_chama import (
-    access_chama_threads,
+    access_chama_async,
     recent_transactions,
     chama_details_organised,
     organise_mmf_withdrawal_activity,
@@ -105,7 +109,8 @@ def manager_dashboard_threads(urls, headers):
         updates_and_features = results[urls[1][0]]["data"]
     if results[urls[2][0]]["status"] == 200:
         profile_picture = results[urls[2][0]]["data"]
-
+    print("===================================")
+    print(chamas)
     return {
         "chamas": chamas,
         "updates_and_features": updates_and_features,
@@ -291,9 +296,9 @@ def first_contribution_day_valid(
 
 
 # it gets the one chama details and displays them
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
-def chama(request, key):
+@async_tokens_in_cookies("manager")
+@async_validate_and_refresh_token("manager")
+async def chama(request, key):
     # get the chama details
     chama_name = key
     chama_id = get_chama_id(chama_name)
@@ -326,13 +331,13 @@ def chama(request, key):
             {"limit": 3},
         ),
         (f"{os.getenv('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
-        (f"{os.getenv('api_url')}/managers/profile_picture", {}),
-        (f"{os.getenv('api_url')}/investments/chamas/available_investments", {}),
-        (f"{os.getenv('api_url')}/investments/chamas/in-house_mmf", {}),
+        (f"{os.getenv('api_url')}/managers/profile_picture", None),
+        (f"{os.getenv('api_url')}/investments/chamas/available_investments", None),
+        (f"{os.getenv('api_url')}/investments/chamas/in-house_mmf", None),
     )
     # ===================================
 
-    results = chama_threads(urls, headers)
+    results = await chama_async(urls, headers)
 
     if results["chama"]:
         return render(
@@ -356,28 +361,18 @@ def chama(request, key):
         return redirect(reverse("manager:dashboard"))
 
 
-def chama_threads(urls, headers):
+async def chama_async(urls, headers):
     results = {}
-    threads = []
 
-    for url, payload in urls:
-        if payload:
-            thread = threading.Thread(
-                target=fetch_data, args=(url, results, payload, headers)
-            )
-        elif is_empty_dict(payload):
-            thread = threading.Thread(
-                target=fetch_data, args=(url, results, {}, headers)
-            )
-        else:
-            thread = threading.Thread(target=fetch_data, args=(url, results))
+    async with aiohttp.ClientSession(headers=headers) as session:
+        tasks = []
+        for url, payload in urls:
+            if payload:
+                tasks.append(fetch_chama_data(session, url, results, data=payload))
+            else:
+                tasks.append(fetch_chama_data(session, url, results))
 
-        threads.append(thread)
-        thread.start()
-
-    # wait for all threads to finish
-    for thread in threads:
-        thread.join()
+        await asyncio.gather(*tasks)
 
     chama = None
     recent_activity = []
