@@ -249,8 +249,8 @@
                                   <!--child--><span class="text-danger small fw-bold">Ksh: {{ investment_data.daily_interest }} </span>
                               </div>
                               <div class="text-end">
-                                  <!--head--><span class="text-muted small">Int rate (last 24hrs)</span><br>
-                                  <!--child--><span class="text-danger small fw-bold">{{ investment_data.investment_rate }} </span>
+                                  <!--head--><span class="text-muted small">Interest rate</span><br>
+                                  <!--child--><span class="text-danger small fw-bold">{{ investment_data.investment_rate }} %</span>
                               </div>
                           </div>
                           <hr>
@@ -291,7 +291,7 @@
                       <tr>
                         <th scope="row">{{ transaction.member_name }}</th>
                         <td>{{ transaction.expected_contribution }}</td>
-                        <td>{{ transaction.member_contribution_so_far }}</td>
+                        <td>{{ transaction.contribution_so_far }}</td>
                         <td>{{ transaction.Sunday }} </td>
                         <td>{{ transaction.Monday }} </td>
                         <td>{{ transaction.Tuesday }} </td>
@@ -452,6 +452,7 @@
     }
   });
   </script>
+  
 
 
  {% endblock %}

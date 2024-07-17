@@ -93,9 +93,7 @@ async def login(
         data={"sub": user.email, "role": "manager"}
     )
 
-    print("----access payload")
     payload = jwt.decode(access_token, os.getenv("JWT_SECRET"), algorithms="HS256")
-    print(payload)
 
     return {
         "access_token": access_token,
@@ -107,8 +105,9 @@ async def login(
 @router.post("/refresh", response_model=schemas.refreshedToken)
 async def new_access_token(
     token_data: schemas.TokenData = Body(...),
-    # current_user: models.Member = Depends(oauth2.get_current_user),
 ):
+
+    print("==========refreshes*****************")
     try:
         logging.info(f"token_data: {token_data}")
         new_access_token = await oauth2.create_access_token(
@@ -117,6 +116,24 @@ async def new_access_token(
         return {"new_access_token": new_access_token, "refreshed_token_type": "bearer"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# check if a token is valid
+@router.post("/isTokenValid", response_model=schemas.TokenData)
+async def check_token(
+    token_data: schemas.receivedToken = Body(...),
+):
+    print("==========check token*****************")
+    try:
+        payload = jwt.decode(
+            token_data.token, os.getenv("JWT_SECRET"), algorithms="HS256"
+        )
+        return True
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# whenthe token is invalid or expired the route above will raise an exception
 
 
 # this is for logout, currently not working but everything else is working

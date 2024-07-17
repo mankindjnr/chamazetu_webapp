@@ -11,7 +11,15 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime, timezone
+from datetime import datetime
+from pytz import timezone
+
+nairobi_tz = timezone("Africa/Nairobi")
+
+
+def nairobi_now():
+    return datetime.now(nairobi_tz).replace(tzinfo=None)
+
 
 # Define the many-to-many relationship table between members and chamas
 members_chamas_association = Table(
@@ -22,7 +30,7 @@ members_chamas_association = Table(
     ),
     Column("chama_id", Integer, ForeignKey("chamas.id"), primary_key=True, index=True),
     Column("num_of_shares", Integer, nullable=False, default=1, index=True),
-    Column("date_joined", DateTime, default=datetime.now(timezone.utc)),
+    Column("date_joined", DateTime, default=nairobi_now),
     Column("registration_fee_paid", Boolean, default=False),
     UniqueConstraint("member_id", "chama_id", name="unique_member_chama"),
 )
@@ -52,11 +60,11 @@ class Member(Base):
     profile_picture = Column(String, nullable=True)
 
     password = Column(String, nullable=False)
-    date_joined = Column(DateTime, default=datetime.now(timezone.utc))
+    date_joined = Column(DateTime, default=nairobi_now)
     updated_at = Column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=nairobi_now,
+        onupdate=nairobi_now,
     )
     is_active = Column(Boolean, default=True)
     is_member = Column(Boolean, default=True)
@@ -86,14 +94,14 @@ class Chama(Base):
     chama_type = Column(String, nullable=False)  # investment, savings, lending
     num_of_members_allowed = Column(String, nullable=False)
     description = Column(String(500), nullable=False)
-    date_created = Column(DateTime, default=datetime.now(timezone.utc))
+    date_created = Column(DateTime, default=nairobi_now)
     updated_at = Column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=nairobi_now,
+        onupdate=nairobi_now,
     )
     registration_fee = Column(Integer, nullable=False)
-    contribution_amount = Column(Integer, nullable=False)
+    contribution_amount = Column(Integer, index=True, nullable=False)
     contribution_interval = Column(
         String, nullable=False
     )  # daily, weekly, monthly, custom
@@ -113,7 +121,7 @@ class Chama(Base):
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
     account_name = Column(String, nullable=False)
     category = Column(String, nullable=False)  # private or public onlyy
-    fine_per_share = Column(Integer, nullable=False)
+    fine_per_share = Column(Integer, index=True, nullable=False)
 
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
@@ -171,11 +179,11 @@ class Manager(Base):
     linkedin = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
 
-    date_joined = Column(DateTime, default=datetime.now(timezone.utc))
+    date_joined = Column(DateTime, default=nairobi_now)
     updated_at = Column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=nairobi_now,
+        onupdate=nairobi_now,
     )
     is_active = Column(Boolean, default=True)
     is_manager = Column(Boolean, default=True)
@@ -191,11 +199,11 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
     phone_number = Column(String(12), nullable=False)
-    date_of_transaction = Column(DateTime, default=datetime.now(timezone.utc))
+    date_of_transaction = Column(DateTime, default=nairobi_now)
     updated_at = Column(
         DateTime,
-        default=datetime.now(timezone.utc),
-        onupdate=datetime.now(timezone.utc),
+        default=nairobi_now,
+        onupdate=nairobi_now,
     )
     transaction_completed = Column(Boolean, default=False)
     transaction_code = Column(
@@ -260,7 +268,7 @@ class Available_Investment(Base):
         String, nullable=False
     )  # days, weeks, months, years or N/A
     investment_rate = Column(Float, nullable=False)  # interest rate
-    investment_start_date = Column(DateTime, default=datetime.now(timezone.utc))
+    investment_start_date = Column(DateTime, default=nairobi_now)
     investment_return = Column(
         Float, nullable=False
     )  # amt earned during the invest period - the interests of this investment accumulated so far. if paid, clear to zero, store monthly records - investment tracker
@@ -302,7 +310,7 @@ class Daily_Interest(Base):
     id = Column(Integer, primary_key=True, index=True)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     interest_earned = Column(Float, nullable=False)
-    date_earned = Column(DateTime, default=datetime.now(timezone.utc))
+    date_earned = Column(DateTime, default=nairobi_now)
 
     chama = relationship("Chama", back_populates="daily_interest")
 
@@ -329,7 +337,7 @@ class MMF(Base):
     amount = Column(Integer, nullable=False)
     transaction_type = Column(String, nullable=False)
     current_int_rate = Column(Float, nullable=False)
-    transaction_date = Column(DateTime, default=datetime.now(timezone.utc))
+    transaction_date = Column(DateTime, default=nairobi_now)
     # one to many relationship - one chama can make multiple mmf transactions
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="money_market_fund")
@@ -342,7 +350,7 @@ class Wallet_Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     amount = Column(Integer, nullable=False)
     transaction_type = Column(String, nullable=False)  # moved, deposited, withdrawn
-    transaction_date = Column(DateTime, default=datetime.now(timezone.utc))
+    transaction_date = Column(DateTime, default=nairobi_now)
     transaction_completed = Column(Boolean, default=False)
     transaction_code = Column(String, nullable=False)
     transaction_destination = Column(Integer, nullable=False)  # wallet, chama
@@ -357,7 +365,7 @@ class ChamaContributionDay(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
-    next_contribution_date = Column(DateTime, nullable=False)
+    next_contribution_date = Column(DateTime, default=nairobi_now, nullable=False)
     chama = relationship("Chama", back_populates="chama_contribution_day")
 
 
@@ -431,7 +439,7 @@ class Manager_Update_Feature(Base):
     id = Column(Integer, primary_key=True, index=True)
     feature_title = Column(String(40), nullable=False)
     description = Column(String(250), nullable=False)
-    feature_date = Column(DateTime, default=datetime.now(timezone.utc))
+    feature_date = Column(DateTime, default=nairobi_now)
 
 
 class Member_Update_Features(Base):
@@ -440,7 +448,7 @@ class Member_Update_Features(Base):
     id = Column(Integer, primary_key=True, index=True)
     feature_title = Column(String(40), nullable=False)
     description = Column(String(250), nullable=False)
-    feature_date = Column(DateTime, default=datetime.now(timezone.utc))
+    feature_date = Column(DateTime, default=nairobi_now)
 
 
 class NewsletterSubscription(Base):
@@ -448,6 +456,6 @@ class NewsletterSubscription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False)
-    date_subscribed = Column(DateTime, default=datetime.now(timezone.utc))
+    date_subscribed = Column(DateTime, default=nairobi_now)
     is_subscribed = Column(Boolean, default=True)
     date_unsubscribed = Column(DateTime, nullable=True)

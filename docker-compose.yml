@@ -1,12 +1,38 @@
 version: '3.9'
 
 services:
+  chamazetu_database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - chamazetu_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
   message_broker:
     image: redis:latest
     ports:
       - "6380:6379"
     volumes:
       - redis_data:/data
+    environment:
+      - TZ=Africa/Nairobi
+
+  chamazetu_frontend_database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${FRONTEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FRONTEND_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FRONTEND_POSTGRES_DB}
+    volumes:
+      - frontend_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
 
   chamazetu_frontend:
     build:
@@ -18,9 +44,10 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - message_broker
+      - chamazetu_frontend_database
     environment:
-      - DATABASE_URL=postgres://${SUPA_DB_USER}:${SUPA_DB_PASSWORD}@${SUPA_DB_HOST}:5432/${SUPA_DB_NAME}
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
   chamazetu_backend:
     build:
@@ -31,9 +58,10 @@ services:
     ports:
       - "9400:9400"
     depends_on:
-      - message_broker
+      - chamazetu_database
     environment:
-      - DATABASE_URL=postgres://${SUPABASE_DB_USER}:${SUPABASE_DB_PASSWORD}@{SUPABASE_DB_HOST}:5432/${SUPABASE_DB_NAME}
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@chamazetu_database:5432/${POSTGRES_DB}
 
   celery_worker:
     build:
@@ -42,9 +70,11 @@ services:
     volumes:
       - ./frontend_chamazetu:/app/frontend/
     depends_on:
+      - chamazetu_frontend_database
       - message_broker
     environment:
-      - DATABASE_URL=postgres://${SUPA_DB_USER}:${SUPA_DB_PASSWORD}@${SUPA_DB_HOST}:5432/${SUPA_DB_NAME}
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
   celery_beat_scheduler:
     build:
@@ -53,9 +83,13 @@ services:
     volumes:
       - ./frontend_chamazetu:/app/frontend/
     depends_on:
+      - chamazetu_frontend_database
       - message_broker
     environment:
-      - DATABASE_URL=postgres://${SUPA_DB_USER}:${SUPA_DB_PASSWORD}@${SUPA_DB_HOST}:5432/${SUPA_DB_NAME}
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
 
 volumes:
   redis_data:
+  chamazetu_data:
+  frontend_data:

@@ -32,6 +32,7 @@ ALLOWED_HOSTS = [
     "192.168.242.254",
     "0.0.0.0",
     "192.168.100.7",
+    "34.45.2.223",
 ]
 
 
@@ -108,11 +109,11 @@ WSGI_APPLICATION = "frontend_chamazetu.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("SUPA_DB_NAME"),
-        "USER": os.getenv("SUPA_DB_USER"),
-        "PASSWORD": os.getenv("SUPA_DB_PASSWORD"),
-        "HOST": os.getenv("SUPA_DB_HOST"),
-        "PORT": os.getenv("SUPA_DB_PORT"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -141,7 +142,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Africa/Nairobi"
 
 USE_I18N = True
 
@@ -168,6 +169,7 @@ CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Nairobi"
+CELERY_ENABLE_UTC = False  # set to False to use local timezone(i think)
 
 # monitor celery tasks
 # CELERY_RESULT_BACKEND = "django-db"  # YOU CAN USE REDIS AS WELL
@@ -179,6 +181,9 @@ CELERY_BEAT_SCHEDULER = os.getenv("CELERY_BEAT_SCHEDULER")
 
 
 # Logging configuration
+if not os.path.exists(os.path.join(BASE_DIR, "logs")):
+    os.mkdir(os.path.join(BASE_DIR, "logs"))
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -193,36 +198,38 @@ LOGGING = {
         },
     },
     "handlers": {
-        "file": {
+        "chama_file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "debug.log"),
+            "filename": os.path.join(BASE_DIR, "logs/chama.log"),
             "formatter": "verbose",
         },
-        "console": {
+        "manager_file": {
             "level": "DEBUG",
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/manager.log"),
+            "formatter": "verbose",
+        },
+        "member_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/member.log"),
+            "formatter": "verbose",
         },
     },
     "loggers": {
-        "django": {
-            "handlers": ["file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
         "chama": {
-            "handlers": ["file"],
+            "handlers": ["chama_file"],
             "level": "DEBUG",
             "propagate": True,
         },
         "manager": {
-            "handlers": ["file"],
+            "handlers": ["manager_file"],
             "level": "DEBUG",
             "propagate": True,
         },
         "member": {
-            "handlers": ["file"],
+            "handlers": ["member_file"],
             "level": "DEBUG",
             "propagate": True,
         },

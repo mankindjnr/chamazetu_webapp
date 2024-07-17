@@ -5,10 +5,13 @@ from sqlalchemy import func, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Union, List
 from fastapi.responses import JSONResponse
+from zoneinfo import ZoneInfo
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/investments/chamas", tags=["chama_investment"])
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 # retrieve details on the inhouse mmf
@@ -78,7 +81,7 @@ async def make_an_investment(
         invest_dict["current_int_rate"] = get_current_investment_rate(
             invest_dict["investment_type"], db
         )
-        invest_dict["transaction_date"] = datetime.now(timezone.utc)
+        invest_dict["transaction_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
         del invest_dict["investment_type"]
         print("======invest_dict========")
         print(invest_dict)
@@ -158,7 +161,7 @@ async def update_investment_account(
                     weekly_interest=0.0,
                     monthly_interest=0.0,
                     investment_name=investment_name,
-                    investment_start_date=datetime.now(timezone.utc),
+                    investment_start_date=datetime.now(nairobi_tz).replace(tzinfo=None),
                 )
                 db.add(performance)
             elif performance and update_type == "deposit":
@@ -339,7 +342,7 @@ def calculate_daily_mmf_interests(
                 daily_interest = models.Daily_Interest(
                     chama_id=investment.chama_id,
                     interest_earned=interest_earned,
-                    date_earned=datetime.now(timezone.utc),
+                    date_earned=datetime.now(nairobi_tz).replace(tzinfo=None),
                 )
                 db.add(daily_interest)
                 db.commit()
@@ -406,8 +409,8 @@ async def reset_monthly_interest(
             monthly_interest = models.Monthly_Interest(
                 chama_id=investment.chama_id,
                 interest_earned=investment.monthly_interest,
-                month=datetime.now(timezone.utc).month,
-                year=datetime.now(timezone.utc).year,
+                month=datetime.now(nairobi_tz).month,
+                year=datetime.now(nairobi_tz).year,
                 total_amount_invested=investment.amount_invested,
             )
             db.add(monthly_interest)
@@ -619,7 +622,7 @@ async def make_a_withdrawal_request(
     try:
         print("============withdrawing from mmfs==========")
         withdraw_dict = withdraw_data.dict()
-        withdraw_dict["withdrawal_date"] = datetime.now(timezone.utc)
+        withdraw_dict["withdrawal_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
         withdraw_dict["withdrawal_completed"] = False
         withdraw_dict["withdrawal_status"] = "PENDING"
 
@@ -695,7 +698,7 @@ async def fulfill_withdrawals(
 
             withdrawal.withdrawal_status = "COMPLETED"
             withdrawal.withdrawal_completed = True
-            withdrawal.fulfilled_date = datetime.now(timezone.utc)
+            withdrawal.fulfilled_date = datetime.now(nairobi_tz).replace(tzinfo=None)
 
             # stage all the chnages
             db.add(investment_performance)

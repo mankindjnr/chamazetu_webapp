@@ -67,6 +67,8 @@ class TokenData(BaseModel):
     username: str
     role: str
 
+class receivedToken(BaseModel):
+    token: str
 
 # ============== chama =================
 class ChamaBase(BaseModel):

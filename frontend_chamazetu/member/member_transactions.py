@@ -34,12 +34,20 @@ load_dotenv()
 @validate_and_refresh_token("member")
 def direct_deposit_to_chama(request):
     if request.method == "POST":
-        amount = int(request.POST.get("amount"))
+        amount = request.POST.get("amount") if request.POST.get("amount") != "" else 0
+        if int(amount) <= 0 or not amount.isdigit():
+            messages.error(request, "Invalid amount.")
+            return HttpResponseRedirect(
+                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+            )
+        else:
+            amount = int(amount)
+
         chama_id = get_chama_id(request.POST.get("chamaname"))
         member_id = get_user_id("member", request.COOKIES.get("current_member"))
         phone_number = (
             request.POST.get("phonenumber")
-            if len(request.POST.get("phonenumber")) == 9
+            if len(request.POST.get("phonenumber")) == 10
             and request.POST.get("phonenumber").isdigit()
             else None
         )
@@ -57,7 +65,7 @@ def direct_deposit_to_chama(request):
             # stkpush call with the phone number and amount
             depostinfo = {
                 "amount": amount,
-                "phone_number": phone_number,
+                "phone_number": phone_number[1:],
                 "recipient": request.POST.get("chamaname"),
                 "description": "chamadeposit",
             }
@@ -80,7 +88,7 @@ def direct_deposit_to_chama(request):
                         member_id,
                         chama_id,
                         amount,
-                        phone_number,
+                        phone_number[1:],
                         transaction_origin,
                         headers,
                     ],
@@ -122,7 +130,15 @@ def direct_deposit_to_chama(request):
 @validate_and_refresh_token("member")
 def from_wallet_to_chama(request):
     if request.method == "POST":
-        amount = int(request.POST.get("amount"))
+        amount = request.POST.get("amount") if request.POST.get("amount") != "" else 0
+        if int(amount) <= 0 or not amount.isdigit():
+            messages.error(request, "Invalid amount.")
+            return HttpResponseRedirect(
+                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+            )
+        else:
+            amount = int(amount)
+
         chama_id = get_chama_id(request.POST.get("chamaname"))
         chama_name = request.POST.get("chamaname")
         member_id = get_user_id("member", request.COOKIES.get("current_member"))
@@ -241,11 +257,22 @@ def from_wallet_to_chama(request):
 def deposit_to_wallet(request):
     print("=======deposting to wallet===")
     if request.method == "POST":
-        amount = request.POST.get("amount")
-        phonenumber = request.POST.get("phonenumber")
+        amount = request.POST.get("amount") if request.POST.get("amount") != "" else 0
+        if int(amount) <= 0 or not amount.isdigit():
+            messages.error(request, "Invalid amount.")
+            return redirect(reverse("member:dashboard"))
+        else:
+            amount = int(amount)
+
+        phonenumber = (
+            request.POST.get("phonenumber")
+            if len(request.POST.get("phonenumber")) == 10
+            and request.POST.get("phonenumber").isdigit()
+            else None
+        )
         member_id = request.POST.get("member_id")
         transaction_origin = "direct_deposit"
-        chama_name = ""  # helps if we are depositng from insde a chama to redirect back to the chama
+        chama_name = ""  # helps if we are depositng from insde a chama to redirect back to the chama - rmv this since we removed wallet from chama
         if request.POST.get("chama_name"):
             chama_name = request.POST.get("chama_name")
         if len(phonenumber) != 9:
@@ -261,16 +288,16 @@ def deposit_to_wallet(request):
             print("=======deposting to delay===")
             depostinfo = {
                 "amount": amount,
-                "phone_number": phonenumber,
+                "phone_number": phonenumber[1:],
                 "recipient": "wallet",
                 "description": "walletdeposit",
             }
 
             deposit_resp = requests.post(
-                f"{os.getenv('api_url')}/mobile_money/mpesa/stkpush", json=depostinfo
+                f"{os.getenv('api_url')}/request/push", json=depostinfo
             )
             if (
-                deposit_resp.status_code == 201
+                deposit_resp.status_code == HTTPStatus.CREATED
                 and "CheckoutRequestID" in deposit_resp.json()
             ):
                 checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
@@ -281,7 +308,7 @@ def deposit_to_wallet(request):
                         member_id,
                         "wallet",
                         amount,
-                        phonenumber,
+                        phonenumber[1:],
                         transaction_origin,
                         headers,
                     ],

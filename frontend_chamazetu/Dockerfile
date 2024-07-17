@@ -1,5 +1,6 @@
 FROM python:3.10.12
-
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=Africa/Nairobi
 # Set the working directory in the container
 WORKDIR /app/frontend
 
@@ -15,8 +16,6 @@ RUN pip install -r requirements.txt
 COPY . /app/frontend/
 
 RUN python manage.py collectstatic --no-input
-
-
 
 EXPOSE 8000
 

@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from sqlalchemy import and_, func, desc
 from uuid import uuid4
-import requests, os, base64, httpx
+import requests, os, base64, httpx, pytz
 from dotenv import load_dotenv
 from typing import List
+from zoneinfo import ZoneInfo
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/request", tags=["request"])
 
 load_dotenv()
 
-
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 consumer_key = os.getenv("CONSUMER_KEY")
 consumer_secret = os.getenv("CONSUMER_SECRET")
 shortcode = os.getenv("SHORTCODE")
@@ -35,7 +36,7 @@ async def generate_access_token():
 
 
 def generate_password():
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    timestamp = datetime.now(nairobi_tz).strftime("%Y%m%d%H%M%S")
     data_to_encode = shortcode + passkey + timestamp
     return base64.b64encode(data_to_encode.encode("utf-8")).decode("utf-8"), timestamp
 
@@ -46,6 +47,8 @@ async def stk_push(
     push_data: schemas.StkPushBase = Body(...),
 ):
     token = await generate_access_token()
+    print("=======stk push data=======")
+    print(push_data)
     if not token:
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
@@ -79,6 +82,11 @@ async def stk_push(
     }
 
     async with httpx.AsyncClient() as client:
+        print("=======stk push payload=======")
+        print(payload)
+        print()
+        print("=======stk push headers=======")
+        print(headers)
         response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()  # raise exception for non-2xx status codes
         return response.json()

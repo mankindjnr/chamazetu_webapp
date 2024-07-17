@@ -1,5 +1,6 @@
 FROM python:3.10.12
-
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=Africa/Nairobi
 # Set the working directory in the container
 WORKDIR /app/backend
 

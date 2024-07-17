@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body, Request
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 from sqlalchemy import and_, func, desc
 from uuid import uuid4
@@ -106,28 +107,37 @@ async def registration_callback(
     return {"message": "Transaction processed successfully."}
 
 
-# update call backdta status to success
-@router.put("/update_pending_callback_data", status_code=status.HTTP_200_OK)
+@router.put(
+    "/update_pending_callback_data/{checkoutid}", status_code=status.HTTP_200_OK
+)
 async def update_pending_callback_data(
-    checkout_data: schemas.UpdateCallbackData = Body(...),
+    checkoutid: str,
     db: Session = Depends(database.get_db),
 ):
-
-    checkoutid = checkout_data.checkoutid
-
+    print("===================call back===========================")
     try:
-        db.query(models.CallbackData).filter(
-            models.CallbackData.CheckoutRequestID == checkoutid
-        ).update({"Status": "Success"})
-        db.commit()
-    except Exception as e:
-        print(e)
-        # Rollback the transaction in case of an error
-        db.rollback()
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while processing the transaction.",
+        # Retrieve the callback data for the given checkout id with a lock for update
+        callback_data = (
+            db.query(models.CallbackData)
+            .filter(models.CallbackData.CheckoutRequestID == checkoutid)
+            .with_for_update()
+            .first()
         )
-    finally:
-        # Close the session
-        db.close()
+
+        if not callback_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Callback data not found.",
+            )
+
+        # Update the status of the callback data to success
+        callback_data.Status = "Success"
+        db.commit()  # Commit the transaction
+    except SQLAlchemyError as e:
+        db.rollback()  # Rollback the transaction in case of an error
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while processing the transaction.",
+        ) from e
+
+    return {"message": "Callback data updated successfully."}
