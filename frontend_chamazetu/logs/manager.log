@@ -1,0 +1,120 @@
+INFO 2024-07-16 16:51:13,337 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 16:51:13,337 tasks Task ran at: 2024-07-16 16:51:13.337600
+INFO 2024-07-16 16:51:13,338 tasks Date: 2024-07-16
+INFO 2024-07-16 16:51:13,338 tasks Time: 16:51:13.338438
+INFO 2024-07-16 16:51:13,338 tasks Nairobi Time: 2024-07-16 16:51:13.338676+03:00
+INFO 2024-07-16 17:00:00,039 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:00:00,039 tasks Task ran at: 2024-07-16 17:00:00.039801
+INFO 2024-07-16 17:00:00,040 tasks Date: 2024-07-16
+INFO 2024-07-16 17:00:00,040 tasks Time: 17:00:00.040455
+INFO 2024-07-16 17:00:00,040 tasks Nairobi Time: 2024-07-16 17:00:00.040644+03:00
+INFO 2024-07-16 17:10:00,018 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:10:00,019 tasks Task ran at: 2024-07-16 17:10:00.019659
+INFO 2024-07-16 17:10:00,020 tasks Date: 2024-07-16
+INFO 2024-07-16 17:10:00,022 tasks Time: 17:10:00.022000
+INFO 2024-07-16 17:10:00,023 tasks Nairobi Time: 2024-07-16 17:10:00.023413+03:00
+INFO 2024-07-16 17:20:00,088 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:20:00,089 tasks Task ran at: 2024-07-16 17:20:00.088981
+INFO 2024-07-16 17:20:00,089 tasks Date: 2024-07-16
+INFO 2024-07-16 17:20:00,089 tasks Time: 17:20:00.089399
+INFO 2024-07-16 17:20:00,089 tasks Nairobi Time: 2024-07-16 17:20:00.089572+03:00
+INFO 2024-07-16 17:30:00,094 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:30:00,095 tasks Task ran at: 2024-07-16 17:30:00.095703
+INFO 2024-07-16 17:30:00,096 tasks Date: 2024-07-16
+INFO 2024-07-16 17:30:00,098 tasks Time: 17:30:00.097926
+INFO 2024-07-16 17:30:00,099 tasks Nairobi Time: 2024-07-16 17:30:00.099613+03:00
+INFO 2024-07-16 17:40:00,023 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:40:00,026 tasks Task ran at: 2024-07-16 17:40:00.025897
+INFO 2024-07-16 17:40:00,026 tasks Date: 2024-07-16
+INFO 2024-07-16 17:40:00,027 tasks Time: 17:40:00.027783
+INFO 2024-07-16 17:40:00,030 tasks Nairobi Time: 2024-07-16 17:40:00.030700+03:00
+INFO 2024-07-16 17:50:00,070 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 17:50:00,071 tasks Task ran at: 2024-07-16 17:50:00.071088
+INFO 2024-07-16 17:50:00,071 tasks Date: 2024-07-16
+INFO 2024-07-16 17:50:00,072 tasks Time: 17:50:00.072187
+INFO 2024-07-16 17:50:00,072 tasks Nairobi Time: 2024-07-16 17:50:00.072429+03:00
+INFO 2024-07-16 18:00:00,062 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:00:00,062 tasks Task ran at: 2024-07-16 18:00:00.062809
+INFO 2024-07-16 18:00:00,063 tasks Date: 2024-07-16
+INFO 2024-07-16 18:00:00,063 tasks Time: 18:00:00.063193
+INFO 2024-07-16 18:00:00,063 tasks Nairobi Time: 2024-07-16 18:00:00.063385+03:00
+INFO 2024-07-16 18:00:00,222 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:00:00,223 tasks Task ran at: 2024-07-16 18:00:00.223555
+INFO 2024-07-16 18:00:00,224 tasks Date: 2024-07-16
+INFO 2024-07-16 18:00:00,225 tasks Time: 18:00:00.225357
+INFO 2024-07-16 18:00:00,226 tasks Nairobi Time: 2024-07-16 18:00:00.226103+03:00
+INFO 2024-07-16 18:10:00,067 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:10:00,067 tasks Task ran at: 2024-07-16 18:10:00.067757
+INFO 2024-07-16 18:10:00,068 tasks Date: 2024-07-16
+INFO 2024-07-16 18:10:00,068 tasks Time: 18:10:00.068255
+INFO 2024-07-16 18:10:00,068 tasks Nairobi Time: 2024-07-16 18:10:00.068482+03:00
+INFO 2024-07-16 18:20:00,026 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:20:00,027 tasks Task ran at: 2024-07-16 18:20:00.027174
+INFO 2024-07-16 18:20:00,027 tasks Date: 2024-07-16
+INFO 2024-07-16 18:20:00,027 tasks Time: 18:20:00.027790
+INFO 2024-07-16 18:20:00,028 tasks Nairobi Time: 2024-07-16 18:20:00.028142+03:00
+INFO 2024-07-16 18:30:00,034 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:30:00,034 tasks Task ran at: 2024-07-16 18:30:00.034599
+INFO 2024-07-16 18:30:00,034 tasks Date: 2024-07-16
+INFO 2024-07-16 18:30:00,036 tasks Time: 18:30:00.036057
+INFO 2024-07-16 18:30:00,036 tasks Nairobi Time: 2024-07-16 18:30:00.036800+03:00
+INFO 2024-07-16 18:40:00,092 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:40:00,093 tasks Task ran at: 2024-07-16 18:40:00.092981
+INFO 2024-07-16 18:40:00,093 tasks Date: 2024-07-16
+INFO 2024-07-16 18:40:00,093 tasks Time: 18:40:00.093455
+INFO 2024-07-16 18:40:00,093 tasks Nairobi Time: 2024-07-16 18:40:00.093649+03:00
+INFO 2024-07-16 18:50:00,126 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:50:00,127 tasks Task ran at: 2024-07-16 18:50:00.127075
+INFO 2024-07-16 18:50:00,128 tasks Date: 2024-07-16
+INFO 2024-07-16 18:50:00,129 tasks Time: 18:50:00.129131
+INFO 2024-07-16 18:50:00,129 tasks Nairobi Time: 2024-07-16 18:50:00.129733+03:00
+INFO 2024-07-16 19:00:00,038 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:00:00,039 tasks Task ran at: 2024-07-16 19:00:00.039115
+INFO 2024-07-16 19:00:00,040 tasks Date: 2024-07-16
+INFO 2024-07-16 19:00:00,041 tasks Time: 19:00:00.040944
+INFO 2024-07-16 19:00:00,042 tasks Nairobi Time: 2024-07-16 19:00:00.042143+03:00
+INFO 2024-07-16 19:10:00,121 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:10:00,122 tasks Task ran at: 2024-07-16 19:10:00.122083
+INFO 2024-07-16 19:10:00,123 tasks Date: 2024-07-16
+INFO 2024-07-16 19:10:00,124 tasks Time: 19:10:00.123981
+INFO 2024-07-16 19:10:00,124 tasks Nairobi Time: 2024-07-16 19:10:00.124502+03:00
+INFO 2024-07-16 19:20:00,028 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:20:00,030 tasks Task ran at: 2024-07-16 19:20:00.030676
+INFO 2024-07-16 19:20:00,032 tasks Date: 2024-07-16
+INFO 2024-07-16 19:20:00,032 tasks Time: 19:20:00.032665
+INFO 2024-07-16 19:20:00,033 tasks Nairobi Time: 2024-07-16 19:20:00.033136+03:00
+INFO 2024-07-16 19:30:00,095 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:30:00,096 tasks Task ran at: 2024-07-16 19:30:00.095980
+INFO 2024-07-16 19:30:00,096 tasks Date: 2024-07-16
+INFO 2024-07-16 19:30:00,096 tasks Time: 19:30:00.096883
+INFO 2024-07-16 19:30:00,097 tasks Nairobi Time: 2024-07-16 19:30:00.097130+03:00
+INFO 2024-07-16 19:40:00,058 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:40:00,058 tasks Task ran at: 2024-07-16 19:40:00.058587
+INFO 2024-07-16 19:40:00,060 tasks Date: 2024-07-16
+INFO 2024-07-16 19:40:00,061 tasks Time: 19:40:00.061148
+INFO 2024-07-16 19:40:00,064 tasks Nairobi Time: 2024-07-16 19:40:00.064669+03:00
+INFO 2024-07-16 19:50:00,128 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 19:50:00,129 tasks Task ran at: 2024-07-16 19:50:00.129370
+INFO 2024-07-16 19:50:00,129 tasks Date: 2024-07-16
+INFO 2024-07-16 19:50:00,130 tasks Time: 19:50:00.130114
+INFO 2024-07-16 19:50:00,130 tasks Nairobi Time: 2024-07-16 19:50:00.130465+03:00
+INFO 2024-07-16 20:00:00,149 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 20:00:00,150 tasks Task ran at: 2024-07-16 20:00:00.150652
+INFO 2024-07-16 20:00:00,151 tasks Date: 2024-07-16
+INFO 2024-07-16 20:00:00,154 tasks Time: 20:00:00.153946
+INFO 2024-07-16 20:00:00,154 tasks Nairobi Time: 2024-07-16 20:00:00.154710+03:00
+INFO 2024-07-16 20:00:00,188 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 20:00:00,189 tasks Task ran at: 2024-07-16 20:00:00.189316
+INFO 2024-07-16 20:00:00,189 tasks Date: 2024-07-16
+INFO 2024-07-16 20:00:00,189 tasks Time: 20:00:00.189827
+INFO 2024-07-16 20:00:00,190 tasks Nairobi Time: 2024-07-16 20:00:00.190085+03:00
+INFO 2024-07-16 20:10:00,110 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 20:10:00,133 tasks Task ran at: 2024-07-16 20:10:00.133878
+INFO 2024-07-16 20:10:00,134 tasks Date: 2024-07-16
+INFO 2024-07-16 20:10:00,134 tasks Time: 20:10:00.134639
+INFO 2024-07-16 20:10:00,135 tasks Nairobi Time: 2024-07-16 20:10:00.134955+03:00
+INFO 2024-07-16 20:20:00,039 tasks ==========manager/tasks.py: log_date_time()==========
+INFO 2024-07-16 20:20:00,039 tasks Task ran at: 2024-07-16 20:20:00.039727
+INFO 2024-07-16 20:20:00,040 tasks Date: 2024-07-16
+INFO 2024-07-16 20:20:00,040 tasks Time: 20:20:00.040754
+INFO 2024-07-16 20:20:00,041 tasks Nairobi Time: 2024-07-16 20:20:00.041683+03:00

@@ -1,9 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 from celery import shared_task, current_task
 import requests, os, time, logging
+from datetime import datetime, timedelta
 from celery.exceptions import MaxRetriesExceededError
 from dotenv import load_dotenv
+from django.conf import settings
+from django.template.loader import render_to_string
 from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 from .members import (
     get_wallet_balance,
@@ -17,7 +21,23 @@ from chama.tasks import sending_email
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("member")
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+
+@shared_task
+def date_time_log_member():
+    logger.info("==========member/tasks.py: log_date_time()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    # date
+    logger.info(f"Date: {datetime.now().date()}")
+    # time
+    logger.info(f"Time: {datetime.now().time()}")
+    # nairobi
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+
+    return None
 
 
 @shared_task
@@ -31,6 +51,12 @@ def update_chama_account_balance(chama_id, amount, transaction_type):
     }
 
     response = requests.put(url, json=data)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update chama account balance: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -44,6 +70,12 @@ def update_shares_number_for_member(chama_id, num_of_shares, headers):
     }
 
     response = requests.put(url, json=data, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update member shares: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -72,6 +104,12 @@ def update_wallet_balance(
     }
 
     response = requests.put(url, json=data, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update wallet balance: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -94,6 +132,12 @@ def wallet_deposit(mpesa_data):
     }
 
     response = requests.put(url, json=data, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to deposit to wallet: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -110,6 +154,12 @@ def wallet_withdrawal(headers, amount, member_id, transaction_code):
     }
 
     response = requests.put(url, json=data, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to withdraw from wallet: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -122,6 +172,12 @@ def update_users_profile_image(headers, role, new_profile_image_name):
     }
 
     response = requests.put(url, json=data, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update profile picture: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -254,15 +310,9 @@ def after_succesful_chama_deposit(mpesa_data):
 def difference_btwn_contributed_and_expected(member_id, chama_id):
     # get the amount expected
     amount_expected = get_member_expected_contribution(member_id, chama_id)
-    print("=======expected amount===")
-    print(amount_expected)
     # get the amount contributed so far
     amount_contributed_so_far = get_member_contribution_so_far(chama_id, member_id)
-    print("=======contributed so far===")
-    print(amount_contributed_so_far)
     expected_difference = amount_expected - amount_contributed_so_far
-    print("=======difference===")
-    print(expected_difference)
     if expected_difference < 0:
         return 0
 
@@ -278,12 +328,21 @@ def deposit_is_greater_than_difference(deposited, member_id, chama_id):
 # retrieve chamas share price, previous contribution day and one before that
 @shared_task
 def calculate_missed_contributions_fines():
-    url = f"{os.getenv('api_url')}/chamas/share_price_and_prev_two_contribution_dates"
+    logger.info("==========member/tasks.py: calculate_missed_contributions_fines()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Date: {datetime.now(nairobi_tz)}")
+    url = f"{os.getenv('api_url')}/members/share_price_and_prev_two_contribution_dates"
     response = requests.get(url)
 
     data = response.json()
-    url = f"{os.getenv('api_url')}/chamas/members_and_contribution_fines"
+    url = f"{os.getenv('api_url')}/members/members_and_contribution_fines"
     requests.get(url, json=data)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to calculate missed contributions and fines: {response.status_code}, {response.text}"
+        )
 
     return None
 
@@ -406,9 +465,8 @@ def add_member_to_chama(
 
 @shared_task
 def update_pending_callback_data(checkoutid):
-    url = f"{os.getenv('api_url')}/callback/update_pending_callback_data"
-    data = {"checkoutid": checkoutid}
-    response = requests.put(url, json=data)
+    url = f"{os.getenv('api_url')}/callback/update_pending_callback_data/{checkoutid}"
+    response = requests.put(url)
     return None
 
 
@@ -429,7 +487,7 @@ def send_email_to_new_chama_member(member_id, chama_id):
         )
 
         from_email = settings.EMAIL_HOST_USER
-        to_email = email
+        to_email = [email]
 
         sending_email.delay(mail_subject, message, from_email, to_email)
     return None

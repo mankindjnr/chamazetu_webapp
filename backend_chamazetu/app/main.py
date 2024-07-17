@@ -1,5 +1,9 @@
+import pytz
 from fastapi import FastAPI
 from typing import Optional
+from datetime import datetime
+from .logging_config import setup_logging
+
 from random import randint
 from fastapi.middleware.cors import CORSMiddleware
 from .router import (
@@ -21,6 +25,8 @@ from .router import (
     callback,
     stk_push,
 )
+
+setup_logging()
 
 app = FastAPI()
 

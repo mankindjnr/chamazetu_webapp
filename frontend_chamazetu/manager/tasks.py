@@ -2,12 +2,31 @@ from __future__ import absolute_import, unicode_literals
 from celery import shared_task
 import requests, os, logging
 from time import sleep
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from http import HTTPStatus
+from celery.exceptions import MaxRetriesExceededError
+from zoneinfo import ZoneInfo
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("manager")
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+
+@shared_task
+def manager_log_date_time():
+    logger.info("==========manager/tasks.py: log_date_time()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    # date
+    logger.info(f"Date: {datetime.now().date()}")
+    # time
+    logger.info(f"Time: {datetime.now().time()}")
+    # nairobi
+    logger.info(f"Nairobi Time: {datetime.now(nairobi_tz)}")
+
+    return None
 
 
 @shared_task
@@ -21,6 +40,13 @@ def update_investment_account(chama_id, amount, investment_type, transaction_typ
     }
 
     response = requests.put(url, json=data)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update investment account: {response.status_code}, {response.text}"
+        )
+
     return None
 
 
@@ -35,6 +61,12 @@ def update_chama_account_balance_after_withdrawals(chama_id, amount, transaction
     }
 
     response = requests.put(url, json=data)
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update chama account balance: {response.status_code}, {response.text}"
+        )
     return None
 
 
@@ -47,6 +79,12 @@ def add_chama_withdrawal_request(chama_id, amount, headers):
     }
 
     response = requests.post(url, headers=headers, json=data)
+    if response.status_code == HTTPStatus.CREATED:
+        return None
+    else:
+        logger.error(
+            f"Failed to add withdrawal request: {response.status_code}, {response.text}"
+        )
     return None
 
 

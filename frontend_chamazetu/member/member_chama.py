@@ -126,6 +126,8 @@ async def access_chama(request, chamaname):
     results = await access_chama_async(urls, headers)
 
     if results.get("chama"):
+        update_contribution_days.delay()
+        calculate_missed_contributions_fines.delay()
         return render(
             request,
             "member/chamadashboard.html",
@@ -382,10 +384,16 @@ def join_chama(request):
         chama_name = request.POST.get("chamaname")
         num_of_shares = request.POST.get("shares_num")
         reg_fee = request.POST.get("registration_fee")
-        phone_number = request.POST.get("phone_number")
+        phone_number = request.POST.get("phone_number")[1:]
         chama_id = get_chama_id(chama_name)
         registration_fee = get_chama_registration_fee(chama_id)
         member_id = get_user_id("member", request.COOKIES.get("current_member"))
+
+        if len(phone_number) != 9:
+            messages.error(request, "Invalid phone number")
+            return HttpResponseRedirect(
+                reverse("chama:chamas", args={"role": "member"})
+            )
 
         # confirm if the needed details are there, that is the chamaname, num_of_shares and the registration amount, also, retrieve the registration fee for that chama
         if (
@@ -399,7 +407,7 @@ def join_chama(request):
             data = {
                 "phone_number": phone_number,
                 "amount": registration_fee,
-                "recipient": chama_name,  # might have to cut this to 12 characters
+                "recipient": (chama_name.replace(" ", ""))[:12],
                 "description": "Registration",
             }
 
@@ -425,6 +433,7 @@ def join_chama(request):
             # before sending, confirm that the user is not already a member of that chama
             if not member_already_in_chama(chama_id, member_id):
                 print("========not a member========")
+                print(data)
                 reg_resp = requests.post(url, json=data)
 
                 if reg_resp.status_code == HTTPStatus.CREATED:

@@ -2,12 +2,16 @@ import logging, uuid
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from typing import Union
+from zoneinfo import ZoneInfo
+from datetime import datetime
 from sqlalchemy import func, update, and_, table, column, desc
 
 from .. import schemas, utils, oauth2, models
 from ..database import get_db
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResp)
@@ -26,6 +30,7 @@ async def create_user(
     dbtable = (user.role).capitalize().strip()
 
     user.password = utils.hash_password(user.password)
+
     ModelClass = getattr(
         models, dbtable
     )  # dynamically get the class from the models module
@@ -37,6 +42,8 @@ async def create_user(
     user_dict["profile_picture"] = (
         "https://chamazetu-web.s3.eu-north-1.amazonaws.com/profile_pictures/tree_grow_money.jpg"
     )
+    user_dict["date_joined"] = datetime.now(nairobi_tz).replace(tzinfo=None)
+    user_dict["updated_at"] = datetime.now(nairobi_tz).replace(tzinfo=None)
 
     new_user = ModelClass(**user_dict)
     db.add(new_user)
@@ -224,8 +231,10 @@ async def confirm_user_exists_with_email(
 ):
 
     if role == "member":
+        print("========i'm  member======")
         user = db.query(models.Member).filter(models.Member.email == email).first()
     elif role == "manager":
+        print("========i'm  manager======")
         user = db.query(models.Manager).filter(models.Manager.email == email).first()
 
     if not user:
@@ -248,10 +257,12 @@ async def update_users_password(
         new_password = utils.hash_password(user_dict["updated_password"])
 
         if role == "member":
+            print("========pass  member======")
             updated_user = (
                 db.query(models.Member).filter(models.Member.email == email).first()
             )
         elif role == "manager":
+            print("========pass  manager======")
             updated_user = (
                 db.query(models.Manager).filter(models.Manager.email == email).first()
             )

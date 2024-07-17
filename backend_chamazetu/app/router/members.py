@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from datetime import datetime
+from datetime import timedelta
+from zoneinfo import ZoneInfo
+import logging
 from typing import List
 from uuid import uuid4
 from sqlalchemy import func, update, and_, table, column, desc
@@ -8,6 +11,10 @@ from sqlalchemy import func, update, and_, table, column, desc
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/members", tags=["members"])
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+logger = logging.getLogger(__name__)
 
 
 # get all chamas a member is connected to using member id
@@ -203,7 +210,7 @@ async def update_member_wallet_balance(
         transaction_type = wallet_dict["transaction_type"]
         wallet_dict["member_id"] = current_user.id
         wallet_dict["transaction_completed"] = True
-        wallet_dict["transaction_date"] = datetime.now()
+        wallet_dict["transaction_date"] = datetime.now(nairobi_tz)
         wallet_dict["transaction_code"] = wallet_dict["transaction_code"]
 
         member = (
@@ -364,7 +371,8 @@ async def repay_fines(
                     fine.total_expected_amount
                 )  # deducting the amount from the fine and updating amount to be used in the next fine
                 fine.is_paid = True
-                fine.paid_date = datetime.now()
+                # date in nairobi timezone
+                fine.paid_date = datetime.now(nairobi_tz)
                 fine.total_expected_amount = 0
                 print("==end==:", amount)
             else:
@@ -514,3 +522,221 @@ async def check_chama_membership(
         print("===========error checking chama membership===========")
         print(e)
         raise HTTPException(status_code=400, detail="Failed to check chama membership")
+
+
+@router.get(
+    "/share_price_and_prev_two_contribution_dates",
+    status_code=status.HTTP_200_OK,
+)
+async def get_share_price_and_prev_two_contribution_dates(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        chamas = db.query(models.Chama).all()
+        chamas_details = {}
+        for chama in chamas:
+            chama_contribution_day = (
+                db.query(models.ChamaContributionDay)
+                .filter(models.ChamaContributionDay.chama_id == chama.id)
+                .first()
+            )
+            if not chama_contribution_day:
+                raise HTTPException(
+                    status_code=404, detail="Chama contribution day not found"
+                )
+
+            prev_contribution_date, prev_two_contribution_date = (
+                calculate_two_previous_dates(
+                    chama.contribution_interval,
+                    chama_contribution_day.next_contribution_date,
+                )
+            )
+
+            chamas_details[chama.id] = {
+                "share_price": chama.contribution_amount,
+                "fine_per_share": chama.fine_per_share,
+                "prev_contribution_date": prev_contribution_date,
+                "prev_two_contribution_date": prev_two_contribution_date,
+            }
+
+        logger.warning(
+            "Chamas share price and previous two contribution dates retrieved"
+        )
+        logger.warning(chamas_details)
+
+        return chamas_details
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to retrieve chamas share price and previous two contribution dates",
+        )
+
+
+# using interval and the next contribution date, get the previous two contribution dates
+# i.e next date = 2024-06-23 08:40:07.801134
+# interval = weekly or daily or monthly
+# contribution_day = Monday or Tuesday or Wednesday or Thursday or Friday or Saturday or Sunday
+def calculate_two_previous_dates(interval, next_contribution_date):
+    prev_contribution_date = None
+    prev_two_contribution_date = None
+    if interval == "daily":
+        prev_contribution_date = next_contribution_date - timedelta(days=1)
+        prev_two_contribution_date = next_contribution_date - timedelta(days=2)
+    elif interval == "weekly":
+        prev_contribution_date = next_contribution_date - timedelta(weeks=1)
+        prev_two_contribution_date = next_contribution_date - timedelta(weeks=2)
+    elif interval == "monthly":
+        prev_contribution_date = next_contribution_date - timedelta(weeks=4)
+        prev_two_contribution_date = next_contribution_date - timedelta(weeks=8)
+    return prev_contribution_date, prev_two_contribution_date
+
+
+# using the chama details dreturned above, the share price, the fine, and two prev dates, check between those dates and check a members total contribution between those dates, compare
+# to the expected contribution (share price * num of shares (from members_chamas table)) and calculate the difference.
+# if its > 0, the member is behind in that chamas contribution for that period and is assinged a fine per share to be added as a record in the fines table
+# chama_id, member_id, fine, fine_reason, fine_date(prev_contrib_date), is_paid, paid_date, total_expected_amount(total fine + missed contribution amount)
+@router.get(
+    "/members_and_contribution_fines",
+    status_code=status.HTTP_200_OK,
+)
+async def get_members_and_contribution_fines(
+    chama_details: dict,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chamas_details = chama_details
+        fines = {}
+        for chama_id, chama_details in chamas_details.items():
+            chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+            chama_members = (
+                db.query(models.Member)
+                .join(models.members_chamas_association)
+                .filter(models.members_chamas_association.c.chama_id == chama_id)
+                .filter(
+                    models.members_chamas_association.c.registration_fee_paid == True
+                )
+                .all()
+            )
+
+            if chama_members:
+                for member in chama_members:
+                    logger.warning("Member: " + member.first_name)
+                    member_chama = (
+                        db.query(models.members_chamas_association)
+                        .filter(
+                            and_(
+                                models.members_chamas_association.c.member_id
+                                == member.id,
+                                models.members_chamas_association.c.chama_id
+                                == chama_id,
+                            )
+                        )
+                        .first()
+                    )
+
+                    prev_contribution_datetime = datetime.fromisoformat(
+                        chama_details["prev_contribution_date"]
+                    )
+
+                    prev_two_contribution_datetime = datetime.fromisoformat(
+                        chama_details["prev_two_contribution_date"]
+                    )
+
+                    member_contribution = (
+                        db.query(models.Transaction)
+                        .filter(
+                            and_(
+                                models.Transaction.member_id == member.id,
+                                models.Transaction.chama_id == chama_id,
+                                models.Transaction.transaction_type == "deposit",
+                                models.Transaction.transaction_completed == True,
+                                func.date(models.Transaction.date_of_transaction)
+                                > prev_two_contribution_datetime.date(),
+                                func.date(models.Transaction.date_of_transaction)
+                                <= prev_contribution_datetime.date(),
+                            )
+                        )
+                        .all()
+                    )
+                    total_contribution = sum(
+                        [transaction.amount for transaction in member_contribution]
+                    )
+                    logger.warning("Total contribution: " + str(total_contribution))
+
+                    expected_contribution = (
+                        chama.contribution_amount * member_chama.num_of_shares
+                    )
+                    logger.warning(
+                        "Expected contribution: " + str(expected_contribution)
+                    )
+                    difference = expected_contribution - total_contribution
+                    logger.warning("Difference: " + str(difference))
+                    fine = 0
+                    if difference > 0:
+                        logger.warning("Fine to be added")
+                        fine = member_chama.num_of_shares * chama.fine_per_share
+
+                        fines[member.id] = {
+                            "chama_id": chama_id,
+                            "member_id": member.id,
+                            "fine": fine,
+                            "fine_reason": "Missed contribution",
+                            "fine_date": chama_details["prev_contribution_date"],
+                            "is_paid": False,
+                            "paid_date": None,
+                            "total_expected_amount": fine + difference,
+                        }
+                        # write the record to the fines table but i want if such a record exists, if a record with member_id, chama_id, fine_date exists, dont write another record
+                        # if it doesnt exist, write the record
+                        # prev_contribution_datetime = datetime.fromisoformat(
+                        #     chama_details["prev_contribution_date"]
+                        # )
+                        # if prev contribution date is today, dont write a fine or if prev contribution date is in the future, dont write a fine
+                        # this is because the contribution period has not passed yet
+                        # if (
+                        #     prev_contribution_datetime.date() == datetime.now().date()
+                        #     or prev_contribution_datetime.date() > datetime.now().date()
+                        # ):
+                        #     continue
+
+                        existing_fine = (
+                            db.query(models.Fine)
+                            .filter(
+                                and_(
+                                    models.Fine.member_id == member.id,
+                                    models.Fine.chama_id == chama_id,
+                                    func.date(models.Fine.fine_date)
+                                    == prev_contribution_datetime.date(),
+                                )
+                            )
+                            .first()
+                        )
+
+                        if not existing_fine:
+                            logger.warning("Fine record does not exist")
+                            new_fine = models.Fine(
+                                chama_id=chama_id,
+                                member_id=member.id,
+                                fine=fine,
+                                fine_reason="Missed contribution",
+                                fine_date=chama_details["prev_contribution_date"],
+                                is_paid=False,
+                                paid_date=None,
+                                total_expected_amount=fine + difference,
+                            )
+                            db.add(new_fine)
+                            db.commit()
+                            db.refresh(new_fine)
+        logger.warning("Fines added")
+        logger.warning(fines)
+        logger.warning("=====================")
+        return {"fines": fines}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to retrieve and set members and contribution fines",
+        )

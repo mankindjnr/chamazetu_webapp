@@ -5,6 +5,8 @@ from django.core.mail import send_mail
 import requests, os, time, logging
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
+from http import HTTPStatus
+from zoneinfo import ZoneInfo
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -15,6 +17,25 @@ from django.contrib import messages
 from frontend_chamazetu import settings
 
 load_dotenv()
+
+logger = logging.getLogger("chama")
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+
+# log date and time of the task - hopefully we can know the timezone of the server
+@shared_task
+def chama_date_time_log():
+    logger.info("==========chama/tasks.py: log_date_time()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    # date
+    logger.info(f"Date: {datetime.now().date()}")
+    # time
+    logger.info(f"Time: {datetime.now().time()}")
+    # nairobi
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+
+    return None
 
 
 @shared_task
@@ -49,6 +70,12 @@ def set_contribution_date(first_contribution_date, chama_name):
             "chama_name": chama_name,
         },
     )
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to set first contribution date: {response.status_code}, {response.text}"
+        )
 
     return None
 
@@ -59,26 +86,41 @@ def update_contribution_days():
     """
     Update the next contribution day for chamas
     """
+    logger.info("==========chama/tasks.py: update_contribution_days()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
     response = requests.put(f"{os.getenv('api_url')}/chamas/update_contribution_days")
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to update contribution days: {response.status_code}, {response.text}"
+        )
 
     return None
 
 
 @shared_task
 def check_and_update_accepting_members_status():
-    # we will be checking if today is past the last joining day, if it is we will update the chama to not accepting members
+    # TODO: we will be checking if today is past the last joining day, if it is we will update the chama to not accepting members
     pass
 
 
 # calculate daily interests for the chamas
 @shared_task
-def calaculate_daily_mmf_interests():
+def calculate_daily_mmf_interests():
     """
     Calculate daily interests for the chamas
     """
     response = requests.put(
         f"{os.getenv('api_url')}/investments/chamas/calculate_daily_mmf_interests"
     )
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to calculate daily mmf interests: {response.status_code}, {response.text}"
+        )
 
     return None
 
@@ -91,6 +133,12 @@ def reset_and_move_weekly_mmf_interests():
     response = requests.put(
         f"{os.getenv('api_url')}/investments/chamas/reset_and_move_weekly_mmf_interest_to_principal"
     )
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to reset and move weekly mmf interests: {response.status_code}, {response.text}"
+        )
 
     return None
 
@@ -103,5 +151,11 @@ def reset_monthly_mmf_interests():
     response = requests.put(
         f"{os.getenv('api_url')}/investments/chamas/reset_monthly_mmf_interest"
     )
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to reset monthly mmf interests: {response.status_code}, {response.text}"
+        )
 
     return None

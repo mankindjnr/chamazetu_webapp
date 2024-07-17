@@ -7,6 +7,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
 from datetime import datetime
 import asyncio, aiohttp
+from zoneinfo import ZoneInfo
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import (
@@ -34,6 +35,8 @@ from chama.usermanagement import (
 )
 
 load_dotenv()
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 @tokens_in_cookies("manager")
@@ -203,7 +206,7 @@ def create_chama(request):
         first_contribution_date = datetime.strptime(first_contribution_date, "%Y-%m-%d")
 
         # check that last day of joining is >= today
-        if last_joining_date < datetime.now():
+        if last_joining_date < datetime.now(nairobi_tz):
             messages.error(request, "Last joining date should be greater than today")
             return redirect(reverse("manager:dashboard"))
         if first_contribution_day_valid(

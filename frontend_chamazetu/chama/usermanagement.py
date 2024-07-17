@@ -315,6 +315,8 @@ def activate(request, role, uidb64, token):
 # changing password while logged out
 def forgot_password(request, role):
     if request.method == "POST":
+        print("======pass role======")
+        print(role)
         email = (request.POST["email"]).strip()
 
         user_resp = requests.get(f"{os.getenv('api_url')}/users/{role}/{email}")

@@ -1,0 +1,11 @@
+INFO 2024-07-16 18:00:00,024 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-16 18:00:00,044 tasks Task ran at: 2024-07-16 18:00:00.044552
+INFO 2024-07-16 18:00:00,044 tasks Date: 2024-07-16
+INFO 2024-07-16 18:00:00,045 tasks Time: 18:00:00.045194
+INFO 2024-07-16 18:00:00,045 tasks Nairobi: 2024-07-16 18:00:00.045500+03:00
+INFO 2024-07-16 20:00:00,110 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-16 20:00:00,111 tasks Task ran at: 2024-07-16 20:00:00.111636
+INFO 2024-07-16 20:00:00,112 tasks Date: 2024-07-16
+INFO 2024-07-16 20:00:00,114 tasks Time: 20:00:00.112850
+INFO 2024-07-16 20:00:00,114 tasks Nairobi: 2024-07-16 20:00:00.114504+03:00
+ERROR 2024-07-16 20:21:08,023 tasks Failed to update chama account balance: 422, {"detail":[{"type":"int_from_float","loc":["body","amount_deposited"],"msg":"Input should be a valid integer, got a number with a fractional part","input":4.53,"url":"https://errors.pydantic.dev/2.5/v/int_from_float"}]}

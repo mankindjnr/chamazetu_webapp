@@ -4,11 +4,14 @@ from datetime import datetime, timedelta
 from sqlalchemy import and_, func, desc
 from uuid import uuid4
 from typing import List
+from zoneinfo import ZoneInfo
 
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 # create deposit transaction for a logged in member to chama
@@ -27,8 +30,8 @@ async def create_deposit_transaction(
             transaction_dict["transaction_type"] = "deposit"
             transaction_dict["member_id"] = transaction.member_id
             transaction_dict["transaction_completed"] = True
-            transaction_dict["date_of_transaction"] = datetime.now()
-            transaction_dict["updated_at"] = datetime.now()
+            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz)
+            transaction_dict["updated_at"] = datetime.now(nairobi_tz)
             transaction_dict["transaction_code"] = transaction.transaction_code
 
             new_transaction = models.Transaction(**transaction_dict)
@@ -62,7 +65,7 @@ async def create_deposit_transaction_from_wallet(
         wallet_transaction_dict["transaction_type"] = "moved_to_chama"
         wallet_transaction_dict["member_id"] = current_user.id
         wallet_transaction_dict["transaction_completed"] = True
-        wallet_transaction_dict["transaction_date"] = datetime.now()
+        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz)
         wallet_transaction_dict["transaction_code"] = uuid4().hex
 
         print("===========wallet transaction dict===========")
@@ -118,7 +121,7 @@ async def create_fine_repayment_transaction_from_wallet(
         wallet_transaction_dict["transaction_type"] = "moved_to_chama"
         wallet_transaction_dict["member_id"] = current_user.id
         wallet_transaction_dict["transaction_completed"] = True
-        wallet_transaction_dict["transaction_date"] = datetime.now()
+        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz)
         wallet_transaction_dict["transaction_code"] = uuid4().hex
 
         print("===========wallet transaction dict===========")
@@ -177,8 +180,8 @@ async def create_fine_repayment_transaction_from_mpesa(
             "transaction_origin": "direct_deposit",
             "member_id": mpesa_transaction.member_id,
             "transaction_completed": True,
-            "date_of_transaction": datetime.now(),
-            "updated_at": datetime.now(),
+            "date_of_transaction": datetime.now(nairobi_tz),
+            "updated_at": datetime.now(nairobi_tz),
             "transaction_code": mpesa_transaction.transaction_code,
         }
 
@@ -314,7 +317,8 @@ async def get_transactions_for_members(
 
 
 def get_sunday_date():
-    today = datetime.now()
+    timezone = ZoneInfo("Africa/Nairobi")
+    today = datetime.now(timezone)
     # calculating the number of days to subtract to get the first day of the week
     days_to_subtract = (today.weekday() + 1) % 7
     # subtracting the days to get the first day of the week

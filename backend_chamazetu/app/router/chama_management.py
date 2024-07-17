@@ -2,13 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
-from sqlalchemy import func, update, and_, table, column
+from zoneinfo import ZoneInfo
+import logging
+from sqlalchemy import func, update, and_, table, column, desc
 from typing import List, Union
 from sqlalchemy.exc import SQLAlchemyError
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/chamas", tags=["management"])
+
+logger = logging.getLogger(__name__)
+
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 # create chama for a logged in manager
@@ -22,8 +28,8 @@ async def create_chama(
     try:
         chama_dict = chama.dict()
         chama_dict["manager_id"] = current_user.id
-        chama_dict["date_created"] = datetime.now()
-        chama_dict["updated_at"] = datetime.now()
+        chama_dict["date_created"] = datetime.now(nairobi_tz).replace(tzinfo=None)
+        chama_dict["updated_at"] = datetime.now(nairobi_tz).replace(tzinfo=None)
         chama_dict["account_name"] = chama_dict["chama_name"].replace(" ", "").lower()
 
         new_chama = models.Chama(**chama_dict)
@@ -111,54 +117,64 @@ async def set_first_contribution_day(
 async def update_contribution_days(
     db: Session = Depends(database.get_db),
 ):
-    # get chama_ids, contribution_interval, contribution_day from chamas
-    chamas = db.query(models.Chama).order_by(models.Chama.id).all()
-    chamas_details = {}
-    for chama in chamas:
-        chamas_details[chama.id] = {
-            "contribution_interval": chama.contribution_interval,
-            "contribution_day": chama.contribution_day,
-        }
 
-    for chama_id, details in chamas_details.items():
-        contribution_interval = details["contribution_interval"]
-        contribution_day = details["contribution_day"]
+    try:
+        # get chama_ids, contribution_interval, contribution_day from chamas
+        chamas = db.query(models.Chama).all()
+        for chama in chamas:
+            contribution_interval = chama.contribution_interval
+            contribution_day = chama.contribution_day
 
-        upcoming_contribution_date = calculate_next_contribution_date(
-            contribution_interval, contribution_day
-        )
-        chama_contribution_day = (
-            db.query(models.ChamaContributionDay).filter_by(chama_id=chama_id).first()
-        )
+            upcoming_contribution_date = calculate_next_contribution_date(
+                contribution_interval, contribution_day
+            )
+            print("=========upcoming_contribution_date============")
+            print(upcoming_contribution_date)
 
-        if chama_contribution_day:
-            if upcoming_contribution_date > datetime.now():
+            chama_contribution_day = (
+                db.query(models.ChamaContributionDay)
+                .filter_by(chama_id=chama.id)
+                .first()
+            )
+
+            if chama_contribution_day:
+                print("=========day exists============")
+                print(chama_contribution_day.next_contribution_date)
                 chama_contribution_day.next_contribution_date = (
                     upcoming_contribution_date
                 )
-                print(
-                    f"Chama {chama_id} contribution day updated to {upcoming_contribution_date}"
-                )
+                print("=========after============")
+                print(chama_contribution_day.next_contribution_date)
             else:
-                chama_contribution_day.next_contribution_date = (
-                    calculate_next_contribution_date(
-                        contribution_interval, contribution_day
-                    )
+                print("=========day does not exist============")
+                new_record = models.ChamaContributionDay(
+                    chama_id=chama.id, next_contribution_date=upcoming_contribution_date
                 )
-        else:
-            new_record = models.ChamaContributionDay(
-                chama_id=chama_id, next_contribution_date=upcoming_contribution_date
-            )
-            db.add(new_record)
+                db.add(new_record)
 
-    db.commit()
-
-    return {"message": "Contribution days updated successfully"}
+        db.commit()
+        return {"message": "Contribution days updated successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(
+            status_code=400, detail="Failed to update contribution days"
+        )
 
 
 # ====================================================
 def calculate_next_contribution_date(contribution_interval, contribution_day):
-    today = datetime.now()
+    # set timezone to kenya
+    kenya_tz = ZoneInfo("Africa/Nairobi")
+    today = datetime.now(kenya_tz).replace(tzinfo=None)
+    logger.info(f"Today's date: {today}")
+    logger.info(f"Contribution interval: {contribution_interval}")
+    logger.info(f"Contribution day: {contribution_day}")
+    print("=============================================")
+    print(f"Today's date: {today}")
+    print(f"Contribution interval: {contribution_interval}")
+    print(f"Contribution day: {contribution_day}")
+
     contribution_day_index = {
         "Monday": 0,
         "Tuesday": 1,
@@ -169,23 +185,32 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
         "Sunday": 6,
     }
     next_contribution_date = None
+
     if contribution_interval == "daily":
-        next_contribution_date = today  # + timedelta(days=1)  #
+        next_contribution_date = today.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
     elif contribution_interval == "weekly":
         today_index = today.weekday()
         contribution_day_index_value = contribution_day_index[
             contribution_day.capitalize()
         ]
+        logger.info(f"Today's index: {today_index}")
+        logger.info(f"Contribution day index: {contribution_day_index_value}")
         days_until_contribution_day = (contribution_day_index_value - today_index) % 7
+        logger.info(f"Days until contribution day: {days_until_contribution_day}")
         if days_until_contribution_day == 0:
             # if today is the contribution day check if time is past the contribution time, if not, set the next contribution day to today else set it to next week
             # if today.time() < contribution_time:
             #     next_contribution_date = today
-            if today.time() < datetime.strptime("12:00", "%H:%M").time():
+            if today.time() < datetime.strptime("00:00", "%H:%M").time():
+                logger.info("Time is before contribution time")
                 next_contribution_date = today
             else:
+                logger.info("Time is after contribution time")
                 next_contribution_date = today + timedelta(weeks=1)
         else:
+            logger.info("Today is not the contribution day yet")
             next_contribution_date = today + timedelta(days=days_until_contribution_day)
 
     elif contribution_interval == "monthly":
@@ -199,8 +224,10 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
         else:
             # contribution day has passed this month
             next_month = today.replace(day=int(contribution_day))
-            next_month = next_month.replace(month=next_month.month + 1)
+            next_month = next_month.replace(month=(next_month.month % 12) + 1)
         next_contribution_date = next_month
+    print(f"Next contribution date: {next_contribution_date}")
+    logger.info("=============================================")
     return next_contribution_date
 
 
@@ -291,16 +318,20 @@ async def change_chama_status(
     db: Session = Depends(database.get_db),
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
-    print("status", status)
-    accepting_members = status["accepting_members"]
-    chama_id = status["chama_id"]
+    try:
+        accepting_members = status["accepting_members"]
+        chama_id = status["chama_id"]
 
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    chama.accepting_members = accepting_members
-    db.commit()
-    return {"message": "Status updated successfully"}
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        chama.accepting_members = accepting_members
+        db.commit()
+        return {"message": "Status updated successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to update status")
 
 
 # member_to be added to chama on the member_chama_association table
@@ -322,7 +353,7 @@ async def join_chama(
                 chama_id=chama_id,
                 member_id=member_id,
                 num_of_shares=num_of_shares,
-                date_joined=datetime.now(),
+                date_joined=datetime.now(nairobi_tz).replace(tzinfo=None),
                 registration_fee_paid=True,
             )
             db.execute(new_member_chama)
@@ -516,7 +547,7 @@ async def get_today_deposit(
         oauth2.get_current_user
     ),
 ):
-    today = datetime.now().date()
+    today = datetime.now(nairobi_tz).date()
     transactions = (
         db.query(models.Transaction)
         .filter(models.Transaction.chama_id == chama_id)
@@ -1056,7 +1087,7 @@ async def get_chama_mission_vision(
 # retrive all chamas share price, and previous two contribution dates
 # i wll use date from the upcoming contribution date to get the previous two contribution dates by subtracting the contribution interval
 @router.get(
-    "/share_price_and_prev_two_contribution_dates",
+    "/calculate_fines",
     status_code=status.HTTP_200_OK,
 )
 async def get_share_price_and_prev_two_contribution_dates(
@@ -1105,187 +1136,6 @@ async def get_share_price_and_prev_two_contribution_dates(
         )
 
 
-# using interval and the next contribution date, get the previous two contribution dates
-# i.e next date = 2024-06-23 08:40:07.801134
-# interval = weekly or daily or monthly
-# contribution_day = Monday or Tuesday or Wednesday or Thursday or Friday or Saturday or Sunday
-def calculate_two_previous_dates(interval, next_contribution_date):
-    prev_contribution_date = None
-    prev_two_contribution_date = None
-    if interval == "daily":
-        prev_contribution_date = next_contribution_date - timedelta(days=1)
-        prev_two_contribution_date = next_contribution_date - timedelta(days=2)
-    elif interval == "weekly":
-        prev_contribution_date = next_contribution_date - timedelta(weeks=1)
-        prev_two_contribution_date = next_contribution_date - timedelta(weeks=2)
-    elif interval == "monthly":
-        prev_contribution_date = next_contribution_date - timedelta(weeks=4)
-        prev_two_contribution_date = next_contribution_date - timedelta(weeks=8)
-    return prev_contribution_date, prev_two_contribution_date
-
-
-# using the chama details dreturned above, the share price, the fine, and two prev dates, check between those dates and check a members total contribution between those dates, compare
-# to the expected contribution (share price * num of shares (from members_chamas table)) and calculate the difference.
-# if its > 0, the member is behind in that chamas contribution for that period and is assinged a fine per share to be added as a record in the fines table
-# chama_id, member_id, fine, fine_reason, fine_date(prev_contrib_date), is_paid, paid_date, total_expected_amount(total fine + missed contribution amount)
-@router.get(
-    "/members_and_contribution_fines",
-    status_code=status.HTTP_200_OK,
-)
-async def get_members_and_contribution_fines(
-    chama_details: dict,
-    db: Session = Depends(database.get_db),
-):
-    try:
-        chamas_details = chama_details
-        print("=============beginning======================")
-        fines = {}
-        for chama_id, chama_details in chamas_details.items():
-            print("==============opener=====================")
-            print("==chama_id:", chama_id)
-            chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-            chama_members = (
-                db.query(models.Member)
-                .join(models.members_chamas_association)
-                .filter(models.members_chamas_association.c.chama_id == chama_id)
-                .all()
-            )
-
-            print("==chama_members:", chama_members)
-
-            if chama_members:
-                # chama_members_flat = [
-                #     item for sublist in chama_members for item in sublist
-                # ]
-                print("+++++++++++++++")
-                for member in chama_members:
-                    print("*****************")
-                    print("==m_id:", member.id)
-                    member_chama = (
-                        db.query(models.members_chamas_association)
-                        .filter(
-                            and_(
-                                models.members_chamas_association.c.member_id
-                                == member.id,
-                                models.members_chamas_association.c.chama_id
-                                == chama_id,
-                            )
-                        )
-                        .first()
-                    )
-
-                    prev_contribution_datetime = datetime.fromisoformat(
-                        chama_details["prev_contribution_date"]
-                    )
-
-                    prev_two_contribution_datetime = datetime.fromisoformat(
-                        chama_details["prev_two_contribution_date"]
-                    )
-
-                    member_contribution = (
-                        db.query(models.Transaction)
-                        .filter(
-                            and_(
-                                models.Transaction.member_id == member.id,
-                                models.Transaction.chama_id == chama_id,
-                                models.Transaction.transaction_type == "deposit",
-                                models.Transaction.transaction_completed == True,
-                                func.date(models.Transaction.date_of_transaction)
-                                > prev_two_contribution_datetime.date(),
-                                func.date(models.Transaction.date_of_transaction)
-                                <= prev_contribution_datetime.date(),
-                            )
-                        )
-                        .all()
-                    )
-                    total_contribution = sum(
-                        [transaction.amount for transaction in member_contribution]
-                    )
-                    print("==contributed:", total_contribution)
-
-                    expected_contribution = (
-                        chama.contribution_amount * member_chama.num_of_shares
-                    )
-                    print("==one share:", chama.contribution_amount)
-                    print("==num shares:", member_chama.num_of_shares)
-                    print("==expected cont:", expected_contribution)
-                    difference = expected_contribution - total_contribution
-                    print("==difference:", difference)
-                    fine = 0
-                    if difference > 0:
-                        fine = member_chama.num_of_shares * chama.fine_per_share
-                        print("==fine:", fine)
-                        print("==fine+diff:", fine + difference)
-
-                        fines[member.id] = {
-                            "chama_id": chama_id,
-                            "member_id": member.id,
-                            "fine": fine,
-                            "fine_reason": "Missed contribution",
-                            "fine_date": chama_details["prev_contribution_date"],
-                            "is_paid": False,
-                            "paid_date": None,
-                            "total_expected_amount": fine + difference,
-                        }
-                        # write the record to the fines table but i want if such a record exists, if a record with member_id, chama_id, fine_date exists, dont write another record
-                        # if it doesnt exist, write the record
-                        # prev_contribution_datetime = datetime.fromisoformat(
-                        #     chama_details["prev_contribution_date"]
-                        # )
-                        # if prev contribution date is today, dont write a fine or if prev contribution date is in the future, dont write a fine
-                        # this is because the contribution period has not passed yet
-                        # if (
-                        #     prev_contribution_datetime.date() == datetime.now().date()
-                        #     or prev_contribution_datetime.date() > datetime.now().date()
-                        # ):
-                        #     continue
-
-                        print(
-                            "==prev_contribution_datetime:", prev_contribution_datetime
-                        )
-
-                        existing_fine = (
-                            db.query(models.Fine)
-                            .filter(
-                                and_(
-                                    models.Fine.member_id == member.id,
-                                    models.Fine.chama_id == chama_id,
-                                    func.date(models.Fine.fine_date)
-                                    == prev_contribution_datetime.date(),
-                                )
-                            )
-                            .first()
-                        )
-
-                        if not existing_fine:
-                            print("=================not existing====================")
-                            new_fine = models.Fine(
-                                chama_id=chama_id,
-                                member_id=member.id,
-                                fine=fine,
-                                fine_reason="Missed contribution",
-                                fine_date=chama_details["prev_contribution_date"],
-                                is_paid=False,
-                                paid_date=None,
-                                total_expected_amount=fine + difference,
-                            )
-                            db.add(new_fine)
-                            db.commit()
-                            db.refresh(new_fine)
-                        else:
-                            print("=====================existing=====================")
-            print("==============closer=====================")
-        print("=============ending======================")
-        return {"fines": fines}
-    except Exception as e:
-        db.rollback()
-        print(e)
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to retrieve and set members and contribution fines",
-        )
-
-
 # retrieve all fines for a chama - where is_paid is False
 @router.get(
     "/fines/{chama_id}",
@@ -1296,35 +1146,47 @@ async def get_chama_fines(
     db: Session = Depends(database.get_db),
 ):
     try:
-        chama_fines = (
-            db.query(models.Fine)
-            .filter(models.Fine.chama_id == chama_id)
-            .filter(models.Fine.is_paid == False)
-            .all()
-        )
-        if not chama_fines:
-            return {"fines": []}
+        with db.begin():
+            # Retrieve the latest 10 fines where is_paid is False
+            chama_fines = (
+                db.query(models.Fine)
+                .filter(models.Fine.chama_id == chama_id)
+                .filter(models.Fine.is_paid == False)
+                .order_by(desc(models.Fine.fine_date))
+                .limit(10)
+                .all()
+            )
+            if not chama_fines:
+                return {"fines": []}
 
-        shares_number = (
-            db.query(models.members_chamas_association)
-            .filter(models.members_chamas_association.c.chama_id == chama_id)
-            .all()
-        )
+            # Extract member IDs from the retrieved fines
+            member_ids = [fine.member_id for fine in chama_fines]
+
+            # Retrieve the number of shares for each member in the member_ids list
+            shares_number = (
+                db.query(models.members_chamas_association)
+                .filter(models.members_chamas_association.c.chama_id == chama_id)
+                .filter(models.members_chamas_association.c.member_id.in_(member_ids))
+                .all()
+            )
 
         return {
             "fines": [
                 {
                     "member_id": fine.member_id,
-                    "num_of_shares": [
-                        shares.num_of_shares
-                        for shares in shares_number
-                        if shares.member_id == fine.member_id
-                    ][0],
+                    "num_of_shares": next(
+                        (
+                            shares.num_of_shares
+                            for shares in shares_number
+                            if shares.member_id == fine.member_id
+                        ),
+                        0,
+                    ),
                     "fine": fine.fine,
                     "fine_reason": fine.fine_reason,
                     "fine_date": fine.fine_date.strftime("%d-%m-%Y"),
                     "total_expected_amount": fine.total_expected_amount,
-                    "cleared": "No" if fine.is_paid == False else "Yes",
+                    "cleared": "No" if not fine.is_paid else "Yes",
                 }
                 for fine in chama_fines
             ]
