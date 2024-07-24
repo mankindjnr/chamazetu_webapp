@@ -1,1 +1,4 @@
-2024-07-23 17:48:26,869 - investments_error - ERROR - getting investment balance failed 'NoneType' object has no attribute 'investment_rate'
+2024-07-24 17:46:22,278 - investments_error - ERROR - getting investment balance failed 'NoneType' object has no attribute 'investment_rate'
+2024-07-24 17:46:44,742 - investments_error - ERROR - getting investment balance failed 'NoneType' object has no attribute 'investment_rate'
+2024-07-24 17:47:10,192 - investments_error - ERROR - getting investment balance failed 'NoneType' object has no attribute 'investment_rate'
+2024-07-24 17:47:44,290 - investments_error - ERROR - getting investment balance failed 'NoneType' object has no attribute 'investment_rate'

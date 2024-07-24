@@ -364,3 +364,47 @@ INFO 2024-07-23 17:37:02,484 tasks Nairobi: 2024-07-23 17:37:02.484044+03:00
 INFO 2024-07-23 17:38:55,232 tasks amountb4:5
 INFO 2024-07-23 17:38:55,257 tasks greaterafter:5
 INFO 2024-07-23 17:38:55,468 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_23072024173754191113638169', 'wallet_update': None, 'direct_deposit': {'amount': 5, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}
+INFO 2024-07-24 16:11:06,908 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-24 16:11:06,974 tasks Task ran at: 2024-07-24 16:11:06.974255
+INFO 2024-07-24 16:11:06,974 tasks Date: 2024-07-24
+INFO 2024-07-24 16:11:06,974 tasks Time: 16:11:06.974926
+INFO 2024-07-24 16:11:06,975 tasks Nairobi: 2024-07-24 16:11:06.975151+03:00
+INFO 2024-07-24 16:29:12,621 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:29:12,622 tasks Task ran at: 2024-07-24 16:29:12.622732
+INFO 2024-07-24 16:29:12,623 tasks Nairobi: 2024-07-24 16:29:12.623546+03:00
+INFO 2024-07-24 16:29:28,133 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:29:28,134 tasks Task ran at: 2024-07-24 16:29:28.134085
+INFO 2024-07-24 16:29:28,134 tasks Nairobi: 2024-07-24 16:29:28.134648+03:00
+INFO 2024-07-24 16:29:48,367 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:29:48,368 tasks Task ran at: 2024-07-24 16:29:48.368122
+INFO 2024-07-24 16:29:48,369 tasks Nairobi: 2024-07-24 16:29:48.368979+03:00
+INFO 2024-07-24 16:42:35,203 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:42:35,203 tasks Task ran at: 2024-07-24 16:42:35.203674
+INFO 2024-07-24 16:42:35,204 tasks Nairobi: 2024-07-24 16:42:35.203988+03:00
+INFO 2024-07-24 16:50:17,665 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:50:17,665 tasks Task ran at: 2024-07-24 16:50:17.665753
+INFO 2024-07-24 16:50:17,666 tasks Nairobi: 2024-07-24 16:50:17.666107+03:00
+INFO 2024-07-24 16:50:28,604 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 16:50:28,605 tasks Task ran at: 2024-07-24 16:50:28.605194
+INFO 2024-07-24 16:50:28,606 tasks Nairobi: 2024-07-24 16:50:28.606093+03:00
+INFO 2024-07-24 17:05:37,305 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:05:37,305 tasks Task ran at: 2024-07-24 17:05:37.305495
+INFO 2024-07-24 17:05:37,305 tasks Nairobi: 2024-07-24 17:05:37.305759+03:00
+INFO 2024-07-24 17:06:08,250 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:06:08,250 tasks Task ran at: 2024-07-24 17:06:08.250914
+INFO 2024-07-24 17:06:08,251 tasks Nairobi: 2024-07-24 17:06:08.251249+03:00
+INFO 2024-07-24 17:06:48,891 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:06:48,892 tasks Task ran at: 2024-07-24 17:06:48.892805
+INFO 2024-07-24 17:06:48,893 tasks Nairobi: 2024-07-24 17:06:48.893614+03:00
+INFO 2024-07-24 17:07:42,320 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:07:42,320 tasks Task ran at: 2024-07-24 17:07:42.320628
+INFO 2024-07-24 17:07:42,321 tasks Nairobi: 2024-07-24 17:07:42.321077+03:00
+INFO 2024-07-24 17:10:34,003 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:10:34,004 tasks Task ran at: 2024-07-24 17:10:34.004815
+INFO 2024-07-24 17:10:34,006 tasks Nairobi: 2024-07-24 17:10:34.006306+03:00
+INFO 2024-07-24 17:29:02,493 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:29:02,502 tasks Task ran at: 2024-07-24 17:29:02.502305
+INFO 2024-07-24 17:29:02,503 tasks Nairobi: 2024-07-24 17:29:02.503396+03:00
+INFO 2024-07-24 17:29:44,790 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-24 17:29:44,791 tasks Task ran at: 2024-07-24 17:29:44.791671
+INFO 2024-07-24 17:29:44,792 tasks Nairobi: 2024-07-24 17:29:44.792405+03:00
