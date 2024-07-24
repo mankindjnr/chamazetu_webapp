@@ -7,6 +7,7 @@ from functools import wraps
 from asgiref.sync import sync_to_async
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 import aiohttp
+from http import HTTPStatus
 
 from django.core.mail import EmailMultiAlternatives
 from django.contrib.sites.shortcuts import get_current_site
@@ -131,7 +132,7 @@ def get_user_email(role, id):
 def signin(request, role):
     if request.method == "POST":
         data = {
-            "username": request.POST["email"],
+            "username": request.POST.get("email").strip().lower(),
             "password": request.POST["password"],
         }
 
@@ -141,12 +142,12 @@ def signin(request, role):
             f"{os.getenv('api_url')}/auth/{role}s/login/", data=data
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             access_tokens = {}
             refresh_tokens = {}
             access_tokens[role] = response.json()["access_token"]
             refresh_tokens[role] = response.json()["refresh_token"]
-            current_user = request.POST["email"]
+            current_user = request.POST["email"].strip().lower()
 
             # check if user is a member or manager
             if role == "manager":
@@ -192,7 +193,7 @@ def signup(request, role):
     if request.method == "POST":
         first_name = request.POST["first_name"]
         last_name = request.POST["last_name"]
-        email = request.POST["email"]
+        email = request.POST.get("email", "").strip().lower()
         password = request.POST["password"]
         confirm_password = request.POST["password2"]
 
@@ -217,7 +218,7 @@ def signup(request, role):
             headers=headers,
         )
 
-        if response.status_code == 201:
+        if response.status_code == HTTPStatus.CREATED:
             # successful signup - redirect to login page
             current_user = response.json()["User"][0]
             # -------------------email verification-------------------------------------

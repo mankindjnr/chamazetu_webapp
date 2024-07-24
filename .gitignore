@@ -7,3 +7,4 @@ backend_chamazetu/staticfiles
 frontend_chamazetu/key.pem
 frontend_chamazetu/cert.pem
 frontend_chamazetu/certs
+backend_chamazetu/alembic/versions/*

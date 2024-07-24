@@ -18,11 +18,12 @@ nairobi_tz = ZoneInfo("Africa/Nairobi")
 async def create_user(
     user: schemas.UserBase = Body(...), db: Session = Depends(get_db)
 ):
-    member_check = (
-        db.query(models.Member).filter(models.Member.email == user.email).first()
-    )
+
+    # email to lowercase
+    email = (user.email).lower()
+    member_check = db.query(models.Member).filter(models.Member.email == email).first()
     manager_check = (
-        db.query(models.Manager).filter(models.Manager.email == user.email).first()
+        db.query(models.Manager).filter(models.Manager.email == email).first()
     )
     if member_check or manager_check:
         raise HTTPException(status_code=400, detail="user already exists")
@@ -73,7 +74,7 @@ async def update_email_verification(
     user_email: schemas.UserEmailActvationBase = Body(...),
     db: Session = Depends(get_db),
 ):
-    email = user_email.dict()["user_email"]
+    email = (user_email.dict()["user_email"]).lower()
     user = (
         db.query(models.Member)
         .filter(and_(models.Member.id == uid, models.Member.email == email))
@@ -96,7 +97,7 @@ async def update_email_verification(
     user_email: schemas.UserEmailActvationBase = Body(...),
     db: Session = Depends(get_db),
 ):
-    email = user_email.dict()["user_email"]
+    email = (user_email.dict()["user_email"]).lower()
     user = (
         db.query(models.Manager)
         .filter(
@@ -142,11 +143,8 @@ async def get_user_by_email(
         oauth2.get_current_user
     ),
 ):
-    print("============profile picture============")
     user = None
     if role == "member":
-        print("============member============")
-        print(current_user.id)
         user = (
             db.query(models.Member).filter(models.Member.id == current_user.id).first()
         )
@@ -232,10 +230,16 @@ async def confirm_user_exists_with_email(
 
     if role == "member":
         print("========i'm  member======")
-        user = db.query(models.Member).filter(models.Member.email == email).first()
+        user = (
+            db.query(models.Member).filter(models.Member.email == email.lower()).first()
+        )
     elif role == "manager":
         print("========i'm  manager======")
-        user = db.query(models.Manager).filter(models.Manager.email == email).first()
+        user = (
+            db.query(models.Manager)
+            .filter(models.Manager.email == email.lower())
+            .first()
+        )
 
     if not user:
         raise HTTPException(status_code=404, detail="user not found")

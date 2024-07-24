@@ -5,6 +5,7 @@ from sqlalchemy import and_, func, desc
 from uuid import uuid4
 from typing import List
 from zoneinfo import ZoneInfo
+import logging
 
 
 from .. import schemas, database, utils, oauth2, models
@@ -12,6 +13,9 @@ from .. import schemas, database, utils, oauth2, models
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+transaction_info_logger = logging.getLogger("transactions_info")
+transaction_error_logger = logging.getLogger("transactions_error")
 
 
 # create deposit transaction for a logged in member to chama
@@ -30,8 +34,12 @@ async def create_deposit_transaction(
             transaction_dict["transaction_type"] = "deposit"
             transaction_dict["member_id"] = transaction.member_id
             transaction_dict["transaction_completed"] = True
-            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz)
-            transaction_dict["updated_at"] = datetime.now(nairobi_tz)
+            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz).replace(
+                tzinfo=None
+            )
+            transaction_dict["updated_at"] = datetime.now(nairobi_tz).replace(
+                tzinfo=None
+            )
             transaction_dict["transaction_code"] = transaction.transaction_code
 
             new_transaction = models.Transaction(**transaction_dict)
@@ -43,8 +51,47 @@ async def create_deposit_transaction(
 
     except Exception as e:
         print("------direct deposit error--------")
-        print(e)
+        transaction_error_logger.error(f"Failed to create transaction: {e}")
         raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+@router.post(
+    "/before_processing_direct_deposit",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.TransactionResp,
+)
+async def create_unprocessed_deposit_transaction(
+    transaction: schemas.BeforeProcessingBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("===========before processing ===========")
+        with db.begin():
+            transaction_dict = transaction.dict()
+            transaction_dict["transaction_type"] = transaction.transaction_type
+            transaction_dict["member_id"] = transaction.member_id
+            transaction_dict["transaction_completed"] = False
+            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz).replace(
+                tzinfo=None
+            )
+            transaction_dict["updated_at"] = datetime.now(nairobi_tz).replace(
+                tzinfo=None
+            )
+            transaction_dict["transaction_code"] = transaction.transaction_code
+
+            new_transaction = models.Transaction(**transaction_dict)
+            db.add(new_transaction)
+            db.flush()  # flush to get the id of the transaction and trigger constraints
+            db.refresh(new_transaction)
+
+        return new_transaction
+
+    except Exception as e:
+        print("------direct deposit error--------")
+        transaction_error_logger.error(f"Failed to create unprocessed transaction: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to create unprocessed transaction"
+        )
 
 
 # create a deposit transaction from wallet to chama
@@ -60,16 +107,14 @@ async def create_deposit_transaction_from_wallet(
 ):
 
     try:
-        print("===========hit wallet transaction===========")
         wallet_transaction_dict = wallet_transaction.dict()
         wallet_transaction_dict["transaction_type"] = "moved_to_chama"
         wallet_transaction_dict["member_id"] = current_user.id
         wallet_transaction_dict["transaction_completed"] = True
-        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz)
+        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz).replace(
+            tzinfo=None
+        )
         wallet_transaction_dict["transaction_code"] = uuid4().hex
-
-        print("===========wallet transaction dict===========")
-        print(wallet_transaction_dict)
 
         new_wallet_transaction = models.Wallet_Transaction(**wallet_transaction_dict)
         db.add(new_wallet_transaction)
@@ -121,11 +166,10 @@ async def create_fine_repayment_transaction_from_wallet(
         wallet_transaction_dict["transaction_type"] = "moved_to_chama"
         wallet_transaction_dict["member_id"] = current_user.id
         wallet_transaction_dict["transaction_completed"] = True
-        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz)
+        wallet_transaction_dict["transaction_date"] = datetime.now(nairobi_tz).replace(
+            tzinfo=None
+        )
         wallet_transaction_dict["transaction_code"] = uuid4().hex
-
-        print("===========wallet transaction dict===========")
-        print(wallet_transaction_dict)
 
         new_wallet_transaction = models.Wallet_Transaction(**wallet_transaction_dict)
         db.add(new_wallet_transaction)
@@ -180,7 +224,7 @@ async def create_fine_repayment_transaction_from_mpesa(
             "transaction_origin": "direct_deposit",
             "member_id": mpesa_transaction.member_id,
             "transaction_completed": True,
-            "date_of_transaction": datetime.now(nairobi_tz),
+            "date_of_transaction": datetime.now(nairobi_tz).replace(tzinfo=None),
             "updated_at": datetime.now(nairobi_tz),
             "transaction_code": mpesa_transaction.transaction_code,
         }
@@ -206,6 +250,132 @@ def generateWalletNumber(member_id):
     return wallet_number
 
 
+# combining multiple transactions into one - wallet update, account update and direct deposit
+@router.post("/unified_deposit_transactions", status_code=status.HTTP_201_CREATED)
+async def unified_deposit_transactions(
+    transactions: schemas.UnifiedTransactionBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        if not transactions.wallet_deposit:
+            # prepare wallet transaction
+            wallet_transaction = transactions.wallet_update
+            if wallet_transaction:
+                wallet_dict = wallet_transaction.dict()
+                wallet_dict["transaction_date"] = datetime.now(nairobi_tz).replace(
+                    tzinfo=None
+                )
+                wallet_dict["transaction_completed"] = True
+                wallet_dict["transaction_destination"] = 0
+                wallet_dict["transaction_code"] = transactions.transaction_code
+                wallet_dict["member_id"] = transactions.member_id
+
+                new_wallet_transaction = models.Wallet_Transaction(**wallet_dict)
+                db.add(new_wallet_transaction)
+
+                # update the member wallet balance
+                member = (
+                    db.query(models.Member)
+                    .filter(models.Member.id == transactions.member_id)
+                    .first()
+                )
+                if not member:
+                    raise HTTPException(status_code=404, detail="Member not found")
+                member.wallet_balance += wallet_transaction.amount
+
+            # prepare direct deposit transaction
+            direct_deposit = transactions.direct_deposit
+            if direct_deposit:
+                direct_dict = direct_deposit.dict()
+                direct_dict["transaction_type"] = "deposit"
+                direct_dict["member_id"] = transactions.member_id
+                direct_dict["transaction_completed"] = True
+                direct_dict["transaction_code"] = transactions.transaction_code
+                direct_dict["date_of_transaction"] = datetime.now(nairobi_tz).replace(
+                    tzinfo=None
+                )
+                direct_dict["updated_at"] = direct_dict["date_of_transaction"]
+                direct_dict["chama_id"] = transactions.chama_id
+
+                new_direct_deposit = models.Transaction(**direct_dict)
+                db.add(new_direct_deposit)
+
+                # update the chama account with direct deposit amount
+                chama_account = (
+                    db.query(models.Chama_Account)
+                    .filter(models.Chama_Account.chama_id == transactions.chama_id)
+                    .first()
+                )
+                if not chama_account:
+                    raise HTTPException(
+                        status_code=404, detail="Chama account not found"
+                    )
+                chama_account.account_balance += direct_deposit.amount
+        else:
+            # prepare wallet transaction - all cont are made so we only have to move money to the wallet
+            wallet_transaction = transactions.wallet_deposit
+            if wallet_transaction:
+                wallet_dict = wallet_transaction.dict()
+                wallet_dict["transaction_date"] = datetime.now(nairobi_tz).replace(
+                    tzinfo=None
+                )
+                wallet_dict["transaction_completed"] = True
+                wallet_dict["transaction_destination"] = 0
+                wallet_dict["transaction_code"] = transactions.transaction_code
+                wallet_dict["member_id"] = transactions.member_id
+
+                new_wallet_deposit = models.Wallet_Transaction(**wallet_dict)
+                db.add(new_wallet_deposit)
+
+                # update the member wallet balance
+                member = (
+                    db.query(models.Member)
+                    .filter(models.Member.id == transactions.member_id)
+                    .first()
+                )
+                if not member:
+                    raise HTTPException(status_code=404, detail="Member not found")
+                member.wallet_balance += wallet_transaction.amount
+
+        # prepare unprocessed transaction
+        unprocessed_transaction = (
+            db.query(models.Transaction)
+            .filter(
+                and_(
+                    models.Transaction.member_id == transactions.member_id,
+                    models.Transaction.chama_id == transactions.chama_id,
+                    models.Transaction.transaction_origin == "mpesa",
+                    models.Transaction.transaction_type == "unprocessed deposit",
+                    models.Transaction.transaction_code
+                    == transactions.transaction_code,
+                    models.Transaction.transaction_completed == False,
+                )
+            )
+            .first()
+        )
+        if not unprocessed_transaction:
+            raise HTTPException(
+                status_code=404, detail="Unprocessed transaction not found"
+            )
+        unprocessed_transaction.transaction_completed = True
+        unprocessed_transaction.updated_at = datetime.now(nairobi_tz).replace(
+            tzinfo=None
+        )
+        unprocessed_transaction.transaction_type = "processed"
+
+        db.commit()
+        return {"message": "Unified transactions created successfully"}
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(
+            f"Failed to create unified transaction: {e} at {datetime.now(nairobi_tz)}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to create unified transaction"
+        )
+
+
 # fetch transactions for a certain chama
 @router.get(
     "/recent/{chama_id}",
@@ -223,6 +393,7 @@ async def get_transactions(
                 and_(
                     models.Transaction.chama_id == chama_id,
                     models.Transaction.transaction_completed == True,
+                    models.Transaction.transaction_origin != "mpesa",
                 )
             )
             .order_by(desc(models.Transaction.date_of_transaction))
@@ -293,6 +464,8 @@ async def get_transactions_for_members(
             db.query(models.Transaction)
             .filter(
                 models.Transaction.chama_id == chama_id,
+                models.Transaction.transaction_completed == True,
+                models.Transaction.transaction_origin != "mpesa",
                 func.date(models.Transaction.date_of_transaction)
                 >= date_of_transaction,
             )

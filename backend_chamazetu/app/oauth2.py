@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from zoneinfo import ZoneInfo
 
 from . import schemas, database, models
 
@@ -13,6 +14,7 @@ load_dotenv()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 SECRET_KEY = os.getenv("JWT_SECRET")
 ALGORITHM = os.getenv("JWT_ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES"))
@@ -21,7 +23,9 @@ JWT_REFRESH_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_EXPIRE_DAYS"))
 
 async def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(nairobi_tz).replace(tzinfo=None) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -29,7 +33,9 @@ async def create_access_token(data: dict):
 
 async def create_refresh_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(days=JWT_REFRESH_EXPIRE_DAYS)
+    expire = datetime.now(nairobi_tz).replace(tzinfo=None) + timedelta(
+        days=JWT_REFRESH_EXPIRE_DAYS
+    )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

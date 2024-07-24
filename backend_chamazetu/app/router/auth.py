@@ -23,7 +23,7 @@ async def login(
 ):
     user = (
         db.query(models.Member)
-        .filter(models.Member.email == user_credentials.username)
+        .filter(models.Member.email == (user_credentials.username).lower())
         .first()
     )
 
@@ -65,7 +65,7 @@ async def login(
 ):
     user = (
         db.query(models.Manager)
-        .filter(models.Manager.email == user_credentials.username)
+        .filter(models.Manager.email == (user_credentials.username).lower())
         .first()
     )
 
@@ -123,7 +123,6 @@ async def new_access_token(
 async def check_token(
     token_data: schemas.receivedToken = Body(...),
 ):
-    print("==========check token*****************")
     try:
         payload = jwt.decode(
             token_data.token, os.getenv("JWT_SECRET"), algorithms="HS256"

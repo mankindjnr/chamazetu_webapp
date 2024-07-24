@@ -12,7 +12,8 @@ from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/chamas", tags=["management"])
 
-logger = logging.getLogger(__name__)
+management_info_logger = logging.getLogger("management_info")
+management_error_logger = logging.getLogger("management_error")
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
 
@@ -128,8 +129,11 @@ async def update_contribution_days(
             upcoming_contribution_date = calculate_next_contribution_date(
                 contribution_interval, contribution_day
             )
-            print("=========upcoming_contribution_date============")
-            print(upcoming_contribution_date)
+            management_info_logger.info(f"interval: {contribution_interval}")
+            management_info_logger.info(f"day: {contribution_day}")
+            management_info_logger.info(
+                f"upcoming_contribution_date: {upcoming_contribution_date}"
+            )
 
             chama_contribution_day = (
                 db.query(models.ChamaContributionDay)
@@ -138,15 +142,10 @@ async def update_contribution_days(
             )
 
             if chama_contribution_day:
-                print("=========day exists============")
-                print(chama_contribution_day.next_contribution_date)
                 chama_contribution_day.next_contribution_date = (
                     upcoming_contribution_date
                 )
-                print("=========after============")
-                print(chama_contribution_day.next_contribution_date)
             else:
-                print("=========day does not exist============")
                 new_record = models.ChamaContributionDay(
                     chama_id=chama.id, next_contribution_date=upcoming_contribution_date
                 )
@@ -156,7 +155,9 @@ async def update_contribution_days(
         return {"message": "Contribution days updated successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(
+            f"failed to update contribution days for: {chama.id}, error: {e}"
+        )
         raise HTTPException(
             status_code=400, detail="Failed to update contribution days"
         )
@@ -167,13 +168,9 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
     # set timezone to kenya
     kenya_tz = ZoneInfo("Africa/Nairobi")
     today = datetime.now(kenya_tz).replace(tzinfo=None)
-    logger.info(f"Today's date: {today}")
-    logger.info(f"Contribution interval: {contribution_interval}")
-    logger.info(f"Contribution day: {contribution_day}")
-    print("=============================================")
-    print(f"Today's date: {today}")
-    print(f"Contribution interval: {contribution_interval}")
-    print(f"Contribution day: {contribution_day}")
+    management_info_logger.info(f"Today's date: {today}")
+    management_info_logger.info(f"Contribution interval: {contribution_interval}")
+    management_info_logger.info(f"Contribution day: {contribution_day}")
 
     contribution_day_index = {
         "Monday": 0,
@@ -195,22 +192,28 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
         contribution_day_index_value = contribution_day_index[
             contribution_day.capitalize()
         ]
-        logger.info(f"Today's index: {today_index}")
-        logger.info(f"Contribution day index: {contribution_day_index_value}")
+        management_info_logger.info(f"Today's index: {today_index}")
+        management_info_logger.info(
+            f"Contribution day index: {contribution_day_index_value}"
+        )
         days_until_contribution_day = (contribution_day_index_value - today_index) % 7
-        logger.info(f"Days until contribution day: {days_until_contribution_day}")
+        management_info_logger.info(
+            f"Days until contribution day: {days_until_contribution_day}"
+        )
         if days_until_contribution_day == 0:
             # if today is the contribution day check if time is past the contribution time, if not, set the next contribution day to today else set it to next week
             # if today.time() < contribution_time:
             #     next_contribution_date = today
-            if today.time() < datetime.strptime("00:00", "%H:%M").time():
-                logger.info("Time is before contribution time")
-                next_contribution_date = today
-            else:
-                logger.info("Time is after contribution time")
-                next_contribution_date = today + timedelta(weeks=1)
+            # TODO:=== uncomment the above code when contribution time is implemented ===
+            # if today.time() < datetime.strptime("00:00", "%H:%M").time():
+            #     logging.info("Time is before contribution time")
+            #     next_contribution_date = today
+            # else:
+            #     logging.info("Time is after contribution time")
+            #     next_contribution_date = today + timedelta(weeks=1)
+            next_contribution_date = today
         else:
-            logger.info("Today is not the contribution day yet")
+            management_info_logger.info("Today is not the contribution day yet")
             next_contribution_date = today + timedelta(days=days_until_contribution_day)
 
     elif contribution_interval == "monthly":
@@ -226,9 +229,11 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
             next_month = today.replace(day=int(contribution_day))
             next_month = next_month.replace(month=(next_month.month % 12) + 1)
         next_contribution_date = next_month
-    print(f"Next contribution date: {next_contribution_date}")
-    logger.info("=============================================")
-    return next_contribution_date
+
+    management_info_logger.info(f"Next contribution date: {next_contribution_date}")
+    management_info_logger.info("=============================================")
+    # return the next contribution date with no microseconds seconds and minutes zeor
+    return next_contribution_date.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
 # ====================================================
@@ -466,7 +471,6 @@ async def update_account_balance(
     transaction_type = account_dict["transaction_type"]
 
     try:
-        print("=====updating account bal=========")
         with db.begin():
             chama_account = (
                 db.query(models.Chama_Account)
@@ -497,18 +501,15 @@ async def update_account_balance(
             db.refresh(
                 chama_account
             )  # needed to refresh the object to get the updated values
-        print("=====account bal updated=========")
         return chama_account
 
     except SQLAlchemyError as e:
         db.rollback()
-        print("------update acc error--------")
-        print(e)
+        management_error_logger.error(f"failed to update account balance, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to update account balance")
     except Exception as e:
         db.rollback()
-        print("------update acc error--------")
-        print(e)
+        management_error_logger.error(f"failed to update account balance, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to update account balance")
 
 
@@ -548,21 +549,39 @@ async def get_today_deposit(
     ),
 ):
     today = datetime.now(nairobi_tz).date()
-    transactions = (
-        db.query(models.Transaction)
-        .filter(models.Transaction.chama_id == chama_id)
-        .filter(models.Transaction.transaction_type == "deposit")
-        .filter(func.date(models.Transaction.date_of_transaction) == today)
-        .all()
-    )
 
-    for transaction in transactions:
-        print(transaction.date_of_transaction)
+    try:
+        total_amount = (
+            db.query(func.coalesce(func.sum(models.Transaction.amount), 0))
+            .filter(models.Transaction.chama_id == chama_id)
+            .filter(models.Transaction.transaction_type == "deposit")
+            .filter(func.date(models.Transaction.date_of_transaction) == today)
+            .scalar()
+        )
 
-    if not transactions:
-        raise HTTPException(status_code=404, detail="No transactions found")
-    total_amount = sum([transaction.amount for transaction in transactions])
-    return {"today_deposits": total_amount}
+        total_fines = 0
+        if current_user.is_member:
+            total_fines = (
+                db.query(func.coalesce(func.sum(models.Fine.total_expected_amount), 0))
+                .filter(
+                    and_(
+                        models.Fine.chama_id == chama_id,
+                        models.Fine.member_id == current_user.id,
+                        models.Fine.is_paid == False,
+                    )
+                )
+                .scalar()
+            )
+
+        return {"today_deposits": total_amount, "total_fines": total_fines}
+    except Exception as e:
+        db.rollback()
+        management_error_logger.error(
+            f"failed to get today's deposits for chama: {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve today's deposits"
+        )
 
 
 # get chama day and convert to string
@@ -574,17 +593,29 @@ async def get_chama_contrbution_day(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    contribution = (
-        db.query(models.ChamaContributionDay)
-        .filter(models.ChamaContributionDay.chama_id == chama_id)
-        .first()
-    )
-    if not contribution:
-        raise HTTPException(status_code=404, detail="Chama contribution day not found")
-    return {
-        "contribution_day": contribution.next_contribution_date.strftime("%A"),
-        "contribution_date": contribution.next_contribution_date.strftime("%d-%B-%Y"),
-    }
+    try:
+        contribution = (
+            db.query(models.ChamaContributionDay)
+            .filter(models.ChamaContributionDay.chama_id == chama_id)
+            .first()
+        )
+        if not contribution:
+            raise HTTPException(
+                status_code=404, detail="Chama contribution day not found"
+            )
+        return {
+            "contribution_day": contribution.next_contribution_date.strftime("%A"),
+            "contribution_date": contribution.next_contribution_date.strftime(
+                "%d-%B-%Y"
+            ),
+        }
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama contribution day for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama contribution day"
+        )
 
 
 # get chama contribution interval
@@ -596,13 +627,21 @@ async def get_chama_contrbution_interval(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {
-        "contribution_interval": chama.contribution_interval,
-        "contribution_day": chama.contribution_day,
-    }
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {
+            "contribution_interval": chama.contribution_interval,
+            "contribution_day": chama.contribution_day,
+        }
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama contribution interval for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama contribution interval"
+        )
 
 
 # get chamas registration fee
@@ -650,15 +689,23 @@ async def get_chama_members_count(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama_members_query = db.query(models.members_chamas_association).filter(
-        models.members_chamas_association.c.chama_id == chama_id
-    )
-    number_of_members = chama_members_query.count()
-    if not chama_members_query:
-        raise HTTPException(
-            status_code=404, detail="could not retrieve chama members count"
+    try:
+        number_of_members = (
+            db.query(func.count(models.members_chamas_association.c.member_id))
+            .filter(models.members_chamas_association.c.chama_id == chama_id)
+            .scalar()
         )
-    return {"number_of_members": number_of_members}
+
+        if number_of_members == 0:
+            raise HTTPException(status_code=404, detail="No members found")
+        return {"number_of_members": number_of_members}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama members count for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama members count"
+        )
 
 
 # activate and deactivate chama

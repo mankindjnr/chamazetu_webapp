@@ -67,8 +67,10 @@ class TokenData(BaseModel):
     username: str
     role: str
 
+
 class receivedToken(BaseModel):
     token: str
+
 
 # ============== chama =================
 class ChamaBase(BaseModel):
@@ -193,6 +195,40 @@ class ChamaDeleteBase(BaseModel):
 
 
 # ============== transaction =================
+class WalletTransactionUni(BaseModel):
+    amount: float
+    transaction_type: str
+
+
+class WalletDepositUni(BaseModel):
+    amount: int
+    transaction_type: str
+
+
+class DirectDepositUni(BaseModel):
+    amount: int
+    phone_number: str
+    transaction_origin: str
+
+
+class UnifiedTransactionBase(BaseModel):
+    member_id: int = Field(..., description="ID of the member")
+    chama_id: int = Field(..., description="ID of the chama")
+    transaction_code: str = Field(..., description="Transaction code")
+    wallet_update: Optional[WalletTransactionUni] = Field(
+        None, description="Details of the wallet update transaction"
+    )
+    direct_deposit: Optional[DirectDepositUni] = Field(
+        None, description="Details of the direct deposit transaction"
+    )
+    wallet_deposit: Optional[WalletDepositUni] = Field(
+        None, description="Details of the wallet deposit transaction"
+    )
+
+    class Config:
+        orm_mode = True
+
+
 class TransactionBase(BaseModel):
     amount: int
     chama_id: int
@@ -211,6 +247,20 @@ class DirectTransactionBase(BaseModel):
     phone_number: str
     transaction_origin: str
     transaction_code: str
+
+    class Config:
+        orm_mode = True
+        # from_attributes = True
+
+
+class BeforeProcessingBase(BaseModel):
+    amount: int
+    member_id: int
+    chama_id: int
+    phone_number: str
+    transaction_origin: str
+    transaction_code: str
+    transaction_type: str
 
     class Config:
         orm_mode = True

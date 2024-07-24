@@ -1,4 +1,6 @@
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -20,11 +22,9 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (
-    "PRODUCTION" not in os.environ
-)  # result is True if PRODUCTION is not in os.environ
+# i have this in my .env IN_PROD="False" and IN_PROD="True" for production, i want DEBUG to be False in production AND True in development
+DEBUG = True
 
-# ALLOWED_HOSTS = ["*"]
 ALLOWED_HOSTS = [
     "localhost",
     "chamazetu.com",
@@ -85,7 +85,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
 
-CELERY_IMPORTS = ("chama.tasks",)
+CELERY_IMPORTS = ("chama.tasks", "member.tasks", "manager.tasks")
 
 TEMPLATES = [
     {
@@ -170,6 +170,9 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Nairobi"
 CELERY_ENABLE_UTC = False  # set to False to use local timezone(i think)
+CELERY_TASK_RESULT_EXPIRES = 3600
+# CELERY_TASK_TIME_LIMIT = 1000  # 1000 seconds - 16 minutes is how long a task can run
+CELERY_WORKER_CONCURRENCY = 4  # number of workers
 
 # monitor celery tasks
 # CELERY_RESULT_BACKEND = "django-db"  # YOU CAN USE REDIS AS WELL
@@ -200,20 +203,26 @@ LOGGING = {
     "handlers": {
         "chama_file": {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/chama.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 5,
             "formatter": "verbose",
         },
         "manager_file": {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/manager.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 5,
             "formatter": "verbose",
         },
         "member_file": {
             "level": "DEBUG",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "filename": os.path.join(BASE_DIR, "logs/member.log"),
+            "maxBytes": 1024 * 1024 * 5,  # 5MB
+            "backupCount": 5,
             "formatter": "verbose",
         },
     },

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from django.conf import settings
 from django.template.loader import render_to_string
 from http import HTTPStatus
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from zoneinfo import ZoneInfo
 
 from .members import (
@@ -181,6 +182,38 @@ def update_users_profile_image(headers, role, new_profile_image_name):
     return None
 
 
+# the status of this in the table will be processed later in the day(bg)
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_fixed(10),
+    retry=retry_if_exception_type(requests.RequestException),
+)
+def record_transaction_before_processing(
+    checkoutrequestid, member_id, destination, amount, phone_number, transaction_origin
+):
+    # record the transaction in the database
+    url = f"{os.getenv('api_url')}/transactions/before_processing_direct_deposit"
+    data = {
+        "amount": amount,
+        "member_id": member_id,
+        "chama_id": destination,
+        "phone_number": f"254{phone_number}",
+        "transaction_origin": "mpesa",
+        "transaction_code": checkoutrequestid,
+        "transaction_type": "unprocessed deposit",
+    }
+
+    response = requests.post(url, json=data)
+    if response.status_code == HTTPStatus.CREATED:
+        return True
+    else:
+        logger.error(
+            f"Failed to record stk push transaction: {checkoutrequestid} {response.status_code}, {response.text}"
+        )
+        response.raise_for_status()
+    return None
+
+
 @shared_task(bind=True, max_retries=3)
 def stk_push_status(
     self,
@@ -194,17 +227,31 @@ def stk_push_status(
 ):
     """
     Check the status of the stk push
+    but record the transaction in the database then check the status TODO: is this necessary?
     """
+    record_unprocessed_transaction = record_transaction_before_processing(
+        checkoutrequestid,
+        member_id,
+        destination,
+        amount,
+        phone_number,
+        transaction_origin,
+    )
+    # i should only continue if the transaction was recorded
+    if not record_unprocessed_transaction:
+        return None
+
     time.sleep(60)
-    for _ in range(3):
+
+    retry_delay = 30  # initial retry delay
+    for attempt in range(3):
         try:
             response = requests.get(
                 f"{os.getenv('api_url')}/request/status/{checkoutrequestid}",
             )
-            print("=====first phone number====")
-            print(phone_number)
-            if response.status_code == 200:
-                if response.json()["queryResponse"]["ResultCode"] == "0":
+            if response.status_code == HTTPStatus.OK:
+                result_code = response.json()["queryResponse"]["ResultCode"]
+                if result_code == "0":
                     successful_push_data = {
                         "checkoutrequestid": checkoutrequestid,
                         "member_id": member_id,
@@ -216,17 +263,31 @@ def stk_push_status(
                     }
                     return successful_push_data
                 else:
-                    return None
+                    return {
+                        "error": "Transaction not successful",
+                        "result_code": result_code,
+                    }
             else:
-                time.sleep(30)
+                logger.error(
+                    f"Failed to check stk push status: {checkoutrequestid} {response.status_code}, {response.text}"
+                )
+                raise Exception("Failed to check stk push status")
+
         except Exception as e:
-            try:
-                self.retry(exc=e, countdown=30)
-            except MaxRetriesExceededError:
-                raise Exception("Max retries exceeded")
+            if attempt < 2:
+                time.sleep(retry_delay)
+                retry_delay *= 2  # exponential backoff
+            else:
+                try:
+                    self.retry(exc=e, countdown=retry_delay)
+                except MaxRetriesExceededError:
+                    raise Exception("Max retries exceeded") from e
+
+    raise Exception("Max retries exceeded")
 
 
 @shared_task
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(3))
 def after_succesful_chama_deposit(mpesa_data):
     """
     After a successful stk push we add the amount to the chama account, update wallets if necessary
@@ -241,70 +302,81 @@ def after_succesful_chama_deposit(mpesa_data):
     transaction_code = mpesa_data["checkoutrequestid"]
     headers = mpesa_data["headers"]
 
-    # TODO: check for fines and update amount onwards but exit only after updaing account balance:
-    # return amount after paying fines
-    print("=====second phone number====")
-    print(phone_number)
-    print("=======checking for fines====")
-    print("===", amount, "===")
+    logger.info(f"amountb4:{amount}")
     if member_has_fines_or_missed_contributions(member_id, chama_id):
-        print("=======member has fines====")
-        # =======checking if member has fines before calling the fine repayment function====
+        # TODO: later we could just retrieve the amount to repay and make all transaction at once
         amount = balance_after_paying_fines_and_missed_contributions(
             headers, amount, member_id, chama_id, transaction_code, phone_number
         )
-        print("=======amount after fines====")
-        print(amount, "===")
+        logger.info(f"amountrepaid:{amount}")
 
-    print("=======checking for fines done====")
-    print("===:", amount)
+    transaction_data = {
+        "member_id": member_id,
+        "chama_id": chama_id,
+        "transaction_code": transaction_code,
+        "wallet_update": None,
+        "direct_deposit": None,
+        "wallet_deposit": None,
+    }
     if amount > 0:
-        print("------amount > 0---------")
+        logger.info(f"greaterafter:{amount}")
         expected_difference = difference_btwn_contributed_and_expected(
             member_id, chama_id
         )
         if expected_difference == 0:
-            print("=======in expected difference == 0====")
-            update_wallet_balance.delay(
-                headers, amount, chama_id, "moved_to_wallet", transaction_code
-            )
-            # "Excess amount of Ksh: {amount} deposited to wallet. You have already contributed the expected amount for this contribution interval."
-            return
+            # if all cont have been made then this amt will now move to wallet
+            logger.info(f"wallet_deposit:{amount}")
+            transaction_data["wallet_deposit"] = {
+                "amount": amount,
+                "transaction_type": "moved_to_wallet",
+            }
+        elif expected_difference > 0:  # we have contributions to make
+            if deposit_is_greater_than_difference(amount, member_id, chama_id):
+                # the deposit is greater than the expected difference
+                # so we will deposit the expected difference and move excess to wallet
+                excess_amount_to_wallet = amount - expected_difference
+                amount_to_chama = expected_difference
+                logger.info(
+                    f"excess:{excess_amount_to_wallet} to chama:{amount_to_chama}"
+                )
+                transaction_data["wallet_update"] = {
+                    "amount": excess_amount_to_wallet,
+                    "transaction_type": "moved_to_wallet",
+                }
+                amount = amount_to_chama
 
-        if deposit_is_greater_than_difference(amount, member_id, chama_id):
-            print("=======in deposit_is_greater_than_difference====")
-            excess_amount = amount - expected_difference
-            amount_to_deposit = expected_difference
-            update_wallet_balance.delay(
-                headers, excess_amount, chama_id, "moved_to_wallet", transaction_code
-            )
-            # "Excess amount of Ksh: {excess_amount} deposited to wallet.",
-
-            amount = amount_to_deposit
-
-        # deposit the amount to chama
-        url = f"{os.getenv('api_url')}/transactions/direct_deposit"
-        data = {
+        # deposit the expected amount to chama
+        # would it be better if i decoupled the wallet deposit, the route  and also the data structure below.
+        # if  wallet deposit alone, i could keep a the route but change the data structure delivrery.
+        transaction_data["direct_deposit"] = {
             "amount": amount,
-            "member_id": member_id,
-            "chama_id": chama_id,
             "phone_number": f"254{phone_number}",
             "transaction_origin": transaction_origin,
-            "transaction_code": transaction_code,
         }
 
-        for _ in range(3):
-            response = requests.post(url, json=data)
-            if response.status_code == HTTPStatus.CREATED:
-                print("=======deposit successful update====")
-                # call the background task function to update the chama account balance
-                update_chama_account_balance.delay(chama_id, amount, "deposit")
-                # "Deposit of Khs: {amount} to {request.POST.get('chamaname')} successful",
-                return
-            else:
-                time.sleep(30)
-    print("=======amount < 0====")
-    return
+        # make the transaction together and update account balance with this amount
+        logger.info(f"transaction_data:{transaction_data}")
+        url = f"{os.getenv('api_url')}/transactions/unified_deposit_transactions"
+        response = requests.post(url, json=transaction_data)
+
+        if response.status_code == HTTPStatus.CREATED:
+            return
+        else:
+            logger.error(f"Failed to record deposit transactions: {response.text}")
+            raise Exception("Failed to record deposit transactions")
+
+
+def member_has_fines_or_missed_contributions(member_id, chama_id):
+    url = f"{os.getenv('api_url')}/members/fines"
+    data = {"member_id": member_id, "chama_id": chama_id}
+    resp = requests.get(url, json=data)
+    if resp.status_code == HTTPStatus.OK:
+        has_fines = resp.json().get("has_fines")
+        return has_fines
+    logger.error(
+        f"Failed to check if member has fines: {resp.status_code}, {resp.text}"
+    )
+    return False
 
 
 def difference_btwn_contributed_and_expected(member_id, chama_id):
@@ -328,16 +400,18 @@ def deposit_is_greater_than_difference(deposited, member_id, chama_id):
 # retrieve chamas share price, previous contribution day and one before that
 @shared_task
 def calculate_missed_contributions_fines():
-    logger.info("==========member/tasks.py: calculate_missed_contributions_fines()==========")
+    logger.info(
+        "==========member/tasks.py: calculate_missed_contributions_fines()=========="
+    )
     logger.info(f"Task ran at: {datetime.now()}")
-    logger.info(f"Date: {datetime.now(nairobi_tz)}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
     url = f"{os.getenv('api_url')}/members/share_price_and_prev_two_contribution_dates"
     response = requests.get(url)
 
     data = response.json()
-    url = f"{os.getenv('api_url')}/members/members_and_contribution_fines"
-    requests.get(url, json=data)
-    if response.status_code == HTTPStatus.OK:
+    url = f"{os.getenv('api_url')}/members/setting_chama_members_contribution_fines"
+    resp = requests.post(url, json=data)
+    if resp.status_code == HTTPStatus.CREATED:
         return None
     else:
         logger.error(
@@ -376,9 +450,7 @@ def balance_after_paying_fines_and_missed_contributions(
         # using the received amount and balance_after - update wallet, transaction and accout - bg task
 
         if resp.status_code == HTTPStatus.OK:
-            print("======repaying done========")
             paid_fine = amount - resp.json().get("balance_after_fines")
-            print(paid_fine)
             update_chama_account_balance.delay(chama_id, paid_fine, "deposit")
             return resp.json().get("balance_after_fines")
         else:
@@ -388,19 +460,6 @@ def balance_after_paying_fines_and_missed_contributions(
         # "Failed to deposit Ksh: {amount} to {chama_name}. Please try again later."
         # TODO: fix this, handle the error better
         return amount
-
-
-def member_has_fines_or_missed_contributions(member_id, chama_id):
-    print("====checking for members fines=====")
-    url = f"{os.getenv('api_url')}/members/fines"
-    data = {"member_id": member_id, "chama_id": chama_id}
-    resp = requests.get(url, json=data)
-    if resp.status_code == HTTPStatus.OK:
-        has_fines = resp.json().get("has_fines")
-        print("=======has====")
-        print(has_fines)
-        return has_fines
-    return False
 
 
 # check on the status of the registration fee payment
@@ -435,7 +494,7 @@ def add_member_to_chama(
     try:
         if registration_fee_status(checkoutid):
             # call a bg task to update the call back data from pending to success
-            update_pending_callback_data.delay(checkoutid)
+            update_pending_registration_callback_data.delay(checkoutid)
             # call the backend to add the member to the chama
             url = f"{os.getenv('api_url')}/chamas/join"
             data = {
@@ -464,7 +523,7 @@ def add_member_to_chama(
 
 
 @shared_task
-def update_pending_callback_data(checkoutid):
+def update_pending_registration_callback_data(checkoutid):
     url = f"{os.getenv('api_url')}/callback/update_pending_callback_data/{checkoutid}"
     response = requests.put(url)
     return None

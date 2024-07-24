@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
-from sqlalchemy.orm import Session
+from sqlalchemy import func, update, and_, table, column, desc
+from sqlalchemy.orm import Session, joinedload
+from typing import Union
 from datetime import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 import logging
 from typing import List
 from uuid import uuid4
-from sqlalchemy import func, update, and_, table, column, desc
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -14,7 +15,8 @@ router = APIRouter(prefix="/members", tags=["members"])
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
 
-logger = logging.getLogger(__name__)
+transaction_info_logger = logging.getLogger("transactions_info")
+transaction_error_logger = logging.getLogger("transactions_error")
 
 
 # get all chamas a member is connected to using member id
@@ -165,10 +167,11 @@ async def get_recent_transactions(
                     models.Transaction.member_id == current_user.id,
                     models.Transaction.transaction_completed == True,
                     models.Transaction.is_reversed == False,
+                    j,
                 )
             )
             .order_by(desc(models.Transaction.date_of_transaction))
-            .limit(7)
+            .limit(4)
             .all()
         )
 
@@ -210,7 +213,7 @@ async def update_member_wallet_balance(
         transaction_type = wallet_dict["transaction_type"]
         wallet_dict["member_id"] = current_user.id
         wallet_dict["transaction_completed"] = True
-        wallet_dict["transaction_date"] = datetime.now(nairobi_tz)
+        wallet_dict["transaction_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
         wallet_dict["transaction_code"] = wallet_dict["transaction_code"]
 
         member = (
@@ -294,7 +297,7 @@ async def get_recent_wallet_activity(
             db.query(models.Wallet_Transaction)
             .filter(models.Wallet_Transaction.member_id == current_user.id)
             .order_by(desc(models.Wallet_Transaction.transaction_date))
-            .limit(5)
+            .limit(3)
             .all()
         )
 
@@ -337,7 +340,7 @@ async def repay_fines(
     db: Session = Depends(database.get_db),
 ):
     try:
-        print("===========repaying fines===========")
+        transaction_info_logger.info("===========repaying fines===========")
         fine_dict = fine_data.dict()
         chama_id = fine_dict["chama_id"]
         member_id = fine_dict["member_id"]
@@ -353,6 +356,7 @@ async def repay_fines(
                 )
             )
             .order_by(models.Fine.fine_date)
+            .with_for_update()
             .all()
         )
 
@@ -361,38 +365,25 @@ async def repay_fines(
             return {"balance_after_fines": amount}
 
         for fine in fines:
-            print("===========repaying fine===========")
-            print(fine)
-            print()
-            print(fine.total_expected_amount)
-            print("==start:", amount)
+            transaction_info_logger.info(f"fine amout {fine}")
+            transaction_info_logger.info(f"paying with {amount}")
             if amount >= fine.total_expected_amount:
                 amount -= (
                     fine.total_expected_amount
                 )  # deducting the amount from the fine and updating amount to be used in the next fine
                 fine.is_paid = True
-                # date in nairobi timezone
-                fine.paid_date = datetime.now(nairobi_tz)
+                fine.paid_date = datetime.now(nairobi_tz).replace(tzinfo=None)
                 fine.total_expected_amount = 0
-                print("==end==:", amount)
             else:
-                print("===========less fine===========")
                 fine.total_expected_amount -= amount
                 amount = 0
-                print(amount)
                 break
 
-        db.commit()  # committing all the changes to the database
-
-        # # reffreshing
-        # for fine in fines:
-        #     db.refresh(fine)
-        print("===========fines repaid===========")
-        print(amount)
+        db.commit()
         return {"balance_after_fines": amount}
 
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(f"Failed to repay fines {e}")
         db.rollback()
         raise HTTPException(status_code=400, detail="Failed to repay fines")
 
@@ -437,8 +428,7 @@ async def check_fines(
         return {"has_fines": total_fine_amount > 0}
 
     except Exception as e:
-        print("===========error checking fines===========")
-        print(e)
+        transaction_error_logger.error(f"Failed to check fines {e}")
         raise HTTPException(status_code=400, detail="Failed to check fines")
 
 
@@ -457,8 +447,8 @@ async def get_total_fines(
         chama_id = fine_dict["chama_id"]
         member_id = fine_dict["member_id"]
 
-        fines = (
-            db.query(models.Fine)
+        total_fine_amount = (
+            db.query(func.coalesce(func.sum(models.Fine.total_expected_amount), 0))
             .filter(
                 and_(
                     models.Fine.chama_id == chama_id,
@@ -466,24 +456,13 @@ async def get_total_fines(
                     models.Fine.is_paid == False,
                 )
             )
-            .all()
+            .scalar()
         )
-
-        if not fines:
-            # return false if the member has no fines to pay
-            return {"total_fines": 0}
-
-        total_fine_amount = 0
-        for fine in fines:
-            total_fine_amount += fine.total_expected_amount
-
-        # return true if the member has fines to pay
 
         return {"total_fines": total_fine_amount}
 
     except Exception as e:
-        print("===========error getting total fines===========")
-        print(e)
+        transaction_error_logger.error(f"Failed to get total fines {e}")
         raise HTTPException(status_code=400, detail="Failed to get total fines")
 
 
@@ -560,14 +539,15 @@ async def get_share_price_and_prev_two_contribution_dates(
                 "prev_two_contribution_date": prev_two_contribution_date,
             }
 
-        logger.warning(
+        transaction_info_logger.info(
             "Chamas share price and previous two contribution dates retrieved"
         )
-        logger.warning(chamas_details)
 
         return chamas_details
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(
+            f"Failed to retrieve chamas share price and previous two contribution dates {e}"
+        )
         raise HTTPException(
             status_code=400,
             detail="Failed to retrieve chamas share price and previous two contribution dates",
@@ -597,22 +577,34 @@ def calculate_two_previous_dates(interval, next_contribution_date):
 # to the expected contribution (share price * num of shares (from members_chamas table)) and calculate the difference.
 # if its > 0, the member is behind in that chamas contribution for that period and is assinged a fine per share to be added as a record in the fines table
 # chama_id, member_id, fine, fine_reason, fine_date(prev_contrib_date), is_paid, paid_date, total_expected_amount(total fine + missed contribution amount)
-@router.get(
-    "/members_and_contribution_fines",
-    status_code=status.HTTP_200_OK,
+@router.post(
+    "/setting_chama_members_contribution_fines",
+    status_code=status.HTTP_201_CREATED,
 )
-async def get_members_and_contribution_fines(
+async def setting_members_contribution_fines(
     chama_details: dict,
     db: Session = Depends(database.get_db),
 ):
     try:
-        chamas_details = chama_details
+        transaction_info_logger.info("=====setting members contribution fines========")
         fines = {}
-        for chama_id, chama_details in chamas_details.items():
+        for chama_id, details in chama_details.items():
             chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-            chama_members = (
+            if not chama:
+                continue
+            transaction_info_logger.info(f"chama {chama_id}")
+
+            last_contribution_datetime = datetime.fromisoformat(
+                details["prev_contribution_date"]
+            )
+            second_last_contribution_datetime = datetime.fromisoformat(
+                details["prev_two_contribution_date"]
+            )
+
+            members = (
                 db.query(models.Member)
                 .join(models.members_chamas_association)
+                .options(joinedload(models.Member.chamas))
                 .filter(models.members_chamas_association.c.chama_id == chama_id)
                 .filter(
                     models.members_chamas_association.c.registration_fee_paid == True
@@ -620,123 +612,113 @@ async def get_members_and_contribution_fines(
                 .all()
             )
 
-            if chama_members:
-                for member in chama_members:
-                    logger.warning("Member: " + member.first_name)
-                    member_chama = (
-                        db.query(models.members_chamas_association)
+            for member in members:
+                member_chama = (
+                    db.query(models.members_chamas_association)
+                    .filter(
+                        and_(
+                            models.members_chamas_association.c.member_id == member.id,
+                            models.members_chamas_association.c.chama_id == chama_id,
+                        )
+                    )
+                    .first()
+                )
+
+                if not member_chama:
+                    continue
+
+                total_contribution = (
+                    db.query(func.coalesce(func.sum(models.Transaction.amount), 0))
+                    .filter(
+                        and_(
+                            models.Transaction.member_id == member.id,
+                            models.Transaction.chama_id == chama_id,
+                            models.Transaction.transaction_type == "deposit",
+                            models.Transaction.transaction_completed == True,
+                            models.Transaction.is_reversed == False,
+                            func.date(models.Transaction.date_of_transaction)
+                            > second_last_contribution_datetime.date(),
+                            func.date(models.Transaction.date_of_transaction)
+                            <= last_contribution_datetime.date(),
+                        )
+                    )
+                    .scalar()
+                )
+
+                expected_contribution = (
+                    chama.contribution_amount * member_chama.num_of_shares
+                )
+                difference = expected_contribution - total_contribution
+
+                if difference > 0:
+                    fine = member_chama.num_of_shares * chama.fine_per_share
+                    fine_data = {
+                        "chama_id": chama_id,
+                        "member_id": member.id,
+                        "fine": fine,
+                        "fine_reason": "missed contribution",
+                        "fine_date": details["prev_contribution_date"],
+                        "is_paid": False,
+                        "paid_date": None,
+                        "total_expected_amount": fine + difference,
+                    }
+
+                    existing_fine = (
+                        db.query(models.Fine)
                         .filter(
                             and_(
-                                models.members_chamas_association.c.member_id
-                                == member.id,
-                                models.members_chamas_association.c.chama_id
-                                == chama_id,
+                                models.Fine.member_id == member.id,
+                                models.Fine.chama_id == chama_id,
+                                func.date(models.Fine.fine_date)
+                                == last_contribution_datetime.date(),
                             )
                         )
                         .first()
                     )
 
-                    prev_contribution_datetime = datetime.fromisoformat(
-                        chama_details["prev_contribution_date"]
-                    )
+                    if not existing_fine:
+                        transaction_info_logger.info(f"fine {fine_data}")
+                        new_fine = models.Fine(**fine_data)
+                        db.add(new_fine)
+                        db.commit()
+                        db.refresh(new_fine)
 
-                    prev_two_contribution_datetime = datetime.fromisoformat(
-                        chama_details["prev_two_contribution_date"]
-                    )
-
-                    member_contribution = (
-                        db.query(models.Transaction)
-                        .filter(
-                            and_(
-                                models.Transaction.member_id == member.id,
-                                models.Transaction.chama_id == chama_id,
-                                models.Transaction.transaction_type == "deposit",
-                                models.Transaction.transaction_completed == True,
-                                func.date(models.Transaction.date_of_transaction)
-                                > prev_two_contribution_datetime.date(),
-                                func.date(models.Transaction.date_of_transaction)
-                                <= prev_contribution_datetime.date(),
-                            )
-                        )
-                        .all()
-                    )
-                    total_contribution = sum(
-                        [transaction.amount for transaction in member_contribution]
-                    )
-                    logger.warning("Total contribution: " + str(total_contribution))
-
-                    expected_contribution = (
-                        chama.contribution_amount * member_chama.num_of_shares
-                    )
-                    logger.warning(
-                        "Expected contribution: " + str(expected_contribution)
-                    )
-                    difference = expected_contribution - total_contribution
-                    logger.warning("Difference: " + str(difference))
-                    fine = 0
-                    if difference > 0:
-                        logger.warning("Fine to be added")
-                        fine = member_chama.num_of_shares * chama.fine_per_share
-
-                        fines[member.id] = {
-                            "chama_id": chama_id,
-                            "member_id": member.id,
-                            "fine": fine,
-                            "fine_reason": "Missed contribution",
-                            "fine_date": chama_details["prev_contribution_date"],
-                            "is_paid": False,
-                            "paid_date": None,
-                            "total_expected_amount": fine + difference,
-                        }
-                        # write the record to the fines table but i want if such a record exists, if a record with member_id, chama_id, fine_date exists, dont write another record
-                        # if it doesnt exist, write the record
-                        # prev_contribution_datetime = datetime.fromisoformat(
-                        #     chama_details["prev_contribution_date"]
-                        # )
-                        # if prev contribution date is today, dont write a fine or if prev contribution date is in the future, dont write a fine
-                        # this is because the contribution period has not passed yet
-                        # if (
-                        #     prev_contribution_datetime.date() == datetime.now().date()
-                        #     or prev_contribution_datetime.date() > datetime.now().date()
-                        # ):
-                        #     continue
-
-                        existing_fine = (
-                            db.query(models.Fine)
-                            .filter(
-                                and_(
-                                    models.Fine.member_id == member.id,
-                                    models.Fine.chama_id == chama_id,
-                                    func.date(models.Fine.fine_date)
-                                    == prev_contribution_datetime.date(),
-                                )
-                            )
-                            .first()
-                        )
-
-                        if not existing_fine:
-                            logger.warning("Fine record does not exist")
-                            new_fine = models.Fine(
-                                chama_id=chama_id,
-                                member_id=member.id,
-                                fine=fine,
-                                fine_reason="Missed contribution",
-                                fine_date=chama_details["prev_contribution_date"],
-                                is_paid=False,
-                                paid_date=None,
-                                total_expected_amount=fine + difference,
-                            )
-                            db.add(new_fine)
-                            db.commit()
-                            db.refresh(new_fine)
-        logger.warning("Fines added")
-        logger.warning(fines)
-        logger.warning("=====================")
-        return {"fines": fines}
+        transaction_info_logger.info("=====members contribution fines set========")
+        return {"message": "fines set successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        transaction_error_logger.error(f"Failed to set members contribution fines {e}")
         raise HTTPException(
             status_code=400,
-            detail="Failed to retrieve and set members and contribution fines",
+            detail="Failed to set members contribution fines",
         )
+
+
+# return the fine amount of one individual member in a chama
+@router.get(
+    "/member_fine/{chama_id}/{member_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.TotalFinesResp,
+)
+async def get_member_fine(
+    chama_id: int,
+    member_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        total_fines = (
+            db.query(func.coalesce(func.sum(models.Fine.total_expected_amount), 0))
+            .filter(
+                and_(
+                    models.Fine.chama_id == chama_id,
+                    models.Fine.member_id == member_id,
+                    models.Fine.is_paid == False,
+                )
+            )
+            .scalar()
+        )
+
+        return {"total_fines": total_fines}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get member fine {e}")
+        raise HTTPException(status_code=400, detail="Failed to get member fine")

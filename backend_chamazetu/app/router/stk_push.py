@@ -7,10 +7,14 @@ import requests, os, base64, httpx, pytz
 from dotenv import load_dotenv
 from typing import List
 from zoneinfo import ZoneInfo
+import logging
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/request", tags=["request"])
+
+transaction_info_logger = logging.getLogger("transactions_info")
+transaction_error_logger = logging.getLogger("transactions_error")
 
 
 load_dotenv()
@@ -47,8 +51,6 @@ async def stk_push(
     push_data: schemas.StkPushBase = Body(...),
 ):
     token = await generate_access_token()
-    print("=======stk push data=======")
-    print(push_data)
     if not token:
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
@@ -82,11 +84,6 @@ async def stk_push(
     }
 
     async with httpx.AsyncClient() as client:
-        print("=======stk push payload=======")
-        print(payload)
-        print()
-        print("=======stk push headers=======")
-        print(headers)
         response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()  # raise exception for non-2xx status codes
         return response.json()
@@ -121,7 +118,6 @@ async def stk_push_status(checkout_request_id: str):
             )
             response.raise_for_status()  # Raise exception for non-2xx status codes
             response_data = response.json()
-            print(response_data)
 
             if "ResultCode" in response_data:
                 result_code = response_data["ResultCode"]
@@ -140,11 +136,11 @@ async def stk_push_status(checkout_request_id: str):
 
             return {"message": message, "queryResponse": response_data}
     except httpx.RequestError as e:
-        print("Request error:", str(e))
+        transaction_error_logger.error(f"HTTP request error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to query STK push status")
     except httpx.HTTPStatusError as e:
-        print("HTTP error:", str(e))
+        transaction_error_logger.error(f"HTTP status error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to query STK push status")
     except ValueError as e:
-        print("Error decoding JSON:", str(e))
+        transaction_error_logger.error(f"Value error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to query STK push status")

@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task, current_task
+from celery import shared_task, current_task, chain
 from celery.exceptions import MaxRetriesExceededError
 from django.core.mail import send_mail
 import requests, os, time, logging
@@ -130,6 +130,9 @@ def reset_and_move_weekly_mmf_interests():
     """
     Reset and add weekly mmf interests to the principal
     """
+    logger.info(f"=======chama/tasks.py: reset_and_move_weekly_mmf_interests()========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
     response = requests.put(
         f"{os.getenv('api_url')}/investments/chamas/reset_and_move_weekly_mmf_interest_to_principal"
     )
@@ -159,3 +162,62 @@ def reset_monthly_mmf_interests():
         )
 
     return None
+
+
+# first chain task
+# a task that will run once 12 hours, it checks on transactions in the callback table - if their status is
+# pending, it will update them accordingly - check if the transaction has been processed and update - athe transactions shouldd have been made atleast 30 mins ago
+@shared_task
+def update_callback_transactions():
+    """
+    Update transactions in the callback table
+    """
+    logger.info("==========chama/tasks.py: update_callback_transactions()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/callback/update_callback_transactions"
+    )
+    if response.status_code == HTTPStatus.OK:
+        return True
+    else:
+        logger.error(
+            f"Failed to update callback transactions: {response.status_code}, {response.text}"
+        )
+
+    return False
+
+
+# route will check the transactions table and retrieve transactions whose  transaction type is "unprocessed deposit", it will then compare those transactions against
+# the callback data table using the cehckout request id, if in the callback data that transaction is marked as success, we will reverse the amount to user.
+@shared_task
+def fix_callback_and_transactions_mismatch():
+    """
+    Add missing transactions to the transactions table
+    """
+    logger.info(
+        "==========chama/tasks.py: fix_callback_and_transactions_mismatch()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/callback/fix_callback_transactions_table_mismatch"  # fix unprocessed transactions against the callback table
+    )
+    if response.status_code == HTTPStatus.OK:
+        return None
+    else:
+        logger.error(
+            f"Failed to add fixing transactions: {response.status_code}, {response.text}"
+        )
+
+    return None
+
+
+@shared_task
+def run_update_and_fix_callbacks():
+    """
+    Run update_callback_transactions and then fix_callback_and_transactions_mismatch if the first task is successful
+    """
+    update_task = update_callback_transactions.s()
+    fix_task = fix_callback_and_transactions_mismatch.s()
+    return chain(update_task | fix_task)()

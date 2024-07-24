@@ -186,31 +186,56 @@
         <div class="col-lg-8">
           <div class="row">
 
-            <!-- Sales Card -->
-            <div class="col-xxl-4 col-md-6">
-              <div class="card info-card sales-card">
+             <!-- check if chama.member_incurred_fines is greater than zero -->
+              {% if chama.member_incurred_fines > 0 %}
+              <!-- member total fines-->
+              <div class="col-xxl-4 col-md-6">
+                <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
-                <div class="card-body">
-                  <h5 class="card-title">Deposits <span>| Today</span></h5>
+                  <div class="card-body">
+                    <h5 class="card-title">Fines Incurred <span>| unpaid</span></h5>
 
-                  <div class="d-flex align-items-center">
-                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <small>Ksh:</small>
-                    </div>
-                    <div class="ps-3">
-                      {% if chama.today_deposits %}
-                      <h6>{{ chama.today_deposits }}</h6>
-                      {% else %}
-                      <h6>0</h6>
-                      {% endif %}
-                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
-
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <small>Ksh:</small>
+                      </div>
+                      <div class="ps-3">
+                        <h6>{{ chama.member_incurred_fines }}</h6>
+                      </div>
                     </div>
                   </div>
-                </div>
 
+                </div>
               </div>
-            </div><!-- End deposit Card -->
+            <!-- end member fines card-->
+             {% else %}
+            <!-- Deposit Card -->
+              <div class="col-xxl-4 col-md-6">
+                <div class="card info-card sales-card">
+
+                  <div class="card-body">
+                    <h5 class="card-title">Deposits <span>| Today</span></h5>
+
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <small>Ksh:</small>
+                      </div>
+                      <div class="ps-3">
+                        {% if chama.today_deposits %}
+                        <h6>{{ chama.today_deposits }}</h6>
+                        {% else %}
+                        <h6>0</h6>
+                        {% endif %}
+                        <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div><!-- End deposit Card -->
+            {% endif %}
+
 
             <!-- total deposited Card -->
             <div class="col-xxl-4 col-md-6">

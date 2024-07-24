@@ -2,9 +2,11 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 
+# we get the last sunday date
 def get_sunday_date():
     nairobi_tz = ZoneInfo("Africa/Nairobi")
     today = datetime.now(nairobi_tz)
+    print(today)
     # calculating the number of days to subtract to get the first day of the week
     days_to_subtract = (today.weekday() + 1) % 7
     # subtracting the days to get the first day of the week

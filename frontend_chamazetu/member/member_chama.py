@@ -126,8 +126,6 @@ async def access_chama(request, chamaname):
     results = await access_chama_async(urls, headers)
 
     if results.get("chama"):
-        update_contribution_days.delay()
-        calculate_missed_contributions_fines.delay()
         return render(
             request,
             "member/chamadashboard.html",
@@ -175,7 +173,6 @@ async def access_chama_async(urls, headers):
     monthly_interests = None
     user_profile = {}
     investment_data = None
-    fines = None
 
     # process the results of the threads
     if results[urls[0][0]]["status"] == 200:
@@ -196,6 +193,7 @@ async def access_chama_async(urls, headers):
             chama["account_balance"] = results[urls[3][0]]["data"]["account_balance"]
         if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
             chama["today_deposits"] = results[urls[4][0]]["data"]["today_deposits"]
+            chama["member_incurred_fines"] = results[urls[4][0]]["data"]["total_fines"]
         if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
             investment_data = results[urls[5][0]]["data"]
         if urls[6][0] in results and results[urls[6][0]]["status"] == 200:

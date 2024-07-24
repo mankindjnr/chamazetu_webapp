@@ -38,14 +38,6 @@ def call_back(request):
     }
 
     response = requests.post(url, json=data)
-    print("======== RESPONSE ========")
-    print(data)
-    print()
-    print(response.json())
-    print()
-    print(response.status_code)
-    print("======== END RESPONSE =====")
-
     # Process the callback payload here
     return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
 
@@ -76,13 +68,6 @@ def registration_call_back(request):
 
     # run three times on failure
     response = requests.post(url, json=data)
-    print("========REG RESPONSE ========")
-    print(data)
-    print()
-    print(response.json())
-    print()
-    print(response.status_code)
-    print("======== END REG RESPONSE =====")
 
     # Process the callback payload here
     return JsonResponse({"ResultCode": 0, "ResultDesc": "Success"})
