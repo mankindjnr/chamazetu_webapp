@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 from zoneinfo import ZoneInfo
-from celery import Celery
+from celery import Celery, chain
 from django.conf import settings
 from datetime import timedelta
 from celery.schedules import crontab
@@ -28,7 +28,6 @@ app.conf.beat_schedule = {
         "task": "chama.tasks.update_contribution_days",
         "schedule": crontab(minute=40, hour=0),
     },
-    # run once every hour
     # every day - midnight - calculate daily mmf interests - midnight
     "run_daily": {
         "task": "chama.tasks.calculate_daily_mmf_interests",
@@ -47,28 +46,19 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=15, hour=0, day_of_month=1),
     },
     # few minutes after midnight - calculate missed contributions and update the fines
-    # run every 2 hours
     "run_fines": {
         "task": "member.tasks.calculate_missed_contributions_fines",
         "schedule": crontab(minute=0, hour=1),
     },
-    # run every 2 hours
+    # run at 2am every day
     "run_pending_withdrawals": {
-        "task": "manager.tasks.check_pending_withdrawals",
-        "schedule": crontab(minute=0, hour="*/2"),
+        "task": "manager.tasks.fulfill_pending_withdrawal_requests",
+        "schedule": crontab(minute=0, hour=2),
     },
-    # run every ten minutes
-    "chamadate_time": {
-        "task": "chama.tasks.chama_date_time_log",
-        "schedule": crontab(minute=0, hour="*/2"),
-    },
-    "manager_time": {
-        "task": "manager.tasks.manager_log_date_time",
-        "schedule": crontab(minute=0, hour="*/2"),
-    },
-    "member_datetime": {
-        "task": "member.tasks.date_time_log_member",
-        "schedule": crontab(minute=0, hour="*/2"),
+    # run at 11pm every day
+    "update_and_fix_callbacks": {
+        "task": "chama.tasks.run_update_and_fix_callbacks",
+        "schedule": crontab(minute=0, hour=23),
     },
 }
 

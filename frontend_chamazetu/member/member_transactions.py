@@ -66,7 +66,7 @@ def direct_deposit_to_chama(request):
             depostinfo = {
                 "amount": amount,
                 "phone_number": phone_number[1:],
-                "recipient": request.POST.get("chamaname"),
+                "recipient": request.POST.get("chamaname").replace(" ", "").upper(),
                 "description": "chamadeposit",
             }
 
@@ -272,10 +272,9 @@ def deposit_to_wallet(request):
         )
         member_id = request.POST.get("member_id")
         transaction_origin = "direct_deposit"
-        chama_name = ""  # helps if we are depositng from insde a chama to redirect back to the chama - rmv this since we removed wallet from chama
         if request.POST.get("chama_name"):
             chama_name = request.POST.get("chama_name")
-        if len(phonenumber) != 9:
+        if not phonenumber:
             messages.error(request, "Invalid phone number")
             return redirect(reverse("member:dashboard"))
 
@@ -319,14 +318,7 @@ def deposit_to_wallet(request):
             else:
                 messages.error(request, "Failed to send stkpush, please try again.")
 
-            if chama_name:
-                return redirect(
-                    reverse(
-                        "member:access_chama", args=[request.POST.get("chama_name")]
-                    )
-                )
-            else:
-                return redirect(reverse("member:dashboard"))
+            return redirect(reverse("member:dashboard"))
 
     print("=======not a post wallet===")
     return redirect(reverse("member:dashboard"))
@@ -408,16 +400,12 @@ def balance_after_paying_fines_and_missed_contributions(
     # if amount > fines + missed contributions, we deduct the amount from the fines and missed contributions
     # if amount <= we return 0 and we use the current amount to clear the fines and missed contributions
     fines_total = get_member_fines(member_id, chama_id)
-    print("=======fines total===")
-    print(fines_total)
 
     to_be_paid = 0  # the amount to be paid to clear fines and missed contributions
     if amount > fines_total:
-        print("----amount > fines total----")
         amount -= fines_total  # deduct the fines from the amount
         to_be_paid = fines_total
     else:
-        print("----amount < fines total----")
         to_be_paid = amount  # use the whole amount to clear the fines
         amount = 0
 
@@ -454,11 +442,8 @@ def balance_after_paying_fines_and_missed_contributions(
             messages.success(
                 request, f"Fines and missed contributions of {to_be_paid} deducted."
             )
-            print("=======amount left===")
-            print(amount)
             return amount  # return the amount left after paying fines
         else:
-            print("=======repaying failed========")
             return amount  # not sure if to return the amount if repayment fails or to return the initial amount
     else:
         # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction

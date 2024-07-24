@@ -9,3 +9,358 @@ INFO 2024-07-16 20:00:00,112 tasks Date: 2024-07-16
 INFO 2024-07-16 20:00:00,114 tasks Time: 20:00:00.112850
 INFO 2024-07-16 20:00:00,114 tasks Nairobi: 2024-07-16 20:00:00.114504+03:00
 ERROR 2024-07-16 20:21:08,023 tasks Failed to update chama account balance: 422, {"detail":[{"type":"int_from_float","loc":["body","amount_deposited"],"msg":"Input should be a valid integer, got a number with a fractional part","input":4.53,"url":"https://errors.pydantic.dev/2.5/v/int_from_float"}]}
+INFO 2024-07-18 12:24:42,936 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 12:24:42,937 tasks Task ran at: 2024-07-18 12:24:42.937018
+INFO 2024-07-18 12:24:42,937 tasks Date: 2024-07-18 12:24:42.937264+03:00
+INFO 2024-07-18 12:24:44,296 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-18 12:24:44,296 tasks Task ran at: 2024-07-18 12:24:44.296808
+INFO 2024-07-18 12:24:44,297 tasks Date: 2024-07-18
+INFO 2024-07-18 12:24:44,297 tasks Time: 12:24:44.297173
+INFO 2024-07-18 12:24:44,297 tasks Nairobi: 2024-07-18 12:24:44.297336+03:00
+INFO 2024-07-18 13:44:24,225 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 13:44:24,251 tasks Task ran at: 2024-07-18 13:44:24.251517
+INFO 2024-07-18 13:44:24,252 tasks Date: 2024-07-18 13:44:24.252498+03:00
+INFO 2024-07-18 14:00:00,139 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-18 14:00:00,139 tasks Task ran at: 2024-07-18 14:00:00.139765
+INFO 2024-07-18 14:00:00,140 tasks Date: 2024-07-18
+INFO 2024-07-18 14:00:00,140 tasks Time: 14:00:00.140259
+INFO 2024-07-18 14:00:00,140 tasks Nairobi: 2024-07-18 14:00:00.140506+03:00
+INFO 2024-07-18 14:22:56,196 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 14:22:56,197 tasks Task ran at: 2024-07-18 14:22:56.197028
+INFO 2024-07-18 14:22:56,197 tasks Date: 2024-07-18 14:22:56.197417+03:00
+INFO 2024-07-18 14:28:24,023 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 14:28:24,023 tasks Task ran at: 2024-07-18 14:28:24.023803
+INFO 2024-07-18 14:28:24,025 tasks Date: 2024-07-18 14:28:24.025440+03:00
+INFO 2024-07-18 15:40:29,269 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 15:40:29,329 tasks Task ran at: 2024-07-18 15:40:29.329139
+INFO 2024-07-18 15:40:29,329 tasks Date: 2024-07-18 15:40:29.329857+03:00
+INFO 2024-07-18 15:42:21,949 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 15:42:21,950 tasks Task ran at: 2024-07-18 15:42:21.950002
+INFO 2024-07-18 15:42:21,950 tasks Date: 2024-07-18 15:42:21.950687+03:00
+INFO 2024-07-18 15:43:06,393 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 15:43:06,395 tasks Task ran at: 2024-07-18 15:43:06.395241
+INFO 2024-07-18 15:43:06,396 tasks Date: 2024-07-18 15:43:06.396345+03:00
+INFO 2024-07-18 15:44:04,030 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 15:44:04,031 tasks Task ran at: 2024-07-18 15:44:04.031052
+INFO 2024-07-18 15:44:04,032 tasks Date: 2024-07-18 15:44:04.031914+03:00
+INFO 2024-07-18 15:44:16,133 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 15:44:16,134 tasks Task ran at: 2024-07-18 15:44:16.133936
+INFO 2024-07-18 15:44:16,134 tasks Date: 2024-07-18 15:44:16.134695+03:00
+INFO 2024-07-18 16:00:00,210 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-18 16:00:00,211 tasks Task ran at: 2024-07-18 16:00:00.211179
+INFO 2024-07-18 16:00:00,211 tasks Date: 2024-07-18
+INFO 2024-07-18 16:00:00,218 tasks Time: 16:00:00.218351
+INFO 2024-07-18 16:00:00,219 tasks Nairobi: 2024-07-18 16:00:00.218986+03:00
+INFO 2024-07-18 16:55:16,231 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:55:16,231 tasks Task ran at: 2024-07-18 16:55:16.231681
+INFO 2024-07-18 16:55:16,232 tasks Date: 2024-07-18 16:55:16.231958+03:00
+INFO 2024-07-18 16:55:58,032 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:55:58,032 tasks Task ran at: 2024-07-18 16:55:58.032595
+INFO 2024-07-18 16:55:58,033 tasks Date: 2024-07-18 16:55:58.033020+03:00
+INFO 2024-07-18 16:56:34,267 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:56:34,268 tasks Task ran at: 2024-07-18 16:56:34.267984
+INFO 2024-07-18 16:56:34,268 tasks Date: 2024-07-18 16:56:34.268319+03:00
+INFO 2024-07-18 16:56:42,538 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:56:42,539 tasks Task ran at: 2024-07-18 16:56:42.538967
+INFO 2024-07-18 16:56:42,539 tasks Date: 2024-07-18 16:56:42.539262+03:00
+INFO 2024-07-18 16:56:50,168 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:56:50,169 tasks Task ran at: 2024-07-18 16:56:50.168966
+INFO 2024-07-18 16:56:50,169 tasks Date: 2024-07-18 16:56:50.169156+03:00
+INFO 2024-07-18 16:57:04,140 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:57:04,142 tasks Task ran at: 2024-07-18 16:57:04.142584
+INFO 2024-07-18 16:57:04,143 tasks Date: 2024-07-18 16:57:04.143308+03:00
+INFO 2024-07-18 16:57:20,751 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:57:20,752 tasks Task ran at: 2024-07-18 16:57:20.752134
+INFO 2024-07-18 16:57:20,752 tasks Date: 2024-07-18 16:57:20.752364+03:00
+INFO 2024-07-18 16:57:29,540 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:57:29,540 tasks Task ran at: 2024-07-18 16:57:29.540755
+INFO 2024-07-18 16:57:29,541 tasks Date: 2024-07-18 16:57:29.541049+03:00
+INFO 2024-07-18 16:57:56,788 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:57:56,789 tasks Task ran at: 2024-07-18 16:57:56.789072
+INFO 2024-07-18 16:57:56,790 tasks Date: 2024-07-18 16:57:56.789854+03:00
+INFO 2024-07-18 16:58:10,912 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 16:58:10,912 tasks Task ran at: 2024-07-18 16:58:10.912776
+INFO 2024-07-18 16:58:10,913 tasks Date: 2024-07-18 16:58:10.913009+03:00
+INFO 2024-07-18 17:05:52,276 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-18 17:05:52,307 tasks Task ran at: 2024-07-18 17:05:52.307027
+INFO 2024-07-18 17:05:52,307 tasks Date: 2024-07-18 17:05:52.307402+03:00
+INFO 2024-07-19 10:00:02,237 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 10:00:02,264 tasks Task ran at: 2024-07-19 10:00:02.264330
+INFO 2024-07-19 10:00:02,264 tasks Date: 2024-07-19
+INFO 2024-07-19 10:00:02,265 tasks Time: 10:00:02.265051
+INFO 2024-07-19 10:00:02,265 tasks Nairobi: 2024-07-19 10:00:02.265345+03:00
+INFO 2024-07-19 10:09:43,380 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 10:09:43,380 tasks Task ran at: 2024-07-19 10:09:43.380762
+INFO 2024-07-19 10:09:43,381 tasks Date: 2024-07-19
+INFO 2024-07-19 10:09:43,381 tasks Time: 10:09:43.381304
+INFO 2024-07-19 10:09:43,381 tasks Nairobi: 2024-07-19 10:09:43.381501+03:00
+INFO 2024-07-19 12:00:00,047 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 12:00:00,049 tasks Task ran at: 2024-07-19 12:00:00.048981
+INFO 2024-07-19 12:00:00,049 tasks Date: 2024-07-19
+INFO 2024-07-19 12:00:00,049 tasks Time: 12:00:00.049465
+INFO 2024-07-19 12:00:00,049 tasks Nairobi: 2024-07-19 12:00:00.049669+03:00
+INFO 2024-07-19 14:00:00,081 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 14:00:00,094 tasks Task ran at: 2024-07-19 14:00:00.094118
+INFO 2024-07-19 14:00:00,094 tasks Date: 2024-07-19
+INFO 2024-07-19 14:00:00,094 tasks Time: 14:00:00.094773
+INFO 2024-07-19 14:00:00,095 tasks Nairobi: 2024-07-19 14:00:00.095009+03:00
+INFO 2024-07-19 16:00:00,169 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 16:00:00,170 tasks Task ran at: 2024-07-19 16:00:00.170649
+INFO 2024-07-19 16:00:00,171 tasks Date: 2024-07-19
+INFO 2024-07-19 16:00:00,171 tasks Time: 16:00:00.171712
+INFO 2024-07-19 16:00:00,171 tasks Nairobi: 2024-07-19 16:00:00.171944+03:00
+INFO 2024-07-19 18:00:00,105 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-19 18:00:00,116 tasks Task ran at: 2024-07-19 18:00:00.116622
+INFO 2024-07-19 18:00:00,116 tasks Date: 2024-07-19
+INFO 2024-07-19 18:00:00,117 tasks Time: 18:00:00.117023
+INFO 2024-07-19 18:00:00,117 tasks Nairobi: 2024-07-19 18:00:00.117182+03:00
+INFO 2024-07-21 09:40:30,188 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-21 09:40:30,188 tasks Task ran at: 2024-07-21 09:40:30.188567
+INFO 2024-07-21 09:40:30,188 tasks Date: 2024-07-21
+INFO 2024-07-21 09:40:30,188 tasks Time: 09:40:30.188966
+INFO 2024-07-21 09:40:30,189 tasks Nairobi: 2024-07-21 09:40:30.189135+03:00
+INFO 2024-07-21 10:00:00,085 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-21 10:00:00,086 tasks Task ran at: 2024-07-21 10:00:00.086064
+INFO 2024-07-21 10:00:00,086 tasks Date: 2024-07-21
+INFO 2024-07-21 10:00:00,087 tasks Time: 10:00:00.087090
+INFO 2024-07-21 10:00:00,088 tasks Nairobi: 2024-07-21 10:00:00.088158+03:00
+INFO 2024-07-21 11:02:57,296 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:02:57,316 tasks Task ran at: 2024-07-21 11:02:57.316128
+INFO 2024-07-21 11:02:57,317 tasks Date: 2024-07-21 11:02:57.316981+03:00
+ERROR 2024-07-21 11:02:57,493 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-17T00:00:00","prev_two_contribution_date":"2024-07-16T00:00:00"}}
+INFO 2024-07-21 11:03:31,057 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:03:31,057 tasks Task ran at: 2024-07-21 11:03:31.057769
+INFO 2024-07-21 11:03:31,058 tasks Date: 2024-07-21 11:03:31.058239+03:00
+ERROR 2024-07-21 11:03:31,432 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:10:25,800 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:10:25,800 tasks Task ran at: 2024-07-21 11:10:25.800539
+INFO 2024-07-21 11:10:25,800 tasks Date: 2024-07-21 11:10:25.800787+03:00
+ERROR 2024-07-21 11:10:25,941 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:11:30,600 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:11:30,601 tasks Task ran at: 2024-07-21 11:11:30.601365
+INFO 2024-07-21 11:11:30,601 tasks Date: 2024-07-21 11:11:30.601633+03:00
+ERROR 2024-07-21 11:11:30,738 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:11:58,072 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:11:58,073 tasks Task ran at: 2024-07-21 11:11:58.073432
+INFO 2024-07-21 11:11:58,073 tasks Date: 2024-07-21 11:11:58.073787+03:00
+ERROR 2024-07-21 11:11:58,239 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:13:42,036 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:13:42,037 tasks Task ran at: 2024-07-21 11:13:42.036959
+INFO 2024-07-21 11:13:42,037 tasks Date: 2024-07-21 11:13:42.037754+03:00
+ERROR 2024-07-21 11:13:42,146 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:25:39,422 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:25:39,423 tasks Task ran at: 2024-07-21 11:25:39.423777
+INFO 2024-07-21 11:25:39,424 tasks Date: 2024-07-21 11:25:39.424259+03:00
+ERROR 2024-07-21 11:25:39,590 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 11:31:24,031 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 11:31:24,032 tasks Task ran at: 2024-07-21 11:31:24.032287
+INFO 2024-07-21 11:31:24,032 tasks Date: 2024-07-21 11:31:24.032912+03:00
+ERROR 2024-07-21 11:31:24,156 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:00:00,137 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-21 12:00:00,180 tasks Task ran at: 2024-07-21 12:00:00.180623
+INFO 2024-07-21 12:00:00,181 tasks Date: 2024-07-21
+INFO 2024-07-21 12:00:00,182 tasks Time: 12:00:00.181966
+INFO 2024-07-21 12:00:00,182 tasks Nairobi: 2024-07-21 12:00:00.182412+03:00
+INFO 2024-07-21 12:26:09,525 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:26:09,525 tasks Task ran at: 2024-07-21 12:26:09.525435
+INFO 2024-07-21 12:26:09,525 tasks Date: 2024-07-21 12:26:09.525718+03:00
+ERROR 2024-07-21 12:26:09,789 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:27:34,426 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:27:34,427 tasks Task ran at: 2024-07-21 12:27:34.427244
+INFO 2024-07-21 12:27:34,427 tasks Date: 2024-07-21 12:27:34.427529+03:00
+ERROR 2024-07-21 12:27:34,548 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:27:58,487 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:27:58,488 tasks Task ran at: 2024-07-21 12:27:58.487502
+INFO 2024-07-21 12:27:58,488 tasks Date: 2024-07-21 12:27:58.488618+03:00
+ERROR 2024-07-21 12:27:58,622 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:28:38,588 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:28:38,589 tasks Task ran at: 2024-07-21 12:28:38.588940
+INFO 2024-07-21 12:28:38,589 tasks Date: 2024-07-21 12:28:38.589793+03:00
+ERROR 2024-07-21 12:28:38,742 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:29:46,755 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:29:46,758 tasks Task ran at: 2024-07-21 12:29:46.758369
+INFO 2024-07-21 12:29:46,759 tasks Date: 2024-07-21 12:29:46.759081+03:00
+ERROR 2024-07-21 12:29:46,903 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:31:33,700 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:31:33,702 tasks Task ran at: 2024-07-21 12:31:33.702386
+INFO 2024-07-21 12:31:33,703 tasks Date: 2024-07-21 12:31:33.703174+03:00
+ERROR 2024-07-21 12:31:33,849 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 12:32:44,887 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 12:32:44,888 tasks Task ran at: 2024-07-21 12:32:44.888091
+INFO 2024-07-21 12:32:44,888 tasks Date: 2024-07-21 12:32:44.888377+03:00
+ERROR 2024-07-21 12:32:45,029 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 13:30:08,903 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:30:08,903 tasks Task ran at: 2024-07-21 13:30:08.903891
+INFO 2024-07-21 13:30:08,905 tasks Date: 2024-07-21 13:30:08.905542+03:00
+ERROR 2024-07-21 13:30:09,159 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 13:30:36,166 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:30:36,167 tasks Task ran at: 2024-07-21 13:30:36.167118
+INFO 2024-07-21 13:30:36,167 tasks Date: 2024-07-21 13:30:36.167766+03:00
+ERROR 2024-07-21 13:30:36,336 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 13:36:11,121 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:36:11,121 tasks Task ran at: 2024-07-21 13:36:11.121834
+INFO 2024-07-21 13:36:11,123 tasks Date: 2024-07-21 13:36:11.122669+03:00
+ERROR 2024-07-21 13:36:11,314 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 13:38:46,150 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:38:46,151 tasks Task ran at: 2024-07-21 13:38:46.151658
+INFO 2024-07-21 13:38:46,152 tasks Date: 2024-07-21 13:38:46.152327+03:00
+ERROR 2024-07-21 13:38:46,366 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+ERROR 2024-07-21 13:40:09,071 tasks Failed to record transaction: ws_CO_21072024134008755113638169
+INFO 2024-07-21 13:41:09,714 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:41:09,714 tasks Task ran at: 2024-07-21 13:41:09.714792
+INFO 2024-07-21 13:41:09,715 tasks Date: 2024-07-21 13:41:09.715115+03:00
+ERROR 2024-07-21 13:41:09,874 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 13:48:39,808 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:48:39,808 tasks Task ran at: 2024-07-21 13:48:39.808646
+INFO 2024-07-21 13:48:39,809 tasks Date: 2024-07-21 13:48:39.808985+03:00
+ERROR 2024-07-21 13:48:40,013 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+ERROR 2024-07-21 13:49:28,128 tasks Failed to record transaction: ws_CO_21072024134927867113638169
+INFO 2024-07-21 13:50:28,705 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 13:50:28,705 tasks Task ran at: 2024-07-21 13:50:28.705527
+INFO 2024-07-21 13:50:28,705 tasks Date: 2024-07-21 13:50:28.705865+03:00
+ERROR 2024-07-21 13:50:28,873 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 14:00:00,050 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-21 14:00:00,051 tasks Task ran at: 2024-07-21 14:00:00.051448
+INFO 2024-07-21 14:00:00,051 tasks Date: 2024-07-21
+INFO 2024-07-21 14:00:00,052 tasks Time: 14:00:00.052435
+INFO 2024-07-21 14:00:00,053 tasks Nairobi: 2024-07-21 14:00:00.053517+03:00
+INFO 2024-07-21 14:21:22,427 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:21:22,445 tasks Task ran at: 2024-07-21 14:21:22.445165
+INFO 2024-07-21 14:21:22,446 tasks Date: 2024-07-21 14:21:22.445927+03:00
+ERROR 2024-07-21 14:21:22,679 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+ERROR 2024-07-21 14:21:39,234 tasks Failed to record transaction: ws_CO_21072024142138988113638169
+INFO 2024-07-21 14:22:39,932 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:22:39,933 tasks Task ran at: 2024-07-21 14:22:39.933283
+INFO 2024-07-21 14:22:39,935 tasks Date: 2024-07-21 14:22:39.934948+03:00
+ERROR 2024-07-21 14:22:40,101 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+ERROR 2024-07-21 14:25:18,121 tasks Failed to record transaction: ws_CO_21072024142517769113638169
+INFO 2024-07-21 14:26:18,706 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:26:18,709 tasks Task ran at: 2024-07-21 14:26:18.709453
+INFO 2024-07-21 14:26:18,713 tasks Date: 2024-07-21 14:26:18.713244+03:00
+ERROR 2024-07-21 14:26:18,918 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 14:29:23,569 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:29:23,571 tasks Task ran at: 2024-07-21 14:29:23.571022
+INFO 2024-07-21 14:29:23,572 tasks Date: 2024-07-21 14:29:23.572200+03:00
+ERROR 2024-07-21 14:29:23,705 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 14:33:55,966 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:33:55,966 tasks Task ran at: 2024-07-21 14:33:55.966590
+INFO 2024-07-21 14:33:55,966 tasks Date: 2024-07-21 14:33:55.966855+03:00
+ERROR 2024-07-21 14:33:56,132 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 14:43:06,795 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:43:06,796 tasks Task ran at: 2024-07-21 14:43:06.796149
+INFO 2024-07-21 14:43:06,796 tasks Date: 2024-07-21 14:43:06.796716+03:00
+ERROR 2024-07-21 14:43:06,952 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 14:45:59,848 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 14:45:59,853 tasks Task ran at: 2024-07-21 14:45:59.853853
+INFO 2024-07-21 14:45:59,858 tasks Date: 2024-07-21 14:45:59.858460+03:00
+ERROR 2024-07-21 14:46:00,106 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:04:57,452 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:04:57,467 tasks Task ran at: 2024-07-21 15:04:57.467562
+INFO 2024-07-21 15:04:57,467 tasks Date: 2024-07-21 15:04:57.467822+03:00
+ERROR 2024-07-21 15:04:57,613 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:06:26,364 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:06:26,366 tasks Task ran at: 2024-07-21 15:06:26.366074
+INFO 2024-07-21 15:06:26,366 tasks Date: 2024-07-21 15:06:26.366576+03:00
+ERROR 2024-07-21 15:06:26,537 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:08:03,415 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:08:03,415 tasks Task ran at: 2024-07-21 15:08:03.415738
+INFO 2024-07-21 15:08:03,416 tasks Date: 2024-07-21 15:08:03.415984+03:00
+ERROR 2024-07-21 15:08:03,633 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:09:17,767 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:09:17,768 tasks Task ran at: 2024-07-21 15:09:17.768419
+INFO 2024-07-21 15:09:17,768 tasks Date: 2024-07-21 15:09:17.768850+03:00
+ERROR 2024-07-21 15:09:17,911 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:13:00,806 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:13:00,807 tasks Task ran at: 2024-07-21 15:13:00.807200
+INFO 2024-07-21 15:13:00,808 tasks Date: 2024-07-21 15:13:00.808058+03:00
+ERROR 2024-07-21 15:13:00,997 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:16:27,031 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:16:27,031 tasks Task ran at: 2024-07-21 15:16:27.031657
+INFO 2024-07-21 15:16:27,033 tasks Date: 2024-07-21 15:16:27.032993+03:00
+ERROR 2024-07-21 15:16:27,249 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:19:45,667 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:19:45,668 tasks Task ran at: 2024-07-21 15:19:45.668010
+INFO 2024-07-21 15:19:45,668 tasks Date: 2024-07-21 15:19:45.668352+03:00
+ERROR 2024-07-21 15:19:45,875 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:22:04,020 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:22:04,024 tasks Task ran at: 2024-07-21 15:22:04.024080
+INFO 2024-07-21 15:22:04,027 tasks Date: 2024-07-21 15:22:04.027587+03:00
+ERROR 2024-07-21 15:22:04,187 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:22:38,744 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:22:38,746 tasks Task ran at: 2024-07-21 15:22:38.746835
+INFO 2024-07-21 15:22:38,747 tasks Date: 2024-07-21 15:22:38.747372+03:00
+ERROR 2024-07-21 15:22:38,903 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:23:34,751 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:23:34,753 tasks Task ran at: 2024-07-21 15:23:34.752990
+INFO 2024-07-21 15:23:34,754 tasks Date: 2024-07-21 15:23:34.754563+03:00
+ERROR 2024-07-21 15:23:34,909 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:23:54,693 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:23:54,693 tasks Task ran at: 2024-07-21 15:23:54.693672
+INFO 2024-07-21 15:23:54,694 tasks Date: 2024-07-21 15:23:54.694405+03:00
+ERROR 2024-07-21 15:23:54,851 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:26:19,045 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:26:19,045 tasks Task ran at: 2024-07-21 15:26:19.045517
+INFO 2024-07-21 15:26:19,045 tasks Date: 2024-07-21 15:26:19.045775+03:00
+ERROR 2024-07-21 15:26:19,214 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 15:26:58,098 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-21 15:26:58,098 tasks Task ran at: 2024-07-21 15:26:58.098571
+INFO 2024-07-21 15:26:58,098 tasks Date: 2024-07-21 15:26:58.098813+03:00
+ERROR 2024-07-21 15:26:58,263 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-20T00:00:00","prev_two_contribution_date":"2024-07-19T00:00:00"}}
+INFO 2024-07-21 18:10:31,358 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-21 18:10:31,358 tasks Task ran at: 2024-07-21 18:10:31.358595
+INFO 2024-07-21 18:10:31,358 tasks Date: 2024-07-21
+INFO 2024-07-21 18:10:31,359 tasks Time: 18:10:31.359079
+INFO 2024-07-21 18:10:31,359 tasks Nairobi: 2024-07-21 18:10:31.359270+03:00
+INFO 2024-07-22 06:37:33,664 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-22 06:37:33,665 tasks Task ran at: 2024-07-22 06:37:33.665691
+INFO 2024-07-22 06:37:33,666 tasks Date: 2024-07-22
+INFO 2024-07-22 06:37:33,666 tasks Time: 06:37:33.666525
+INFO 2024-07-22 06:37:33,666 tasks Nairobi: 2024-07-22 06:37:33.666905+03:00
+INFO 2024-07-22 06:42:20,823 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-22 06:42:20,825 tasks Task ran at: 2024-07-22 06:42:20.825280
+INFO 2024-07-22 06:42:20,826 tasks Date: 2024-07-22 06:42:20.826644+03:00
+ERROR 2024-07-22 06:42:21,089 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-21T00:00:00","prev_two_contribution_date":"2024-07-20T00:00:00"}}
+INFO 2024-07-22 06:42:44,690 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-22 06:42:44,691 tasks Task ran at: 2024-07-22 06:42:44.691465
+INFO 2024-07-22 06:42:44,692 tasks Date: 2024-07-22 06:42:44.691957+03:00
+ERROR 2024-07-22 06:42:44,804 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-21T00:00:00","prev_two_contribution_date":"2024-07-20T00:00:00"}}
+INFO 2024-07-22 07:08:47,105 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-22 07:08:47,106 tasks Task ran at: 2024-07-22 07:08:47.106227
+INFO 2024-07-22 07:08:47,106 tasks Date: 2024-07-22 07:08:47.106411+03:00
+ERROR 2024-07-22 07:08:47,260 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-21T00:00:00","prev_two_contribution_date":"2024-07-20T00:00:00"}}
+INFO 2024-07-22 07:14:10,717 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-22 07:14:10,718 tasks Task ran at: 2024-07-22 07:14:10.718491
+INFO 2024-07-22 07:14:10,719 tasks Date: 2024-07-22 07:14:10.719005+03:00
+ERROR 2024-07-22 07:14:10,897 tasks Failed to calculate missed contributions and fines: 200, {"1":{"share_price":1000,"fine_per_share":100,"prev_contribution_date":"2024-07-21T00:00:00","prev_two_contribution_date":"2024-07-20T00:00:00"}}
+INFO 2024-07-22 07:16:11,169 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-22 07:16:11,207 tasks Task ran at: 2024-07-22 07:16:11.207178
+INFO 2024-07-22 07:16:11,207 tasks Date: 2024-07-22 07:16:11.207477+03:00
+INFO 2024-07-22 08:00:00,139 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-22 08:00:00,141 tasks Task ran at: 2024-07-22 08:00:00.139928
+INFO 2024-07-22 08:00:00,142 tasks Date: 2024-07-22
+INFO 2024-07-22 08:00:00,143 tasks Time: 08:00:00.143306
+INFO 2024-07-22 08:00:00,144 tasks Nairobi: 2024-07-22 08:00:00.144583+03:00
+INFO 2024-07-22 10:00:00,027 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-22 10:00:00,070 tasks Task ran at: 2024-07-22 10:00:00.070804
+INFO 2024-07-22 10:00:00,073 tasks Date: 2024-07-22
+INFO 2024-07-22 10:00:00,073 tasks Time: 10:00:00.073324
+INFO 2024-07-22 10:00:00,073 tasks Nairobi: 2024-07-22 10:00:00.073550+03:00
+INFO 2024-07-22 12:00:00,228 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-22 12:00:00,240 tasks Task ran at: 2024-07-22 12:00:00.240773
+INFO 2024-07-22 12:00:00,241 tasks Date: 2024-07-22
+INFO 2024-07-22 12:00:00,242 tasks Time: 12:00:00.242418
+INFO 2024-07-22 12:00:00,243 tasks Nairobi: 2024-07-22 12:00:00.243088+03:00
+INFO 2024-07-23 17:15:09,601 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-23 17:15:09,650 tasks Task ran at: 2024-07-23 17:15:09.650442
+INFO 2024-07-23 17:15:09,651 tasks Date: 2024-07-23
+INFO 2024-07-23 17:15:09,651 tasks Time: 17:15:09.651441
+INFO 2024-07-23 17:15:09,651 tasks Nairobi: 2024-07-23 17:15:09.651776+03:00
+INFO 2024-07-23 17:36:55,277 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-23 17:36:55,279 tasks Task ran at: 2024-07-23 17:36:55.279305
+INFO 2024-07-23 17:36:55,282 tasks Nairobi: 2024-07-23 17:36:55.282649+03:00
+INFO 2024-07-23 17:37:02,482 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-23 17:37:02,483 tasks Task ran at: 2024-07-23 17:37:02.483479
+INFO 2024-07-23 17:37:02,484 tasks Nairobi: 2024-07-23 17:37:02.484044+03:00
+INFO 2024-07-23 17:38:55,232 tasks amountb4:5
+INFO 2024-07-23 17:38:55,257 tasks greaterafter:5
+INFO 2024-07-23 17:38:55,468 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_23072024173754191113638169', 'wallet_update': None, 'direct_deposit': {'amount': 5, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}

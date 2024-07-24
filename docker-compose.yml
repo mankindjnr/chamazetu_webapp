@@ -40,6 +40,7 @@ services:
     command: python manage.py runsslserver 0.0.0.0:8000 --certificate /app/frontend/cert.pem --key /app/frontend/key.pem
     volumes:
       - ./frontend_chamazetu:/app/frontend/
+      - ./staticfiles:/app/frontend/staticfiles
       - ./app/frontend/certs:/app/frontend/certs
     ports:
       - "8000:8000"

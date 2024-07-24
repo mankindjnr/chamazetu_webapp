@@ -206,17 +206,11 @@ class Transaction(Base):
         onupdate=nairobi_now,
     )
     transaction_completed = Column(Boolean, default=False)
-    transaction_code = Column(
-        String, nullable=False
-    )  # mpesa code or bank transaction code
-    transaction_type = Column(
-        String, nullable=False
-    )  # deposit, withdrawal, loan, loan_payment, interest
+    transaction_code = Column(String, nullable=False)
+    transaction_type = Column(String, nullable=False)  # deposit, withdrawal,etc
     is_reversed = Column(Boolean, default=False)
-
-    # from which account did the transaction come from - user_account, user_dynamic_wallet(global)
-    transaction_origin = Column(String, nullable=False)
-
+    needs_reversal = Column(Boolean, default=False)
+    transaction_origin = Column(String, nullable=False)  # wallet/mpesa etc
     # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     chama = relationship("Chama", back_populates="transactions")

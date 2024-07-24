@@ -1,43 +1,20 @@
-2024-07-16 20:14:44,427 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
-    version = _bcrypt.__about__.__version__
-AttributeError: module 'bcrypt' has no attribute '__about__'
-2024-07-16 20:20:06,434 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-07-16 20:20:06,881 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-07-16 20:21:07,206 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-07-16 20:21:07,597 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
-2024-07-16 20:28:49,222 - app.router.chama_management - INFO - Today's date: 2024-07-16 20:28:49.222562
-2024-07-16 20:28:49,224 - app.router.chama_management - INFO - Contribution interval: daily
-2024-07-16 20:28:49,224 - app.router.chama_management - INFO - Contribution day: daily
-2024-07-16 20:28:49,232 - app.router.chama_management - INFO - =============================================
-2024-07-16 20:28:49,303 - app.router.members - WARNING - Chamas share price and previous two contribution dates retrieved
-2024-07-16 20:28:49,303 - app.router.members - WARNING - {1: {'share_price': 1000, 'fine_per_share': 100, 'prev_contribution_date': datetime.datetime(2024, 7, 15, 0, 0), 'prev_two_contribution_date': datetime.datetime(2024, 7, 14, 0, 0)}}
-2024-07-16 20:28:49,346 - app.router.members - WARNING - Member: nurtu
-2024-07-16 20:28:49,369 - app.router.members - WARNING - Total contribution: 0
-2024-07-16 20:28:49,370 - app.router.members - WARNING - Expected contribution: 1000
-2024-07-16 20:28:49,371 - app.router.members - WARNING - Difference: 1000
-2024-07-16 20:28:49,371 - app.router.members - WARNING - Fine to be added
-2024-07-16 20:28:49,401 - app.router.members - WARNING - Member: memlo
-2024-07-16 20:28:49,415 - app.router.members - WARNING - Total contribution: 1000
-2024-07-16 20:28:49,415 - app.router.members - WARNING - Expected contribution: 1000
-2024-07-16 20:28:49,416 - app.router.members - WARNING - Difference: 0
-2024-07-16 20:28:49,416 - app.router.members - WARNING - Member: nasta
-2024-07-16 20:28:49,433 - app.router.members - WARNING - Total contribution: 0
-2024-07-16 20:28:49,433 - app.router.members - WARNING - Expected contribution: 1000
-2024-07-16 20:28:49,434 - app.router.members - WARNING - Difference: 1000
-2024-07-16 20:28:49,435 - app.router.members - WARNING - Fine to be added
-2024-07-16 20:28:49,447 - app.router.members - WARNING - Member: zodru
-2024-07-16 20:28:49,459 - app.router.members - WARNING - Total contribution: 0
-2024-07-16 20:28:49,460 - app.router.members - WARNING - Expected contribution: 1000
-2024-07-16 20:28:49,460 - app.router.members - WARNING - Difference: 1000
-2024-07-16 20:28:49,460 - app.router.members - WARNING - Fine to be added
-2024-07-16 20:28:49,470 - app.router.members - WARNING - Member: varko
-2024-07-16 20:28:49,485 - app.router.members - WARNING - Total contribution: 0
-2024-07-16 20:28:49,486 - app.router.members - WARNING - Expected contribution: 1000
-2024-07-16 20:28:49,486 - app.router.members - WARNING - Difference: 1000
-2024-07-16 20:28:49,487 - app.router.members - WARNING - Fine to be added
-2024-07-16 20:28:49,498 - app.router.members - WARNING - Fine record does not exist
-2024-07-16 20:28:49,559 - app.router.members - WARNING - Fines added
-2024-07-16 20:28:49,560 - app.router.members - WARNING - {1: {'chama_id': '1', 'member_id': 1, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-15T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 3: {'chama_id': '1', 'member_id': 3, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-15T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 4: {'chama_id': '1', 'member_id': 4, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-15T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 6: {'chama_id': '1', 'member_id': 6, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-15T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}}
-2024-07-16 20:28:49,561 - app.router.members - WARNING - =====================
+2024-07-18 13:44:24,274 - root - WARNING - Chamas share price and previous two contribution dates retrieved
+2024-07-18 13:44:24,276 - root - WARNING - {1: {'share_price': 1000, 'fine_per_share': 100, 'prev_contribution_date': datetime.datetime(2024, 7, 17, 0, 0), 'prev_two_contribution_date': datetime.datetime(2024, 7, 16, 0, 0)}}
+2024-07-18 13:44:24,533 - root - WARNING - Member: nurtu
+2024-07-18 13:44:24,558 - root - WARNING - Fine to be added
+2024-07-18 13:44:24,633 - root - WARNING - Fine record does not exist
+2024-07-18 13:44:24,726 - root - WARNING - Member: memlo
+2024-07-18 13:44:24,752 - root - WARNING - Fine to be added
+2024-07-18 13:44:24,765 - root - WARNING - Fine record does not exist
+2024-07-18 13:44:24,812 - root - WARNING - Member: nasta
+2024-07-18 13:44:24,834 - root - WARNING - Fine to be added
+2024-07-18 13:44:24,838 - root - WARNING - Fine record does not exist
+2024-07-18 13:44:24,867 - root - WARNING - Member: zodru
+2024-07-18 13:44:24,909 - root - WARNING - Fine to be added
+2024-07-18 13:44:24,926 - root - WARNING - Fine record does not exist
+2024-07-18 13:44:24,963 - root - WARNING - Member: varko
+2024-07-18 13:44:25,000 - root - WARNING - Fine to be added
+2024-07-18 13:44:25,015 - root - WARNING - Fine record does not exist
+2024-07-18 13:44:25,045 - root - WARNING - Fines added
+2024-07-18 13:44:25,046 - root - WARNING - {1: {'chama_id': '1', 'member_id': 1, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-17T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 2: {'chama_id': '1', 'member_id': 2, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-17T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 3: {'chama_id': '1', 'member_id': 3, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-17T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 4: {'chama_id': '1', 'member_id': 4, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-17T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}, 6: {'chama_id': '1', 'member_id': 6, 'fine': 100, 'fine_reason': 'Missed contribution', 'fine_date': '2024-07-17T00:00:00', 'is_paid': False, 'paid_date': None, 'total_expected_amount': 1100}}
+2024-07-18 13:44:25,046 - root - WARNING - =====================

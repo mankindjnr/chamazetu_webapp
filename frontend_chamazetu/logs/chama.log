@@ -8,3 +8,255 @@ INFO 2024-07-16 20:00:00,067 tasks Task ran at: 2024-07-16 20:00:00.066967
 INFO 2024-07-16 20:00:00,067 tasks Date: 2024-07-16
 INFO 2024-07-16 20:00:00,068 tasks Time: 20:00:00.068154
 INFO 2024-07-16 20:00:00,068 tasks Nairobi: 2024-07-16 20:00:00.068637+03:00
+INFO 2024-07-18 12:24:44,286 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-18 12:24:44,286 tasks Task ran at: 2024-07-18 12:24:44.286887
+INFO 2024-07-18 12:24:44,287 tasks Date: 2024-07-18
+INFO 2024-07-18 12:24:44,287 tasks Time: 12:24:44.287354
+INFO 2024-07-18 12:24:44,287 tasks Nairobi: 2024-07-18 12:24:44.287568+03:00
+INFO 2024-07-18 12:24:44,352 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-18 12:24:44,352 tasks Task ran at: 2024-07-18 12:24:44.352568
+INFO 2024-07-18 12:24:44,352 tasks Nairobi: 2024-07-18 12:24:44.352819+03:00
+INFO 2024-07-18 14:00:00,219 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-18 14:00:00,220 tasks Task ran at: 2024-07-18 14:00:00.220135
+INFO 2024-07-18 14:00:00,220 tasks Date: 2024-07-18
+INFO 2024-07-18 14:00:00,220 tasks Time: 14:00:00.220615
+INFO 2024-07-18 14:00:00,220 tasks Nairobi: 2024-07-18 14:00:00.220766+03:00
+INFO 2024-07-18 16:00:00,171 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-18 16:00:00,190 tasks Task ran at: 2024-07-18 16:00:00.190029
+INFO 2024-07-18 16:00:00,190 tasks Date: 2024-07-18
+INFO 2024-07-18 16:00:00,191 tasks Time: 16:00:00.191195
+INFO 2024-07-18 16:00:00,191 tasks Nairobi: 2024-07-18 16:00:00.191592+03:00
+INFO 2024-07-19 10:00:06,367 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 10:00:06,368 tasks Task ran at: 2024-07-19 10:00:06.368150
+INFO 2024-07-19 10:00:06,368 tasks Date: 2024-07-19
+INFO 2024-07-19 10:00:06,368 tasks Time: 10:00:06.368664
+INFO 2024-07-19 10:00:06,368 tasks Nairobi: 2024-07-19 10:00:06.368835+03:00
+INFO 2024-07-19 10:09:43,348 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 10:09:43,348 tasks Task ran at: 2024-07-19 10:09:43.348534
+INFO 2024-07-19 10:09:43,348 tasks Date: 2024-07-19
+INFO 2024-07-19 10:09:43,348 tasks Time: 10:09:43.348869
+INFO 2024-07-19 10:09:43,349 tasks Nairobi: 2024-07-19 10:09:43.349019+03:00
+INFO 2024-07-19 12:00:00,022 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 12:00:00,037 tasks Task ran at: 2024-07-19 12:00:00.037493
+INFO 2024-07-19 12:00:00,037 tasks Date: 2024-07-19
+INFO 2024-07-19 12:00:00,038 tasks Time: 12:00:00.037996
+INFO 2024-07-19 12:00:00,038 tasks Nairobi: 2024-07-19 12:00:00.038202+03:00
+INFO 2024-07-19 14:00:00,122 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 14:00:00,124 tasks Task ran at: 2024-07-19 14:00:00.123957
+INFO 2024-07-19 14:00:00,125 tasks Date: 2024-07-19
+INFO 2024-07-19 14:00:00,126 tasks Time: 14:00:00.126210
+INFO 2024-07-19 14:00:00,127 tasks Nairobi: 2024-07-19 14:00:00.126983+03:00
+INFO 2024-07-19 16:00:00,113 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 16:00:00,114 tasks Task ran at: 2024-07-19 16:00:00.113973
+INFO 2024-07-19 16:00:00,114 tasks Date: 2024-07-19
+INFO 2024-07-19 16:00:00,114 tasks Time: 16:00:00.114739
+INFO 2024-07-19 16:00:00,115 tasks Nairobi: 2024-07-19 16:00:00.115175+03:00
+INFO 2024-07-19 18:00:00,063 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-19 18:00:00,101 tasks Task ran at: 2024-07-19 18:00:00.101175
+INFO 2024-07-19 18:00:00,101 tasks Date: 2024-07-19
+INFO 2024-07-19 18:00:00,101 tasks Time: 18:00:00.101650
+INFO 2024-07-19 18:00:00,101 tasks Nairobi: 2024-07-19 18:00:00.101832+03:00
+INFO 2024-07-21 09:40:29,987 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-21 09:40:29,987 tasks Task ran at: 2024-07-21 09:40:29.987626
+INFO 2024-07-21 09:40:29,988 tasks Date: 2024-07-21
+INFO 2024-07-21 09:40:29,989 tasks Time: 09:40:29.989300
+INFO 2024-07-21 09:40:29,989 tasks Nairobi: 2024-07-21 09:40:29.989521+03:00
+INFO 2024-07-21 10:00:00,125 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-21 10:00:00,125 tasks Task ran at: 2024-07-21 10:00:00.125556
+INFO 2024-07-21 10:00:00,126 tasks Date: 2024-07-21
+INFO 2024-07-21 10:00:00,126 tasks Time: 10:00:00.126451
+INFO 2024-07-21 10:00:00,126 tasks Nairobi: 2024-07-21 10:00:00.126672+03:00
+INFO 2024-07-21 11:02:57,506 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:02:57,521 tasks Task ran at: 2024-07-21 11:02:57.521391
+INFO 2024-07-21 11:02:57,521 tasks Nairobi: 2024-07-21 11:02:57.521656+03:00
+INFO 2024-07-21 11:03:31,442 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:03:31,442 tasks Task ran at: 2024-07-21 11:03:31.442774
+INFO 2024-07-21 11:03:31,442 tasks Nairobi: 2024-07-21 11:03:31.442953+03:00
+INFO 2024-07-21 11:10:25,951 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:10:25,951 tasks Task ran at: 2024-07-21 11:10:25.951720
+INFO 2024-07-21 11:10:25,953 tasks Nairobi: 2024-07-21 11:10:25.953792+03:00
+INFO 2024-07-21 11:11:30,748 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:11:30,749 tasks Task ran at: 2024-07-21 11:11:30.749436
+INFO 2024-07-21 11:11:30,758 tasks Nairobi: 2024-07-21 11:11:30.757703+03:00
+INFO 2024-07-21 11:11:58,245 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:11:58,246 tasks Task ran at: 2024-07-21 11:11:58.245964
+INFO 2024-07-21 11:11:58,246 tasks Nairobi: 2024-07-21 11:11:58.246197+03:00
+INFO 2024-07-21 11:13:42,155 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:13:42,156 tasks Task ran at: 2024-07-21 11:13:42.156156
+INFO 2024-07-21 11:13:42,156 tasks Nairobi: 2024-07-21 11:13:42.156342+03:00
+INFO 2024-07-21 11:25:39,598 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:25:39,599 tasks Task ran at: 2024-07-21 11:25:39.599384
+INFO 2024-07-21 11:25:39,601 tasks Nairobi: 2024-07-21 11:25:39.601763+03:00
+INFO 2024-07-21 11:31:24,167 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 11:31:24,167 tasks Task ran at: 2024-07-21 11:31:24.167906
+INFO 2024-07-21 11:31:24,168 tasks Nairobi: 2024-07-21 11:31:24.168329+03:00
+ERROR 2024-07-21 12:00:00,088 tasks Failed to update callback transactions: 500, {"detail":"name 'timedelta' is not defined"}
+INFO 2024-07-21 12:00:00,125 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-21 12:00:00,126 tasks Task ran at: 2024-07-21 12:00:00.126173
+INFO 2024-07-21 12:00:00,126 tasks Date: 2024-07-21
+INFO 2024-07-21 12:00:00,127 tasks Time: 12:00:00.127403
+INFO 2024-07-21 12:00:00,127 tasks Nairobi: 2024-07-21 12:00:00.127869+03:00
+INFO 2024-07-21 12:26:09,802 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:26:09,803 tasks Task ran at: 2024-07-21 12:26:09.803106
+INFO 2024-07-21 12:26:09,804 tasks Nairobi: 2024-07-21 12:26:09.804097+03:00
+INFO 2024-07-21 12:27:34,561 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:27:34,562 tasks Task ran at: 2024-07-21 12:27:34.562483
+INFO 2024-07-21 12:27:34,564 tasks Nairobi: 2024-07-21 12:27:34.564479+03:00
+INFO 2024-07-21 12:27:58,638 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:27:58,642 tasks Task ran at: 2024-07-21 12:27:58.642571
+INFO 2024-07-21 12:27:58,644 tasks Nairobi: 2024-07-21 12:27:58.643944+03:00
+INFO 2024-07-21 12:28:38,752 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:28:38,754 tasks Task ran at: 2024-07-21 12:28:38.754348
+INFO 2024-07-21 12:28:38,754 tasks Nairobi: 2024-07-21 12:28:38.754756+03:00
+INFO 2024-07-21 12:29:46,918 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:29:46,919 tasks Task ran at: 2024-07-21 12:29:46.919301
+INFO 2024-07-21 12:29:46,920 tasks Nairobi: 2024-07-21 12:29:46.920426+03:00
+INFO 2024-07-21 12:31:33,861 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:31:33,862 tasks Task ran at: 2024-07-21 12:31:33.862222
+INFO 2024-07-21 12:31:33,862 tasks Nairobi: 2024-07-21 12:31:33.862919+03:00
+INFO 2024-07-21 12:32:45,048 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 12:32:45,049 tasks Task ran at: 2024-07-21 12:32:45.049212
+INFO 2024-07-21 12:32:45,049 tasks Nairobi: 2024-07-21 12:32:45.049723+03:00
+INFO 2024-07-21 13:30:09,182 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:30:09,202 tasks Task ran at: 2024-07-21 13:30:09.201886
+INFO 2024-07-21 13:30:09,203 tasks Nairobi: 2024-07-21 13:30:09.202699+03:00
+INFO 2024-07-21 13:30:36,346 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:30:36,346 tasks Task ran at: 2024-07-21 13:30:36.346413
+INFO 2024-07-21 13:30:36,346 tasks Nairobi: 2024-07-21 13:30:36.346627+03:00
+INFO 2024-07-21 13:36:11,327 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:36:11,327 tasks Task ran at: 2024-07-21 13:36:11.327927
+INFO 2024-07-21 13:36:11,328 tasks Nairobi: 2024-07-21 13:36:11.328383+03:00
+INFO 2024-07-21 13:38:46,385 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:38:46,386 tasks Task ran at: 2024-07-21 13:38:46.386110
+INFO 2024-07-21 13:38:46,386 tasks Nairobi: 2024-07-21 13:38:46.386774+03:00
+INFO 2024-07-21 13:41:09,899 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:41:09,900 tasks Task ran at: 2024-07-21 13:41:09.900061
+INFO 2024-07-21 13:41:09,901 tasks Nairobi: 2024-07-21 13:41:09.900975+03:00
+INFO 2024-07-21 13:48:40,034 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:48:40,034 tasks Task ran at: 2024-07-21 13:48:40.034380
+INFO 2024-07-21 13:48:40,034 tasks Nairobi: 2024-07-21 13:48:40.034598+03:00
+INFO 2024-07-21 13:50:28,896 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 13:50:28,898 tasks Task ran at: 2024-07-21 13:50:28.898877
+INFO 2024-07-21 13:50:28,899 tasks Nairobi: 2024-07-21 13:50:28.899334+03:00
+INFO 2024-07-21 14:00:00,126 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-21 14:00:00,127 tasks Task ran at: 2024-07-21 14:00:00.127196
+INFO 2024-07-21 14:00:00,127 tasks Date: 2024-07-21
+INFO 2024-07-21 14:00:00,127 tasks Time: 14:00:00.127698
+INFO 2024-07-21 14:00:00,127 tasks Nairobi: 2024-07-21 14:00:00.127899+03:00
+INFO 2024-07-21 14:21:22,689 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:21:22,704 tasks Task ran at: 2024-07-21 14:21:22.704280
+INFO 2024-07-21 14:21:22,705 tasks Nairobi: 2024-07-21 14:21:22.705314+03:00
+INFO 2024-07-21 14:22:40,119 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:22:40,119 tasks Task ran at: 2024-07-21 14:22:40.119564
+INFO 2024-07-21 14:22:40,119 tasks Nairobi: 2024-07-21 14:22:40.119918+03:00
+INFO 2024-07-21 14:26:18,934 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:26:18,934 tasks Task ran at: 2024-07-21 14:26:18.934833
+INFO 2024-07-21 14:26:18,935 tasks Nairobi: 2024-07-21 14:26:18.935666+03:00
+INFO 2024-07-21 14:29:23,721 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:29:23,721 tasks Task ran at: 2024-07-21 14:29:23.721518
+INFO 2024-07-21 14:29:23,721 tasks Nairobi: 2024-07-21 14:29:23.721793+03:00
+INFO 2024-07-21 14:33:56,145 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:33:56,146 tasks Task ran at: 2024-07-21 14:33:56.146076
+INFO 2024-07-21 14:33:56,146 tasks Nairobi: 2024-07-21 14:33:56.146313+03:00
+INFO 2024-07-21 14:43:06,968 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:43:06,969 tasks Task ran at: 2024-07-21 14:43:06.969180
+INFO 2024-07-21 14:43:06,969 tasks Nairobi: 2024-07-21 14:43:06.969705+03:00
+INFO 2024-07-21 14:46:00,132 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 14:46:00,133 tasks Task ran at: 2024-07-21 14:46:00.133212
+INFO 2024-07-21 14:46:00,133 tasks Nairobi: 2024-07-21 14:46:00.133497+03:00
+INFO 2024-07-21 15:04:57,637 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:04:57,638 tasks Task ran at: 2024-07-21 15:04:57.638312
+INFO 2024-07-21 15:04:57,638 tasks Nairobi: 2024-07-21 15:04:57.638649+03:00
+INFO 2024-07-21 15:06:26,558 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:06:26,559 tasks Task ran at: 2024-07-21 15:06:26.559089
+INFO 2024-07-21 15:06:26,559 tasks Nairobi: 2024-07-21 15:06:26.559695+03:00
+INFO 2024-07-21 15:08:03,654 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:08:03,655 tasks Task ran at: 2024-07-21 15:08:03.654953
+INFO 2024-07-21 15:08:03,655 tasks Nairobi: 2024-07-21 15:08:03.655337+03:00
+INFO 2024-07-21 15:09:17,923 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:09:17,924 tasks Task ran at: 2024-07-21 15:09:17.924030
+INFO 2024-07-21 15:09:17,924 tasks Nairobi: 2024-07-21 15:09:17.924269+03:00
+INFO 2024-07-21 15:13:01,010 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:13:01,012 tasks Task ran at: 2024-07-21 15:13:01.011969
+INFO 2024-07-21 15:13:01,012 tasks Nairobi: 2024-07-21 15:13:01.012810+03:00
+INFO 2024-07-21 15:16:27,267 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:16:27,267 tasks Task ran at: 2024-07-21 15:16:27.267340
+INFO 2024-07-21 15:16:27,267 tasks Nairobi: 2024-07-21 15:16:27.267744+03:00
+INFO 2024-07-21 15:19:45,888 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:19:45,893 tasks Task ran at: 2024-07-21 15:19:45.893356
+INFO 2024-07-21 15:19:45,893 tasks Nairobi: 2024-07-21 15:19:45.893856+03:00
+INFO 2024-07-21 15:22:04,205 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:22:04,206 tasks Task ran at: 2024-07-21 15:22:04.206032
+INFO 2024-07-21 15:22:04,206 tasks Nairobi: 2024-07-21 15:22:04.206492+03:00
+INFO 2024-07-21 15:22:38,913 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:22:38,915 tasks Task ran at: 2024-07-21 15:22:38.915257
+INFO 2024-07-21 15:22:38,915 tasks Nairobi: 2024-07-21 15:22:38.915667+03:00
+INFO 2024-07-21 15:23:34,923 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:23:34,924 tasks Task ran at: 2024-07-21 15:23:34.924329
+INFO 2024-07-21 15:23:34,924 tasks Nairobi: 2024-07-21 15:23:34.924855+03:00
+INFO 2024-07-21 15:23:54,864 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:23:54,865 tasks Task ran at: 2024-07-21 15:23:54.865030
+INFO 2024-07-21 15:23:54,865 tasks Nairobi: 2024-07-21 15:23:54.865617+03:00
+INFO 2024-07-21 15:26:19,228 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:26:19,229 tasks Task ran at: 2024-07-21 15:26:19.229907
+INFO 2024-07-21 15:26:19,230 tasks Nairobi: 2024-07-21 15:26:19.230295+03:00
+INFO 2024-07-21 15:26:58,280 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-21 15:26:58,280 tasks Task ran at: 2024-07-21 15:26:58.280853
+INFO 2024-07-21 15:26:58,281 tasks Nairobi: 2024-07-21 15:26:58.281270+03:00
+INFO 2024-07-21 18:10:31,398 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-21 18:10:31,398 tasks Task ran at: 2024-07-21 18:10:31.398583
+INFO 2024-07-21 18:10:31,399 tasks Date: 2024-07-21
+INFO 2024-07-21 18:10:31,399 tasks Time: 18:10:31.399513
+INFO 2024-07-21 18:10:31,400 tasks Nairobi: 2024-07-21 18:10:31.399997+03:00
+INFO 2024-07-22 06:37:33,762 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-22 06:37:33,763 tasks Task ran at: 2024-07-22 06:37:33.763161
+INFO 2024-07-22 06:37:33,763 tasks Date: 2024-07-22
+INFO 2024-07-22 06:37:33,763 tasks Time: 06:37:33.763702
+INFO 2024-07-22 06:37:33,763 tasks Nairobi: 2024-07-22 06:37:33.763883+03:00
+INFO 2024-07-22 06:42:20,673 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-22 06:42:20,674 tasks Task ran at: 2024-07-22 06:42:20.674143
+INFO 2024-07-22 06:42:20,675 tasks Nairobi: 2024-07-22 06:42:20.674918+03:00
+INFO 2024-07-22 06:42:44,629 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-22 06:42:44,629 tasks Task ran at: 2024-07-22 06:42:44.629727
+INFO 2024-07-22 06:42:44,630 tasks Nairobi: 2024-07-22 06:42:44.630067+03:00
+INFO 2024-07-22 07:08:47,066 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-22 07:08:47,067 tasks Task ran at: 2024-07-22 07:08:47.067374
+INFO 2024-07-22 07:08:47,067 tasks Nairobi: 2024-07-22 07:08:47.067868+03:00
+INFO 2024-07-22 07:14:10,649 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-22 07:14:10,668 tasks Task ran at: 2024-07-22 07:14:10.668189
+INFO 2024-07-22 07:14:10,669 tasks Nairobi: 2024-07-22 07:14:10.669322+03:00
+INFO 2024-07-22 07:16:11,111 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-22 07:16:11,113 tasks Task ran at: 2024-07-22 07:16:11.113425
+INFO 2024-07-22 07:16:11,114 tasks Nairobi: 2024-07-22 07:16:11.114075+03:00
+INFO 2024-07-22 08:00:00,083 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-22 08:00:00,095 tasks Task ran at: 2024-07-22 08:00:00.095434
+INFO 2024-07-22 08:00:00,096 tasks Date: 2024-07-22
+INFO 2024-07-22 08:00:00,096 tasks Time: 08:00:00.096691
+INFO 2024-07-22 08:00:00,097 tasks Nairobi: 2024-07-22 08:00:00.096972+03:00
+INFO 2024-07-22 10:00:00,141 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-22 10:00:00,159 tasks Task ran at: 2024-07-22 10:00:00.159867
+INFO 2024-07-22 10:00:00,160 tasks Date: 2024-07-22
+INFO 2024-07-22 10:00:00,161 tasks Time: 10:00:00.161783
+INFO 2024-07-22 10:00:00,170 tasks Nairobi: 2024-07-22 10:00:00.163056+03:00
+INFO 2024-07-22 12:00:00,066 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-07-22 12:00:00,067 tasks Task ran at: 2024-07-22 12:00:00.067925
+INFO 2024-07-22 12:00:00,068 tasks Nairobi: 2024-07-22 12:00:00.068681+03:00
+INFO 2024-07-22 12:00:00,193 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-22 12:00:00,194 tasks Task ran at: 2024-07-22 12:00:00.194706
+INFO 2024-07-22 12:00:00,195 tasks Date: 2024-07-22
+INFO 2024-07-22 12:00:00,197 tasks Time: 12:00:00.197329
+INFO 2024-07-22 12:00:00,198 tasks Nairobi: 2024-07-22 12:00:00.198132+03:00
+INFO 2024-07-23 17:15:09,887 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-07-23 17:15:10,015 tasks Task ran at: 2024-07-23 17:15:10.015046
+INFO 2024-07-23 17:15:10,015 tasks Date: 2024-07-23
+INFO 2024-07-23 17:15:10,015 tasks Time: 17:15:10.015782
+INFO 2024-07-23 17:15:10,016 tasks Nairobi: 2024-07-23 17:15:10.016006+03:00
+INFO 2024-07-23 17:15:10,023 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-07-23 17:15:10,024 tasks Task ran at: 2024-07-23 17:15:10.024213
+INFO 2024-07-23 17:15:10,024 tasks Nairobi: 2024-07-23 17:15:10.024584+03:00
+INFO 2024-07-23 17:36:55,105 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-23 17:36:55,106 tasks Task ran at: 2024-07-23 17:36:55.106608
+INFO 2024-07-23 17:36:55,107 tasks Nairobi: 2024-07-23 17:36:55.107679+03:00
+INFO 2024-07-23 17:37:02,427 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-07-23 17:37:02,428 tasks Task ran at: 2024-07-23 17:37:02.428175
+INFO 2024-07-23 17:37:02,428 tasks Nairobi: 2024-07-23 17:37:02.428559+03:00

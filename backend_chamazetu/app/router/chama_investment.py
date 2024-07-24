@@ -1,17 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timezone
 from sqlalchemy import func, desc, and_
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Union, List
 from fastapi.responses import JSONResponse
 from zoneinfo import ZoneInfo
+import logging
+import math
 
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/investments/chamas", tags=["chama_investment"])
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
+
+investment_info_logger = logging.getLogger("investments_info")
+investment_error_logger = logging.getLogger("investments_error")
 
 
 # retrieve details on the inhouse mmf
@@ -76,22 +82,19 @@ async def make_an_investment(
 ):
 
     try:
-        print("============investing in mmfs==========")
         invest_dict = invest_data.dict()
         invest_dict["current_int_rate"] = get_current_investment_rate(
             invest_dict["investment_type"], db
         )
         invest_dict["transaction_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
         del invest_dict["investment_type"]
-        print("======invest_dict========")
-        print(invest_dict)
 
         investment_deposit = models.MMF(**invest_dict)
         db.add(investment_deposit)
         db.commit()
         db.refresh(investment_deposit)
     except Exception as e:
-        print("============investment deposit failed==========")
+        investment_error_logger.error(f"investment deposit failed {e}")
         print(e)
         raise HTTPException(status_code=400, detail="investment deposit failed")
 
@@ -100,7 +103,6 @@ def get_current_investment_rate(
     investment_type: str, db: Session = Depends(database.get_db)
 ):
     try:
-        print("========gettingthe investment rate===========")
         investment_type = investment_type.lower()
         investment_object = (
             db.query(models.Available_Investment)
@@ -108,13 +110,8 @@ def get_current_investment_rate(
             .first()
         )
     except Exception as e:
-        print("============could not retrieve current investment rate==========")
-        print(e)
-        raise HTTPException(
-            status_code=400, detail="could not retrieve current investment rate"
-        )
-    print("==========invst rate============")
-    print(investment_object.investment_rate)
+        investment_error_logger.error(f"could not retrieve current investment rate {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     return investment_object.investment_rate
 
 
@@ -128,9 +125,7 @@ async def update_investment_account(
     db: Session = Depends(database.get_db),
 ):
 
-    print("=========updating perfro===============")
     update_dict = account_update.dict()
-    print(update_dict["investment_type"])
     chama_id = update_dict["chama_id"]
     new_amount = update_dict["amount_invested"]
     update_type = update_dict["transaction_type"]
@@ -181,9 +176,7 @@ async def update_investment_account(
     except SQLAlchemyError as e:
         db.rollback()
         print(e)
-        raise HTTPException(
-            status_code=400, detail="updating investment account failed"
-        )
+        raise HTTPException(status_code=400, detail=str(e))
 
     return {"message": "investment account updated successfully"}
 
@@ -203,7 +196,6 @@ async def get_investment_account_balance(
 ):
 
     try:
-        print("============getting investment balance==========")
         investment_account_balance = (
             db.query(models.Investment_Performance)
             .filter(models.Investment_Performance.chama_id == chama_id)
@@ -231,11 +223,9 @@ async def get_investment_account_balance(
         investment_performance_dict["total_interest_earned"] = "{:.2f}".format(
             investment_performance_dict["total_interest_earned"]
         )
-        print("====investment_performance_dict====")
         return schemas.InvestmentPerformanceResp(**investment_performance_dict)
     except Exception as e:
-        print("============getting investment balance failed==========")
-        print(e)
+        investment_error_logger.error(f"getting investment balance failed {e}")
         raise HTTPException(status_code=400, detail="Getting investment balance failed")
 
 
@@ -299,6 +289,11 @@ async def get_investments_recent_activity(
     return recent_invst_activity
 
 
+def truncate(number, decimals=0):
+    factor = 10**decimals
+    return math.trunc(number * factor) / factor
+
+
 # calculating daily mmf interests
 @router.put("/calculate_daily_mmf_interests", status_code=status.HTTP_200_OK)
 def calculate_daily_mmf_interests(
@@ -306,7 +301,6 @@ def calculate_daily_mmf_interests(
 ):
 
     try:
-        print("============calculating daily interests==========")
         investments = db.query(models.Investment_Performance).filter(
             models.Investment_Performance.investment_type == "mmf"
         )
@@ -318,23 +312,23 @@ def calculate_daily_mmf_interests(
             .first()
         )
 
+        interest_rate = get_current_investment_rate("mmf", db)
         if inhouse_mmf_returns:
             for investment in investments:
-                interest_rate = get_current_investment_rate(
-                    (investment.investment_type).upper(), db
-                )
-                interest_earned = (
-                    investment.amount_invested * (interest_rate / 100) / 360
+                interest_earned = truncate(
+                    (investment.amount_invested * (interest_rate / 100) / 360), 2
                 )
                 investment.daily_interest = interest_earned
                 investment.weekly_interest += interest_earned
                 investment.monthly_interest += interest_earned
                 investment.total_interest_earned += interest_earned
+                db.add(investment)
                 db.commit()
                 db.refresh(investment)
 
-                # this will add all interests earned to the available investments table that shows how much interests have been earned from that particular interests and how much we will be paying out
+                # add all interests earned to the available investments table that shows how much has been made by that investment.
                 inhouse_mmf_returns.investment_return += interest_earned
+                db.add(inhouse_mmf_returns)
                 db.commit()
                 db.refresh(inhouse_mmf_returns)
 
@@ -349,10 +343,8 @@ def calculate_daily_mmf_interests(
                 db.refresh(daily_interest)
     except Exception as e:
         db.rollback()
-        print(e)
-        raise HTTPException(
-            status_code=400, detail="calculating daily interests failed"
-        )
+        investment_error_logger.error(f"calculating daily interests failed {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # when we move interest to principal, we should reset the interest, monthly
@@ -365,31 +357,26 @@ async def reset_and_move_weekly_interest_to_principal(
 ):
 
     try:
-        print(
-            "============resetting and moving weekly interests to principal=========="
-        )
         investments = db.query(models.Investment_Performance).filter(
             models.Investment_Performance.investment_type == "mmf"
         )
 
         for investment in investments:
-            print(
-                "============resetting and moving weekly interests to principal=========="
+            investment_info_logger.info(
+                f"old amount invested {investment.amount_invested}"
             )
-            print(investment.weekly_interest)
-            print(investment.amount_invested)
             investment.amount_invested += investment.weekly_interest
             investment.amount_invested = "{:.2f}".format(investment.amount_invested)
-            print(investment.amount_invested)
             investment.weekly_interest = 0.0
             db.commit()
             db.refresh(investment)
+            investment_info_logger.info(
+                f"new amount invested {investment.amount_invested}"
+            )
     except Exception as e:
         db.rollback()
         print(e)
-        raise HTTPException(
-            status_code=400, detail="resetting and moving weekly interests failed"
-        )
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # reset the monthly interest to zero
@@ -399,33 +386,45 @@ async def reset_monthly_interest(
 ):
 
     try:
-        print("============resetting monthly interests==========")
-        investments = db.query(models.Investment_Performance).filter(
-            models.Investment_Performance.investment_type == "mmf"
+        investments = (
+            db.query(models.Investment_Performance)
+            .filter(models.Investment_Performance.investment_type == "mmf")
+            .all()
         )
 
+        current_month = datetime.now(nairobi_tz).month
+        current_year = datetime.now(nairobi_tz).year
+
+        monthly_interests = []
         for investment in investments:
             # record this monthly interest to the monthly interest table
             monthly_interest = models.Monthly_Interest(
                 chama_id=investment.chama_id,
                 interest_earned=investment.monthly_interest,
-                month=datetime.now(nairobi_tz).month,
-                year=datetime.now(nairobi_tz).year,
+                month=current_month,
+                year=current_year,
                 total_amount_invested=investment.amount_invested,
             )
-            db.add(monthly_interest)
-            db.commit()
-            db.refresh(monthly_interest)
+            monthly_interests.append(monthly_interest)
 
-            investment.monthly_interest = 0.0
+        with db.begin():
+            db.bulk_save_objects(monthly_interests)
             db.commit()
-            db.refresh(investment)
+
+            # update all investments in bulk
+            for investment in investments:
+                db.add(investment)
+            db.commit()
+
+        return {"message": "monthly interest reset successful"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        investment_error_logger.error(f"resetting monthly interest failed {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         db.rollback()
-        print(e)
-        raise HTTPException(
-            status_code=400, detail="resetting monthly interests failed"
-        )
+        investment_error_logger.error(f"resetting monthly interest failed {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # get daily interests for the last specified days
@@ -446,7 +445,6 @@ async def get_daily_interests(
 
     try:
         limit = limit.dict()["limit"]
-        print("============getting daily interests==========")
         daily_interests = (
             db.query(models.Daily_Interest)
             .filter(models.Daily_Interest.chama_id == chama_id)

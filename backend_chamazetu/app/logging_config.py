@@ -14,32 +14,91 @@ LOGGING_CONFIG = {
         },
     },
     "handlers": {
-        "management_file": {
+        "management_info": {
             "level": "INFO",
             "formatter": "default",
             "class": "logging.FileHandler",
-            "filename": "management.log",
+            "filename": os.path.join(LOG_DIR, "management_info.log"),
             "mode": "w",
         },
-        "transactions_file": {
-            "level": "WARNING",
-            "formatter": "default",
-            "class": "logging.FileHandler",
-            "filename": "transactions.log",
-            "mode": "w",
-        },
-        "error_file": {
+        "management_error": {
             "level": "ERROR",
             "formatter": "default",
             "class": "logging.FileHandler",
-            "filename": "error.log",
+            "filename": os.path.join(LOG_DIR, "management_error.log"),
+            "mode": "w",
+        },
+        "transactions_info": {
+            "level": "INFO",
+            "formatter": "default",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "transactions_info.log"),
+            "mode": "w",
+        },
+        "transactions_error": {
+            "level": "ERROR",
+            "formatter": "default",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "transactions_error.log"),
+            "mode": "w",
+        },
+        "investments_info": {
+            "level": "ERROR",
+            "formatter": "default",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "investments_info.log"),
+            "mode": "w",
+        },
+        "investments_error": {
+            "level": "ERROR",
+            "formatter": "default",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "investments_error.log"),
             "mode": "w",
         },
     },
     "loggers": {
+        "management_info": {
+            "handlers": ["management_info"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "management_error": {
+            "handlers": ["management_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "transactions_info": {
+            "handlers": ["transactions_info"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "transactions_error": {
+            "handlers": ["transactions_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "investments_info": {
+            "handlers": ["investments_info"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "investments_error": {
+            "handlers": ["investments_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
         "": {
-            "handlers": ["management_file", "transactions_file", "error_file"],
+            "handlers": [
+                "management_info",
+                "management_error",
+                "transactions_info",
+                "transactions_error",
+                "investments_info",
+                "investments_error",
+            ],
             "level": "DEBUG",
+            "propagate": True,
         },
     },
 }
