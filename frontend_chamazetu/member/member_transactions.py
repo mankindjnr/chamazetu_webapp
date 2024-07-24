@@ -202,6 +202,7 @@ def from_wallet_to_chama(request):
                 data = {
                     "amount": amount,
                     "transaction_destination": chama_id,
+                    "transaction_code": transaction_code,
                 }
 
                 response = requests.post(url, headers=headers, json=data)
@@ -212,13 +213,13 @@ def from_wallet_to_chama(request):
                     update_chama_account_balance.delay(
                         chama_id, amount, transaction_type
                     )
-                    update_wallet_balance.delay(
-                        headers,
-                        amount,
-                        chama_id,
-                        "moved_to_chama",
-                        transaction_code,
-                    )
+                    # update_wallet_balance.delay(
+                    #     headers,
+                    #     amount,
+                    #     chama_id,
+                    #     "moved_to_chama",
+                    #     transaction_code,
+                    # )
                     messages.success(
                         request,
                         f"Moved Khs: {amount} from wallet to {request.POST.get('chamaname')} successfully",

@@ -275,6 +275,15 @@ class WalletTransactionBase(BaseModel):
         orm_mode = True
 
 
+class WalletToChamaBase(BaseModel):
+    amount: int
+    transaction_destination: int  # chama_id
+    transaction_code: str
+
+    class Config:
+        orm_mode = True
+
+
 class MemberWalletBalanceResp(BaseModel):
     wallet_balance: int
 
