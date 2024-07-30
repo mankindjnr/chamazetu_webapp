@@ -100,9 +100,6 @@ def public_chama_threads(urls):
             mission = results[urls[3][0]]["data"]["mission"]
             vision = results[urls[3][0]]["data"]["vision"]
 
-    print("======public chama=====")
-    print(public_chama)
-
     return {
         "public_chama": public_chama,
         "faqs": faqs,
@@ -134,6 +131,16 @@ def get_chama_contribution_day(chama_id):
         contribution_details = resp.json()
         return contribution_details
     return "to_be_set"
+
+
+def get_next_contribution_date(chama_id):
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/next_contribution_date/{chama_id}"
+    )
+    if resp.status_code == HTTPStatus.OK:
+        return resp.json()["next_contribution_date"]
+    else:
+        return None
 
 
 def get_chama_contribution_interval(chama_id):
@@ -265,26 +272,18 @@ def get_chamas_last_four_contribution_days(chama_id):
     ahead_date = datetime.strptime(
         get_chama_contribution_day(chama_id)["contribution_date"], "%d-%B-%Y"
     )
-    print("======upcoming date")
-    print(ahead_date)
     chama_start_date = datetime.strptime(get_chama_start_date(chama_id), "%d-%m-%Y")
-    print("======chama start date")
-    print(chama_start_date)
 
     dates = []
     if interval == "daily":
-        print("===daily===")
         while chama_start_date <= ahead_date:
             dates.append(ahead_date)
             ahead_date -= timedelta(days=1)
     elif interval == "weekly":
-        print("===weekly===")
         while chama_start_date <= ahead_date:
-            print("times")
             dates.append(ahead_date)
             ahead_date -= timedelta(weeks=1)
     elif interval == "monthly":
-        print("===monthly===")
         while chama_start_date <= ahead_date:
             dates.append(ahead_date)
             prev_month = ahead_date.month - 1 if ahead_date.month > 1 else 12
@@ -298,9 +297,7 @@ def get_chamas_last_four_contribution_days(chama_id):
                     day=int(contribution_day), month=prev_month, year=prev_year
                 )
 
-    latest_four_dates = []
-    for date in dates:
-        latest_four_dates.append(date.strftime("%d-%m-%Y"))
+    latest_four_dates = [date.strftime("%d-%m-%Y") for date in dates[:4]]
     return latest_four_dates
 
 

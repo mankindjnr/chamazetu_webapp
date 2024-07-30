@@ -550,3 +550,20 @@ def send_email_to_new_chama_member(member_id, chama_id):
 
         sending_email.delay(mail_subject, message, from_email, to_email)
     return None
+
+
+@shared_task
+def auto_contribute():
+    logger.info("==========member/tasks.py: auto_contribute()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+
+    url = f"{os.getenv('api_url')}/members/make_auto_contributions"
+    response = requests.post(url)
+    if response.status_code == HTTPStatus.CREATED:
+        return True
+    else:
+        logger.error(
+            f"Failed to auto contribute: {response.status_code}, {response.text}"
+        )
+    return None

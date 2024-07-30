@@ -74,6 +74,7 @@ class Member(Base):
     wallet_balance = Column(Integer, nullable=False, default=0)
 
     fines = relationship("Fine", back_populates="member")
+    auto_contributions = relationship("AutoContribution", back_populates="member")
 
     # one to many with wallet transactions
     wallet_transactions = relationship("Wallet_Transaction", back_populates="member")
@@ -151,6 +152,7 @@ class Chama(Base):
 
     daily_interest = relationship("Daily_Interest", back_populates="chama")
     monthly_interest = relationship("Monthly_Interest", back_populates="chama")
+    auto_contributions = relationship("AutoContribution", back_populates="chama")
 
     members = relationship(
         "Member", secondary=members_chamas_association, back_populates="chamas"
@@ -351,6 +353,21 @@ class Wallet_Transaction(Base):
     # one to many relationship - one member can make multiple wallet transactions
     member_id = Column(Integer, ForeignKey("members.id"))
     member = relationship("Member", back_populates="wallet_transactions")
+
+
+# auto contrbution data
+class AutoContribution(Base):
+    __tablename__ = "auto_contributions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    member_id = Column(Integer, ForeignKey("members.id"))
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    expected_amount = Column(Integer, nullable=False)
+    next_contribution_date = Column(DateTime, default=nairobi_now, nullable=False)
+
+    # relationships
+    member = relationship("Member", back_populates="auto_contributions")  # one to many
+    chama = relationship("Chama", back_populates="auto_contributions")  # one to many
 
 
 # this table will have chama and its next contribution date

@@ -408,3 +408,115 @@ INFO 2024-07-24 17:29:02,503 tasks Nairobi: 2024-07-24 17:29:02.503396+03:00
 INFO 2024-07-24 17:29:44,790 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
 INFO 2024-07-24 17:29:44,791 tasks Task ran at: 2024-07-24 17:29:44.791671
 INFO 2024-07-24 17:29:44,792 tasks Nairobi: 2024-07-24 17:29:44.792405+03:00
+INFO 2024-07-29 10:39:24,979 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-29 10:39:24,980 tasks Task ran at: 2024-07-29 10:39:24.980157
+INFO 2024-07-29 10:39:24,980 tasks Date: 2024-07-29
+INFO 2024-07-29 10:39:24,980 tasks Time: 10:39:24.980690
+INFO 2024-07-29 10:39:24,981 tasks Nairobi: 2024-07-29 10:39:24.980975+03:00
+INFO 2024-07-29 11:04:45,892 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-29 11:04:45,894 tasks Task ran at: 2024-07-29 11:04:45.894039
+INFO 2024-07-29 11:04:45,894 tasks Nairobi: 2024-07-29 11:04:45.894615+03:00
+INFO 2024-07-29 11:05:11,094 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-29 11:05:11,095 tasks Task ran at: 2024-07-29 11:05:11.094996
+INFO 2024-07-29 11:05:11,095 tasks Nairobi: 2024-07-29 11:05:11.095399+03:00
+INFO 2024-07-29 11:05:31,975 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-29 11:05:31,976 tasks Task ran at: 2024-07-29 11:05:31.976743
+INFO 2024-07-29 11:05:31,978 tasks Nairobi: 2024-07-29 11:05:31.977946+03:00
+INFO 2024-07-29 12:00:00,081 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-29 12:00:00,123 tasks Task ran at: 2024-07-29 12:00:00.123139
+INFO 2024-07-29 12:00:00,125 tasks Date: 2024-07-29
+INFO 2024-07-29 12:00:00,125 tasks Time: 12:00:00.125751
+INFO 2024-07-29 12:00:00,126 tasks Nairobi: 2024-07-29 12:00:00.126510+03:00
+INFO 2024-07-29 14:00:00,112 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-29 14:00:00,113 tasks Task ran at: 2024-07-29 14:00:00.113486
+INFO 2024-07-29 14:00:00,114 tasks Date: 2024-07-29
+INFO 2024-07-29 14:00:00,116 tasks Time: 14:00:00.116063
+INFO 2024-07-29 14:00:00,116 tasks Nairobi: 2024-07-29 14:00:00.116788+03:00
+INFO 2024-07-29 16:00:00,100 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-29 16:00:00,116 tasks Task ran at: 2024-07-29 16:00:00.116660
+INFO 2024-07-29 16:00:00,117 tasks Date: 2024-07-29
+INFO 2024-07-29 16:00:00,117 tasks Time: 16:00:00.117428
+INFO 2024-07-29 16:00:00,118 tasks Nairobi: 2024-07-29 16:00:00.118339+03:00
+INFO 2024-07-29 16:45:39,642 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-29 16:45:39,691 tasks Task ran at: 2024-07-29 16:45:39.691347
+INFO 2024-07-29 16:45:39,692 tasks Nairobi: 2024-07-29 16:45:39.692005+03:00
+INFO 2024-07-30 09:07:36,338 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 09:07:36,338 tasks Task ran at: 2024-07-30 09:07:36.338322
+INFO 2024-07-30 09:07:36,338 tasks Date: 2024-07-30
+INFO 2024-07-30 09:07:36,338 tasks Time: 09:07:36.338841
+INFO 2024-07-30 09:07:36,339 tasks Nairobi: 2024-07-30 09:07:36.339080+03:00
+INFO 2024-07-30 09:43:23,805 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-30 09:43:23,845 tasks Task ran at: 2024-07-30 09:43:23.845299
+INFO 2024-07-30 09:43:23,846 tasks Nairobi: 2024-07-30 09:43:23.846151+03:00
+INFO 2024-07-30 09:43:40,265 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-30 09:43:40,266 tasks Task ran at: 2024-07-30 09:43:40.266442
+INFO 2024-07-30 09:43:40,267 tasks Nairobi: 2024-07-30 09:43:40.267140+03:00
+INFO 2024-07-30 09:43:52,929 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-30 09:43:52,929 tasks Task ran at: 2024-07-30 09:43:52.929785
+INFO 2024-07-30 09:43:52,930 tasks Nairobi: 2024-07-30 09:43:52.930095+03:00
+INFO 2024-07-30 10:00:00,384 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 10:00:00,385 tasks Task ran at: 2024-07-30 10:00:00.385832
+INFO 2024-07-30 10:00:00,387 tasks Date: 2024-07-30
+INFO 2024-07-30 10:00:00,388 tasks Time: 10:00:00.388233
+INFO 2024-07-30 10:00:00,388 tasks Nairobi: 2024-07-30 10:00:00.388885+03:00
+INFO 2024-07-30 12:00:00,237 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 12:00:00,248 tasks Task ran at: 2024-07-30 12:00:00.248473
+INFO 2024-07-30 12:00:00,248 tasks Date: 2024-07-30
+INFO 2024-07-30 12:00:00,249 tasks Time: 12:00:00.249186
+INFO 2024-07-30 12:00:00,249 tasks Nairobi: 2024-07-30 12:00:00.249710+03:00
+INFO 2024-07-30 14:00:00,291 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 14:00:00,297 tasks Task ran at: 2024-07-30 14:00:00.297546
+INFO 2024-07-30 14:00:00,299 tasks Date: 2024-07-30
+INFO 2024-07-30 14:00:00,300 tasks Time: 14:00:00.300362
+INFO 2024-07-30 14:00:00,301 tasks Nairobi: 2024-07-30 14:00:00.301191+03:00
+INFO 2024-07-30 14:40:27,636 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 14:40:27,724 tasks Task ran at: 2024-07-30 14:40:27.724614
+INFO 2024-07-30 14:40:27,725 tasks Nairobi: 2024-07-30 14:40:27.725443+03:00
+ERROR 2024-07-30 14:40:27,793 tasks Failed to auto contribute: 400, {"detail":"Failed to auto contribute"}
+INFO 2024-07-30 14:43:48,866 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 14:43:48,872 tasks Task ran at: 2024-07-30 14:43:48.872751
+INFO 2024-07-30 14:43:48,873 tasks Nairobi: 2024-07-30 14:43:48.873534+03:00
+INFO 2024-07-30 15:46:13,407 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 15:46:13,418 tasks Task ran at: 2024-07-30 15:46:13.418491
+INFO 2024-07-30 15:46:13,420 tasks Nairobi: 2024-07-30 15:46:13.420207+03:00
+INFO 2024-07-30 15:57:53,101 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 15:57:53,102 tasks Task ran at: 2024-07-30 15:57:53.102936
+INFO 2024-07-30 15:57:53,104 tasks Nairobi: 2024-07-30 15:57:53.104658+03:00
+INFO 2024-07-30 16:00:00,102 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 16:00:00,102 tasks Task ran at: 2024-07-30 16:00:00.102700
+INFO 2024-07-30 16:00:00,103 tasks Date: 2024-07-30
+INFO 2024-07-30 16:00:00,103 tasks Time: 16:00:00.103698
+INFO 2024-07-30 16:00:00,104 tasks Nairobi: 2024-07-30 16:00:00.104040+03:00
+INFO 2024-07-30 16:58:18,108 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 16:58:18,108 tasks Task ran at: 2024-07-30 16:58:18.108731
+INFO 2024-07-30 16:58:18,109 tasks Nairobi: 2024-07-30 16:58:18.109007+03:00
+INFO 2024-07-30 17:01:43,774 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:01:43,775 tasks Task ran at: 2024-07-30 17:01:43.775066
+INFO 2024-07-30 17:01:43,775 tasks Nairobi: 2024-07-30 17:01:43.775401+03:00
+INFO 2024-07-30 17:06:53,058 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:06:53,059 tasks Task ran at: 2024-07-30 17:06:53.059818
+INFO 2024-07-30 17:06:53,060 tasks Nairobi: 2024-07-30 17:06:53.060313+03:00
+INFO 2024-07-30 17:08:27,660 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:08:27,661 tasks Task ran at: 2024-07-30 17:08:27.661412
+INFO 2024-07-30 17:08:27,662 tasks Nairobi: 2024-07-30 17:08:27.661911+03:00
+INFO 2024-07-30 17:10:26,594 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:10:26,595 tasks Task ran at: 2024-07-30 17:10:26.595620
+INFO 2024-07-30 17:10:26,596 tasks Nairobi: 2024-07-30 17:10:26.596533+03:00
+INFO 2024-07-30 17:13:03,500 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:13:03,501 tasks Task ran at: 2024-07-30 17:13:03.501668
+INFO 2024-07-30 17:13:03,502 tasks Nairobi: 2024-07-30 17:13:03.502331+03:00
+INFO 2024-07-30 17:13:37,738 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-07-30 17:13:37,739 tasks Task ran at: 2024-07-30 17:13:37.739725
+INFO 2024-07-30 17:13:37,740 tasks Nairobi: 2024-07-30 17:13:37.740348+03:00
+ERROR 2024-07-30 17:55:50,459 tasks Failed to update chama account balance: 422, {"detail":[{"type":"int_from_float","loc":["body","amount_deposited"],"msg":"Input should be a valid integer, got a number with a fractional part","input":4.53,"url":"https://errors.pydantic.dev/2.5/v/int_from_float"}]}
+INFO 2024-07-30 17:59:11,666 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-30 17:59:11,666 tasks Task ran at: 2024-07-30 17:59:11.666497
+INFO 2024-07-30 17:59:11,666 tasks Nairobi: 2024-07-30 17:59:11.666782+03:00
+INFO 2024-07-30 17:59:46,114 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-07-30 17:59:46,116 tasks Task ran at: 2024-07-30 17:59:46.116409
+INFO 2024-07-30 17:59:46,116 tasks Nairobi: 2024-07-30 17:59:46.116816+03:00
+INFO 2024-07-30 18:00:00,198 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-30 18:00:00,203 tasks Task ran at: 2024-07-30 18:00:00.203787
+INFO 2024-07-30 18:00:00,211 tasks Date: 2024-07-30
+INFO 2024-07-30 18:00:00,212 tasks Time: 18:00:00.212143
+INFO 2024-07-30 18:00:00,212 tasks Nairobi: 2024-07-30 18:00:00.212686+03:00

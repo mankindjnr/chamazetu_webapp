@@ -188,6 +188,7 @@ async def create_fine_repayment_transaction_from_wallet(
         )
         wallet_transaction_dict["transaction_code"] = uuid4().hex
 
+        # TODO: will update this route by removing it cmpletely, all this to be handled in repay_fines as one - ACID
         new_wallet_transaction = models.Wallet_Transaction(**wallet_transaction_dict)
         db.add(new_wallet_transaction)
         db.commit()

@@ -140,6 +140,13 @@
                   <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-faqs">Faqs</button>
                 </li>
 
+                {% if role == 'member' %}
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-member-settings">Chama Settings</button>
+                </li>
+
+                {% endif %}
+
                 {% if role == 'manager' %}
                 <li class="nav-item">
                   <button class="nav-link" data-bs-toggle="tab" data-bs-target="#edit-description">Update description</button>
@@ -238,6 +245,36 @@
                     </div>
                   {% endfor %}
                 </div>
+
+                <!-- chama member settings -->
+                {% if role == 'member' %}
+                <div class="tab-pane fade chama-member-settings pt-3" id="chama-member-settings">
+                  <h5 class="card-title">Contribution Settings</h5>
+                  <div class="row mb-3">
+                    <!-- activate auto contributions -->
+                     {% if auto_contribute_status == 'inactive' %}
+                    <div class="col-lg-8 col-md-7 label mt-3">This action will activate auto contributions for this chama.</div>
+                    <div class="col-lg-4 col-md-5 mt-3">
+                      <form method="POST" action="{% url 'member:auto_contribute_settings' chama_id=chama.id member_id=member_id status='activate'%}">
+                          {% csrf_token %}
+                          <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                          <input type="submit" class="btn btn-success btn-sm" value="Activate Auto Contributions">
+                      </form>
+                    </div>
+                    {% else %}
+                    <!-- deactivate auto contributions -->
+                    <div class="col-lg-8 col-md-7 label mt-3">This action will deactivate auto contributions for this chama.</div>
+                    <div class="col-lg-4 col-md-5 mt-3">
+                      <form method="POST" action="{% url 'member:auto_contribute_settings' chama_id=chama.id member_id=member_id status='deactivate' %}">
+                          {% csrf_token %}
+                          <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                          <input type="submit" class="btn btn-danger btn-sm" value="Deactivate Auto Contributions">
+                      </form>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <!-- End chama member settigs -->
 
                 <!-- editing and updating the tabs -->
                 {% if role == 'manager' %}

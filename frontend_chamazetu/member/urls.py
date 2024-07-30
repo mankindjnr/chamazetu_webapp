@@ -33,6 +33,11 @@ urlpatterns = [
         name="get_about_chama",
     ),
     path(
+        "auto_contribute_settings/<int:chama_id>/<int:member_id>/<str:status>",
+        views.auto_contribute_settings,
+        name="auto_contribute_settings",
+    ),
+    path(
         "member_profile_updater/<str:role>",
         views.member_profile_updater,
         name="member_profile_updater",
