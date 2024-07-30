@@ -8,6 +8,7 @@ from .member_chama import (
     access_chama,
     view_chama_members,
     get_about_chama,
+    auto_contribute_settings,
 )
 from .member_transactions import (
     direct_deposit_to_chama,

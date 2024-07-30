@@ -23,6 +23,7 @@ from chama.chamas import (
     get_previous_contribution_date,
     public_chama_threads,
     get_chama_registration_fee,
+    get_next_contribution_date,
 )
 from chama.thread_urls import fetch_chama_data
 from .date_day_time import get_sunday_date, extract_date_time
@@ -41,6 +42,7 @@ from .tasks import (
     calculate_missed_contributions_fines,
     add_member_to_chama,
     send_email_to_new_chama_member,
+    auto_contribute,
 )
 from chama.tasks import update_contribution_days
 
@@ -487,6 +489,7 @@ def view_chama_members(request, chama_name):
 @validate_and_refresh_token("member")
 def get_about_chama(request, chama_name):
     chama_id = get_chama_id(chama_name)
+    member_id = get_user_id("member", request.COOKIES.get("current_member"))
     headers = {
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
@@ -495,8 +498,14 @@ def get_about_chama(request, chama_name):
         f"{os.getenv('api_url')}/chamas/about_chama/{chama_id}",
         headers=headers,
     )
+    auto_contribute_status = requests.get(
+        f"{os.getenv('api_url')}/members/auto_contribute_status/{chama_id}/{member_id}"
+    )
+    if auto_contribute_status.status_code == HTTPStatus.OK:
+        auto_contribute_status = auto_contribute_status.json()
+
     print("===================about================")
-    if chama_data.status_code == 200:
+    if chama_data.status_code == HTTPStatus.OK:
         chama = chama_details_organised(chama_data.json().get("chama"))
         rules = chama_data.json().get("rules")
         about = chama_data.json().get("about")
@@ -511,10 +520,11 @@ def get_about_chama(request, chama_name):
                 "rules": rules,
                 "about": about,
                 "faqs": faqs,
+                "member_id": member_id,
+                "auto_contribute_status": auto_contribute_status["status"],
             },
         )
     else:
-        print(chama_data.status_code)
         return redirect(reverse("member:dashboard"))
 
 
@@ -570,3 +580,45 @@ def chama_details_organised(chama_details):
     del chama_details["accepting_members"]
     del chama_details["first_contribution_date"]
     return chama_details
+
+
+def auto_contribute_settings(request, chama_id, member_id, status):
+    if status == "activate":
+        expected_contribution = get_member_expected_contribution(member_id, chama_id)
+        next_contribution_date = get_next_contribution_date(chama_id)
+        data = {
+            "member_id": member_id,
+            "chama_id": chama_id,
+            "expected_amount": expected_contribution,
+            "next_contribution_date": next_contribution_date,
+            "status": status,
+        }
+        url = f"{os.getenv('api_url')}/members/auto_contribute"
+        response = requests.post(url, json=data)
+        if response.status_code == HTTPStatus.CREATED:
+            messages.success(request, "Successfully activated auto contribute")
+            return redirect(
+                reverse("member:get_about_chama", args=[request.POST.get("chama_name")])
+            )
+        else:
+            messages.error(request, "Failed to activate auto contributions")
+            return redirect(
+                reverse("member:get_about_chama", args=[request.POST.get("chama_name")])
+            )
+    else:
+        url = f"{os.getenv('api_url')}/members/auto_contribute/{chama_id}/{member_id}"
+        response = requests.delete(url)
+        if response.status_code == HTTPStatus.OK:
+            messages.success(
+                request, "You have successfully deactivated auto contribute"
+            )
+            return redirect(
+                reverse("member:get_about_chama", args=[request.POST.get("chama_name")])
+            )
+        else:
+            messages.error(request, "Failed to deactivate auto contributions")
+            return redirect(
+                reverse("member:get_about_chama", args=[request.POST.get("chama_name")])
+            )
+
+    return redirect(reverse("member:dashboard"))

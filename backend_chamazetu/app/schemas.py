@@ -736,3 +736,16 @@ class TotalFinesResp(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+
+# =========== chama setings =================
+class AutoContributeBase(BaseModel):
+    member_id: int
+    chama_id: int
+    expected_amount: int
+    next_contribution_date: datetime
+    status: str
+
+    class Config:
+        orm_mode = True
+        from_attributes = True

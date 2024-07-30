@@ -46,12 +46,6 @@ def members_tracker(request, chama_name):
     upcoming_date = datetime.strptime(
         get_chama_contribution_day(chama_id)["contribution_date"], "%d-%B-%Y"
     ).strftime("%d-%m-%Y")
-    monthly_tracker_data = organise_monthly_tracker(
-        get_members_daily_contribution_in_given_month(chama_id, fourth_prev_date),
-        fourth_prev_date,
-        upcoming_date,
-        chama_id,
-    )
     chama_days_tracker = chama_days_contribution_tracker(request, chama_id, interval)
     return render(
         request,
@@ -59,8 +53,6 @@ def members_tracker(request, chama_name):
         {
             "role": "member",
             "chama_name": chama_name,
-            "monthly_tracker_data": monthly_tracker_data["transactions_organised"],
-            "dates": monthly_tracker_data["dates"],
             "members_tracker": chama_days_tracker["members_tracker"],
             "contribution_dates": chama_days_tracker["latest_four_dates"],
         },

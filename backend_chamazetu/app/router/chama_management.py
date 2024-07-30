@@ -267,6 +267,36 @@ async def get_chama_by_id(
     return {"Chama": [chama]}
 
 
+# retrive the next contribution date
+@router.get("/next_contribution_date/{chama_id}", status_code=status.HTTP_200_OK)
+async def get_next_contribution_date(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        chama_contribution_day = (
+            db.query(models.ChamaContributionDay)
+            .filter(models.ChamaContributionDay.chama_id == chama_id)
+            .first()
+        )
+
+        if not chama_contribution_day:
+            raise HTTPException(
+                status_code=404, detail="Chama contribution day not found"
+            )
+
+        # return as a datetime objet
+        return {"next_contribution_date": chama_contribution_day.next_contribution_date}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama contribution day for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama contribution day"
+        )
+
+
 # get chama by name for a logged in member
 @router.get(
     "/chama_name", status_code=status.HTTP_200_OK, response_model=schemas.ChamaResp

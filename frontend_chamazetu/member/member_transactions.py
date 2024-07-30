@@ -74,36 +74,44 @@ def direct_deposit_to_chama(request):
                 f"{os.getenv('api_url')}/request/push", json=depostinfo
             )
             print("-----direct froom mpesa----")
-            print(deposit_resp.json())
-            # if the stk push was successfully sent
-            if (
-                deposit_resp.status_code == HTTPStatus.CREATED
-                and "CheckoutRequestID" in deposit_resp.json()
-            ):
-                # all this function will depend on the result of the backend tasks -will listen to it and execute
-                checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
-                stk_push_status.apply_async(
-                    args=[
-                        checkoutrequestid,
-                        member_id,
-                        chama_id,
-                        amount,
-                        phone_number[1:],
-                        transaction_origin,
-                        headers,
-                    ],
-                    link=after_succesful_chama_deposit.s(),
-                )
-
-                messages.success(
-                    request,
-                    f"mpesa stkpush sent to 0{phone_number} for Ksh: {amount}.",
-                )
-                return HttpResponseRedirect(
-                    reverse(
-                        "member:access_chama", args=(request.POST.get("chamaname"),)
+            if deposit_resp.status_code == HTTPStatus.CREATED:
+                print(deposit_resp.json())
+                # if the stk push was successfully sent
+                if (
+                    deposit_resp.status_code == HTTPStatus.CREATED
+                    and "CheckoutRequestID" in deposit_resp.json()
+                ):
+                    # all this function will depend on the result of the backend tasks -will listen to it and execute
+                    checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
+                    stk_push_status.apply_async(
+                        args=[
+                            checkoutrequestid,
+                            member_id,
+                            chama_id,
+                            amount,
+                            phone_number[1:],
+                            transaction_origin,
+                            headers,
+                        ],
+                        link=after_succesful_chama_deposit.s(),
                     )
-                )
+
+                    messages.success(
+                        request,
+                        f"mpesa stkpush sent to 0{phone_number} for Ksh: {amount}.",
+                    )
+                    return HttpResponseRedirect(
+                        reverse(
+                            "member:access_chama", args=(request.POST.get("chamaname"),)
+                        )
+                    )
+                else:
+                    messages.error(request, "Failed to send stkpush, please try again.")
+                    return HttpResponseRedirect(
+                        reverse(
+                            "member:access_chama", args=(request.POST.get("chamaname"),)
+                        )
+                    )
             else:
                 messages.error(request, "Failed to send stkpush, please try again.")
                 return HttpResponseRedirect(
@@ -395,61 +403,59 @@ def balance_after_paying_fines_and_missed_contributions(
     }
 
     # we first move the fine money from the wallet to the chama if its a success we continue with the repayment
-    url = f"{os.getenv('api_url')}/transactions/record_fine_payment"
+    # url = f"{os.getenv('api_url')}/transactions/record_fine_payment"
 
     # get the amount of fines and missed contributions
     # if amount > fines + missed contributions, we deduct the amount from the fines and missed contributions
     # if amount <= we return 0 and we use the current amount to clear the fines and missed contributions
-    fines_total = get_member_fines(member_id, chama_id)
+    # fines_total = get_member_fines(member_id, chama_id)
 
-    to_be_paid = 0  # the amount to be paid to clear fines and missed contributions
-    if amount > fines_total:
-        amount -= fines_total  # deduct the fines from the amount
-        to_be_paid = fines_total
-    else:
-        to_be_paid = amount  # use the whole amount to clear the fines
-        amount = 0
+    # to_be_paid = 0  # the amount to be paid to clear fines and missed contributions
+    # if amount > fines_total:
+    #     amount -= fines_total  # deduct the fines from the amount
+    #     to_be_paid = fines_total
+    # else:
+    #     to_be_paid = amount  # use the whole amount to clear the fines
+    #     amount = 0
 
+    # data = {
+    #     "amount": to_be_paid,
+    #     "transaction_destination": chama_id,
+    # }
+
+    # wallet_response = requests.post(url, headers=headers, json=data)
+    # if wallet_response.status_code == HTTPStatus.CREATED:
+    url = f"{os.getenv('api_url')}/members/repay_fines"
     data = {
-        "amount": to_be_paid,
-        "transaction_destination": chama_id,
+        "member_id": member_id,
+        "chama_id": chama_id,
+        "amount": amount,
     }
+    print("=======repaying fines=====", data)
 
-    wallet_response = requests.post(url, headers=headers, json=data)
-    if wallet_response.status_code == HTTPStatus.CREATED:
-        url = f"{os.getenv('api_url')}/members/repay_fines"
-        data = {
-            "member_id": member_id,
-            "chama_id": chama_id,
-            "amount": to_be_paid,
-        }
+    resp = requests.put(url, json=data)
 
-        resp = requests.put(url, json=data)
-
-        # using the received amount and balance_after - update wallet, transaction and accout - bg task
-
-        if resp.status_code == HTTPStatus.OK:
-            print("======repaying done========")
-            # paid_fine = amount - resp.json().get("balance_after_fines")
-            print(to_be_paid)
-            update_chama_account_balance.delay(chama_id, to_be_paid, "deposit")
-            update_wallet_balance.delay(
-                headers,
-                to_be_paid,
-                chama_id,
-                "moved_to_chama",
-                transaction_code,
-            )
-            messages.success(
-                request, f"Fines and missed contributions of {to_be_paid} deducted."
-            )
-            return amount  # return the amount left after paying fines
-        else:
-            return amount  # not sure if to return the amount if repayment fails or to return the initial amount
+    # using the received amount and balance_after - update wallet, transaction and accout - bg task
+    if resp.status_code == HTTPStatus.OK:
+        print("======repaying done========")
+        balance = resp.json().get("balance_after_fines")
+        print(balance)
+        # update_chama_account_balance.delay(chama_id, to_be_paid, "deposit")
+        # update_wallet_balance.delay(
+        #     headers,
+        #     to_be_paid,
+        #     chama_id,
+        #     "moved_to_chama",
+        #     transaction_code,
+        # )
+        messages.success(request, f"Fines and missed contributions of deducted.")
+        return balance  # return the amount left after paying fines
     else:
-        # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
-        messages.error(request, "Failed to deposit, please try again later.")
-        return HttpResponseRedirect(reverse("member:access_chama", args=(chama_name,)))
+        return amount  # not sure if to return the amount if repayment fails or to return the initial amount
+
+    # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
+    messages.error(request, "Failed to deposit, please try again later.")
+    return HttpResponseRedirect(reverse("member:access_chama", args=(chama_name,)))
 
 
 # check if a member has fienes or missed contributions
