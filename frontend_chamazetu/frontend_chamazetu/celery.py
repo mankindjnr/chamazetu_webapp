@@ -60,6 +60,11 @@ app.conf.beat_schedule = {
         "task": "chama.tasks.run_update_and_fix_callbacks",
         "schedule": crontab(minute=0, hour=23),
     },
+    # run everyday at 9 pm
+    "make_auto_contributions": {
+        "task": "member.tasks.auto_contribute",
+        "schedule": crontab(minute=0, hour=21),
+    },
 }
 
 app.autodiscover_tasks()
