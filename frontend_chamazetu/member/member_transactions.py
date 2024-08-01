@@ -196,13 +196,8 @@ def from_wallet_to_chama(request):
                     )
 
                 if deposit_is_greater_than_difference(amount, member_id, chama_id):
-                    print(amount, "::", expected_difference)
                     excess_amount = amount - expected_difference
-                    print("=======excess amount===")
-                    print(excess_amount)
                     amount_to_deposit = expected_difference
-                    print("=======amount to deposit===")
-                    print(amount_to_deposit)
                     amount = amount_to_deposit
 
                 # move from wallet to chama
@@ -214,20 +209,11 @@ def from_wallet_to_chama(request):
                 }
 
                 response = requests.post(url, headers=headers, json=data)
-                if response.status_code == 201:
+                if response.status_code == HTTPStatus.CREATED:
                     # call the background task function to update the chama account balance
-                    print("=======deposting to delay===")
-                    print(amount)
                     update_chama_account_balance.delay(
                         chama_id, amount, transaction_type
                     )
-                    # update_wallet_balance.delay(
-                    #     headers,
-                    #     amount,
-                    #     chama_id,
-                    #     "moved_to_chama",
-                    #     transaction_code,
-                    # )
                     messages.success(
                         request,
                         f"Moved Khs: {amount} from wallet to {request.POST.get('chamaname')} successfully",
@@ -281,8 +267,7 @@ def deposit_to_wallet(request):
         )
         member_id = request.POST.get("member_id")
         transaction_origin = "direct_deposit"
-        if request.POST.get("chama_name"):
-            chama_name = request.POST.get("chama_name")
+
         if not phonenumber:
             messages.error(request, "Invalid phone number")
             return redirect(reverse("member:dashboard"))
@@ -304,32 +289,35 @@ def deposit_to_wallet(request):
             deposit_resp = requests.post(
                 f"{os.getenv('api_url')}/request/push", json=depostinfo
             )
-            if (
-                deposit_resp.status_code == HTTPStatus.CREATED
-                and "CheckoutRequestID" in deposit_resp.json()
-            ):
-                checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
+            if deposit_resp.status_code == HTTPStatus.CREATED:
+                if "CheckoutRequestID" in deposit_resp.json():
+                    checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
 
-                stk_push_status.apply_async(
-                    args=[
-                        checkoutrequestid,
-                        member_id,
-                        "wallet",
-                        amount,
-                        phonenumber[1:],
-                        transaction_origin,
-                        headers,
-                    ],
-                    link=wallet_deposit.s(),
-                )
+                    stk_push_status.apply_async(
+                        args=[
+                            checkoutrequestid,
+                            member_id,
+                            "wallet",
+                            amount,
+                            phonenumber[1:],
+                            transaction_origin,
+                            headers,
+                        ],
+                        link=wallet_deposit.s(),
+                    )
 
-                messages.success(request, "mpesa request sent")
+                    messages.success(request, "mpesa request sent")
+                else:
+                    messages.error(
+                        request, "Failed to send mpesa request, please try again."
+                    )
             else:
-                messages.error(request, "Failed to send stkpush, please try again.")
+                messages.error(
+                    request, "Failed to send mpesa request, please try again."
+                )
 
             return redirect(reverse("member:dashboard"))
 
-    print("=======not a post wallet===")
     return redirect(reverse("member:dashboard"))
 
 
@@ -340,15 +328,9 @@ def deposit_to_wallet(request):
 def difference_btwn_contributed_and_expected(member_id, chama_id):
     # get the amount expected
     amount_expected = get_member_expected_contribution(member_id, chama_id)
-    print("=======expected amount===")
-    print(amount_expected)
     # get the amount contributed so far
     amount_contributed_so_far = get_member_contribution_so_far(chama_id, member_id)
-    print("=======contributed so far===")
-    print(amount_contributed_so_far)
     expected_difference = amount_expected - amount_contributed_so_far
-    print("=======difference===")
-    print(expected_difference)
     if expected_difference < 0:
         return 0
 
@@ -371,7 +353,7 @@ def deposit_is_greater_than_difference(deposited, member_id, chama_id):
     )
 
 
-# TODO:
+# TODO: b2c
 def withdraw_from_wallet(request):
     if request.method == "POST":
         amount = request.POST.get("amount")
@@ -387,7 +369,8 @@ def withdraw_from_wallet(request):
 
         url = f"{os.getenv('api_url')}/members/update_wallet_balance"
         data = {
-            "transaction_destination": 0,
+            "member_id": member_id,
+            "transaction_destination": "",  # retrieve the wallet number,
             "amount": amount,
             "transaction_type": "withdrawn_from_wallet",
         }
@@ -397,34 +380,7 @@ def withdraw_from_wallet(request):
 def balance_after_paying_fines_and_missed_contributions(
     request, amount, member_id, chama_id, transaction_code, chama_name
 ):
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
-    }
 
-    # we first move the fine money from the wallet to the chama if its a success we continue with the repayment
-    # url = f"{os.getenv('api_url')}/transactions/record_fine_payment"
-
-    # get the amount of fines and missed contributions
-    # if amount > fines + missed contributions, we deduct the amount from the fines and missed contributions
-    # if amount <= we return 0 and we use the current amount to clear the fines and missed contributions
-    # fines_total = get_member_fines(member_id, chama_id)
-
-    # to_be_paid = 0  # the amount to be paid to clear fines and missed contributions
-    # if amount > fines_total:
-    #     amount -= fines_total  # deduct the fines from the amount
-    #     to_be_paid = fines_total
-    # else:
-    #     to_be_paid = amount  # use the whole amount to clear the fines
-    #     amount = 0
-
-    # data = {
-    #     "amount": to_be_paid,
-    #     "transaction_destination": chama_id,
-    # }
-
-    # wallet_response = requests.post(url, headers=headers, json=data)
-    # if wallet_response.status_code == HTTPStatus.CREATED:
     url = f"{os.getenv('api_url')}/members/repay_fines"
     data = {
         "member_id": member_id,
@@ -439,15 +395,6 @@ def balance_after_paying_fines_and_missed_contributions(
     if resp.status_code == HTTPStatus.OK:
         print("======repaying done========")
         balance = resp.json().get("balance_after_fines")
-        print(balance)
-        # update_chama_account_balance.delay(chama_id, to_be_paid, "deposit")
-        # update_wallet_balance.delay(
-        #     headers,
-        #     to_be_paid,
-        #     chama_id,
-        #     "moved_to_chama",
-        #     transaction_code,
-        # )
         messages.success(request, f"Fines and missed contributions of deducted.")
         return balance  # return the amount left after paying fines
     else:
@@ -467,6 +414,5 @@ def member_has_fines_or_missed_contributions(member_id, chama_id):
     if resp.status_code == HTTPStatus.OK:
         has_fines = resp.json().get("has_fines")
         print("=======has====")
-        print(has_fines)
         return has_fines
     return False

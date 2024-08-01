@@ -275,6 +275,17 @@ class WalletTransactionBase(BaseModel):
         orm_mode = True
 
 
+class UnprocessedWalletDepositBase(BaseModel):
+    amount: int
+    transaction_type: str
+    transaction_code: str
+    transaction_destination: str
+    member_id: int
+
+    class Config:
+        orm_mode = True
+
+
 class WalletToChamaBase(BaseModel):
     amount: int
     transaction_destination: int  # chama_id
@@ -296,14 +307,15 @@ class WalletTransactionResp(BaseModel):
     transaction_type: str
     transaction_completed: bool
     transaction_date: datetime
-    transaction_destination: int
+    transaction_destination: str
 
     class Config:
         orm_mode = True
 
 
 class UpdateWalletBase(BaseModel):
-    transaction_destination: int
+    member_id: int
+    transaction_destination: str
     amount: int
     transaction_type: str
     transaction_code: str

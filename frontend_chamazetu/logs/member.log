@@ -520,3 +520,63 @@ INFO 2024-07-30 18:00:00,203 tasks Task ran at: 2024-07-30 18:00:00.203787
 INFO 2024-07-30 18:00:00,211 tasks Date: 2024-07-30
 INFO 2024-07-30 18:00:00,212 tasks Time: 18:00:00.212143
 INFO 2024-07-30 18:00:00,212 tasks Nairobi: 2024-07-30 18:00:00.212686+03:00
+INFO 2024-07-31 09:06:57,534 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-07-31 09:06:57,534 tasks Task ran at: 2024-07-31 09:06:57.534590
+INFO 2024-07-31 09:06:57,535 tasks Date: 2024-07-31
+INFO 2024-07-31 09:06:57,535 tasks Time: 09:06:57.535301
+INFO 2024-07-31 09:06:57,535 tasks Nairobi: 2024-07-31 09:06:57.535579+03:00
+INFO 2024-08-01 09:52:13,442 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 09:52:13,442 tasks Task ran at: 2024-08-01 09:52:13.442870
+INFO 2024-08-01 09:52:13,443 tasks Date: 2024-08-01
+INFO 2024-08-01 09:52:13,443 tasks Time: 09:52:13.443833
+INFO 2024-08-01 09:52:13,444 tasks Nairobi: 2024-08-01 09:52:13.444122+03:00
+INFO 2024-08-01 10:00:00,015 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 10:00:00,069 tasks Task ran at: 2024-08-01 10:00:00.068968
+INFO 2024-08-01 10:00:00,069 tasks Date: 2024-08-01
+INFO 2024-08-01 10:00:00,070 tasks Time: 10:00:00.069964
+INFO 2024-08-01 10:00:00,070 tasks Nairobi: 2024-08-01 10:00:00.070334+03:00
+INFO 2024-08-01 11:08:40,196 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-01 11:08:40,240 tasks Task ran at: 2024-08-01 11:08:40.240688
+INFO 2024-08-01 11:08:40,241 tasks Nairobi: 2024-08-01 11:08:40.241727+03:00
+INFO 2024-08-01 12:00:00,472 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 12:00:00,474 tasks Task ran at: 2024-08-01 12:00:00.474198
+INFO 2024-08-01 12:00:00,475 tasks Date: 2024-08-01
+INFO 2024-08-01 12:00:00,475 tasks Time: 12:00:00.475609
+INFO 2024-08-01 12:00:00,476 tasks Nairobi: 2024-08-01 12:00:00.475965+03:00
+ERROR 2024-08-01 12:15:17,039 tasks Failed to record stk push transaction: ws_CO_01082024121516305113638169 400, {"detail":"Failed to create unprocessed transaction"}
+ERROR 2024-08-01 12:15:27,127 tasks Failed to record stk push transaction: ws_CO_01082024121516305113638169 400, {"detail":"Failed to create unprocessed transaction"}
+INFO 2024-08-01 14:00:00,143 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 14:00:00,157 tasks Task ran at: 2024-08-01 14:00:00.157298
+INFO 2024-08-01 14:00:00,158 tasks Date: 2024-08-01
+INFO 2024-08-01 14:00:00,158 tasks Time: 14:00:00.158842
+INFO 2024-08-01 14:00:00,159 tasks Nairobi: 2024-08-01 14:00:00.159222+03:00
+ERROR 2024-08-01 14:56:21,640 tasks Failed to update chama account balance: 422, {"detail":[{"type":"int_from_float","loc":["body","amount_deposited"],"msg":"Input should be a valid integer, got a number with a fractional part","input":4.53,"url":"https://errors.pydantic.dev/2.5/v/int_from_float"}]}
+INFO 2024-08-01 16:00:00,096 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 16:00:00,116 tasks Task ran at: 2024-08-01 16:00:00.116714
+INFO 2024-08-01 16:00:00,117 tasks Date: 2024-08-01
+INFO 2024-08-01 16:00:00,118 tasks Time: 16:00:00.118482
+INFO 2024-08-01 16:00:00,119 tasks Nairobi: 2024-08-01 16:00:00.119408+03:00
+ERROR 2024-08-01 17:07:34,008 tasks Failed to record stk push transaction: ws_CO_01082024170733196113638169 400, {"detail":"Failed to create unprocessed wallet transaction"}
+ERROR 2024-08-01 17:07:44,112 tasks Failed to record stk push transaction: ws_CO_01082024170733196113638169 400, {"detail":"Failed to create unprocessed wallet transaction"}
+ERROR 2024-08-01 17:11:11,120 tasks Failed to record stk push transaction: ws_CO_01082024171110529113638169 400, {"detail":"Failed to create unprocessed wallet transaction"}
+ERROR 2024-08-01 17:26:37,736 tasks Failed to record stk push transaction: ws_CO_01082024172636871113638169 500, Internal Server Error
+ERROR 2024-08-01 17:28:23,981 tasks Failed to record stk push transaction: ws_CO_01082024172823136113638169 500, Internal Server Error
+ERROR 2024-08-01 17:28:23,982 tasks HTTP error occurred during transaction recording: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/transactions/before_processing_wallet_deposit
+ERROR 2024-08-01 17:28:54,063 tasks Failed to record stk push transaction: ws_CO_01082024172823136113638169 500, Internal Server Error
+ERROR 2024-08-01 17:28:54,067 tasks HTTP error occurred during transaction recording: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/transactions/before_processing_wallet_deposit
+ERROR 2024-08-01 17:29:24,161 tasks Failed to record stk push transaction: ws_CO_01082024172823136113638169 500, Internal Server Error
+ERROR 2024-08-01 17:29:24,161 tasks HTTP error occurred during transaction recording: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/transactions/before_processing_wallet_deposit
+ERROR 2024-08-01 17:29:54,237 tasks Failed to record stk push transaction: ws_CO_01082024172823136113638169 500, Internal Server Error
+ERROR 2024-08-01 17:29:54,238 tasks HTTP error occurred during transaction recording: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/transactions/before_processing_wallet_deposit
+ERROR 2024-08-01 17:43:49,735 tasks Failed to deposit to wallet: 400, {"detail":"Failed to update members wallet balance"}
+ERROR 2024-08-01 17:59:21,170 tasks Failed to deposit to wallet: 400, {"detail":"Failed to update members wallet balance"}
+INFO 2024-08-01 18:00:00,171 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-01 18:00:00,173 tasks Task ran at: 2024-08-01 18:00:00.173645
+INFO 2024-08-01 18:00:00,177 tasks Date: 2024-08-01
+INFO 2024-08-01 18:00:00,179 tasks Time: 18:00:00.178995
+INFO 2024-08-01 18:00:00,180 tasks Nairobi: 2024-08-01 18:00:00.180536+03:00
+ERROR 2024-08-01 18:03:57,440 tasks Failed to deposit to wallet: 400, {"detail":"Failed to update members wallet balance"}
+ERROR 2024-08-01 18:10:27,937 tasks Failed to deposit to wallet: 400, {"detail":"Failed to update members wallet balance"}
+INFO 2024-08-01 18:19:19,755 tasks amountb4:10
+INFO 2024-08-01 18:19:19,783 tasks greaterafter:10
+INFO 2024-08-01 18:19:20,067 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_01082024181818699113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}

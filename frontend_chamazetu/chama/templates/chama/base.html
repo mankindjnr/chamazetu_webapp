@@ -28,6 +28,27 @@
   
     <!-- Template Main CSS File -->
     <link href="{% static 'chama/css/style.css' %}" rel="stylesheet">
+
+    <style>
+      /* Default: hide member login link */
+      .header-social-links .member-login {
+        display: none;
+      }
+
+      /* Mobile view: show member login link and hide social links */
+      @media (max-width: 767px) {
+        .header-social-links .twitter,
+        .header-social-links .facebook,
+        .header-social-links .linkedin {
+          display: none;
+        }
+
+        .header-social-links .member-login {
+          display: block;
+        }
+      }
+
+    </style>
   
 </head>
 <body>
@@ -65,6 +86,9 @@
             <a href="https://x.com/chamazetu" class="twitter"><i class="bu bi-twitter"></i></a>
             <a href="#" class="facebook"><i class="bu bi-facebook"></i></a>
             <a href="" class="linkedin"><i class="bu bi-linkedin"></i></i></a>
+            <div class="member-login">
+              <a href="{% url 'chama:signin' 'member' %}" target="_blank" rel="noopener noreferrer">login</a>
+            </div>
           </div>
     
         </div>

@@ -9,6 +9,7 @@ import logging
 
 
 from .. import schemas, database, utils, oauth2, models
+from .members import generateWalletNumber
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -94,6 +95,42 @@ async def create_unprocessed_deposit_transaction(
         )
 
 
+@router.post(
+    "/before_processing_wallet_deposit",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_unprocessed_deposit_transaction(
+    wallet_transaction: schemas.UnprocessedWalletDepositBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("===========before processing ===========")
+        with db.begin():
+            wallet_transaction_dict = wallet_transaction.dict()
+            wallet_transaction_dict["transaction_completed"] = False
+            wallet_transaction_dict["transaction_date"] = datetime.now(
+                nairobi_tz
+            ).replace(tzinfo=None)
+
+            new_wallet_transaction = models.Wallet_Transaction(
+                **wallet_transaction_dict
+            )
+            db.add(new_wallet_transaction)
+            db.flush()  # flush to get the id of the transaction and trigger constraints
+            db.refresh(new_wallet_transaction)
+
+        return new_wallet_transaction
+
+    except Exception as e:
+        print("------direct wallet deposit error--------")
+        transaction_error_logger.error(
+            f"Failed to create unprocessed wallet transaction: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to create unprocessed wallet transaction"
+        )
+
+
 # create a deposit transaction from wallet to chama
 @router.post(
     "/deposit_from_wallet",
@@ -136,7 +173,7 @@ async def create_deposit_transaction_from_wallet(
         # add record to transactions table
         transaction_dict = {
             "amount": new_wallet_transaction.amount,
-            "phone_number": generateWalletNumber(current_user.id),
+            "phone_number": generateWalletNumber(db, current_user.id),
             "chama_id": wallet_transaction.transaction_destination,
             "transaction_type": "deposit",
             "transaction_origin": "wallet_deposit",
@@ -197,7 +234,7 @@ async def create_fine_repayment_transaction_from_wallet(
         # add record to transactions table
         transaction_dict = {
             "amount": new_wallet_transaction.amount,
-            "phone_number": generateWalletNumber(current_user.id),
+            "phone_number": generateWalletNumber(db, current_user.id),
             "chama_id": wallet_transaction.transaction_destination,
             "transaction_type": "fine deduction",
             "transaction_origin": "wallet_deposit",
@@ -262,12 +299,6 @@ async def create_fine_repayment_transaction_from_mpesa(
 # ================================================================
 
 
-def generateWalletNumber(member_id):
-    prefix = "94" + str(member_id)
-    wallet_number = prefix.zfill(12)
-    return wallet_number
-
-
 # combining multiple transactions into one - wallet update, account update and direct deposit
 @router.post("/unified_deposit_transactions", status_code=status.HTTP_201_CREATED)
 async def unified_deposit_transactions(
@@ -278,6 +309,7 @@ async def unified_deposit_transactions(
     try:
         if not transactions.wallet_deposit:
             # prepare wallet transaction
+            wallet_number = generateWalletNumber(db, transactions.member_id)
             wallet_transaction = transactions.wallet_update
             if wallet_transaction:
                 wallet_dict = wallet_transaction.dict()
@@ -285,7 +317,7 @@ async def unified_deposit_transactions(
                     tzinfo=None
                 )
                 wallet_dict["transaction_completed"] = True
-                wallet_dict["transaction_destination"] = 0
+                wallet_dict["transaction_destination"] = wallet_number
                 wallet_dict["transaction_code"] = transactions.transaction_code
                 wallet_dict["member_id"] = transactions.member_id
 
@@ -339,7 +371,7 @@ async def unified_deposit_transactions(
                     tzinfo=None
                 )
                 wallet_dict["transaction_completed"] = True
-                wallet_dict["transaction_destination"] = 0
+                wallet_dict["transaction_destination"] = wallet_number
                 wallet_dict["transaction_code"] = transactions.transaction_code
                 wallet_dict["member_id"] = transactions.member_id
 

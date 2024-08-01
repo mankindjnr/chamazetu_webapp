@@ -202,50 +202,78 @@ async def get_recent_transactions(
 async def update_member_wallet_balance(
     wallet_data: schemas.UpdateWalletBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
 ):
 
     try:
         print("===========wallet update===========")
         wallet_dict = wallet_data.dict()
-        amount = wallet_dict["amount"]
         transaction_type = wallet_dict["transaction_type"]
-        wallet_dict["member_id"] = current_user.id
+        amount = wallet_dict["amount"]
         wallet_dict["transaction_completed"] = True
         wallet_dict["transaction_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
-        wallet_dict["transaction_code"] = wallet_dict["transaction_code"]
+        if not "transaction_code" in wallet_dict:
+            wallet_dict["transaction_code"] = generate_transaction_code(
+                transaction_type,
+                "wallet",
+                wallet_dict["transaction_destination"],
+                wallet_dict["member_id"],
+            )
 
-        member = (
-            db.query(models.Member).filter(models.Member.id == current_user.id).first()
-        )
+        with db.begin_nested():
+            member = (
+                db.query(models.Member)
+                .filter(models.Member.id == wallet_dict["member_id"])
+                .with_for_update()
+                .first()
+            )
 
-        if not member:
-            raise HTTPException(status_code=404, detail="Member not found")
+            if not member:
+                raise HTTPException(status_code=404, detail="Member not found")
 
-        if (
-            transaction_type == "deposited_to_wallet"
-            or transaction_type == "moved_to_wallet"
-        ):
-            new_wallet_balance = member.wallet_balance + amount
-        elif (
-            transaction_type == "withdrawn_from_wallet"
-            or transaction_type == "moved_to_chama"
-        ):
-            new_wallet_balance = member.wallet_balance - amount
-        else:
-            raise HTTPException(status_code=400, detail="Invalid transaction type")
+            if transaction_type in ["deposited_to_wallet", "moved_to_wallet"]:
+                new_wallet_balance = member.wallet_balance + amount
+            elif transaction_type in ["withdrawn_from_wallet", "moved_to_chama"]:
+                if member.wallet_balance < amount:
+                    raise HTTPException(status_code=400, detail="Insufficient funds")
+                new_wallet_balance = member.wallet_balance - amount
+            else:
+                raise HTTPException(status_code=400, detail="Invalid transaction type")
 
-        member.wallet_balance = new_wallet_balance
-        db.commit()
-        db.refresh(member)
+            member.wallet_balance = new_wallet_balance
+            db.add(member)
 
-        new_transaction = models.Wallet_Transaction(**wallet_dict)
-        db.add(new_transaction)
-        db.commit()
+            new_transaction = models.Wallet_Transaction(**wallet_dict)
+            db.add(new_transaction)
+
+            if transaction_type == "deposited_to_wallet":
+                unprocessed_transactions = (
+                    db.query(models.Wallet_Transaction)
+                    .filter(models.Wallet_Transaction.member_id == member.id)
+                    .filter(models.Wallet_Transaction.transaction_completed == False)
+                    .filter(
+                        models.Wallet_Transaction.transaction_type
+                        == "unprocessed wallet deposit"
+                    )
+                    .filter(
+                        models.Wallet_Transaction.transaction_code
+                        == wallet_dict["transaction_code"]
+                    )
+                    .filter(
+                        models.Wallet_Transaction.transaction_destination
+                        == wallet_dict["transaction_destination"]
+                    )
+                    .all()
+                )
+
+                for transaction in unprocessed_transactions:
+                    transaction.transaction_completed = True
+                    transaction.transaction_type = "processed wallet deposit"
+                    db.add(transaction)
+
+            db.commit()
         return {"wallet_balance": member.wallet_balance}
     except Exception as e:
-        print("========error updating wallet balance========")
-        print(e)
+        transaction_error_logger.error(f"Failed to update members wallet balance {e}")
         db.rollback()
         raise HTTPException(
             status_code=400, detail="Failed to update members wallet balance"
@@ -280,7 +308,7 @@ async def get_member_wallet_balance(
         )
 
 
-# retrieve wallet activity for a member, latest 7 transactions
+# retrieve wallet activity for a member, latest 3 transactions
 @router.get(
     "/recent_wallet_activity",
     status_code=status.HTTP_200_OK,
@@ -295,6 +323,11 @@ async def get_recent_wallet_activity(
         wallet_activity = (
             db.query(models.Wallet_Transaction)
             .filter(models.Wallet_Transaction.member_id == current_user.id)
+            .filter(models.Wallet_Transaction.transaction_completed == True)
+            .filter(
+                models.Wallet_Transaction.transaction_type
+                != "unprocessed wallet deposit"
+            )
             .order_by(desc(models.Wallet_Transaction.transaction_date))
             .limit(3)
             .all()
@@ -317,8 +350,9 @@ async def get_recent_wallet_activity(
         ]
 
     except Exception as e:
-        print("========error getting recent wallet activity========")
-        print(e)
+        transaction_error_logger.error(
+            f"Failed to get members recent wallet activity {e}"
+        )
         raise HTTPException(
             status_code=400, detail="Failed to get members recent wallet activity"
         )
@@ -390,7 +424,7 @@ async def repay_fines(
                 # record the fine transaction
                 fine_transaction_data = {
                     "amount": fine_amount_repaid,
-                    "phone_number": generateWalletNumber(member_id),
+                    "phone_number": generateWalletNumber(db, member_id),
                     "date_of_transaction": fine_transaction_date,
                     "updated_at": fine_transaction_date,
                     "transaction_completed": True,
@@ -977,7 +1011,7 @@ async def auto_contrmake_auto_contributionsibute(
                     # record the fine transaction as one amount transaction
                     fine_transaction_data = {
                         "amount": fine_amount_deducted,
-                        "phone_number": generateWalletNumber(member.member_id),
+                        "phone_number": generateWalletNumber(db, member.member_id),
                         "date_of_transaction": fine_transaction_date,
                         "updated_at": fine_transaction_date,
                         "transaction_completed": True,
@@ -1021,7 +1055,7 @@ async def auto_contrmake_auto_contributionsibute(
                 transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
                 transaction_data = {
                     "amount": expected_amount,
-                    "phone_number": generateWalletNumber(member.member_id),
+                    "phone_number": generateWalletNumber(db, member.member_id),
                     "date_of_transaction": transaction_date,
                     "updated_at": transaction_date,
                     "transaction_completed": True,
@@ -1136,6 +1170,14 @@ def generate_transaction_code(transaction_type, origin, destination, member_id):
         prefix = f"{month_prefix}AREP"
     elif transaction_type.lower() == "fine_repay":
         prefix = f"{month_prefix}FREP"
+    elif transaction_type.lower() == "moved_to_wallet":
+        prefix = f"{month_prefix}MTOW"
+    elif transaction_type.lower() == "deposited_to_wallet":
+        prefix = f"{month_prefix}DTOW"
+    elif transaction_type.lower() == "withdrawn_from_wallet":
+        prefix = f"{month_prefix}WFRW"
+    elif transaction_type.lower() == "moved_to_chama":
+        prefix = f"{month_prefix}MTCH"
     else:
         raise ValueError("Invalid transaction type. Use 'deposit' or 'withdrawal'.")
 
@@ -1155,7 +1197,33 @@ def generate_transaction_code(transaction_type, origin, destination, member_id):
     return transaction_code
 
 
-def generateWalletNumber(member_id):
-    prefix = "94" + str(member_id)
-    wallet_number = prefix.zfill(12)
+# retrieve the wallet number
+@router.get(
+    "/wallet_number/{member_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_wallet_number(
+    member_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        wallet_number = (
+            db.query(models.Member.wallet_number)
+            .filter(models.Member.id == member_id)
+            .scalar()
+        )
+
+        return {"wallet_number": wallet_number}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get wallet number {e}")
+        raise HTTPException(status_code=400, detail="Failed to get wallet number")
+
+
+def generateWalletNumber(db, member_id):
+    wallet_number = (
+        db.query(models.Member.wallet_number)
+        .filter(models.Member.id == member_id)
+        .scalar()
+    )
     return wallet_number

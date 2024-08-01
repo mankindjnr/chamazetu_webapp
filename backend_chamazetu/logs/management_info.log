@@ -1,5 +1,8 @@
-2024-07-30 18:30:34,918 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
-    version = _bcrypt.__about__.__version__
-AttributeError: module 'bcrypt' has no attribute '__about__'
+2024-08-01 18:11:24,323 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:11:27,859 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-01 18:12:28,738 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:12:29,075 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-01 18:18:18,443 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:18:18,907 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-01 18:19:19,352 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:19:19,718 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"

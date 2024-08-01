@@ -175,15 +175,18 @@ def update_callback_transactions():
     logger.info("==========chama/tasks.py: update_callback_transactions()==========")
     logger.info(f"Task ran at: {datetime.now()}")
     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
-    response = requests.put(
-        f"{os.getenv('api_url')}/callback/update_callback_transactions"
-    )
-    if response.status_code == HTTPStatus.OK:
-        return True
-    else:
-        logger.error(
-            f"Failed to update callback transactions: {response.status_code}, {response.text}"
+    try:
+        response = requests.put(
+            f"{os.getenv('api_url')}/callback/update_callback_transactions"
         )
+        if response.status_code == HTTPStatus.OK:
+            return True
+        else:
+            logger.error(
+                f"Failed to update callback transactions: {response.status_code}, {response.text}"
+            )
+    except requests.RequestException as e:
+        logger.error(f"http req fialed: Failed to update callback transactions: {e}")
 
     return False
 
@@ -191,7 +194,7 @@ def update_callback_transactions():
 # route will check the transactions table and retrieve transactions whose  transaction type is "unprocessed deposit", it will then compare those transactions against
 # the callback data table using the cehckout request id, if in the callback data that transaction is marked as success, we will reverse the amount to user.
 @shared_task
-def fix_callback_and_transactions_mismatch():
+def fix_callback_and_transactions_mismatch(*args, **kwargs):
     """
     Add missing transactions to the transactions table
     """
@@ -200,17 +203,20 @@ def fix_callback_and_transactions_mismatch():
     )
     logger.info(f"Task ran at: {datetime.now()}")
     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
-    response = requests.put(
-        f"{os.getenv('api_url')}/callback/fix_callback_transactions_table_mismatch"  # fix unprocessed transactions against the callback table
-    )
-    if response.status_code == HTTPStatus.OK:
-        return None
-    else:
-        logger.error(
-            f"Failed to add fixing transactions: {response.status_code}, {response.text}"
+    try:
+        response = requests.put(
+            f"{os.getenv('api_url')}/callback/fix_callback_transactions_table_mismatch"  # fix unprocessed transactions against the callback table
         )
+        if response.status_code == HTTPStatus.OK:
+            return None
+        else:
+            logger.error(
+                f"Failed to add fixing transactions: {response.status_code}, {response.text}"
+            )
+    except requests.RequestException as e:
+        logger.error(f"http req fialed: Failed to fix callback transactions: {e}")
 
-    return None
+    return False
 
 
 @shared_task
