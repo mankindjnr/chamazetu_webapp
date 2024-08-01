@@ -9,16 +9,88 @@ from sqlalchemy import (
     Table,
     Float,
     UniqueConstraint,
+    func,
+    event,
 )
 from sqlalchemy.orm import relationship
+from .database import Base, SessionLocal
 from datetime import datetime
 from pytz import timezone
+import string
+import random
 
 nairobi_tz = timezone("Africa/Nairobi")
 
 
 def nairobi_now():
     return datetime.now(nairobi_tz).replace(tzinfo=None)
+
+
+def generate_wallet_number():
+    # generate two random uppercase letters
+    letters = "".join(random.choices(string.ascii_uppercase, k=2))
+    # generate four random digits
+    numbers = "".join(random.choices(string.digits, k=4))
+    # the wallet number
+    return f"W{letters}{numbers}"
+
+
+# ensure unique wallet number
+def generate_unique_wallet_number(session):
+    while True:
+        wallet_number = generate_wallet_number()
+        # check if the wallet number already exists in the database
+        if (
+            not session.query(Member)
+            .filter(Member.wallet_number == wallet_number)
+            .first()
+        ):
+            return wallet_number
+
+
+def generate_custom_member_id():
+    # adjust the starting point and increment logic as needed
+    start_value = 4700
+
+    # fetch the maximum current id and increment it
+    session = SessionLocal()
+    max_id = session.query(func.max(Member.id)).scalar()
+    session.close()
+
+    if max_id:
+        return max(max_id + 1, start_value)
+    else:
+        return start_value
+
+
+def generate_custom_manager_id():
+    # adjust the starting point and increment logic as needed
+    start_value = 9400
+
+    # fetch the maximum current id and increment it
+    session = SessionLocal()
+    max_id = session.query(func.max(Manager.id)).scalar()
+    session.close()
+
+    if max_id:
+        return max(max_id + 1, start_value)
+    else:
+        return start_value
+
+
+def generate_custom_chama_id():
+    # adjust the starting point and increment logic as needed
+    start_value = 4900
+
+    # fetch the maximum current id and increment it
+    session = SessionLocal()
+    max_id = session.query(func.max(Chama.id)).scalar()
+    session.close()
+
+    if max_id:
+        return max(max_id + 1, start_value)
+    else:
+        return start_value
 
 
 # Define the many-to-many relationship table between members and chamas
@@ -47,7 +119,9 @@ chama_investment_association = Table(
 class Member(Base):
     __tablename__ = "members"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer, primary_key=True, index=True, default=generate_custom_member_id
+    )
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -70,8 +144,9 @@ class Member(Base):
     is_member = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)
 
-    # wallet balance
+    # wallet details
     wallet_balance = Column(Integer, nullable=False, default=0)
+    wallet_number = Column(String(7), unique=True, nullable=False)
 
     fines = relationship("Fine", back_populates="member")
     auto_contributions = relationship("AutoContribution", back_populates="member")
@@ -87,10 +162,18 @@ class Member(Base):
     )
 
 
+# event listener to generate unique wallet number before inserting a new member
+@event.listens_for(Member, "before_insert")
+def set_wallet_number(mapper, connection, target):
+    session = SessionLocal()
+    target.wallet_number = generate_unique_wallet_number(session)
+    session.close()
+
+
 class Chama(Base):
     __tablename__ = "chamas"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, default=generate_custom_chama_id)
     chama_name = Column(String, index=True, unique=True, nullable=False)
     chama_type = Column(String, nullable=False)  # investment, savings, lending
     num_of_members_allowed = Column(String, nullable=False)
@@ -168,7 +251,9 @@ class Chama(Base):
 class Manager(Base):
     __tablename__ = "managers"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(
+        Integer, primary_key=True, index=True, default=generate_custom_manager_id
+    )
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -349,7 +434,7 @@ class Wallet_Transaction(Base):
     transaction_date = Column(DateTime, default=nairobi_now)
     transaction_completed = Column(Boolean, default=False)
     transaction_code = Column(String, nullable=False)
-    transaction_destination = Column(Integer, nullable=False)  # wallet, chama
+    transaction_destination = Column(String, nullable=False)  # wallet_number, chama_id
     # one to many relationship - one member can make multiple wallet transactions
     member_id = Column(Integer, ForeignKey("members.id"))
     member = relationship("Member", back_populates="wallet_transactions")

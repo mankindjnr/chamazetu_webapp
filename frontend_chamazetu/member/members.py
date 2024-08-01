@@ -47,6 +47,14 @@ def get_wallet_balance(request):
         return None
 
 
+def get_member_wallet_number(member_id):
+    url = f"{os.getenv('api_url')}/members/wallet_number/{member_id}"
+    response = requests.get(url)
+    if response.status_code == HTTPStatus.OK:
+        wallet_number = response.json()["wallet_number"]
+        return wallet_number
+
+
 def get_member_expected_contribution(member_id, chama_id):
     url = f"{os.getenv('api_url')}/members/expected_contribution"
     data = {"member_id": member_id, "chama_id": chama_id}

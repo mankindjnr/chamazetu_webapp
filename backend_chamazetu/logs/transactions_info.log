@@ -1,31 +1,16 @@
-2024-07-30 18:24:15,328 - transactions_info - INFO - ===========repaying fines===========
-2024-07-30 18:24:15,346 - transactions_info - INFO - fine amout 2200
-2024-07-30 18:24:15,347 - transactions_info - INFO - paying with 100
-2024-07-30 18:24:15,429 - transactions_info - INFO - ===========fines repaid===========
-2024-07-30 18:28:17,649 - transactions_info - INFO - ===========repaying fines===========
-2024-07-30 18:28:17,659 - transactions_info - INFO - fine amout 2100
-2024-07-30 18:28:17,659 - transactions_info - INFO - paying with 2100
-2024-07-30 18:28:17,712 - transactions_info - INFO - ===========fines repaid===========
-2024-07-30 18:30:34,918 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
-    version = _bcrypt.__about__.__version__
-AttributeError: module 'bcrypt' has no attribute '__about__'
-2024-07-30 18:33:41,595 - transactions_info - INFO - ===========repaying fines===========
-2024-07-30 18:33:41,600 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,600 - transactions_info - INFO - paying with 10000
-2024-07-30 18:33:41,601 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,601 - transactions_info - INFO - paying with 8900
-2024-07-30 18:33:41,602 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,602 - transactions_info - INFO - paying with 7800
-2024-07-30 18:33:41,602 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,603 - transactions_info - INFO - paying with 6700
-2024-07-30 18:33:41,604 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,604 - transactions_info - INFO - paying with 5600
-2024-07-30 18:33:41,604 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,605 - transactions_info - INFO - paying with 4500
-2024-07-30 18:33:41,605 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,605 - transactions_info - INFO - paying with 3400
-2024-07-30 18:33:41,606 - transactions_info - INFO - fine amout 1100
-2024-07-30 18:33:41,606 - transactions_info - INFO - paying with 2300
-2024-07-30 18:33:41,692 - transactions_info - INFO - ===========fines repaid===========
+2024-08-01 18:11:24,323 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:11:27,859 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-01 18:12:28,738 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:12:29,075 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-01 18:13:48,270 - transactions_info - INFO - ===========repaying fines===========
+2024-08-01 18:13:48,280 - transactions_info - INFO - fine amout 1100
+2024-08-01 18:13:48,280 - transactions_info - INFO - paying with 1000
+2024-08-01 18:13:48,337 - transactions_info - INFO - ===========fines repaid===========
+2024-08-01 18:14:27,332 - transactions_info - INFO - ===========repaying fines===========
+2024-08-01 18:14:27,336 - transactions_info - INFO - fine amout 100
+2024-08-01 18:14:27,337 - transactions_info - INFO - paying with 1000
+2024-08-01 18:14:27,393 - transactions_info - INFO - ===========fines repaid===========
+2024-08-01 18:18:18,443 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:18:18,907 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-01 18:19:19,352 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-01 18:19:19,718 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"

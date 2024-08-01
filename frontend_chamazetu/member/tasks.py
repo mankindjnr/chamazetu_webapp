@@ -7,7 +7,13 @@ from dotenv import load_dotenv
 from django.conf import settings
 from django.template.loader import render_to_string
 from http import HTTPStatus
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_fixed,
+    retry_if_exception_type,
+    RetryError,
+)
 from zoneinfo import ZoneInfo
 
 from .members import (
@@ -16,6 +22,7 @@ from .members import (
     get_member_contribution_so_far,
     get_user_email,
     get_user_full_name,
+    get_member_wallet_number,
 )
 
 from chama.tasks import sending_email
@@ -82,7 +89,7 @@ def update_shares_number_for_member(chama_id, num_of_shares, headers):
 
 @shared_task
 def update_wallet_balance(
-    headers, amount, chama_id, transaction_type, transaction_code
+    member_id, amount, chama_id, transaction_type, transaction_code
 ):
     url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
@@ -90,7 +97,7 @@ def update_wallet_balance(
         transaction_type == "moved_to_wallet"
         or transaction_type == "deposited_to_wallet"
     ):
-        transaction_destination = 0  # default value for wallet
+        transaction_destination = get_member_wallet_number(member_id)
     elif (
         transaction_type == "withdrawn_from_wallet"
         or transaction_type == "moved_to_chama"
@@ -98,7 +105,8 @@ def update_wallet_balance(
         transaction_destination = chama_id
 
     data = {
-        "transaction_destination": int(transaction_destination),
+        "member_id": member_id,
+        "transaction_destination": transaction_destination,
         "amount": int(amount),
         "transaction_type": transaction_type,
         "transaction_code": transaction_code,
@@ -126,13 +134,14 @@ def wallet_deposit(mpesa_data):
     url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
     data = {
-        "transaction_destination": 0,
+        "member_id": member_id,
+        "transaction_destination": get_member_wallet_number(member_id),
         "amount": amount,
         "transaction_type": "deposited_to_wallet",
         "transaction_code": transaction_code,
     }
 
-    response = requests.put(url, json=data, headers=headers)
+    response = requests.put(url, json=data)
     if response.status_code == HTTPStatus.OK:
         return None
     else:
@@ -148,13 +157,14 @@ def wallet_withdrawal(headers, amount, member_id, transaction_code):
     url = f"{os.getenv('api_url')}/members/update_wallet_balance"
 
     data = {
+        "member_id": member_id,
         "transaction_destination": 0,  # should be the phone number of the member, where the money is being withdrawn to
         "amount": amount,
         "transaction_type": "withdrawn_from_wallet",
         "transaction_code": transaction_code,
     }
 
-    response = requests.put(url, json=data, headers=headers)
+    response = requests.put(url, json=data)
     if response.status_code == HTTPStatus.OK:
         return None
     else:
@@ -179,6 +189,36 @@ def update_users_profile_image(headers, role, new_profile_image_name):
         logger.error(
             f"Failed to update profile picture: {response.status_code}, {response.text}"
         )
+    return None
+
+
+# the status of this in the table will be processed later in the day(bg)
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_fixed(10),
+    retry=retry_if_exception_type(requests.RequestException),
+)
+def record_wallet_transaction_before_processing(
+    checkoutrequestid, member_id, destination, amount
+):
+    # record the transaction in the database
+    url = f"{os.getenv('api_url')}/transactions/before_processing_wallet_deposit"
+    data = {
+        "amount": amount,
+        "transaction_type": "unprocessed wallet deposit",
+        "transaction_code": checkoutrequestid,
+        "transaction_destination": get_member_wallet_number(member_id),
+        "member_id": member_id,
+    }
+
+    response = requests.post(url, json=data)
+    if response.status_code == HTTPStatus.CREATED:
+        return True
+    else:
+        logger.error(
+            f"Failed to record stk push transaction: {checkoutrequestid} {response.status_code}, {response.text}"
+        )
+        response.raise_for_status()
     return None
 
 
@@ -228,15 +268,38 @@ def stk_push_status(
     """
     Check the status of the stk push
     but record the transaction in the database then check the status TODO: is this necessary?
+    TODO:look on the viability of a phone number column in wallet transactions
     """
-    record_unprocessed_transaction = record_transaction_before_processing(
-        checkoutrequestid,
-        member_id,
-        destination,
-        amount,
-        phone_number,
-        transaction_origin,
-    )
+    record_unprocessed_transaction = None
+    try:
+        if destination == "wallet":
+            record_unprocessed_transaction = (
+                record_wallet_transaction_before_processing(
+                    checkoutrequestid,
+                    member_id,
+                    destination,
+                    amount,
+                )
+            )
+        else:
+            record_unprocessed_transaction = record_transaction_before_processing(
+                checkoutrequestid,
+                member_id,
+                destination,
+                amount,
+                phone_number,
+                transaction_origin,
+            )
+    except RetryError as e:
+        logger.error(f"retry error occurred during transaction recording: {e}")
+        self.retry(exc=e, countdown=30)
+    except requests.HTTPError as e:
+        logger.error(f"HTTP error occurred during transaction recording: {e}")
+        self.retry(exc=e, countdown=30)
+    except Exception as e:
+        logger.error(f"An error occurred during transaction recording: {e}")
+        self.retry(exc=e, countdown=30)
+
     # i should only continue if the transaction was recorded
     if not record_unprocessed_transaction:
         return None
@@ -510,7 +573,7 @@ def add_member_to_chama(
                 send_email_to_new_chama_member.delay(member_id, chama_id)
                 # bg task to deposit the registration fee to the chama account minus 9.4% transaction fee
                 # TODO: call another bg task to update chamazetu accounts with the 9.4% transaction fee - business account
-                amount = registration_fee - (0.094 * registration_fee)
+                amount = int(registration_fee - (0.094 * registration_fee))
                 update_chama_account_balance.delay(chama_id, amount, "deposit")
             else:
                 # if the request was unsuccessful, retry the task
