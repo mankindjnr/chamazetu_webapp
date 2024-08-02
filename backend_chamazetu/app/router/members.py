@@ -167,6 +167,7 @@ async def get_recent_transactions(
                     models.Transaction.member_id == current_user.id,
                     models.Transaction.transaction_completed == True,
                     models.Transaction.is_reversed == False,
+                    models.Transaction.transaction_type != "processed",
                 )
             )
             .order_by(desc(models.Transaction.date_of_transaction))
@@ -328,6 +329,9 @@ async def get_recent_wallet_activity(
                 models.Wallet_Transaction.transaction_type
                 != "unprocessed wallet deposit"
             )
+            .filter(
+                models.Wallet_Transaction.transaction_type != "processed wallet deposit"
+            )
             .order_by(desc(models.Wallet_Transaction.transaction_date))
             .limit(3)
             .all()
@@ -478,6 +482,105 @@ async def repay_fines(
         transaction_error_logger.error(f"Failed to repay fines {e}")
         db.rollback()
         raise HTTPException(status_code=400, detail="Failed to repay fines")
+
+
+# TODO: FIX LATER TO ONE WITH ABOVE OR BETTER IN RECORD FINE FROM MPESA ONLY
+@router.put(
+    "/repay_fines_from_mpesa",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.MemberFineResp,
+)
+async def repay_fines(
+    fine_data: schemas.MemberMpesaFineBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        transaction_info_logger.info("===========repaying fines===========")
+        fine_dict = fine_data.dict()
+        chama_id = fine_dict["chama_id"]
+        member_id = fine_dict["member_id"]
+        amount = fine_dict["amount"]
+        phone_number = fine_dict["phone_number"]
+        transaction_code = fine_dict["transaction_code"]
+
+        fines = (
+            db.query(models.Fine)
+            .filter(
+                and_(
+                    models.Fine.chama_id == chama_id,
+                    models.Fine.member_id == member_id,
+                    models.Fine.is_paid == False,
+                )
+            )
+            .order_by(models.Fine.fine_date)
+            .with_for_update()
+            .all()
+        )
+
+        if not fines:
+            #  this means the member has no fines to pay so we return the amount to the member fror the transaction to be completed
+            return {"balance_after_fines": amount}
+
+        total_fines_repaid = 0
+        with db.begin_nested():
+            for fine in fines:
+                transaction_info_logger.info(f"fine amout {fine.total_expected_amount}")
+                transaction_info_logger.info(f"paying with {amount}")
+
+                fine_transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
+
+                if amount >= fine.total_expected_amount:
+                    amount -= fine.total_expected_amount
+                    fine_amount_repaid = fine.total_expected_amount
+                    fine.is_paid = True
+                    fine.paid_date = fine_transaction_date
+                    fine.total_expected_amount = 0
+                else:
+                    fine.total_expected_amount -= amount
+                    fine_amount_repaid = amount
+                    amount = 0
+
+                total_fines_repaid += fine_amount_repaid
+
+                # record the fine transaction
+                fine_transaction_data = {
+                    "amount": fine_amount_repaid,
+                    "phone_number": phone_number,
+                    "date_of_transaction": fine_transaction_date,
+                    "updated_at": fine_transaction_date,
+                    "transaction_completed": True,
+                    "transaction_code": transaction_code,
+                    "transaction_type": "fine deduction",
+                    "transaction_origin": "direct_deposit",
+                    "chama_id": chama_id,
+                    "member_id": member_id,
+                }
+                new_fine_transaction = models.Transaction(**fine_transaction_data)
+                db.add(new_fine_transaction)
+
+                if amount == 0:
+                    break
+
+            # update the chama account balance
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == chama_id)
+                .first()
+            )
+            chama_account.account_balance += total_fines_repaid
+
+            db.commit()
+
+        transaction_info_logger.info("===========mpesa fines repaid===========")
+        # now return the balance after fines have been deducted from the initial amount
+        return {"balance_after_fines": amount}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to repay fines {e}")
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to repay fines")
+
+
+# ================================================================
 
 
 # checking if a member has any fines to pay in a chama

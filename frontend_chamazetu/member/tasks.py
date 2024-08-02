@@ -490,39 +490,40 @@ def balance_after_paying_fines_and_missed_contributions(
 ):
 
     # we first move the money from the wallet to the chama if its a success we continue with the repayment
-    url = f"{os.getenv('api_url')}/transactions/record_fine_payment_from_mpesa"
+    # url = f"{os.getenv('api_url')}/transactions/record_fine_payment_from_mpesa"
+    # data = {
+    #     "amount": amount,
+    #     "transaction_destination": chama_id,
+    #     "phone_number": f"254{phone_number}",
+    #     "transaction_code": transaction_code,
+    #     "member_id": member_id,
+    # }
+
+    # repayment_response = requests.post(url, json=data)
+    # if repayment_response.status_code == HTTPStatus.CREATED:
+    url = f"{os.getenv('api_url')}/members/repay_fines_from_mpesa"
     data = {
-        "amount": amount,
-        "transaction_destination": chama_id,
-        "phone_number": f"254{phone_number}",
         "transaction_code": transaction_code,
+        "phone_number": f"254{phone_number}",
         "member_id": member_id,
+        "chama_id": chama_id,
+        "amount": amount,
     }
 
-    repayment_response = requests.post(url, json=data)
-    if repayment_response.status_code == HTTPStatus.CREATED:
-        url = f"{os.getenv('api_url')}/members/repay_fines"
-        data = {
-            "member_id": member_id,
-            "chama_id": chama_id,
-            "amount": amount,
-        }
+    resp = requests.put(url, json=data)
 
-        resp = requests.put(url, json=data)
-
-        # using the received amount and balance_after - update wallet, transaction and accout - bg task
-
-        if resp.status_code == HTTPStatus.OK:
-            paid_fine = amount - resp.json().get("balance_after_fines")
-            update_chama_account_balance.delay(chama_id, paid_fine, "deposit")
-            return resp.json().get("balance_after_fines")
-        else:
-            return amount
+    # using the received amount and balance_after - update wallet, transaction and accout - bg task
+    if resp.status_code == HTTPStatus.OK:
+        # paid_fine = amount - resp.json().get("balance_after_fines")
+        # update_chama_account_balance.delay(chama_id, paid_fine, "deposit")
+        return resp.json().get("balance_after_fines")
     else:
-        # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
-        # "Failed to deposit Ksh: {amount} to {chama_name}. Please try again later."
-        # TODO: fix this, handle the error better
         return amount
+
+    # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
+    # "Failed to deposit Ksh: {amount} to {chama_name}. Please try again later."
+    # TODO: fix this, handle the error better
+    return amount
 
 
 # check on the status of the registration fee payment

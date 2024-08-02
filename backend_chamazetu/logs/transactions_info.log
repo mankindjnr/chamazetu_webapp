@@ -1,16 +1,30 @@
-2024-08-01 18:11:24,323 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-01 18:11:27,859 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-01 18:12:28,738 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-01 18:12:29,075 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
-2024-08-01 18:13:48,270 - transactions_info - INFO - ===========repaying fines===========
-2024-08-01 18:13:48,280 - transactions_info - INFO - fine amout 1100
-2024-08-01 18:13:48,280 - transactions_info - INFO - paying with 1000
-2024-08-01 18:13:48,337 - transactions_info - INFO - ===========fines repaid===========
-2024-08-01 18:14:27,332 - transactions_info - INFO - ===========repaying fines===========
-2024-08-01 18:14:27,336 - transactions_info - INFO - fine amout 100
-2024-08-01 18:14:27,337 - transactions_info - INFO - paying with 1000
-2024-08-01 18:14:27,393 - transactions_info - INFO - ===========fines repaid===========
-2024-08-01 18:18:18,443 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-01 18:18:18,907 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-01 18:19:19,352 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-01 18:19:19,718 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-02 07:04:44,463 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:04:44,970 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-02 07:05:45,479 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:05:45,781 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-02 07:10:53,460 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:10:53,849 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-02 07:13:55,550 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:13:55,981 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-02 07:14:56,371 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:14:56,693 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-02 07:14:56,774 - transactions_info - INFO - ===========repaying fines===========
+2024-08-02 07:14:56,789 - transactions_info - INFO - fine amout 65
+2024-08-02 07:14:56,789 - transactions_info - INFO - paying with 20
+2024-08-02 07:14:56,827 - transactions_info - INFO - ===========mpesa fines repaid===========
+2024-08-02 07:17:23,640 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:17:24,107 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-02 07:18:24,619 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:18:25,022 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-02 07:18:25,089 - transactions_info - INFO - ===========repaying fines===========
+2024-08-02 07:18:25,098 - transactions_info - INFO - fine amout 45
+2024-08-02 07:18:25,098 - transactions_info - INFO - paying with 10
+2024-08-02 07:18:25,128 - transactions_info - INFO - ===========mpesa fines repaid===========
+2024-08-02 07:19:15,055 - transactions_info - INFO - ===========repaying fines===========
+2024-08-02 07:19:15,062 - transactions_info - INFO - fine amout 35
+2024-08-02 07:19:15,063 - transactions_info - INFO - paying with 900
+2024-08-02 07:19:15,119 - transactions_info - INFO - ===========fines repaid===========
+2024-08-02 07:21:17,724 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:21:18,124 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
+2024-08-02 07:22:18,438 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-08-02 07:22:18,737 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
