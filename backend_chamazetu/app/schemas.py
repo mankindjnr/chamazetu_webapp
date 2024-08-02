@@ -704,6 +704,17 @@ class MemberFineBase(BaseModel):
         orm_mode = True
         from_attributes = True
 
+class MemberMpesaFineBase(BaseModel):
+    transaction_code: str
+    phone_number: str
+    member_id: int
+    chama_id: int
+    amount: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
 
 class MemberFineResp(BaseModel):
     balance_after_fines: int

@@ -580,3 +580,35 @@ ERROR 2024-08-01 18:10:27,937 tasks Failed to deposit to wallet: 400, {"detail":
 INFO 2024-08-01 18:19:19,755 tasks amountb4:10
 INFO 2024-08-01 18:19:19,783 tasks greaterafter:10
 INFO 2024-08-01 18:19:20,067 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_01082024181818699113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}
+INFO 2024-08-02 06:02:51,534 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-02 06:02:51,534 tasks Task ran at: 2024-08-02 06:02:51.534666
+INFO 2024-08-02 06:02:51,534 tasks Date: 2024-08-02
+INFO 2024-08-02 06:02:51,535 tasks Time: 06:02:51.535161
+INFO 2024-08-02 06:02:51,535 tasks Nairobi: 2024-08-02 06:02:51.535387+03:00
+INFO 2024-08-02 06:12:28,605 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-02 06:12:28,628 tasks Task ran at: 2024-08-02 06:12:28.628095
+INFO 2024-08-02 06:12:28,628 tasks Nairobi: 2024-08-02 06:12:28.628552+03:00
+INFO 2024-08-02 06:14:22,176 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-02 06:14:22,177 tasks Task ran at: 2024-08-02 06:14:22.177582
+INFO 2024-08-02 06:14:22,177 tasks Nairobi: 2024-08-02 06:14:22.177930+03:00
+INFO 2024-08-02 06:14:47,825 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-02 06:14:47,826 tasks Task ran at: 2024-08-02 06:14:47.826029
+INFO 2024-08-02 06:14:47,826 tasks Nairobi: 2024-08-02 06:14:47.826748+03:00
+INFO 2024-08-02 06:23:25,738 tasks amountb4:10
+INFO 2024-08-02 06:23:25,902 tasks amountrepaid:0
+INFO 2024-08-02 06:37:08,186 tasks amountb4:7
+INFO 2024-08-02 06:37:08,341 tasks amountrepaid:0
+INFO 2024-08-02 06:48:04,690 tasks amountb4:8
+INFO 2024-08-02 06:48:04,846 tasks amountrepaid:0
+INFO 2024-08-02 07:05:45,816 tasks amountb4:10
+INFO 2024-08-02 07:05:45,895 tasks amountrepaid:10
+INFO 2024-08-02 07:05:45,895 tasks greaterafter:10
+INFO 2024-08-02 07:05:46,121 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024070444637113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}
+INFO 2024-08-02 07:14:56,722 tasks amountb4:20
+INFO 2024-08-02 07:14:56,837 tasks amountrepaid:0
+INFO 2024-08-02 07:18:25,049 tasks amountb4:10
+INFO 2024-08-02 07:18:25,134 tasks amountrepaid:0
+INFO 2024-08-02 07:22:18,776 tasks amountb4:10
+INFO 2024-08-02 07:22:18,812 tasks greaterafter:10
+INFO 2024-08-02 07:22:19,045 tasks excess:5 to chama:5
+INFO 2024-08-02 07:22:19,045 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024072117930113638169', 'wallet_update': {'amount': 5, 'transaction_type': 'moved_to_wallet'}, 'direct_deposit': {'amount': 5, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}

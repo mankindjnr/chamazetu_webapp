@@ -275,7 +275,7 @@ async def create_fine_repayment_transaction_from_mpesa(
             "amount": mpesa_transaction.amount,
             "phone_number": mpesa_transaction.phone_number,
             "chama_id": mpesa_transaction.transaction_destination,
-            "transaction_type": "fine deduction",
+            "transaction_type": "fine deduced",
             "transaction_origin": "direct_deposit",
             "member_id": mpesa_transaction.member_id,
             "transaction_completed": True,
@@ -306,10 +306,13 @@ async def unified_deposit_transactions(
     db: Session = Depends(database.get_db),
 ):
 
+    print("======unified transaction calleds=====")
     try:
         if not transactions.wallet_deposit:
             # prepare wallet transaction
             wallet_number = generateWalletNumber(db, transactions.member_id)
+            print("======unifed wallet nu-=====")
+            print(wallet_number)
             wallet_transaction = transactions.wallet_update
             if wallet_transaction:
                 wallet_dict = wallet_transaction.dict()
@@ -404,10 +407,14 @@ async def unified_deposit_transactions(
             )
             .first()
         )
+        # print the abo
         if not unprocessed_transaction:
+            print("======unprocessed transaction not found=====")
             raise HTTPException(
                 status_code=404, detail="Unprocessed transaction not found"
             )
+        print("======unprocessed transaction found=====")
+        print(unprocessed_transaction)
         unprocessed_transaction.transaction_completed = True
         unprocessed_transaction.updated_at = datetime.now(nairobi_tz).replace(
             tzinfo=None
