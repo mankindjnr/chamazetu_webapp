@@ -22,6 +22,7 @@ from .usermanagement import (
 
 from .chamas import get_all_chamas, get_chama
 from .callback import call_back, registration_call_back
+from .transaction_status import status_result_receiver, status_timeout_receiver
 
 
 # Create your views here.

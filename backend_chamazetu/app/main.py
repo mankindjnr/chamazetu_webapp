@@ -67,5 +67,4 @@ app.include_router(stk_push.router)
 
 @app.get("/")
 async def root():
-    logging.getLogger("management_info").info("Root endpoint accessed")
     return {"Welcome": "to chamaZetu"}

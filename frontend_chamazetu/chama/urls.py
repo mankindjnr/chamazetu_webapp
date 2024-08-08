@@ -21,6 +21,16 @@ urlpatterns = [
     path("chama/<int:chamaid>", views.get_chama, name="chama"),
     path("callback", views.call_back, name="callback"),
     path(
+        "TransactionStatus/result",
+        views.status_result_receiver,
+        name="transactionstatus",
+    ),
+    path(
+        "TransactionStatus/queue",
+        views.status_timeout_receiver,
+        name="transactiontimeout",
+    ),
+    path(
         "callback/registration",
         views.registration_call_back,
         name="registration_callback",
