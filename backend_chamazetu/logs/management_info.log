@@ -1,18 +1,5 @@
-2024-08-02 07:04:44,463 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:04:44,970 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-02 07:05:45,479 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:05:45,781 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
-2024-08-02 07:10:53,460 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:10:53,849 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-02 07:13:55,550 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:13:55,981 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-02 07:14:56,371 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:14:56,693 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
-2024-08-02 07:17:23,640 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:17:24,107 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-02 07:18:24,619 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:18:25,022 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
-2024-08-02 07:21:17,724 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:21:18,124 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-02 07:22:18,438 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-02 07:22:18,737 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
+2024-08-08 13:19:08,623 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'

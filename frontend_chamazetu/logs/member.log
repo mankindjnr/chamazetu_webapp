@@ -612,3 +612,113 @@ INFO 2024-08-02 07:22:18,776 tasks amountb4:10
 INFO 2024-08-02 07:22:18,812 tasks greaterafter:10
 INFO 2024-08-02 07:22:19,045 tasks excess:5 to chama:5
 INFO 2024-08-02 07:22:19,045 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024072117930113638169', 'wallet_update': {'amount': 5, 'transaction_type': 'moved_to_wallet'}, 'direct_deposit': {'amount': 5, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': None}
+INFO 2024-08-04 09:04:35,611 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-04 09:04:35,611 tasks Task ran at: 2024-08-04 09:04:35.611919
+INFO 2024-08-04 09:04:35,612 tasks Date: 2024-08-04
+INFO 2024-08-04 09:04:35,612 tasks Time: 09:04:35.612497
+INFO 2024-08-04 09:04:35,612 tasks Nairobi: 2024-08-04 09:04:35.612768+03:00
+INFO 2024-08-04 09:04:35,791 tasks amountb4:10
+INFO 2024-08-04 09:04:35,922 tasks greaterafter:10
+INFO 2024-08-04 09:04:36,193 tasks wallet_deposit:10
+INFO 2024-08-04 09:04:36,194 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024071053653113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': {'amount': 10, 'transaction_type': 'moved_to_wallet'}}
+ERROR 2024-08-04 09:04:36,204 tasks Failed to record deposit transactions: {"detail":"Failed to create unified transaction"}
+INFO 2024-08-04 09:04:39,207 tasks amountb4:10
+INFO 2024-08-04 09:04:39,219 tasks greaterafter:10
+INFO 2024-08-04 09:04:39,292 tasks wallet_deposit:10
+INFO 2024-08-04 09:04:39,293 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024071053653113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': {'amount': 10, 'transaction_type': 'moved_to_wallet'}}
+ERROR 2024-08-04 09:04:39,303 tasks Failed to record deposit transactions: {"detail":"Failed to create unified transaction"}
+INFO 2024-08-04 09:04:42,307 tasks amountb4:10
+INFO 2024-08-04 09:04:42,318 tasks greaterafter:10
+INFO 2024-08-04 09:04:42,387 tasks wallet_deposit:10
+INFO 2024-08-04 09:04:42,387 tasks transaction_data:{'member_id': 1, 'chama_id': 1, 'transaction_code': 'ws_CO_02082024071053653113638169', 'wallet_update': None, 'direct_deposit': {'amount': 10, 'phone_number': '254113638169', 'transaction_origin': 'direct_deposit'}, 'wallet_deposit': {'amount': 10, 'transaction_type': 'moved_to_wallet'}}
+ERROR 2024-08-04 09:04:42,395 tasks Failed to record deposit transactions: {"detail":"Failed to create unified transaction"}
+INFO 2024-08-04 10:00:00,086 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-04 10:00:00,106 tasks Task ran at: 2024-08-04 10:00:00.105976
+INFO 2024-08-04 10:00:00,106 tasks Date: 2024-08-04
+INFO 2024-08-04 10:00:00,106 tasks Time: 10:00:00.106670
+INFO 2024-08-04 10:00:00,106 tasks Nairobi: 2024-08-04 10:00:00.106896+03:00
+INFO 2024-08-04 13:12:34,464 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-04 13:12:34,511 tasks Task ran at: 2024-08-04 13:12:34.511843
+INFO 2024-08-04 13:12:34,512 tasks Date: 2024-08-04
+INFO 2024-08-04 13:12:34,512 tasks Time: 13:12:34.512348
+INFO 2024-08-04 13:12:34,512 tasks Nairobi: 2024-08-04 13:12:34.512564+03:00
+INFO 2024-08-04 14:00:00,089 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-04 14:00:00,095 tasks Task ran at: 2024-08-04 14:00:00.090979
+INFO 2024-08-04 14:00:00,095 tasks Date: 2024-08-04
+INFO 2024-08-04 14:00:00,096 tasks Time: 14:00:00.096727
+INFO 2024-08-04 14:00:00,097 tasks Nairobi: 2024-08-04 14:00:00.097527+03:00
+INFO 2024-08-04 16:05:34,551 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-04 16:05:34,552 tasks Task ran at: 2024-08-04 16:05:34.552881
+INFO 2024-08-04 16:05:34,553 tasks Date: 2024-08-04
+INFO 2024-08-04 16:05:34,553 tasks Time: 16:05:34.553732
+INFO 2024-08-04 16:05:34,554 tasks Nairobi: 2024-08-04 16:05:34.554003+03:00
+INFO 2024-08-05 10:49:58,048 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-05 10:49:58,564 tasks Task ran at: 2024-08-05 10:49:58.563992
+INFO 2024-08-05 10:49:58,564 tasks Date: 2024-08-05
+INFO 2024-08-05 10:49:58,565 tasks Time: 10:49:58.565017
+INFO 2024-08-05 10:49:58,565 tasks Nairobi: 2024-08-05 10:49:58.565476+03:00
+INFO 2024-08-05 12:06:57,873 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-05 12:06:57,873 tasks Task ran at: 2024-08-05 12:06:57.873638
+INFO 2024-08-05 12:06:57,873 tasks Date: 2024-08-05
+INFO 2024-08-05 12:06:57,874 tasks Time: 12:06:57.874128
+INFO 2024-08-05 12:06:57,874 tasks Nairobi: 2024-08-05 12:06:57.874357+03:00
+INFO 2024-08-05 14:00:00,064 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-05 14:00:00,064 tasks Task ran at: 2024-08-05 14:00:00.064714
+INFO 2024-08-05 14:00:00,065 tasks Date: 2024-08-05
+INFO 2024-08-05 14:00:00,066 tasks Time: 14:00:00.066609
+INFO 2024-08-05 14:00:00,068 tasks Nairobi: 2024-08-05 14:00:00.068048+03:00
+INFO 2024-08-05 16:00:00,029 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-05 16:00:00,029 tasks Task ran at: 2024-08-05 16:00:00.029764
+INFO 2024-08-05 16:00:00,030 tasks Date: 2024-08-05
+INFO 2024-08-05 16:00:00,030 tasks Time: 16:00:00.030620
+INFO 2024-08-05 16:00:00,031 tasks Nairobi: 2024-08-05 16:00:00.031532+03:00
+INFO 2024-08-06 12:55:34,500 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-06 12:55:34,524 tasks Task ran at: 2024-08-06 12:55:34.524738
+INFO 2024-08-06 12:55:34,525 tasks Date: 2024-08-06
+INFO 2024-08-06 12:55:34,525 tasks Time: 12:55:34.525404
+INFO 2024-08-06 12:55:34,525 tasks Nairobi: 2024-08-06 12:55:34.525631+03:00
+INFO 2024-08-06 14:58:09,479 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-06 14:58:09,519 tasks Task ran at: 2024-08-06 14:58:09.519774
+INFO 2024-08-06 14:58:09,520 tasks Date: 2024-08-06
+INFO 2024-08-06 14:58:09,520 tasks Time: 14:58:09.520398
+INFO 2024-08-06 14:58:09,520 tasks Nairobi: 2024-08-06 14:58:09.520717+03:00
+INFO 2024-08-06 16:00:00,186 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-06 16:00:00,187 tasks Task ran at: 2024-08-06 16:00:00.187637
+INFO 2024-08-06 16:00:00,187 tasks Date: 2024-08-06
+INFO 2024-08-06 16:00:00,188 tasks Time: 16:00:00.188179
+INFO 2024-08-06 16:00:00,188 tasks Nairobi: 2024-08-06 16:00:00.188419+03:00
+INFO 2024-08-07 11:34:32,249 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-07 11:34:32,752 tasks Task ran at: 2024-08-07 11:34:32.752131
+INFO 2024-08-07 11:34:32,752 tasks Date: 2024-08-07
+INFO 2024-08-07 11:34:32,753 tasks Time: 11:34:32.753361
+INFO 2024-08-07 11:34:32,753 tasks Nairobi: 2024-08-07 11:34:32.753866+03:00
+INFO 2024-08-07 12:07:21,701 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-07 12:07:21,815 tasks Task ran at: 2024-08-07 12:07:21.815703
+INFO 2024-08-07 12:07:21,816 tasks Date: 2024-08-07
+INFO 2024-08-07 12:07:21,816 tasks Time: 12:07:21.816495
+INFO 2024-08-07 12:07:21,816 tasks Nairobi: 2024-08-07 12:07:21.816867+03:00
+INFO 2024-08-07 14:32:36,773 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-07 14:32:36,810 tasks Task ran at: 2024-08-07 14:32:36.809980
+INFO 2024-08-07 14:32:36,810 tasks Date: 2024-08-07
+INFO 2024-08-07 14:32:36,810 tasks Time: 14:32:36.810771
+INFO 2024-08-07 14:32:36,811 tasks Nairobi: 2024-08-07 14:32:36.811055+03:00
+INFO 2024-08-07 16:12:27,906 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-07 16:12:27,939 tasks Task ran at: 2024-08-07 16:12:27.939454
+INFO 2024-08-07 16:12:27,939 tasks Date: 2024-08-07
+INFO 2024-08-07 16:12:27,940 tasks Time: 16:12:27.940130
+INFO 2024-08-07 16:12:27,940 tasks Nairobi: 2024-08-07 16:12:27.940389+03:00
+INFO 2024-08-07 18:00:00,151 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-07 18:00:00,193 tasks Task ran at: 2024-08-07 18:00:00.193911
+INFO 2024-08-07 18:00:00,194 tasks Date: 2024-08-07
+INFO 2024-08-07 18:00:00,194 tasks Time: 18:00:00.194491
+INFO 2024-08-07 18:00:00,194 tasks Nairobi: 2024-08-07 18:00:00.194761+03:00
+INFO 2024-08-08 12:00:29,174 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-08 12:00:29,204 tasks Task ran at: 2024-08-08 12:00:29.204724
+INFO 2024-08-08 12:00:29,205 tasks Date: 2024-08-08
+INFO 2024-08-08 12:00:29,205 tasks Time: 12:00:29.205745
+INFO 2024-08-08 12:00:29,206 tasks Nairobi: 2024-08-08 12:00:29.206027+03:00
+INFO 2024-08-08 14:00:00,088 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-08 14:00:00,150 tasks Task ran at: 2024-08-08 14:00:00.150916
+INFO 2024-08-08 14:00:00,151 tasks Date: 2024-08-08
+INFO 2024-08-08 14:00:00,151 tasks Time: 14:00:00.151589
+INFO 2024-08-08 14:00:00,151 tasks Nairobi: 2024-08-08 14:00:00.151883+03:00

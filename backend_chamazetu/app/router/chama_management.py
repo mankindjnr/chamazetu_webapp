@@ -26,22 +26,27 @@ async def create_chama(
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
 
-    try:
-        chama_dict = chama.dict()
-        chama_dict["manager_id"] = current_user.id
-        chama_dict["date_created"] = datetime.now(nairobi_tz).replace(tzinfo=None)
-        chama_dict["updated_at"] = datetime.now(nairobi_tz).replace(tzinfo=None)
-        chama_dict["account_name"] = chama_dict["chama_name"].replace(" ", "").lower()
+    chama_dict = chama.dict()
+    chama_dict["manager_id"] = current_user.id
+    chama_dict["date_created"] = datetime.now(nairobi_tz).replace(tzinfo=None)
+    chama_dict["updated_at"] = datetime.now(nairobi_tz).replace(tzinfo=None)
+    chama_dict["account_name"] = chama_dict["chama_name"].replace(" ", "").lower()
+    # TODO: add he chama code for offline payments here
 
-        new_chama = models.Chama(**chama_dict)
+    new_chama = models.Chama(**chama_dict)
+
+    try:
         db.add(new_chama)
         db.commit()
         db.refresh(new_chama)
 
         return {"Chama": [new_chama]}
     except Exception as e:
-        print(e)
+        db.rollback()
+        management_error_logger.error(f"failed to create chama, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to create chama")
+    finally:
+        db.close()  # close the database connection
 
 
 # retrive chama accepting chamas and are active
@@ -68,8 +73,10 @@ async def get_active_chamas(
 
         return chamas
     except Exception as e:
-        print(e)
+        management_error_logger.error(f"failed to retrieve active chamas, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve active chamas")
+    finally:
+        db.close()
 
 
 # TODO: set contribution day for a chama during creation using the first contribution date
@@ -110,7 +117,12 @@ async def set_first_contribution_day(
         return {"message": "Contribution day set successfully"}
     except Exception as e:
         db.rollback()
+        management_error_logger.error(
+            f"failed to set contribution day for: {chama.id}, error: {e}"
+        )
         raise HTTPException(status_code=400, detail="Failed to set contribution day")
+    finally:
+        db.close()
 
 
 # updating contribution days for chamas
@@ -161,6 +173,8 @@ async def update_contribution_days(
         raise HTTPException(
             status_code=400, detail="Failed to update contribution days"
         )
+    finally:
+        db.close()
 
 
 # ====================================================
@@ -201,16 +215,7 @@ def calculate_next_contribution_date(contribution_interval, contribution_day):
             f"Days until contribution day: {days_until_contribution_day}"
         )
         if days_until_contribution_day == 0:
-            # if today is the contribution day check if time is past the contribution time, if not, set the next contribution day to today else set it to next week
-            # if today.time() < contribution_time:
-            #     next_contribution_date = today
-            # TODO:=== uncomment the above code when contribution time is implemented ===
-            # if today.time() < datetime.strptime("00:00", "%H:%M").time():
-            #     logging.info("Time is before contribution time")
-            #     next_contribution_date = today
-            # else:
-            #     logging.info("Time is after contribution time")
-            #     next_contribution_date = today + timedelta(weeks=1)
+            management_info_logger.info("Today is the contribution day")
             next_contribution_date = today
         else:
             management_info_logger.info("Today is not the contribution day yet")
@@ -246,11 +251,21 @@ async def get_chama_by_name(
     db: Session = Depends(database.get_db),
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
-    chama_name = chama_name["chama_name"]
-    chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": [chama]}
+    try:
+        chama_name = chama_name["chama_name"]
+        chama = (
+            db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+        )
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": [chama]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by name for: {chama_name}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by name")
+    finally:
+        db.close()
 
 
 # get chama by id for a logged in member
@@ -260,11 +275,19 @@ async def get_chama_by_id(
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chama_id = chama_id["chamaid"]
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": [chama]}
+    try:
+        chama_id = chama_id["chamaid"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": [chama]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by id for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by id")
+    finally:
+        db.close()
 
 
 # retrive the next contribution date
@@ -295,6 +318,8 @@ async def get_next_contribution_date(
         raise HTTPException(
             status_code=400, detail="Failed to retrieve chama contribution day"
         )
+    finally:
+        db.close()
 
 
 # get chama by name for a logged in member
@@ -306,11 +331,21 @@ async def get_chama_by_name(
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chama_name = chama_name["chamaname"]
-    chama = db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": [chama]}
+    try:
+        chama_name = chama_name["chamaname"]
+        chama = (
+            db.query(models.Chama).filter(models.Chama.chama_name == chama_name).first()
+        )
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": [chama]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by name for: {chama_name}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by name")
+    finally:
+        db.close()
 
 
 # get chama by id for a logged in member
@@ -322,10 +357,18 @@ async def get_chama_by_name(
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": [chama]}
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": [chama]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by id for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by id")
+    finally:
+        db.close()
 
 
 # getting the chama for a public user - no authentication required
@@ -339,11 +382,19 @@ async def view_chama(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    # we will use the id to extract the manager details like profile photo
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": [chama]}
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        # we will use the id to extract the manager details like profile photo
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": [chama]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by id for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by id")
+    finally:
+        db.close()
 
 
 # changing the status of a chama accepting new members or not
@@ -367,6 +418,8 @@ async def change_chama_status(
         db.rollback()
         print(e)
         raise HTTPException(status_code=400, detail="Failed to update status")
+    finally:
+        db.close()
 
 
 # member_to be added to chama on the member_chama_association table
@@ -407,24 +460,31 @@ async def add_shares(
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    shares = shares.dict()
-    chama_id = shares["chama_id"]
-    num_of_shares = shares["num_of_shares"]
-    member_id = current_user.id
+    try:
+        shares = shares.dict()
+        chama_id = shares["chama_id"]
+        num_of_shares = shares["num_of_shares"]
+        member_id = current_user.id
 
-    add_shares = (
-        update(models.members_chamas_association)
-        .where(
-            and_(
-                models.members_chamas_association.c.member_id == member_id,
-                models.members_chamas_association.c.chama_id == chama_id,
+        add_shares = (
+            update(models.members_chamas_association)
+            .where(
+                and_(
+                    models.members_chamas_association.c.member_id == member_id,
+                    models.members_chamas_association.c.chama_id == chama_id,
+                )
             )
+            .values(num_of_shares=num_of_shares)
         )
-        .values(num_of_shares=num_of_shares)
-    )
-    db.execute(add_shares)
-    db.commit()
-    return {"message": "Shares added successfully"}
+        db.execute(add_shares)
+        db.commit()
+        return {"message": "Shares added successfully"}
+    except Exception as e:
+        db.rollback()
+        print(e)
+        raise HTTPException(status_code=400, detail="Failed to add shares")
+    finally:
+        db.close()
 
 
 # members can leave chamas
@@ -439,11 +499,19 @@ async def my_chamas(
     db: Session = Depends(database.get_db),
     current_user: models.Member = Depends(oauth2.get_current_user),
 ):
-    chamaids = chamaids["chamaids"]
-    chamas = db.query(models.Chama).filter(models.Chama.id.in_(chamaids)).all()
-    if not chamas:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama": chamas}
+    try:
+        chamaids = chamaids["chamaids"]
+        chamas = db.query(models.Chama).filter(models.Chama.id.in_(chamaids)).all()
+        if not chamas:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama": chamas}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by id for: {chamaids}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by id")
+    finally:
+        db.close()
 
 
 # retrieving chama id from its name
@@ -452,11 +520,20 @@ async def get_chama_id(
     chamaname: str,
     db: Session = Depends(database.get_db),
 ):
-    print("==========chamaid chamaname============")
-    chama = db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama_id": chama.id}
+    try:
+        chama = (
+            db.query(models.Chama).filter(models.Chama.chama_name == chamaname).first()
+        )
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama_id": chama.id}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by name for: {chamaname}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by name")
+    finally:
+        db.close()
 
 
 # get chamas name from id
@@ -465,11 +542,18 @@ async def get_chama_name(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Chama_name": chama.chama_name}
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Chama_name": chama.chama_name}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama by id for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama by id")
+    finally:
+        db.close()
 
 
 # retrieving all member ids of a chama
@@ -478,10 +562,18 @@ async def get_chama_members(
     chama_id: str,
     db: Session = Depends(database.get_db),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    return {"Members": [member.id for member in chama.members]}
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        return {"Members": [member.id for member in chama.members]}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama members for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama members")
+    finally:
+        db.close()
 
 
 # update accounts balance for a certain chama after a deposit transaction
@@ -528,9 +620,7 @@ async def update_account_balance(
 
             db.flush()  # flush the changes to the database ensures that the changes are saved to the database
             # db.commit() - with db.begin() commits the transaction if all queries are successful, no need to commit manually
-            db.refresh(
-                chama_account
-            )  # needed to refresh the object to get the updated values
+            db.refresh(chama_account)
         return chama_account
 
     except SQLAlchemyError as e:
@@ -541,6 +631,8 @@ async def update_account_balance(
         db.rollback()
         management_error_logger.error(f"failed to update account balance, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to update account balance")
+    finally:
+        db.close()
 
 
 # retrieve chama account balance
@@ -556,14 +648,24 @@ async def get_chama_account_balance(
         oauth2.get_current_user
     ),
 ):
-    chama_account_balance = (
-        db.query(models.Chama_Account)
-        .filter(models.Chama_Account.chama_id == chama_id)
-        .first()
-    )
-    if not chama_account_balance:
-        raise HTTPException(status_code=404, detail="Chama account not found")
-    return chama_account_balance
+    try:
+        chama_account_balance = (
+            db.query(models.Chama_Account)
+            .filter(models.Chama_Account.chama_id == chama_id)
+            .first()
+        )
+        if not chama_account_balance:
+            raise HTTPException(status_code=404, detail="Chama account not found")
+        return chama_account_balance
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama account balance for: {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama account balance"
+        )
+    finally:
+        db.close()
 
 
 # retrieve all transactions to a chama done today and are deposits and sum the total amount
@@ -612,6 +714,8 @@ async def get_today_deposit(
         raise HTTPException(
             status_code=400, detail="Failed to retrieve today's deposits"
         )
+    finally:
+        db.close()
 
 
 # get chama day and convert to string
@@ -646,6 +750,8 @@ async def get_chama_contrbution_day(
         raise HTTPException(
             status_code=400, detail="Failed to retrieve chama contribution day"
         )
+    finally:
+        db.close()
 
 
 # get chama contribution interval
@@ -672,6 +778,8 @@ async def get_chama_contrbution_interval(
         raise HTTPException(
             status_code=400, detail="Failed to retrieve chama contribution interval"
         )
+    finally:
+        db.close()
 
 
 # get chamas registration fee
@@ -680,12 +788,21 @@ async def get_chama_registration_fee(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
 
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-
-    return {"registration_fee": chama.registration_fee}
+        return {"registration_fee": chama.registration_fee}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama registration fee for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama registration fee"
+        )
+    finally:
+        db.close()
 
 
 # count the number of members in a certain chama
@@ -700,15 +817,25 @@ async def get_chama_members_count(
         oauth2.get_current_user
     ),
 ):
-    chama_members_query = db.query(models.members_chamas_association).filter(
-        models.members_chamas_association.c.chama_id == chama_id
-    )
-    number_of_members = chama_members_query.count()
-    if not chama_members_query:
-        raise HTTPException(
-            status_code=404, detail="could not retrieve chama members count"
+    try:
+        number_of_members = (
+            db.query(func.count(models.members_chamas_association.c.member_id))
+            .filter(models.members_chamas_association.c.chama_id == chama_id)
+            .scalar()
         )
-    return {"number_of_members": number_of_members}
+
+        if number_of_members == 0:
+            raise HTTPException(status_code=404, detail="No members found")
+        return {"number_of_members": number_of_members}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama members count for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama members count"
+        )
+    finally:
+        db.close()
 
 
 @router.get(
@@ -745,14 +872,25 @@ async def activate_chama(
     db: Session = Depends(database.get_db),
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
-    chama_dict = chama.dict()
-    chama_id = chama_dict["chama_id"]
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
-    chama.is_active = chama_dict["is_active"]
-    db.commit()
-    return {"message": "Chama activated/deactivated successfully"}
+    try:
+        chama_dict = chama.dict()
+        chama_id = chama_dict["chama_id"]
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+        chama.is_active = chama_dict["is_active"]
+        db.commit()
+        return {"message": "Chama activated/deactivated successfully"}
+    except Exception as e:
+        db.rollback()
+        management_error_logger.error(
+            f"failed to activate/deactivate chama, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to activate/deactivate chama"
+        )
+    finally:
+        db.close()
 
 
 # delete chama id
@@ -773,8 +911,10 @@ async def delete_chama(
         return {"message": "Chama deleted successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to delete chama, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to delete chama")
+    finally:
+        db.close()
 
 
 # get chamas creation date
@@ -786,11 +926,21 @@ async def get_chama_creation_date(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
 
-    return {"creation_date": chama.date_created.strftime("%d-%m-%Y")}
+        return {"creation_date": chama.date_created.strftime("%d-%m-%Y")}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama creation date for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama creation date"
+        )
+    finally:
+        db.close()
 
 
 # get chamas start date
@@ -802,11 +952,21 @@ async def get_chama_start_date(
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        raise HTTPException(status_code=404, detail="Chama not found")
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
 
-    return {"start_date": chama.last_joining_date.strftime("%d-%m-%Y")}
+        return {"start_date": chama.last_joining_date.strftime("%d-%m-%Y")}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama start date for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve chama start date"
+        )
+    finally:
+        db.close()
 
 
 # get chama about by id from (rules, description, mission, vision, faqs)
@@ -821,16 +981,13 @@ async def get_chama_about(
         oauth2.get_current_user
     ),
 ):
-    print("=============================================")
     try:
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
 
         chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
-        chama_rules_dict = {}
-        for rule in chama_rules:
-            chama_rules_dict[rule.id] = rule.rule
+        chama_rules_dict = {rule.id: rule.rule for rule in chama_rules}
 
         about_chama = (
             db.query(models.About_Chama)
@@ -851,9 +1008,15 @@ async def get_chama_about(
             "about": about_chama,
             "faqs": chama_faqs_list,
         }
+    except SQLAlchemyError as e:
+        management_error_logger.error(
+            f"failed to get chama about for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to retrieve chama about")
     except Exception as e:
-        print("=============================================")
-        print(e)
+        management_error_logger.error(
+            f"failed to get chama about for id {chama_id}, error: {e}"
+        )
         raise HTTPException(status_code=400, detail="Failed to retrieve chama about")
 
 
@@ -901,27 +1064,25 @@ async def update_chama_vision(
             .filter(models.About_Chama.chama_id == chama_id)
             .first()
         )
-        print("about_chama", about_chama, chama.id)
-        if chama and not about_chama:
-            print("===chama wtihout about===")
+        if not about_chama:
             new_about_chama = models.About_Chama(
                 chama_id=chama_id,
                 manager_id=chama.manager_id,
                 vision=vision_dict["vision"],
             )
             db.add(new_about_chama)
-            db.commit()
-            db.refresh(new_about_chama)
-        elif chama and about_chama:
-            print("===chama with about===")
+        else:
             about_chama.vision = vision_dict["vision"]
-            db.commit()
-            db.refresh(about_chama)
+        db.commit()
 
         return {"message": "Chama vision updated successfully"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        management_error_logger.error(f"failed to update chama vision, error: {e}")
+        raise HTTPException(status_code=400, detail="Failed to update chama vision")
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to update chama vision, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to update chama vision")
 
 
@@ -932,7 +1093,6 @@ async def update_chama_mission(
     current_user: models.Manager = Depends(oauth2.get_current_user),
 ):
     try:
-        print("==================hit====================")
         mission_dict = mission.dict()
         chama_id = mission_dict["chama_id"]
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
@@ -946,21 +1106,22 @@ async def update_chama_mission(
             .first()
         )
 
-        if chama and not about_chama:
+        if not about_chama:
             new_about_chama = models.About_Chama(
                 chama_id=chama_id,
                 manager_id=chama.manager_id,
                 mission=mission_dict["mission"],
             )
             db.add(new_about_chama)
-            db.commit()
-            db.refresh(new_about_chama)
-        elif chama and about_chama:
+        else:
             about_chama.mission = mission_dict["mission"]
-            db.commit()
-            db.refresh(about_chama)
+        db.commit()
 
         return {"message": "Chama mission updated successfully"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        management_error_logger.error(f"failed to update chama mission, error: {e}")
+        raise HTTPException(status_code=400, detail="Failed to update chama mission")
     except Exception as e:
         db.rollback()
         print(e)
@@ -981,20 +1142,31 @@ async def add_rule(
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
 
-        chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
         new_rule = models.Rule(chama_id=chama_id, rule=rule_dict["rule"])
         db.add(new_rule)
         db.commit()
         db.refresh(new_rule)
 
         return {"message": "Rule added successfully"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        management_error_logger.error(f"failed to add rule, error: {e}")
+        raise HTTPException(status_code=400, detail="Failed to add rule")
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to add rule, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to add rule")
 
 
 # edit a rule in a chama
+
+
+# utility function to get a chama by id
+def get_chama_by_id_func(db, chama_id):
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+    return chama
 
 
 # delete a rule in a chama
@@ -1007,9 +1179,7 @@ async def delete_rule(
     try:
         rule_dict = rule.dict()
         chama_id = rule_dict["chama_id"]
-        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-        if not chama:
-            raise HTTPException(status_code=404, detail="Chama not found")
+        chama = get_chama_by_id_func(db, chama_id)
 
         rule_to_delete = (
             db.query(models.Rule)
@@ -1039,11 +1209,8 @@ async def add_faq(
     try:
         faq_dict = faq.dict()
         chama_id = faq_dict["chama_id"]
-        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-        if not chama:
-            raise HTTPException(status_code=404, detail="Chama not found")
+        chama = get_chama_by_id_func(db, chama_id)
 
-        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id)
         new_faq = models.Faq(
             chama_id=chama_id,
             question=faq_dict["question"],
@@ -1056,7 +1223,7 @@ async def add_faq(
         return {"message": "Faq added successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to add faq, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to add faq")
 
 
@@ -1070,9 +1237,7 @@ async def delete_faq(
     try:
         faq_dict = faq.dict()
         chama_id = faq_dict["chama_id"]
-        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-        if not chama:
-            raise HTTPException(status_code=404, detail="Chama not found")
+        chama = get_chama_by_id_func(db, chama_id)
 
         faq_to_delete = (
             db.query(models.Faq)
@@ -1102,7 +1267,7 @@ async def get_chama_faqs(
     db: Session = Depends(database.get_db),
 ):
     try:
-        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id)
+        chama_faqs = db.query(models.Faq).filter(models.Faq.chama_id == chama_id).all()
         if not chama_faqs:
             raise HTTPException(status_code=404, detail="Chama faqs not found")
         return {
@@ -1111,7 +1276,7 @@ async def get_chama_faqs(
             ]
         }
     except Exception as e:
-        print(e)
+        management_error_logger.error(f"failed to get chama faqs, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve chama faqs")
 
 
@@ -1125,12 +1290,14 @@ async def get_chama_rules(
     db: Session = Depends(database.get_db),
 ):
     try:
-        chama_rules = db.query(models.Rule).filter(models.Rule.chama_id == chama_id)
+        chama_rules = (
+            db.query(models.Rule).filter(models.Rule.chama_id == chama_id).all()
+        )
         if not chama_rules:
             raise HTTPException(status_code=404, detail="Chama rules not found")
         return [rule.rule for rule in chama_rules]
     except Exception as e:
-        print(e)
+        management_error_logger.error(f"failed to get chama rules, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve chama rules")
 
 
@@ -1155,7 +1322,9 @@ async def get_chama_mission_vision(
             )
         return {"mission": about_chama.mission, "vision": about_chama.vision}
     except Exception as e:
-        print(e)
+        management_error_logger.error(
+            f"failed to get chama mission and vision for id {chama_id}, error: {e}"
+        )
         raise HTTPException(
             status_code=400, detail="Failed to retrieve chama mission and vision"
         )
@@ -1184,10 +1353,6 @@ async def get_share_price_and_prev_two_contribution_dates(
                     status_code=404, detail="Chama contribution day not found"
                 )
 
-            print("================contributions==================")
-            print(chama.contribution_interval)
-            print(chama_contribution_day.next_contribution_date)
-
             prev_contribution_date, prev_two_contribution_date = (
                 calculate_two_previous_dates(
                     chama.contribution_interval,
@@ -1195,8 +1360,6 @@ async def get_share_price_and_prev_two_contribution_dates(
                 )
             )
 
-            print(prev_contribution_date, "::", prev_two_contribution_date)
-            print("================contributions==================")
             chamas_details[chama.id] = {
                 "share_price": chama.contribution_amount,
                 "fine_per_share": chama.fine_per_share,
@@ -1206,7 +1369,9 @@ async def get_share_price_and_prev_two_contribution_dates(
 
         return chamas_details
     except Exception as e:
-        print(e)
+        management_error_logger.error(
+            f"failed to get chamas share price and previous two contribution dates, error: {e}"
+        )
         raise HTTPException(
             status_code=400,
             detail="Failed to retrieve chamas share price and previous two contribution dates",
@@ -1269,7 +1434,7 @@ async def get_chama_fines(
             ]
         }
     except Exception as e:
-        print(e)
+        management_error_logger.error(f"failed to get chama fines, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve chama fines")
 
 
