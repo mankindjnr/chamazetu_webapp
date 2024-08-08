@@ -722,3 +722,22 @@ INFO 2024-08-08 14:00:00,150 tasks Task ran at: 2024-08-08 14:00:00.150916
 INFO 2024-08-08 14:00:00,151 tasks Date: 2024-08-08
 INFO 2024-08-08 14:00:00,151 tasks Time: 14:00:00.151589
 INFO 2024-08-08 14:00:00,151 tasks Nairobi: 2024-08-08 14:00:00.151883+03:00
+INFO 2024-08-08 15:36:03,267 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-08 15:36:03,267 tasks Task ran at: 2024-08-08 15:36:03.267901
+INFO 2024-08-08 15:36:03,268 tasks Nairobi: 2024-08-08 15:36:03.268379+03:00
+INFO 2024-08-08 15:37:15,504 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-08 15:37:15,505 tasks Task ran at: 2024-08-08 15:37:15.505165
+INFO 2024-08-08 15:37:15,505 tasks Nairobi: 2024-08-08 15:37:15.505455+03:00
+INFO 2024-08-08 15:37:31,484 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-08 15:37:31,485 tasks Task ran at: 2024-08-08 15:37:31.485824
+INFO 2024-08-08 15:37:31,486 tasks Nairobi: 2024-08-08 15:37:31.486189+03:00
+INFO 2024-08-08 16:00:00,108 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-08 16:00:00,108 tasks Task ran at: 2024-08-08 16:00:00.108600
+INFO 2024-08-08 16:00:00,108 tasks Date: 2024-08-08
+INFO 2024-08-08 16:00:00,111 tasks Time: 16:00:00.111910
+INFO 2024-08-08 16:00:00,112 tasks Nairobi: 2024-08-08 16:00:00.112729+03:00
+INFO 2024-08-08 18:00:00,131 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-08 18:00:00,131 tasks Task ran at: 2024-08-08 18:00:00.131614
+INFO 2024-08-08 18:00:00,132 tasks Date: 2024-08-08
+INFO 2024-08-08 18:00:00,132 tasks Time: 18:00:00.132307
+INFO 2024-08-08 18:00:00,133 tasks Nairobi: 2024-08-08 18:00:00.132596+03:00

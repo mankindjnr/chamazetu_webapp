@@ -193,11 +193,11 @@ def update_users_profile_image(headers, role, new_profile_image_name):
 
 
 # the status of this in the table will be processed later in the day(bg)
-@retry(
-    stop=stop_after_attempt(2),
-    wait=wait_fixed(10),
-    retry=retry_if_exception_type(requests.RequestException),
-)
+# @retry(
+#     stop=stop_after_attempt(2),
+#     wait=wait_fixed(10),
+#     retry=retry_if_exception_type(requests.RequestException),
+# )
 def record_wallet_transaction_before_processing(
     checkoutrequestid, member_id, destination, amount
 ):
@@ -223,11 +223,11 @@ def record_wallet_transaction_before_processing(
 
 
 # the status of this in the table will be processed later in the day(bg)
-@retry(
-    stop=stop_after_attempt(2),
-    wait=wait_fixed(10),
-    retry=retry_if_exception_type(requests.RequestException),
-)
+# @retry(
+#     stop=stop_after_attempt(2),
+#     wait=wait_fixed(10),
+#     retry=retry_if_exception_type(requests.RequestException),
+# )
 def record_transaction_before_processing(
     checkoutrequestid, member_id, destination, amount, phone_number, transaction_origin
 ):
@@ -349,8 +349,8 @@ def stk_push_status(
     raise Exception("Max retries exceeded")
 
 
+# test a normal retry mechanism
 @shared_task
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(3))
 def after_succesful_chama_deposit(mpesa_data):
     """
     After a successful stk push we add the amount to the chama account, update wallets if necessary

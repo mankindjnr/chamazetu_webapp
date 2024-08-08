@@ -9,15 +9,50 @@ import httpx
 import logging
 import os
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 from .. import schemas, database, utils, oauth2, models
-from .stk_push import stk_push_status
+from .stk_push import stk_push_status, generate_access_token, generate_password
 
 router = APIRouter(prefix="/callback", tags=["callback"])
 
 transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
+
+
+# transaction status function
+async def check_transaction_status(transaction_id: str) -> dict:
+    url = os.getenv("TRANSACTION_STATUS_URL")
+    access_token = await generate_access_token()
+    password, timestamp = generate_password()
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {access_token}",
+    }
+
+    payload = {
+        "Initiator": "BLACKALPHA NJOROGE VENTURES",
+        "SecurityCredential": password,
+        "CommandID": "TransactionStatusQuery",
+        "TransactionID": transaction_id,
+        "PartyA": 4138859,
+        "IdentifierType": "4",
+        "ResultURL": "https://chamazetu.com/TransactionStatus/result",
+        "QueueTimeOutURL": "https://chamazetu.com/TransactionStatus/queue",
+        "Remarks": "Transaction status query",
+        "Occasion": "Updating call back data table",
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        response_data = response.json()
+
+    return response_data
 
 
 @router.post("/data", status_code=status.HTTP_201_CREATED)
@@ -149,6 +184,7 @@ async def update_pending_callback_data(
 async def update_callback_transactions(
     db: Session = Depends(database.get_db),
 ):
+    transaction_info_logger.info("Updating callback transactions")
     try:
         kenya_tz = ZoneInfo("Africa/Nairobi")
         five_minutes_ago = datetime.now(kenya_tz) - timedelta(minutes=5)
@@ -163,18 +199,19 @@ async def update_callback_transactions(
 
         if pending_transactions:
             for transaction in pending_transactions:
-                checkout_request_id = transaction.CheckoutRequestID
+                trasaction_id = transaction.MpesaReceiptNumber
 
                 # Call the stk_push_status function directly
-                response = await stk_push_status(checkout_request_id)
+                response = await check_transaction_status(transaction_id)
 
-                if response["message"] == "0 The transaction was successful":
+                if response["ResponseCode"] == "0":
                     # Update transaction status to success
                     transaction.Status = "Success"
                 else:
                     # Update transaction status to failed with reason
                     transaction.Status = "Failed"
-                    transaction.ResultCode = response["queryResponse"]["ResultCode"]
+                    transaction.ResultDesc = response["ResponseDescription"]
+                    transaction.ResultCode = response["ResponseCode"]
 
                 db.add(transaction)
 
