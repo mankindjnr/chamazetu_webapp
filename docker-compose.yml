@@ -111,6 +111,7 @@ services:
     environment:
       - TZ=Africa/Nairobi
       - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
+      - C_FORCE_ROOT=true
     networks:
       - chamazetu_network
 

@@ -19,6 +19,29 @@ transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
 
 
+# get wallet number and balance
+@router.get("/wallet_info/{member_id}", status_code=status.HTTP_200_OK)
+async def get_wallet_info(
+    member_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        member = db.query(models.Member).filter(models.Member.id == member_id).first()
+
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+        return {
+            "wallet_number": member.wallet_number,
+            "wallet_balance": member.wallet_balance,
+        }
+
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get wallet info {e}")
+        raise HTTPException(status_code=400, detail="Failed to get wallet info")
+
+
 # get all chamas a member is connected to using member id
 @router.get(
     "/chamas",
@@ -196,34 +219,27 @@ async def get_recent_transactions(
 
 # update wallet balance
 @router.put(
-    "/update_wallet_balance",
+    "/deposit_to_wallet",
     status_code=status.HTTP_200_OK,
     response_model=schemas.MemberWalletBalanceResp,
 )
-async def update_member_wallet_balance(
+async def deposit_to_wallet(
     wallet_data: schemas.UpdateWalletBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
 
     try:
-        print("===========wallet update===========")
-        wallet_dict = wallet_data.dict()
-        transaction_type = wallet_dict["transaction_type"]
-        amount = wallet_dict["amount"]
-        wallet_dict["transaction_completed"] = True
-        wallet_dict["transaction_date"] = datetime.now(nairobi_tz).replace(tzinfo=None)
-        if not "transaction_code" in wallet_dict:
-            wallet_dict["transaction_code"] = generate_transaction_code(
-                transaction_type,
-                "wallet",
-                wallet_dict["transaction_destination"],
-                wallet_dict["member_id"],
-            )
+        transaction_type = wallet_data.transaction_type
+        amount = wallet_data.amount
+        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
+        transaction_code = wallet_data.transaction_code
+        transaction_destination = wallet_data.transaction_destination
+        member_id = wallet_data.member_id
 
         with db.begin_nested():
             member = (
                 db.query(models.Member)
-                .filter(models.Member.id == wallet_dict["member_id"])
+                .filter(models.Member.id == member_id)
                 .with_for_update()
                 .first()
             )
@@ -231,48 +247,39 @@ async def update_member_wallet_balance(
             if not member:
                 raise HTTPException(status_code=404, detail="Member not found")
 
-            if transaction_type in ["deposited_to_wallet", "moved_to_wallet"]:
-                new_wallet_balance = member.wallet_balance + amount
-            elif transaction_type in ["withdrawn_from_wallet", "moved_to_chama"]:
-                if member.wallet_balance < amount:
-                    raise HTTPException(status_code=400, detail="Insufficient funds")
-                new_wallet_balance = member.wallet_balance - amount
-            else:
-                raise HTTPException(status_code=400, detail="Invalid transaction type")
+            # update the members wallet balance
+            member.wallet_balance += amount
 
-            member.wallet_balance = new_wallet_balance
-            db.add(member)
+            wallet_transaction = models.Wallet_Transaction(
+                amount=amount,
+                transaction_type=transaction_type,
+                transaction_date=transaction_date,
+                transaction_completed=True,
+                transaction_code=transaction_code,
+                transaction_destination=transaction_destination,
+                member_id=member_id,
+            )
+            db.add(wallet_transaction)
 
-            new_transaction = models.Wallet_Transaction(**wallet_dict)
-            db.add(new_transaction)
-
-            if transaction_type == "deposited_to_wallet":
-                unprocessed_transactions = (
-                    db.query(models.Wallet_Transaction)
-                    .filter(models.Wallet_Transaction.member_id == member.id)
-                    .filter(models.Wallet_Transaction.transaction_completed == False)
-                    .filter(
-                        models.Wallet_Transaction.transaction_type
-                        == "unprocessed wallet deposit"
-                    )
-                    .filter(
-                        models.Wallet_Transaction.transaction_code
-                        == wallet_dict["transaction_code"]
-                    )
-                    .filter(
-                        models.Wallet_Transaction.transaction_destination
-                        == wallet_dict["transaction_destination"]
-                    )
-                    .all()
+            # callback record update
+            callback_record = (
+                db.query(models.CallbackData)
+                .filter(
+                    models.CallbackData.CheckoutRequestID == transaction_code,
+                    models.CallbackData.Status == "Pending",
+                    models.CallbackData.Amount == amount,
+                    models.CallbackData.Purpose == "wallet",
                 )
+                .first()
+            )
+            transaction_info_logger.info(f"callback record {callback_record}")
+            callback_record.Status = "Success"
 
-                for transaction in unprocessed_transactions:
-                    transaction.transaction_completed = True
-                    transaction.transaction_type = "processed wallet deposit"
-                    db.add(transaction)
-
-            db.commit()
+        db.commit()
         return {"wallet_balance": member.wallet_balance}
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         transaction_error_logger.error(f"Failed to update members wallet balance {e}")
         db.rollback()
@@ -367,21 +374,25 @@ async def get_recent_wallet_activity(
 
 
 # might check on adding headers to the request to make sure the member is the one making the request
-@router.put(
-    "/repay_fines",
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.MemberFineResp,
+@router.post(
+    "/unified_wallet_contribution",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.UnifiedWalletContResp,
 )
-async def repay_fines(
-    fine_data: schemas.MemberFineBase = Body(...),
+async def unified_wallet_contribution(
+    contrib_data: schemas.UnifiedWalletContBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
     try:
-        transaction_info_logger.info("===========repaying fines===========")
-        fine_dict = fine_data.dict()
-        chama_id = fine_dict["chama_id"]
-        member_id = fine_dict["member_id"]
-        amount = fine_dict["amount"]
+        transaction_info_logger.info(
+            "===========unified wallet contribution==========="
+        )
+        chama_id = contrib_data.chama_id
+        member_id = contrib_data.member_id
+        amount = contrib_data.amount
+        expected_amount = contrib_data.expected_contribution
+        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
+        wallet_number = generateWalletNumber(db, member_id)
 
         fines = (
             db.query(models.Fine)
@@ -397,73 +408,120 @@ async def repay_fines(
             .all()
         )
 
-        if not fines:
-            #  this means the member has no fines to pay so we return the amount to the member fror the transaction to be completed
-            return {"balance_after_fines": amount}
-
         total_fines_repaid = 0
+        amount_contributed = 0
         with db.begin_nested():
-            for fine in fines:
-                transaction_info_logger.info(f"fine amout {fine.total_expected_amount}")
-                transaction_info_logger.info(f"paying with {amount}")
+            if fines:
+                for fine in fines:
+                    transaction_info_logger.info(
+                        f"fine amout {fine.total_expected_amount}"
+                    )
+                    transaction_info_logger.info(f"paying with {amount}")
 
-                fine_transaction_code = generate_transaction_code(
-                    "fine_repay", "wallet", "fine", member_id
+                    fine_transaction_code = generate_transaction_code(
+                        "fine_repay", wallet_number, chama_id
+                    )
+
+                    if amount >= fine.total_expected_amount:
+                        amount -= fine.total_expected_amount
+                        fine_amount_repaid = fine.total_expected_amount
+                        fine.is_paid = True
+                        fine.paid_date = transaction_date
+                        fine.total_expected_amount = 0
+                    else:
+                        fine.total_expected_amount -= amount
+                        fine_amount_repaid = amount
+                        amount = 0
+
+                    total_fines_repaid += fine_amount_repaid
+
+                    # record the fine transaction
+                    fine_transaction_data = {
+                        "amount": fine_amount_repaid,
+                        "phone_number": wallet_number,
+                        "date_of_transaction": transaction_date,
+                        "updated_at": transaction_date,
+                        "transaction_completed": True,
+                        "transaction_code": fine_transaction_code,
+                        "transaction_type": "fine deduction",
+                        "transaction_origin": "wallet",
+                        "chama_id": chama_id,
+                        "member_id": member_id,
+                    }
+                    new_fine_transaction = models.Transaction(**fine_transaction_data)
+                    db.add(new_fine_transaction)
+
+                    # create a wallet transaction for fine deduction
+                    wallet_fine_transaction_data = {
+                        "amount": fine_amount_repaid,
+                        "transaction_type": "fine deduction",
+                        "transaction_date": transaction_date,
+                        "transaction_completed": True,
+                        "transaction_code": fine_transaction_code,
+                        "transaction_destination": chama_id,
+                        "member_id": member_id,
+                    }
+                    new_wallet_fine_transaction = models.Wallet_Transaction(
+                        **wallet_fine_transaction_data
+                    )
+                    db.add(new_wallet_fine_transaction)
+
+                    if amount == 0:
+                        break
+
+            # if after fine repayment, the member has some amount left, we contribute towards the expected amount
+            # this is both a wallet and trasaction record
+            member_record = (
+                db.query(models.Member).filter(models.Member.id == member_id).first()
+            )
+            if amount > 0 and expected_amount > 0:
+                transaction_code = generate_transaction_code(
+                    "deposit", wallet_number, chama_id
                 )
-                fine_transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
 
-                if amount >= fine.total_expected_amount:
-                    amount -= fine.total_expected_amount
-                    fine_amount_repaid = fine.total_expected_amount
-                    fine.is_paid = True
-                    fine.paid_date = fine_transaction_date
-                    fine.total_expected_amount = 0
-                else:
-                    fine.total_expected_amount -= amount
-                    fine_amount_repaid = amount
-                    amount = 0
+                if amount > expected_amount:
+                    amount = expected_amount
 
-                total_fines_repaid += fine_amount_repaid
-
-                # record the fine transaction
-                fine_transaction_data = {
-                    "amount": fine_amount_repaid,
-                    "phone_number": generateWalletNumber(db, member_id),
-                    "date_of_transaction": fine_transaction_date,
-                    "updated_at": fine_transaction_date,
+                # record the transaction
+                transaction_data = {
+                    "amount": amount,
+                    "phone_number": member_record.wallet_number,
+                    "date_of_transaction": transaction_date,
+                    "updated_at": transaction_date,
                     "transaction_completed": True,
-                    "transaction_code": fine_transaction_code,
-                    "transaction_type": "fine deduction",
-                    "transaction_origin": "wallet_deposit",
+                    "transaction_code": transaction_code,
+                    "transaction_type": "deposit",
+                    "transaction_origin": "wallet",
                     "chama_id": chama_id,
                     "member_id": member_id,
                 }
-                new_fine_transaction = models.Transaction(**fine_transaction_data)
-                db.add(new_fine_transaction)
 
-                # create a wallet transaction for fine deduction
-                wallet_fine_transaction_data = {
-                    "amount": fine_amount_repaid,
-                    "transaction_type": "fine deduction",
-                    "transaction_date": fine_transaction_date,
+                new_transaction = models.Transaction(**transaction_data)
+                db.add(new_transaction)
+
+                # record the wallet transaction
+                wallet_transaction_data = {
+                    "amount": amount,
+                    "transaction_type": "moved to chama",
+                    "transaction_date": transaction_date,
                     "transaction_completed": True,
-                    "transaction_code": fine_transaction_code,
+                    "transaction_code": transaction_code,
                     "transaction_destination": chama_id,
                     "member_id": member_id,
                 }
-                new_wallet_fine_transaction = models.Wallet_Transaction(
-                    **wallet_fine_transaction_data
-                )
-                db.add(new_wallet_fine_transaction)
 
-                if amount == 0:
-                    break
+                new_wallet_transaction = models.Wallet_Transaction(
+                    **wallet_transaction_data
+                )
+                db.add(new_wallet_transaction)
+
+                amount_contributed = amount
 
             # update the wallet balance
             member_record = (
                 db.query(models.Member).filter(models.Member.id == member_id).first()
             )
-            member_record.wallet_balance -= total_fines_repaid
+            member_record.wallet_balance -= amount_contributed + total_fines_repaid
 
             # update the chama account balance
             chama_account = (
@@ -471,17 +529,20 @@ async def repay_fines(
                 .filter(models.Chama_Account.chama_id == chama_id)
                 .first()
             )
-            chama_account.account_balance += total_fines_repaid
+            chama_account.account_balance += total_fines_repaid + amount_contributed
 
             db.commit()
 
-        transaction_info_logger.info("===========fines repaid===========")
-        # now return the balance after fines have been deducted from the initial amount
-        return {"balance_after_fines": amount}
+        transaction_info_logger.info(
+            "===========unified wallet contribution==========="
+        )
+        return {"message": "unified wallet contribution successful"}
     except Exception as e:
-        transaction_error_logger.error(f"Failed to repay fines {e}")
+        transaction_error_logger.error(f"failed to make a unified wallet cont {e}")
         db.rollback()
-        raise HTTPException(status_code=400, detail="Failed to repay fines")
+        raise HTTPException(
+            status_code=400, detail="unified wallet contribution failed"
+        )
 
 
 # TODO: FIX LATER TO ONE WITH ABOVE OR BETTER IN RECORD FINE FROM MPESA ONLY
@@ -1095,7 +1156,7 @@ async def auto_contrmake_auto_contributionsibute(
                         tzinfo=None
                     )
                     fine_transaction_code = generate_transaction_code(
-                        "auto_repay", "wallet", "fine", member.member_id
+                        "auto_repay", "wallet", "fine"
                     )
 
                     if wallet_balance < fine.total_expected_amount:
@@ -1153,7 +1214,7 @@ async def auto_contrmake_auto_contributionsibute(
                 # continue with the contribution
                 # make a transaction
                 transaction_code = generate_transaction_code(
-                    "auto_deposit", "wallet", "chama", member.member_id
+                    "auto_deposit", "wallet", "chama"
                 )
                 transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
                 transaction_data = {
@@ -1258,7 +1319,7 @@ def difference_between_contributed_and_expected(
     return expected_amount - total_contribution
 
 
-def generate_transaction_code(transaction_type, origin, destination, member_id):
+def generate_transaction_code(transaction_type, origin, destination):
     # Get current month abbreviation in uppercase
     month_prefix = datetime.now(nairobi_tz).strftime("%b").upper()
 
@@ -1293,9 +1354,7 @@ def generate_transaction_code(transaction_type, origin, destination, member_id):
     )
 
     # Construct transaction code
-    transaction_code = (
-        f"{prefix}{timestamp}_{random_element}_{origin}_{destination}{member_id}"
-    )
+    transaction_code = f"{prefix}{timestamp}_{random_element}_{origin}_{destination}"
 
     return transaction_code
 

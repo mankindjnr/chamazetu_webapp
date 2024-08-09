@@ -164,20 +164,20 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # Celery settings
-CELERY_broker_url = os.getenv("CELERY_broker_url")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
 accept_content = ["json", "pickle"]
-task_serializer = "json"
+CELERY_TASK_SERIALIZER = "json"
 result_serializer = "json"
-timezone = "Africa/Nairobi"
-CELERY_enable_utc = False  # set to False to use local timezone(i think)
-result_expires = 3600
+CELERY_TIMEZONE = "Africa/Nairobi"
+CELERY_ENABLE_UTC = False  # set to False to use local timezone(i think)
+CELERY_TASK_RESULT_EXPIRES = 3600
 # CELERY_TASK_TIME_LIMIT = 1000  # 1000 seconds - 16 minutes is how long a task can run
 CELERY_WORKER_CONCURRENCY = 4  # number of workers
 
 # monitor celery tasks
-# result_backend = "django-db"  # YOU CAN USE REDIS AS WELL
+# CELERY_RESULT_BACKEND = "django-db"  # YOU CAN USE REDIS AS WELL
 # using redis as the result backend
-result_backend = os.getenv("result_backend")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
 
 # celery beat settings
 CELERY_BEAT_SCHEDULER = os.getenv("CELERY_BEAT_SCHEDULER")

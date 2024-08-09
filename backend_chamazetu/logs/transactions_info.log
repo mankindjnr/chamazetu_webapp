@@ -1,4 +1,0 @@
-2024-08-08 18:09:55,866 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-08 18:09:56,350 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"
-2024-08-08 18:10:57,102 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
-2024-08-08 18:10:57,383 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query "HTTP/1.1 200 OK"
