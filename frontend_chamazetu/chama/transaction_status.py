@@ -16,7 +16,7 @@ load_dotenv()
 @require_http_methods(["POST"])
 @csrf_exempt
 def status_result_receiver(request):
-    PRINT("=======status result=======")
+    print("=======status result=======")
     data = request.body.decode("utf-8")
     data = json.loads(data)
     print("=======status result=======")

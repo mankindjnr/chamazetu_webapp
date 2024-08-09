@@ -12,19 +12,20 @@
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
 
-    <div class="search-bar">
+    <!-- <div class="search-bar">
       <form class="search-form d-flex align-items-center" method="POST" action="#">
         <input type="text" name="query" placeholder="Search" title="Enter search keyword">
         <button type="submit" title="Search"><i class="bi bi-search"></i></button>
       </form>
-    </div><!-- End Search Bar -->
+    </div> -->
+    <!-- End Search Bar -->
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
 
         <li class="nav-item d-block d-lg-none">
           <a class="nav-link nav-icon search-bar-toggle " href="#">
-            <i class="bi bi-search"></i>
+            <!-- <i class="bi bi-search"></i> -->
           </a>
         </li><!-- End Search Icon-->
 
@@ -37,9 +38,7 @@
               Ksh: {{ wallet.wallet_balance }}
           </button> -->
           <!-- Button trigger wallet deposit modal -->
-        <button type="button" class="btn btn-success bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
-          Ksh: {{ wallet.wallet_balance }}
-        </button>
+          <button type="button" class="btn btn-dark bi bi-wallet">Ksh: {{ wallet.wallet_balance }}</button>
           </a>
 
         </li>
@@ -162,17 +161,17 @@
         {% endif %}
       <!-- end messages -->
       <div class="ml-auto">
-        <!-- Button trigger wallet deposit modal
-        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
+        <!-- Button trigger wallet deposit modal-->
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
           Deposit from wallet
-        </button> -->
+        </button>
         <!-- wallet deposit Modal -->
         {% include 'member/modals/wallet_deposit_modal.html' %}
 
         <!-- Button trigger direct deposit modal -->
-        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
+        <!-- <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
           mpesa
-        </button>
+        </button> -->
         <!-- direct deposit Modal -->
         {% include 'member/modals/direct_deposit_modal.html' %}
       </div>

@@ -229,6 +229,23 @@ class UnifiedTransactionBase(BaseModel):
         orm_mode = True
 
 
+class UnifiedWalletContBase(BaseModel):
+    expected_contribution: int
+    member_id: int
+    chama_id: int
+    amount: int
+
+    class Config:
+        orm_mode = True
+
+
+class UnifiedWalletContResp(BaseModel):
+    message: str
+
+    class Config:
+        orm_mode = True
+
+
 class TransactionBase(BaseModel):
     amount: int
     chama_id: int
@@ -703,6 +720,7 @@ class MemberFineBase(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
 
 class MemberMpesaFineBase(BaseModel):
     transaction_code: str

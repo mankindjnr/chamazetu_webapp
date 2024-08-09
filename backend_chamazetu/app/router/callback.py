@@ -61,8 +61,6 @@ async def callback_data(
     db: Session = Depends(database.get_db),
 ):
     try:
-        # Start a new transaction
-        # db.begin()
         transaction_date = datetime.strptime(
             str(transaction_data.TransactionDate), "%Y%m%d%H%M%S"
         )
@@ -77,7 +75,7 @@ async def callback_data(
             MpesaReceiptNumber=transaction_data.MpesaReceiptNumber,
             TransactionDate=transaction_date,
             PhoneNumber=transaction_data.PhoneNumber,
-            Purpose="chama",
+            Purpose="wallet",
             Status="Pending",
         )
         db.add(new_callback)
@@ -198,11 +196,19 @@ async def update_callback_transactions(
         )
 
         if pending_transactions:
+            transaction_info_logger.info("Updating callback transactions")
+            transaction_info_logger.info(
+                f"Transactions to update: {len(pending_transactions)}"
+            )
             for transaction in pending_transactions:
-                trasaction_id = transaction.MpesaReceiptNumber
+                transaction_info_logger.info(
+                    f"Updating transaction: {transaction.MpesaReceiptNumber}"
+                )
+                transaction_id = transaction.MpesaReceiptNumber
 
                 # Call the stk_push_status function directly
                 response = await check_transaction_status(transaction_id)
+                transaction_info_logger.info(f"Response: {response}")
 
                 if response["ResponseCode"] == "0":
                     # Update transaction status to success

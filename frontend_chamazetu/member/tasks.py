@@ -122,35 +122,6 @@ def update_wallet_balance(
     return None
 
 
-@shared_task
-def wallet_deposit(mpesa_data):
-    if not mpesa_data:
-        return
-    headers = mpesa_data["headers"]
-    amount = mpesa_data["amount"]
-    member_id = mpesa_data["member_id"]
-    transaction_code = mpesa_data["checkoutrequestid"]
-
-    url = f"{os.getenv('api_url')}/members/update_wallet_balance"
-
-    data = {
-        "member_id": member_id,
-        "transaction_destination": get_member_wallet_number(member_id),
-        "amount": amount,
-        "transaction_type": "deposited_to_wallet",
-        "transaction_code": transaction_code,
-    }
-
-    response = requests.put(url, json=data)
-    if response.status_code == HTTPStatus.OK:
-        return None
-    else:
-        logger.error(
-            f"Failed to deposit to wallet: {response.status_code}, {response.text}"
-        )
-    return None
-
-
 # TODO: this is a business to customer transaction
 @shared_task
 def wallet_withdrawal(headers, amount, member_id, transaction_code):
@@ -193,11 +164,7 @@ def update_users_profile_image(headers, role, new_profile_image_name):
 
 
 # the status of this in the table will be processed later in the day(bg)
-# @retry(
-#     stop=stop_after_attempt(2),
-#     wait=wait_fixed(10),
-#     retry=retry_if_exception_type(requests.RequestException),
-# )
+@shared_task(bind=True, max_retries=3)
 def record_wallet_transaction_before_processing(
     checkoutrequestid, member_id, destination, amount
 ):
@@ -223,11 +190,7 @@ def record_wallet_transaction_before_processing(
 
 
 # the status of this in the table will be processed later in the day(bg)
-# @retry(
-#     stop=stop_after_attempt(2),
-#     wait=wait_fixed(10),
-#     retry=retry_if_exception_type(requests.RequestException),
-# )
+@shared_task(bind=True, max_retries=3)
 def record_transaction_before_processing(
     checkoutrequestid, member_id, destination, amount, phone_number, transaction_origin
 ):
@@ -267,42 +230,9 @@ def stk_push_status(
 ):
     """
     Check the status of the stk push
-    but record the transaction in the database then check the status TODO: is this necessary?
-    TODO:look on the viability of a phone number column in wallet transactions
+    since  we no longer do direct chama deposits, we will only make unprocessed deposits to the wallet
+    or default to using the callback - we will update the callback table to success
     """
-    record_unprocessed_transaction = None
-    try:
-        if destination == "wallet":
-            record_unprocessed_transaction = (
-                record_wallet_transaction_before_processing(
-                    checkoutrequestid,
-                    member_id,
-                    destination,
-                    amount,
-                )
-            )
-        else:
-            record_unprocessed_transaction = record_transaction_before_processing(
-                checkoutrequestid,
-                member_id,
-                destination,
-                amount,
-                phone_number,
-                transaction_origin,
-            )
-    except RetryError as e:
-        logger.error(f"retry error occurred during transaction recording: {e}")
-        self.retry(exc=e, countdown=30)
-    except requests.HTTPError as e:
-        logger.error(f"HTTP error occurred during transaction recording: {e}")
-        self.retry(exc=e, countdown=30)
-    except Exception as e:
-        logger.error(f"An error occurred during transaction recording: {e}")
-        self.retry(exc=e, countdown=30)
-
-    # i should only continue if the transaction was recorded
-    if not record_unprocessed_transaction:
-        return None
 
     time.sleep(60)
 
@@ -322,7 +252,6 @@ def stk_push_status(
                         "amount": amount,
                         "phone_number": phone_number,
                         "transaction_origin": transaction_origin,
-                        "headers": headers,
                     }
                     return successful_push_data
                 else:
@@ -347,6 +276,34 @@ def stk_push_status(
                     raise Exception("Max retries exceeded") from e
 
     raise Exception("Max retries exceeded")
+
+
+@shared_task
+def wallet_deposit(mpesa_data):
+    if not mpesa_data:
+        return
+    amount = mpesa_data["amount"]
+    member_id = mpesa_data["member_id"]
+    transaction_code = mpesa_data["checkoutrequestid"]
+
+    url = f"{os.getenv('api_url')}/members/deposit_to_wallet"
+
+    data = {
+        "member_id": member_id,
+        "transaction_destination": get_member_wallet_number(member_id),
+        "amount": amount,
+        "transaction_type": "deposit to wallet",
+        "transaction_code": transaction_code,
+    }
+
+    response = requests.put(url, json=data)
+    if response.status_code == HTTPStatus.OK:
+        return True
+    else:
+        logger.error(
+            f"Failed to deposit to wallet: {response.status_code}, {response.text}"
+        )
+    return None
 
 
 # test a normal retry mechanism
@@ -488,19 +445,6 @@ def calculate_missed_contributions_fines():
 def balance_after_paying_fines_and_missed_contributions(
     headers, amount, member_id, chama_id, transaction_code, phone_number
 ):
-
-    # we first move the money from the wallet to the chama if its a success we continue with the repayment
-    # url = f"{os.getenv('api_url')}/transactions/record_fine_payment_from_mpesa"
-    # data = {
-    #     "amount": amount,
-    #     "transaction_destination": chama_id,
-    #     "phone_number": f"254{phone_number}",
-    #     "transaction_code": transaction_code,
-    #     "member_id": member_id,
-    # }
-
-    # repayment_response = requests.post(url, json=data)
-    # if repayment_response.status_code == HTTPStatus.CREATED:
     url = f"{os.getenv('api_url')}/members/repay_fines_from_mpesa"
     data = {
         "transaction_code": transaction_code,
@@ -514,15 +458,10 @@ def balance_after_paying_fines_and_missed_contributions(
 
     # using the received amount and balance_after - update wallet, transaction and accout - bg task
     if resp.status_code == HTTPStatus.OK:
-        # paid_fine = amount - resp.json().get("balance_after_fines")
-        # update_chama_account_balance.delay(chama_id, paid_fine, "deposit")
         return resp.json().get("balance_after_fines")
     else:
         return amount
 
-    # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
-    # "Failed to deposit Ksh: {amount} to {chama_name}. Please try again later."
-    # TODO: fix this, handle the error better
     return amount
 
 
