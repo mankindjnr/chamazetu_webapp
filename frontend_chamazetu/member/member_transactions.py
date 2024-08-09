@@ -144,13 +144,13 @@ def from_wallet_to_chama(request):
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
 
-        if int(amount) <= 0:
+        amount = int(float(amount))
+
+        if amount <= 0:
             messages.error(request, "Invalid amount.")
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
-
-        amount = int(float(amount))
 
         chama_id = get_chama_id(request.POST.get("chamaname"))
         chama_name = request.POST.get("chamaname")
@@ -221,7 +221,7 @@ def deposit_to_wallet(request):
             "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
         }
 
-        if amount > 10:
+        if amount >= 10:
             depostinfo = {
                 "amount": amount,
                 "phone_number": phonenumber[1:],
