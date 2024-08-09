@@ -161,7 +161,7 @@ def from_wallet_to_chama(request):
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
             )
-        if wallet_balance < 1:
+        if wallet_balance < 1 or wallet_balance < amount:
             messages.error(request, "Insufficient funds.")
             return HttpResponseRedirect(
                 reverse("member:access_chama", args=(request.POST.get("chamaname"),))
