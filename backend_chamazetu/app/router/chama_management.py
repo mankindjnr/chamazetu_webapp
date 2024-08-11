@@ -153,6 +153,13 @@ async def update_contribution_days(
                 .first()
             )
 
+            auto_contributions_date = (
+                db.query(models.AutoContribution).filter_by(chama_id=chama.id).all()
+            )
+
+            for auto_contribution in auto_contributions_date:
+                auto_contribution.next_contribution_date = upcoming_contribution_date
+
             if chama_contribution_day:
                 chama_contribution_day.next_contribution_date = (
                     upcoming_contribution_date

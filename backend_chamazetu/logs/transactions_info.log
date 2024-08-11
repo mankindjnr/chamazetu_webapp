@@ -1,0 +1,20 @@
+2024-08-11 14:10:47,598 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2024-08-11 14:15:00,068 - transactions_info - INFO - ===========auto contribution starting===========
+2024-08-11 14:15:00,074 - transactions_info - INFO - members 4
+2024-08-11 14:15:00,080 - transactions_info - INFO - ===1 wallet number WCU4429
+2024-08-11 14:15:00,084 - transactions_info - INFO - ===1 wallet balance 2080
+2024-08-11 14:15:00,092 - transactions_info - INFO - ===expected amount 1000
+2024-08-11 14:15:00,103 - transactions_info - INFO - ===2 wallet number WBR2003
+2024-08-11 14:15:00,105 - transactions_info - INFO - ===2 wallet balance 1220
+2024-08-11 14:15:00,116 - transactions_info - INFO - ===expected amount 1000
+2024-08-11 14:15:00,120 - transactions_info - INFO - ===4 wallet number WMV6707
+2024-08-11 14:15:00,121 - transactions_info - INFO - ===4 wallet balance 6200
+2024-08-11 14:15:00,133 - transactions_info - INFO - ===expected amount 1000
+2024-08-11 14:15:00,139 - transactions_info - INFO - ===3 wallet number WHL4510
+2024-08-11 14:15:00,141 - transactions_info - INFO - ===3 wallet balance 4600
+2024-08-11 14:15:00,155 - transactions_info - INFO - ===expected amount 1000
+2024-08-11 14:15:00,217 - transactions_info - INFO - ===========auto contribution ending===========

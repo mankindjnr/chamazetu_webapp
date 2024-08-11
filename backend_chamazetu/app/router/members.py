@@ -1096,35 +1096,48 @@ async def check_auto_contribute_status(
     "/make_auto_contributions",
     status_code=status.HTTP_201_CREATED,
 )
-async def auto_contrmake_auto_contributionsibute(
+async def make_auto_contributions(
     db: Session = Depends(database.get_db),
 ):
 
     try:
-        print("===========auto contribute===========")
+        transaction_info_logger.info("===========auto contribution starting===========")
+        today = datetime.now(nairobi_tz).date()
+
         members = (
             db.query(models.AutoContribution)
-            .filter(
-                func.date(models.AutoContribution.next_contribution_date)
-                == datetime.now(nairobi_tz).date()
-            )
+            .filter(func.date(models.AutoContribution.next_contribution_date) == today)
             .all()
         )
+        transaction_info_logger.info(f"members {len(members)}")
+        if not members:
+            return {"message": "No members to auto contribute"}
+
+        transactions = []
+        wallet_transactions = []
+        member_updates = []
+        chama_updates = {}
 
         with db.begin_nested():
             for member in members:
+                wallet_number = generateWalletNumber(db, member.member_id)
+                transaction_info_logger.info(
+                    f"==={member.member_id} wallet number {wallet_number}"
+                )
                 wallet_balance = (
                     db.query(models.Member.wallet_balance)
                     .filter(models.Member.id == member.member_id)
                     .scalar()
                 )
-                print(f"{member.member_id} wallet balance {wallet_balance}")
+                transaction_info_logger.info(
+                    f"==={member.member_id} wallet balance {wallet_balance}"
+                )
 
                 # here we will check if user has already made any deposits/contributions and update the expected amount
                 expected_amount = difference_between_contributed_and_expected(
                     db, member.member_id, member.chama_id, member.expected_amount
                 )
-                print(f"expected amount {expected_amount}")
+                transaction_info_logger.info(f"===expected amount {expected_amount}")
 
                 # skip if the expected amount is 0
                 if expected_amount <= 0:
@@ -1149,125 +1162,129 @@ async def auto_contrmake_auto_contributionsibute(
 
                 total_fines_deducted = 0
 
-                # loop through the fines and deduct them from the wallet
+                # deduct fines from the wallet
                 for fine in member_fines:
-                    print(f"fine {fine.total_expected_amount}")
-                    fine_transaction_date = datetime.now(nairobi_tz).replace(
-                        tzinfo=None
+                    fine_amount_deducted = min(
+                        wallet_balance, fine.total_expected_amount
                     )
-                    fine_transaction_code = generate_transaction_code(
-                        "auto_repay", "wallet", "fine"
-                    )
-
-                    if wallet_balance < fine.total_expected_amount:
-                        fine.total_expected_amount -= wallet_balance
-                        fine_amount_deducted = wallet_balance
-                        wallet_balance = 0
-                    else:
-                        fine_amount_deducted = fine.total_expected_amount
-                        wallet_balance -= fine.total_expected_amount
-                        fine.total_expected_amount = 0
-                        fine.is_paid = True
-                        fine.paid_date = fine_transaction_date
-
+                    wallet_balance -= fine_amount_deducted
+                    fine.total_expected_amount -= fine_amount_deducted
                     total_fines_deducted += fine_amount_deducted
 
-                    # record the fine transaction as one amount transaction
-                    fine_transaction_data = {
-                        "amount": fine_amount_deducted,
-                        "phone_number": generateWalletNumber(db, member.member_id),
-                        "date_of_transaction": fine_transaction_date,
-                        "updated_at": fine_transaction_date,
-                        "transaction_completed": True,
-                        "transaction_code": fine_transaction_code,
-                        "transaction_type": "fine deduction",
-                        "transaction_origin": "wallet_deposit",
-                        "chama_id": member.chama_id,
-                        "member_id": member.member_id,
-                    }
+                    # update the fine record
+                    if fine.total_expected_amount == 0:
+                        fine.is_paid = True
+                        fine.paid_date = datetime.now(nairobi_tz).replace(tzinfo=None)
 
-                    new_fine_transaction = models.Transaction(**fine_transaction_data)
-                    db.add(new_fine_transaction)
-
-                    # create a wallet transaction for fine deduction
-                    wallet_fine_transaction_data = {
-                        "amount": fine_amount_deducted,
-                        "transaction_type": "fine deduction",
-                        "transaction_date": fine_transaction_date,
-                        "transaction_completed": True,
-                        "transaction_code": fine_transaction_code,
-                        "transaction_destination": member.chama_id,
-                        "member_id": member.member_id,
-                    }
-
-                    new_wallet_fine_transaction = models.Wallet_Transaction(
-                        **wallet_fine_transaction_data
+                    transaction_code = generate_transaction_code(
+                        "auto_repay", wallet_number, "fine"
                     )
-                    db.add(new_wallet_fine_transaction)
+                    transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
+
+                    transactions.append(
+                        models.Transaction(
+                            amount=fine_amount_deducted,
+                            phone_number=wallet_number,
+                            date_of_transaction=transaction_date,
+                            updated_at=transaction_date,
+                            transaction_completed=True,
+                            transaction_code=transaction_code,
+                            transaction_type="fine deduction",
+                            transaction_origin="wallet",
+                            chama_id=member.chama_id,
+                            member_id=member.member_id,
+                        )
+                    )
+
+                    wallet_transactions.append(
+                        models.Wallet_Transaction(
+                            amount=fine_amount_deducted,
+                            transaction_type="fine deduction",
+                            transaction_date=transaction_date,
+                            transaction_completed=True,
+                            transaction_code=transaction_code,
+                            transaction_destination=member.chama_id,
+                            member_id=member.member_id,
+                        )
+                    )
 
                     if wallet_balance == 0:
                         break
 
-                if wallet_balance < expected_amount:
-                    continue
+                if wallet_balance >= expected_amount:
+                    # process contribution
+                    transaction_code = generate_transaction_code(
+                        "auto_deposit", wallet_number, member.chama_id
+                    )
+                    transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
 
-                # continue with the contribution
-                # make a transaction
-                transaction_code = generate_transaction_code(
-                    "auto_deposit", "wallet", "chama"
+                    transactions.append(
+                        models.Transaction(
+                            amount=expected_amount,
+                            phone_number=wallet_number,
+                            date_of_transaction=transaction_date,
+                            updated_at=transaction_date,
+                            transaction_completed=True,
+                            transaction_code=transaction_code,
+                            transaction_type="deposit",
+                            transaction_origin="wallet",
+                            chama_id=member.chama_id,
+                            member_id=member.member_id,
+                        )
+                    )
+
+                    wallet_transactions.append(
+                        models.Wallet_Transaction(
+                            amount=expected_amount,
+                            transaction_type="moved to chama",
+                            transaction_date=transaction_date,
+                            transaction_completed=True,
+                            transaction_code=transaction_code,
+                            transaction_destination=member.chama_id,
+                            member_id=member.member_id,
+                        )
+                    )
+
+                    member_updates.append(
+                        {
+                            "member_id": member.member_id,
+                            "wallet_balance": wallet_balance - expected_amount,
+                        }
+                    )
+
+                    if member.chama_id not in chama_updates:
+                        chama_updates[member.chama_id] = (
+                            expected_amount + total_fines_deducted
+                        )
+                    else:
+                        chama_updates[member.chama_id] += (
+                            expected_amount + total_fines_deducted
+                        )
+
+            # update the database bulk
+            db.bulk_save_objects(transactions)
+            db.bulk_save_objects(wallet_transactions)
+
+            # update the wallet balances
+            for update in member_updates:
+                db.query(models.Member).filter(
+                    models.Member.id == update["member_id"]
+                ).update({"wallet_balance": update["wallet_balance"]})
+
+            # update the chama account balances
+            for chama_id, amount in chama_updates.items():
+                db.query(models.Chama_Account).filter(
+                    models.Chama_Account.chama_id == chama_id
+                ).update(
+                    {
+                        models.Chama_Account.account_balance: models.Chama_Account.account_balance
+                        + amount
+                    }
                 )
-                transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
-                transaction_data = {
-                    "amount": expected_amount,
-                    "phone_number": generateWalletNumber(db, member.member_id),
-                    "date_of_transaction": transaction_date,
-                    "updated_at": transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_type": "deposit",
-                    "transaction_origin": "wallet_deposit",
-                    "chama_id": member.chama_id,
-                    "member_id": member.member_id,
-                }
-
-                new_transaction = models.Transaction(**transaction_data)
-                db.add(new_transaction)
-
-                # create a wallet transaction
-                wallet_transaction_data = {
-                    "amount": expected_amount,
-                    "transaction_type": "moved_to_chama",
-                    "transaction_date": transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_destination": member.chama_id,
-                    "member_id": member.member_id,
-                }
-
-                new_wallet_transaction = models.Wallet_Transaction(
-                    **wallet_transaction_data
-                )
-                db.add(new_wallet_transaction)
-
-                # update the wallet balance
-                member_record = (
-                    db.query(models.Member)
-                    .filter(models.Member.id == member.member_id)
-                    .first()
-                )
-                member_record.wallet_balance = wallet_balance - expected_amount
-
-                # update the chama account balance
-                chama_account = (
-                    db.query(models.Chama_Account)
-                    .filter(models.Chama_Account.chama_id == member.chama_id)
-                    .first()
-                )
-
-                chama_account.account_balance += expected_amount + total_fines_deducted
 
             db.commit()
 
+        transaction_info_logger.info("===========auto contribution ending===========")
         return {"message": "Auto contribution completed successfully"}
     except Exception as e:
         db.rollback()
