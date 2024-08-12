@@ -1211,7 +1211,8 @@ async def make_auto_contributions(
                     if wallet_balance == 0:
                         break
 
-                if wallet_balance >= expected_amount:
+                actual_contribution = min(expected_amount, wallet_balance)
+                if actual_contribution > 0:
                     # process contribution
                     transaction_code = generate_transaction_code(
                         "auto_deposit", wallet_number, member.chama_id
@@ -1220,7 +1221,7 @@ async def make_auto_contributions(
 
                     transactions.append(
                         models.Transaction(
-                            amount=expected_amount,
+                            amount=actual_contribution,
                             phone_number=wallet_number,
                             date_of_transaction=transaction_date,
                             updated_at=transaction_date,
@@ -1235,7 +1236,7 @@ async def make_auto_contributions(
 
                     wallet_transactions.append(
                         models.Wallet_Transaction(
-                            amount=expected_amount,
+                            amount=actual_contribution,
                             transaction_type="moved to chama",
                             transaction_date=transaction_date,
                             transaction_completed=True,
@@ -1245,21 +1246,25 @@ async def make_auto_contributions(
                         )
                     )
 
-                    member_updates.append(
-                        {
-                            "member_id": member.member_id,
-                            "wallet_balance": wallet_balance - expected_amount,
-                        }
-                    )
+                    wallet_balance -= actual_contribution
 
-                    if member.chama_id not in chama_updates:
-                        chama_updates[member.chama_id] = (
-                            expected_amount + total_fines_deducted
-                        )
-                    else:
-                        chama_updates[member.chama_id] += (
-                            expected_amount + total_fines_deducted
-                        )
+                # update the wallet balance
+                member_updates.append(
+                    {
+                        "member_id": member.member_id,
+                        "wallet_balance": wallet_balance,
+                    }
+                )
+
+                # update the chama account balance
+                if member.chama_id not in chama_updates:
+                    chama_updates[member.chama_id] = (
+                        actual_contribution + total_fines_deducted
+                    )
+                else:
+                    chama_updates[member.chama_id] += (
+                        actual_contribution + total_fines_deducted
+                    )
 
             # update the database bulk
             db.bulk_save_objects(transactions)
