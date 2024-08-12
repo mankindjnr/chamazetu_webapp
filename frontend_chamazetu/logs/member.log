@@ -819,3 +819,38 @@ INFO 2024-08-11 14:00:00,059 tasks Nairobi: 2024-08-11 14:00:00.059267+03:00
 INFO 2024-08-11 14:15:00,057 tasks ==========member/tasks.py: auto_contribute()==========
 INFO 2024-08-11 14:15:00,057 tasks Task ran at: 2024-08-11 14:15:00.057808
 INFO 2024-08-11 14:15:00,058 tasks Nairobi: 2024-08-11 14:15:00.058105+03:00
+INFO 2024-08-12 09:47:20,232 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-12 09:47:20,444 tasks Task ran at: 2024-08-12 09:47:20.444050
+INFO 2024-08-12 09:47:20,444 tasks Date: 2024-08-12
+INFO 2024-08-12 09:47:20,444 tasks Time: 09:47:20.444618
+INFO 2024-08-12 09:47:20,444 tasks Nairobi: 2024-08-12 09:47:20.444843+03:00
+INFO 2024-08-12 09:47:20,789 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 09:47:20,789 tasks Task ran at: 2024-08-12 09:47:20.789650
+INFO 2024-08-12 09:47:20,789 tasks Nairobi: 2024-08-12 09:47:20.789882+03:00
+INFO 2024-08-12 10:00:00,033 tasks ==========member/tasks.py: log_date_time()==========
+INFO 2024-08-12 10:00:00,034 tasks Task ran at: 2024-08-12 10:00:00.034161
+INFO 2024-08-12 10:00:00,034 tasks Date: 2024-08-12
+INFO 2024-08-12 10:00:00,035 tasks Time: 10:00:00.035199
+INFO 2024-08-12 10:00:00,035 tasks Nairobi: 2024-08-12 10:00:00.035496+03:00
+INFO 2024-08-12 10:24:24,375 tasks ==========member/tasks.py: calculate_missed_contributions_fines()==========
+INFO 2024-08-12 10:24:24,391 tasks Task ran at: 2024-08-12 10:24:24.391720
+INFO 2024-08-12 10:24:24,392 tasks Nairobi: 2024-08-12 10:24:24.392370+03:00
+INFO 2024-08-12 10:27:38,946 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 10:27:38,949 tasks Task ran at: 2024-08-12 10:27:38.949497
+INFO 2024-08-12 10:27:38,951 tasks Nairobi: 2024-08-12 10:27:38.950920+03:00
+INFO 2024-08-12 10:33:54,589 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 10:33:54,593 tasks Task ran at: 2024-08-12 10:33:54.593057
+INFO 2024-08-12 10:33:54,595 tasks Nairobi: 2024-08-12 10:33:54.594849+03:00
+INFO 2024-08-12 10:46:55,025 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 10:46:55,027 tasks Task ran at: 2024-08-12 10:46:55.027162
+INFO 2024-08-12 10:46:55,028 tasks Nairobi: 2024-08-12 10:46:55.028023+03:00
+ERROR 2024-08-12 10:46:55,211 tasks Failed to auto contribute: 400, {"detail":"Failed to auto contribute"}
+INFO 2024-08-12 11:34:41,489 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 11:34:41,520 tasks Task ran at: 2024-08-12 11:34:41.520171
+INFO 2024-08-12 11:34:41,520 tasks Nairobi: 2024-08-12 11:34:41.520719+03:00
+INFO 2024-08-12 11:38:35,192 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 11:38:35,193 tasks Task ran at: 2024-08-12 11:38:35.193943
+INFO 2024-08-12 11:38:35,195 tasks Nairobi: 2024-08-12 11:38:35.195103+03:00
+INFO 2024-08-12 11:41:47,602 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-08-12 11:41:47,603 tasks Task ran at: 2024-08-12 11:41:47.603248
+INFO 2024-08-12 11:41:47,603 tasks Nairobi: 2024-08-12 11:41:47.603622+03:00

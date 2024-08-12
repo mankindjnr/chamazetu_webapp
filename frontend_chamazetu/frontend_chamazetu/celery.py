@@ -63,7 +63,7 @@ app.conf.beat_schedule = {
     # run everyday at 9 pm
     "make_auto_contributions": {
         "task": "member.tasks.auto_contribute",
-        "schedule": crontab(minute=0, hour=8),
+        "schedule": crontab(minute=0, hour=10),
     },
 }
 
