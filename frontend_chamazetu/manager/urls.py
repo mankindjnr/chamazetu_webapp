@@ -13,7 +13,15 @@ urlpatterns = [
         name="change_password",
     ),
     path("create_chama", views.create_chama, name="create_chama"),
+    path(
+        "create_activity/<int:chama_id>", views.create_activity, name="create_activity"
+    ),
     path("chama/<str:key>", views.chama, name="chama"),
+    path(
+        "chama_activity/<int:activity_id>",
+        views.chama_activity,
+        name="chama_activity",
+    ),
     path(
         "view_chama_members/<str:chama_name>",
         views.view_chama_members,
@@ -81,5 +89,25 @@ urlpatterns = [
         "withdraw_investment",
         views.withdraw_from_investment,
         name="withdraw_investment",
+    ),
+    path(
+        "new_activity_members/<str:activity_name>/<int:activity_id>",
+        views.new_activity_members,
+        name="new_activity_members",
+    ),
+    path(
+        "deactivate_activate_activity/<str:activity_name>/<int:activity_id>",
+        views.deactivate_activate_activity,
+        name="deactivate_activate_activity",
+    ),
+    path(
+        "restart_activity/<str:activity_name>/<int:activity_id>",
+        views.restart_activity,
+        name="restart_activity",
+    ),
+    path(
+        "delete_activity/<int:activity_id>",
+        views.delete_activity,
+        name="delete_activity",
     ),
 ]

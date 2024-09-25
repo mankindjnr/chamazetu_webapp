@@ -38,7 +38,7 @@
               Ksh: {{ wallet.wallet_balance }}
           </button> -->
           <!-- Button trigger wallet deposit modal -->
-          <button type="button" class="btn btn-dark bi bi-wallet">Ksh: {{ wallet.wallet_balance }}</button>
+          <button type="button" class="btn btn-dark bi bi-wallet" style="background-color: black;">Ksh: {{ wallet_balance }}</button>
           </a>
 
         </li>
@@ -47,24 +47,15 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
+            <i class="bi bi-person">member</i>
+            <!-- <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid"> -->
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>{{ current_user.current_user }}</h6>
-              <span>{{ role }}</span>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'member:profile' current_user.member_id %}">
-                <i class="bi bi-person"></i>
-                <span>My Profile</span>
-              </a>
+              <!-- <h6>{{ current_user.current_user }}</h6>
+              <span>{{ role }}</span> -->
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -81,11 +72,17 @@
               </a>
             </li> -->
             <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'manager' %}">
+                <i class="bi bi-house"></i>
+                <span>manager dashboard</span>
+              </a>
+            </li>
+            <li>
               <hr class="dropdown-divider">
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'member' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -103,40 +100,46 @@
   <aside id="sidebar" class="sidebar">
 
     <ul class="sidebar-nav" id="sidebar-nav">
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:chama_activities' chama_name chama_id %}">
+          <i class="ri-hand-coin-fill"></i>
+          <span>Chama Activities</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-shake-hands-fill"></i>
+          <span>Chama Projects</span>
+        </a>
+      </li>
 
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:members_tracker' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
-          <span>Members Tracker</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:fines_tracker' chama.chama_name 'member' %}">
-          <i class="bi bi-grid"></i>
-          <span>Fines Tracker</span>
-        </a>
-      </li>
-
-      <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>Daily Performance</span> 
-        </a>
-      </li> -->
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:view_chama_members' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
-          <span>Members List</span> 
+          <span>Fund Performance</span> 
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:get_about_chama' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
+        <a class="nav-link collapsed" href="{% url 'member:view_chama_members' chama_name chama_id %}">
+          <i class="ri-group-2-line"></i>
+          <span>Chama Members</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-admin-fill"></i>
+          <span>Manager Activity</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_about_chama' chama_name chama_id %}">
+          <i class="ri-article-line"></i>
           <span>About Chama</span> 
         </a>
       </li><!-- End about Page Nav -->
@@ -146,9 +149,8 @@
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">
-    {% if chama %}
     <div class="pagetitle d-flex justify-content-between align-items-center">
-      <h1>{{ chama.chama_name}}</h1>
+      <h1>{{ chama_name}}</h1>
 
       <!-- messages after deposit trial -->
       {% if messages %}
@@ -162,18 +164,9 @@
       <!-- end messages -->
       <div class="ml-auto">
         <!-- Button trigger wallet deposit modal-->
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#walletDepositModal">
-          Deposit from wallet
+        <button type="button" id="selectActivityTransactionBtn" class="btn btn-success btn-sm">
+          Contribute
         </button>
-        <!-- wallet deposit Modal -->
-        {% include 'member/modals/wallet_deposit_modal.html' %}
-
-        <!-- Button trigger direct deposit modal -->
-        <!-- <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
-          mpesa
-        </button> -->
-        <!-- direct deposit Modal -->
-        {% include 'member/modals/direct_deposit_modal.html' %}
       </div>
 
     </div><!-- End Page Title -->
@@ -185,9 +178,49 @@
         <div class="col-lg-8">
           <div class="row">
 
-             <!-- check if chama.member_incurred_fines is greater than zero -->
-              {% if chama.member_incurred_fines > 0 %}
-              <!-- member total fines-->
+            <!-- wallet form -->
+            <div class="col-12">
+              <div class="card" id="walletForm" style="display: none;">
+                <div class="card-body">
+                  <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button>
+                    <h5 class="card-title">Select An Activity To Contribute To:</h5>
+                  <form action="{% url 'member:from_wallet_to_select_activity' chama_id chama_name %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="amount" class="form-label">Amount</label>
+                      <div class="input-group">
+                        <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                        <input type="number" class="form-control" id="amount" name="amount" min="10" required>
+                        <small class="error-message"></small>
+                      </div>
+                    </div>
+
+                    <!-- select between withdrawal and deposit -->
+                    <div class="mb-3">
+                      <label for="activity_name" class="form-label">Activity Name</label>
+                      <select class="form-select" id="activity_title" name="activity_title" required>
+                        <option value="">Select Activity</option>
+                        {% for activity in chama_activities %}
+                        <option value="{{ activity.title }}">{{ activity.title }}</option>
+                        {% endfor %}
+                    </select>
+                      <small class="error-message"></small>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('walletForm').style.display = 'none';">Close</button>
+                      <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
+                    </div>
+
+                  </form>
+
+                </div>
+              </div>
+            </div>
+            <!-- End wallet form -->
+
+             <!-- all missed fines and contributions in the chama -->
+              <!-- chama total fines-->
               <div class="col-xxl-4 col-md-6">
                 <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
@@ -199,7 +232,7 @@
                         <small>Ksh:</small>
                       </div>
                       <div class="ps-3">
-                        <h6>{{ chama.member_incurred_fines }}</h6>
+                        <h6>{{ total_fines }}</h6>
                       </div>
                     </div>
                   </div>
@@ -207,49 +240,21 @@
                 </div>
               </div>
             <!-- end member fines card-->
-             {% else %}
-            <!-- Deposit Card -->
-              <div class="col-xxl-4 col-md-6">
-                <div class="card info-card sales-card">
-
-                  <div class="card-body">
-                    <h5 class="card-title">Deposits <span>| Today</span></h5>
-
-                    <div class="d-flex align-items-center">
-                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <small>Ksh:</small>
-                      </div>
-                      <div class="ps-3">
-                        {% if chama.today_deposits %}
-                        <h6>{{ chama.today_deposits }}</h6>
-                        {% else %}
-                        <h6>0</h6>
-                        {% endif %}
-                        <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
-
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div><!-- End deposit Card -->
-            {% endif %}
-
 
             <!-- total deposited Card -->
             <div class="col-xxl-4 col-md-6">
-              <div class="card info-card revenue-card">
+              <div class="card info-card revenue-card" style="background-color: black;">
 
                 <div class="card-body">
                   <h5 class="card-title">Account <span>| current</span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <small>Ksh:</small>
+                      <i class="ri-bank-fill"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>{{ chama.account_balance}}</h6>
-                      <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+                      <span class="text-success pt-2 fw-bold">Account Bal</span> <span class="text-muted small pt-2 ps-1">Ksh: {{ account_balance }}</span><br/>
+                      <span class="text-success pt-2 fw-bold">Available Bal</span> <span class="text-muted small pt-2 ps-1">Ksh: {{ available_balance }}</span>
 
                     </div>
                   </div>
@@ -262,7 +267,7 @@
             <div class="col-xxl-4 col-xl-12">
               <div class="card info-card customers-card">
                   <div class="card-body">
-                      <h5 class="card-title">MMF <span>| Investment</span></h5>
+                      <h5 class="card-title">Daily Interest Earning Account <span>| Investment</span></h5>
                       <div class="d-flex align-items-center justify-content-center">
                         <h6>Ksh: {{investment_data.amount_invested }}</h6>
                     </div>
@@ -283,96 +288,35 @@
               </div>
             </div><!-- End investments Card -->
 
-            <!-- actitvity weekly -->
-            <div class="col-12">
-              <div class="card recent-sales overflow-auto">
-
+            <!-- activities -->
+             {% for activity in chama_activities %}
+            <div class="col-xxl-4 col-md-6">
+              <div class="card info-card revenue-card">
+                <div class="card-header d-flex justify-content-between">
+                  <span>{{ activity.contribution_date }}</span>
+                  <!-- <button type="button" class="btn btn-success btn-sm ms-auto" data-bs-toggle="modal" data-bs-target="#walletActivityModal">Contribute</button>
+                  {% include 'member/modals/wallet_to_activity_direct.html' %} -->
+                </div>
+                <a href="{% url 'member:activities' chama_name chama_id activity.type activity.activity_id %}" style="text-decoration: none; color: inherit;">
                 <div class="card-body">
-                  <h5 class="card-title">chama weekly contributions <span>|Ksh</span></h5>
-                  <div>
-                    <hr>
-                    <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ chama.contribution_date}}</button>
+                  <br/>
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-team-fill"></i>
+                    </div>
+                    <div class="ps-3">
+                      <h5>{{ activity.type }}</h5>
+                      <span class="text-success small pt-1 fw-bold"></span> <span class="text-muted small pt-2 ps-1">{{ activity.title }}</span>
+
+                    </div>
                   </div>
-
-                  <table class="table table-success table-striped-columns">
-                    <thead>
-                      <tr>
-                        <th scope="col">members</th>
-                        <th scope="col">expected</th>
-                        <th scope="col">contributed</th>
-                        <th scope="col">sunday</th>
-                        <th scope="col">monday</th>
-                        <th scope="col">tuesday</th>
-                        <th scope="col">wednesday</th>
-                        <th scope="col">thursday</th>
-                        <th scope="col">friday</th>
-                        <th scope="col">saturday</th>
-                      </tr>
-                    </thead>
-                    {% if activity %}
-                    <tbody>
-                      {% for transaction in activity %}
-                      <tr>
-                        <th scope="row">{{ transaction.member_name }}</th>
-                        <td>{{ transaction.expected_contribution }}</td>
-                        <td>{{ transaction.contribution_so_far }}</td>
-                        <td>{{ transaction.Sunday }} </td>
-                        <td>{{ transaction.Monday }} </td>
-                        <td>{{ transaction.Tuesday }} </td>
-                        <td>{{ transaction.Wednesday }} </td>
-                        <td>{{ transaction.Thursday }}</td>
-                        <td>{{ transaction.Friday }}</td>
-                        <td>{{ transaction.Saturday }}</td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                    {% endif %}
-                  </table>
-
                 </div>
-
+                </a>
               </div>
-            </div><!-- End weekly activity -->
+            </div>
+            {% endfor %}
 
-            <!-- performance monthly -->
-            <div class="col-12">
-              <div class="card recent-sales overflow-auto">
-
-                <div class="card-body">
-                  <h5 class="card-title">Fund performance <span>|monthly</span></h5>
-
-                  <table class="table">
-                    <thead>
-                      <!-- TODO: they will become buttons that users can select to see monthly performance -->
-                      <!-- <tr>
-                        <th scope="col">3 months</th>
-                        <th scope="col">6 months</th>
-                        <th scope="col">12 months</th>
-                      </tr> -->
-                      <tr>
-                        <th scope="col">month</th>
-                        <th scope="col">interest earned</th>
-                        <th scope="col">Total investment</th>
-                      </tr>
-                      
-                    </thead>
-                    <tbody>
-                      {% if fund_performance %}
-                      {% for performance in fund_performance %}
-                      <tr>
-                        <td>{{ performance.month }}</td>
-                        <td class="text-primary">{{ performance.interest_earned}}</td>
-                        <td>Ksh {{ performance.total_amount_invested }}</td>
-                      </tr>
-                      {% endfor %}
-                      {% endif %}
-                    </tbody>
-                  </table>
-
-                </div>
-
-              </div>
-            </div><!-- End fund performance -->
+            <!-- end of activities -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -452,17 +396,6 @@
 
       </div>
     </section>
-    {% else %}
-    <!-- redirect home, this chama does not exists -->
-    <div class="alert alert-danger" role="alert">
-      <h4 class="alert-heading">No chama found!</h4>
-      <p>It seems you have not created a chama yet. Please create a chama to continue.</p>
-      <hr>
-      <p class="mb-0">Click <a href="{% url 'manager:createchama' %}">here</a> to create a chama.</p>
-    </div>
-    {% endif %}
-    <!-- wallet Modal -->
-      {% include 'member/modals/wallet_modal.html' %}
   </main><!-- End #main -->
 
   <script>
@@ -474,6 +407,40 @@
         chama_created.style.display = "none";
       }, 6000);
     }
+
+    let buttons = ["activityTransactionBtn", "selectActivityTransactionBtn"];
+      buttons.forEach(function(buttonid){
+        var button = document.getElementById(buttonid);
+        if (button) {
+          button.addEventListener("click", function() {
+            let form = document.getElementById("walletForm");
+            if (form) {
+              if (form.style.display === "none") {
+                form.style.display = "block";
+              } else {
+                form.style.display = "none";
+              }
+            } else {
+              console.log("transaction form not found");
+            }
+          });
+        } else {
+          console.log(buttonid + " not found");
+        }
+      });
+
+      // prevent form submission on enter key if amount is not digit and greater that 10
+      document.getElementById("amount").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          let amount = document.getElementById("amount").value;
+          if (isNaN(amount) || amount < 10) {
+            document.querySelector(".error-message").textContent = "Amount must be a number and greater or equal than 10";
+          } else {
+            document.querySelector(".error-message").textContent = "";
+          }
+        }
+      });
   });
   </script>
   

@@ -1,0 +1,497 @@
+{% extends "chama/loginBase.html" %}
+{% load static %}
+
+{% block content %}
+  <header id="header" class="header fixed-top d-flex align-items-center">
+
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
+        <img src="{% static 'chama/img/favicon.png' %}" alt="">
+        <span class="d-none d-lg-block">Manager</span>
+      </a>
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div><!-- End Logo -->
+
+    <div class="search-bar">
+      <form class="search-form d-flex align-items-center" method="POST" action="#">
+        <input type="text" name="query" placeholder="Search" title="Enter search keyword">
+        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
+      </form>
+    </div>
+
+    <!-- TODO: check if messages to notify chama creation success-->
+
+    <nav class="header-nav ms-auto">
+
+      <ul class="d-flex align-items-center">
+
+        <li class="nav-item d-block d-lg-none">
+          <a class="nav-link nav-icon search-bar-toggle " href="#">
+            <i class="bi bi-search"></i>
+          </a>
+        </li><!-- End Search Icon-->
+
+        <li class="nav-item dropdown pe-3">
+
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">{{ current_role }}
+            <img src="{{ profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a><!-- End Profile Iamge Icon -->
+
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+              <h6>{{ current_user }}</h6>
+              <!-- <span>manager</span> -->
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% if current_role == "manager" %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'member' %}">
+                <i class="bi bi-house"></i>
+                <span>member dashboard</span>
+              </a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'manager:profile' manager_id %}">
+                <i class="bi bi-person"></i>
+                <span>My Profile</span>
+              </a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+  
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <!-- <li>
+              <a class="dropdown-item d-flex align-items-center" href="#">
+                <i class="bi bi-question-circle"></i>
+                <span>Need Help?</span>
+              </a>
+            </li> -->
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+
+          </ul><!-- End Profile Dropdown Items -->
+        </li><!-- End Profile Nav -->
+
+      </ul>
+    </nav><!-- End Icons Navigation -->
+
+  </header><!-- End Header -->
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+      <li class="nav-heading">Pages</li>
+      <!-- <li class="nav-item">
+        <a class="nav-link " href="#">
+          <i class="bi bi-grid"></i>
+          <span>search chamas</span>
+        </a>
+      </li> -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
+          <i class="bi bi-menu-button-wide"></i><span>Chamazangu</span><i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <ul id="components-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+          {% if chamas %}
+          {% for chama in chamas %}
+          <li>
+              <a href="{% url 'manager:chama' chama.chama_name %}">
+              <i class="bi bi-circle"></i><span>{{ chama.chama_name }}</span>
+            </a>
+          </li>
+          {% endfor %}
+          {% else %}
+          <li>
+            <a href="#">
+              <i class="bi bi-circle"></i><span>no chamas available</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </li><!-- End chamas Nav -->
+
+    </ul>
+
+  </aside><!-- End Sidebar-->
+
+  <main id="main" class="main">
+
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+      <h1>Home</h1>
+      <div class="search-bar">
+        {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for messages in messages %}
+            <strong>{{ messages }}</strong>
+          {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+      </div>
+      <!-- Button placed at the right end -->
+      <button type="button" id="showFormBtn2" class="btn btn-primary btn-sm">New chama</button>
+    </div>
+    <!-- End Page Title -->
+
+    <section class="section dashboard">
+      <div class="row">
+
+        <!-- Left side columns -->
+        <div class="col-lg-8">
+          <div class="row">
+            <!-- creating chama form-->
+            <!-- TODO: introduce js checks before submission refuse sql injection elements i.e undescore -->
+            <div id="chamaForm" style="display: none;">
+              <div class="col-xxl-4 col-xl-12">
+
+                <div class="card info-card customers-card">
+
+                  <div class="card-body">
+                    <h5 class="card-title">Create a New Chama</h5>
+                    <form action="{% url 'manager:create_chama' %}" method="post" id="createChamaForm" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="chama_name" class="form-label">Chama Name</label>
+                            <input type="text" class="form-control" id="chama_name" name="chama_name" required>
+                            <small class="error-message"></small>
+                        </div>
+                        <div class="mb-3">
+                          <label for="chama_type" class="form-label">Chama Type</label>
+                          <input type="text" class="form-control" id="chama_type" name="chama_type" data-role="tagsinput" placeholder="e.g investment, saving, merry-go-round e.t.c" required>
+                          <small class="error-message"></small>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="category" class="form-label">Chama Category</label>
+                          <select class="form-select" id="category" name="category" onchange="showOptions()">
+                            <option value="private">Private</option>
+                            <option value="public">Public</option>
+                          </select>
+                          <!-- helper message -->
+                          <small id="categoryhelp" class="form-text text-muted"></small>
+                        </div>
+                        <!--TODO: limit to 500 characters check with javascript and notify the use with small text -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" maxlength="500" required></textarea>
+                            <small id="descriptionHelp" class="form-text text-muted">max 500 characters</small>
+                            <small class="error-message"></small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="members" class="form-label">Number of Members</label> 
+                            <input type="number" class="form-control" id="members_allowed" name="members_allowed" min="1" placeholder="number of members" required>
+                            <div class="form-check">
+                              <input class="form-check-input" type="checkbox" id="noLimit" name="noLimit">
+                              <label class="form-check-label" for="noLimit"><b>No limit</b></label>
+                            </div>
+                            <small class="error-message"></small>
+                        </div>
+                        
+                        <!-- contribution frequency -->
+                        <!-- Frequency Selection TODO: custom later or just add dropdown for bi-weekly, bi-monthly, tri/weekly/monthly-->
+                         <hr style="color: aqua;">
+                        <div class="mb-3">
+                          <label for="frequency" class="form-label">Contribution Frequency</label>
+                          <select class="form-select" id="frequency" name="frequency" onchange="showOptions()">
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                              <!-- <option value="custom">custom</option> -->
+                          </select>
+                          <!-- helper message for the custom entry -->
+                          <small id="frequencyHelp" class="form-text text-muted"></small>
+                        </div>
+                        <!-- Weekly Options -->
+                        <div class="mb-3" id="weekly_options" style="display: none;">
+                            <label for="weekly_day" class="form-label">Select Day of Week</label>
+                            <select class="form-select" id="weekly_day" name="weekly_day">
+                                <option value="sunday">Sunday</option>
+                                <option value="monday">Monday</option>
+                                <option value="tuesday">Tuesday</option>
+                                <option value="wednesday">Wednesday</option>
+                                <option value="thursday">Thursday</option>
+                                <option value="friday">Friday</option>
+                                <option value="saturday">Saturday</option>
+                            </select>
+                        </div>
+                        <!-- Monthly Options -->
+                        <div class="mb-3" id="monthly_options" style="display: none;">
+                            <label for="monthly_date" class="form-label">Select Day of Month</label>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <label for="monthly_week" class="form-label">Week</label>
+                                <select class="form-select" id="monthly_week" name="monthly_week">
+                                    <option value="first">First</option>
+                                    <option value="second">Second</option>
+                                    <option value="third">Third</option>
+                                    <option value="fourth">Fourth</option>
+                                    <option value="last">Last</option>
+                                    <option value="">Clear</option>
+                                </select>
+                              </div>
+                              <div class="col-md-6">
+                                <label for="monthly_day" class="form-label">Day</label>
+                                <select class="form-select" id="monthly_day" name="monthly_day">
+                                  <option value=""></option>
+                                    <option value="sunday">Sunday</option>
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="">Clear</option>
+                                </select>
+                            </div>
+                          </div>
+                          <div class="mt-3">
+                            <label for="monthly_specific_date" class="form-label">Or select a Specific Date</label>
+                            <input type="number" class="form-control" id="monthly_specific_date" name="monthly_specific_date" min="1" max="31" placeholder="Day of the month (e.g 21)">
+                          </div>
+                        </div>
+                        <hr style="color: aqua;">
+                        <!-- End Frequency Selection -->
+                        
+                        <div class="mb-3">
+                          <label for="registration" class="form-label">Registration Fee</label>
+                          <input type="number" class="form-control" id="registration" name="registration" placeholder="enter 0 if no registration fee" min="0" required>
+                          <small class="error-message"></small>
+                        </div>
+                        <hr>
+                        
+                        <div class="mb-3">
+                          <p><b>Deadline for joining the chama</b></p>
+                          <label for="last_joining_date" class="form-label">Last day of joining</label>
+                          <input type="date" class="form-control" id="last_joining_date" name="last_joining_date" required>
+                        </div>
+                        <!-- <div class="row mb-3">
+                          <p><b>When will the chama start and when the first contribution will be</b></p>
+                          <div class="col-md-6">
+                              <label for="last_joining_date" class="form-label">Last day of joining</label>
+                              <input type="date" class="form-control" id="last_joining_date" name="last_joining_date" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="first_contribution_date" class="form-label">First contribution date</label>
+                            <input type="date" class="form-control" id="first_contribution_date" name="first_contribution_date" required>
+                        </div>
+                        <small id="dateHelp" class="form-text text-muted">First contribution date should be past the final day of joining</small>
+                        </div> -->
+                        <!-- checkbox -->
+                        <hr>
+                        <div class="mb-3 form-check">
+                          <!-- a sentence notifying the manager -->
+                          <p><b>Check the box below if members can start joining immediately</b></p>
+                          <input type="checkbox" class="form-check-input" id="accepting_members" name="accepting_members">
+                          <label class="form-check-label" for="accepting_members">Accepting Members</label>
+                        </div>
+
+                        <br/>
+                        <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create Chama</button>
+                    </form>
+                </div>
+                
+                </div>
+
+              </div>
+              <!-- frequency script -->
+              <script>
+                function showOptions() {
+                    var frequency = document.getElementById("frequency").value;
+                    if (frequency === "weekly") {
+                        document.getElementById("weekly_options").style.display = "block";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
+                        document.getElementById("monthly_options").style.display = "none";
+                    } else if (frequency === "monthly") {
+                        document.getElementById("weekly_options").style.display = "none";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
+                        document.getElementById("monthly_options").style.display = "block";
+                    } else {
+                        document.getElementById("weekly_options").style.display = "none";
+                        //document.getElementById("bi_weekly_options").style.display = "none";
+                        document.getElementById("monthly_options").style.display = "none";
+                    }
+                    // } else if (frequency === "custom") {
+                    //     document.getElementById("frequencyHelp").innerHTML = "you'll get to set the frequency later";
+                    // }
+                }
+
+                document.getElementById("monthly_specific_date").addEventListener('input', function() {
+                // If a specific date is selected, disable week/day selection
+                var isDateSelected = this.value.length > 0;
+                document.getElementById("monthly_week").disabled = isDateSelected;
+                document.getElementById("monthly_day").disabled = isDateSelected;
+              });
+
+              document.getElementById("monthly_week").addEventListener('change', function() {
+                  // If week/day is selected, clear and disable specific date input
+                  if (this.value !== ''){
+                    document.getElementById("monthly_specific_date").value = '';
+                    document.getElementById("monthly_specific_date").disabled = true;
+                  } else {
+                    document.getElementById("monthly_specific_date").disabled = false;
+                  }
+              });
+
+              document.getElementById("monthly_day").addEventListener('change', function() {
+                  // If week/day is selected, clear and disable specific date input
+                  if (this.value !== ''){
+                    document.getElementById("monthly_specific_date").value = '';
+                    document.getElementById("monthly_specific_date").disabled = true;
+                  } else {
+                    document.getElementById("monthly_specific_date").disabled = false;
+                  }
+              });
+
+
+                // no limit members or limit members
+                document.getElementById('noLimit').addEventListener('change', function() {
+                  document.getElementById('members_allowed').disabled = this.checked;
+              });
+            </script>
+          </div> <!-- the id hiding the form-->
+
+            <!-- chama Card -->
+            {% if chamas %}
+            {% for chama in chamas %}
+            
+            <div class="col-xxl-4 col-md-6">
+              <a href="{% url 'manager:chama' chama.chama_name %}" style="text-decoration: none; color: inherit;">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">{{ chama.chama_name }} <span>| {% if chama.is_active %} active {% else %} not active {% endif %} </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="ps-3">
+                      <h6>{{ chama.number_of_members }} members</h6>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              </a>
+            </div><!-- End chama Card -->
+            {% endfor %}
+            {% else %}
+            <!-- if no chama -->
+            <div class="col-xxl-4 col-xl-12">
+
+              <div id="createForm" class="card info-card customers-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">no chamas available </h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="bi bi-people"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-muted small pt-1 fw-bold">
+                        Welcome to chamaZetu! It looks like you haven't created any chamas yet. Get started by creating your first chama now.
+                      </span>
+
+                    </div>
+                  </div>
+                  <button id="showFormBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create</button>
+                </div>
+              </div>
+
+            </div><!-- End no chama available/create one Card -->
+            {% endif %}
+
+          </div>
+        </div><!-- End Left side columns -->
+
+        <!-- Right side columns -->
+        <div class="col-lg-4">
+
+          <!-- News & Updates Traffic -->
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">Updates &amp; new products <span>| Latest</span></h5>
+              {% if updates_and_features %}
+              <div class="activity">
+                {% for update in updates_and_features %}
+                <div class="activity-item d-flex">
+                  <i class='bi bi-grid activity-badge text-danger align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark"><b>{{ update.feature_title }}:</b> {{ update.description }} </p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div><!-- End News & Updates -->
+
+        </div><!-- End Right side columns -->
+
+      </div>
+    </section>
+
+  </main><!-- End #main -->
+
+  <script>
+    // notification
+    document.addEventListener("DOMContentLoaded", function() {
+  var chama_created = document.getElementById("chama_created");
+  if (chama_created) {
+    setTimeout(function() {
+      chama_created.style.display = "none";
+    }, 5000);
+  }
+
+  let buttons = ["showFormBtn", "showFormBtn2"]
+  buttons.forEach(function(buttonid){
+    var button = document.getElementById(buttonid);
+    if (button) {
+      button.addEventListener("click", function() {
+        let form = document.getElementById("chamaForm");
+        if (form) {
+          if (form.style.display === "none") {
+            form.style.display = "block";
+          } else {
+            form.style.display = "none";
+          }
+        } else {
+          console.log("chamaForm not found");
+        }
+      });
+    } else {
+      console.log(buttonid + " not found");
+    }
+  });
+});
+  </script>
+
+
+ {% endblock %}

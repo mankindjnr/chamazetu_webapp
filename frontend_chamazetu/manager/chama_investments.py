@@ -13,7 +13,6 @@ from chama.decorate.validate_refresh_token import validate_and_refresh_token
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_id
-from member.member_chama import access_chama_async, recent_transactions
 from .tasks import update_investment_account, add_chama_withdrawal_request
 from member.tasks import update_chama_account_balance
 
@@ -27,8 +26,8 @@ load_dotenv()
 
 
 # invest to an investment
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def invest(request):
     if request.method == "POST":
         chama_name = (request.POST.get("chama_name")).strip()

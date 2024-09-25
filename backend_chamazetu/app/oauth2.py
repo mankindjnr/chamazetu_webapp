@@ -42,7 +42,6 @@ async def create_refresh_token(data: dict):
 
 
 async def verify_access_token(token: str, credentials_exception):
-    print(token)
     if not token:
         raise credentials_exception
 
@@ -52,7 +51,6 @@ async def verify_access_token(token: str, credentials_exception):
         raise credentials_exception
     try:
         payload = jwt.decode(token.split(" ")[1], SECRET_KEY, algorithms=[ALGORITHM])
-        print(payload)
     except ExpiredSignatureError:
         raise credentials_exception
     except InvalidTokenError:
@@ -61,30 +59,25 @@ async def verify_access_token(token: str, credentials_exception):
         raise credentials_exception
 
     username: str = payload.get("sub")
-    role: str = payload.get("role")
-    if not username or not role:
+    if not username:
         raise credentials_exception
 
     # check if the user exists in the database
 
-    token_data = schemas.TokenData(username=username, role=role)
+    token_data = schemas.TokenData(username=username)
     return token_data
 
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)
 ):
-    print("===get_current_user===")
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid Credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     token = await verify_access_token(token, credentials_exception)
-    role = token.role
-    Model = getattr(models, role.capitalize())
-    user = db.query(Model).filter(Model.email == token.username).first()
+    user = db.query(models.User).filter(models.User.email == token.username).first()
     if user is None:
-        print("===user not found===")
         raise credentials_exception
     return user

@@ -24,6 +24,8 @@ from .router import (
     fines,
     callback,
     stk_push,
+    activities,
+    chamazetu_admin,
 )
 
 setup_logging()
@@ -63,6 +65,8 @@ app.include_router(newsletter.router)
 app.include_router(fines.router)
 app.include_router(callback.router)
 app.include_router(stk_push.router)
+app.include_router(activities.router)
+app.include_router(chamazetu_admin.router)
 
 
 @app.get("/")

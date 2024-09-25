@@ -1,63 +1,7 @@
-2024-08-12 11:34:41,532 - transactions_info - INFO - ===========auto contribution starting===========
-2024-08-12 11:34:41,542 - transactions_info - INFO - members 6
-2024-08-12 11:34:41,549 - transactions_info - INFO - ===1 wallet number WCU4429
-2024-08-12 11:34:41,555 - transactions_info - INFO - ===1 wallet balance 80
-2024-08-12 11:34:41,571 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:34:41,576 - transactions_info - INFO - ===2 wallet number WBR2003
-2024-08-12 11:34:41,581 - transactions_info - INFO - ===2 wallet balance 220
-2024-08-12 11:34:41,597 - transactions_info - INFO - ===expected amount 1000
-2024-08-12 11:34:41,613 - transactions_info - INFO - ===4 wallet number WMV6707
-2024-08-12 11:34:41,617 - transactions_info - INFO - ===4 wallet balance 4200
-2024-08-12 11:34:41,639 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:34:41,646 - transactions_info - INFO - ===3 wallet number WHL4510
-2024-08-12 11:34:41,648 - transactions_info - INFO - ===3 wallet balance 1700
-2024-08-12 11:34:41,675 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:34:41,683 - transactions_info - INFO - ===5 wallet number WQM3194
-2024-08-12 11:34:41,688 - transactions_info - INFO - ===5 wallet balance 800
-2024-08-12 11:34:41,703 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:34:41,706 - transactions_info - INFO - ===4702 wallet number WDA4661
-2024-08-12 11:34:41,710 - transactions_info - INFO - ===4702 wallet balance 100
-2024-08-12 11:34:41,723 - transactions_info - INFO - ===expected amount 1000
-2024-08-12 11:34:41,785 - transactions_info - INFO - ===========auto contribution ending===========
-2024-08-12 11:38:35,208 - transactions_info - INFO - ===========auto contribution starting===========
-2024-08-12 11:38:35,215 - transactions_info - INFO - members 6
-2024-08-12 11:38:35,218 - transactions_info - INFO - ===1 wallet number WCU4429
-2024-08-12 11:38:35,220 - transactions_info - INFO - ===1 wallet balance 80
-2024-08-12 11:38:35,238 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:38:35,244 - transactions_info - INFO - ===2 wallet number WBR2003
-2024-08-12 11:38:35,250 - transactions_info - INFO - ===2 wallet balance 220
-2024-08-12 11:38:35,261 - transactions_info - INFO - ===expected amount 1000
-2024-08-12 11:38:35,270 - transactions_info - INFO - ===4 wallet number WMV6707
-2024-08-12 11:38:35,273 - transactions_info - INFO - ===4 wallet balance 4200
-2024-08-12 11:38:35,289 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:38:35,291 - transactions_info - INFO - ===3 wallet number WHL4510
-2024-08-12 11:38:35,294 - transactions_info - INFO - ===3 wallet balance 1700
-2024-08-12 11:38:35,307 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:38:35,309 - transactions_info - INFO - ===5 wallet number WQM3194
-2024-08-12 11:38:35,314 - transactions_info - INFO - ===5 wallet balance 800
-2024-08-12 11:38:35,326 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:38:35,331 - transactions_info - INFO - ===4702 wallet number WDA4661
-2024-08-12 11:38:35,335 - transactions_info - INFO - ===4702 wallet balance 1000
-2024-08-12 11:38:35,353 - transactions_info - INFO - ===expected amount 1000
-2024-08-12 11:38:35,400 - transactions_info - INFO - ===========auto contribution ending===========
-2024-08-12 11:41:47,613 - transactions_info - INFO - ===========auto contribution starting===========
-2024-08-12 11:41:47,622 - transactions_info - INFO - members 6
-2024-08-12 11:41:47,626 - transactions_info - INFO - ===1 wallet number WCU4429
-2024-08-12 11:41:47,634 - transactions_info - INFO - ===1 wallet balance 80
-2024-08-12 11:41:47,652 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:41:47,656 - transactions_info - INFO - ===2 wallet number WBR2003
-2024-08-12 11:41:47,658 - transactions_info - INFO - ===2 wallet balance 220
-2024-08-12 11:41:47,676 - transactions_info - INFO - ===expected amount 1000
-2024-08-12 11:41:47,684 - transactions_info - INFO - ===4 wallet number WMV6707
-2024-08-12 11:41:47,691 - transactions_info - INFO - ===4 wallet balance 4200
-2024-08-12 11:41:47,708 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:41:47,714 - transactions_info - INFO - ===3 wallet number WHL4510
-2024-08-12 11:41:47,718 - transactions_info - INFO - ===3 wallet balance 1700
-2024-08-12 11:41:47,727 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:41:47,730 - transactions_info - INFO - ===5 wallet number WQM3194
-2024-08-12 11:41:47,735 - transactions_info - INFO - ===5 wallet balance 800
-2024-08-12 11:41:47,750 - transactions_info - INFO - ===expected amount 0
-2024-08-12 11:41:47,753 - transactions_info - INFO - ===4702 wallet number WDA4661
-2024-08-12 11:41:47,754 - transactions_info - INFO - ===4702 wallet balance 1000
-2024-08-12 11:41:47,768 - transactions_info - INFO - ===expected amount 500
-2024-08-12 11:41:47,818 - transactions_info - INFO - ===========auto contribution ending===========
+2024-09-25 11:04:47,407 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2024-09-25 11:06:36,311 - root - INFO - token_data: username='bardiyefya@gufum.com'
+2024-09-25 11:08:05,785 - root - INFO - token_data: username='bardiyefya@gufum.com'

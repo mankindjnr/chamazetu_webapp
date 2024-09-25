@@ -1,0 +1,297 @@
+{% extends "chama/loginBase.html" %}
+{% load static %}
+{% load filters %}
+
+{% block content %}
+
+  <!-- ======= Header ======= -->
+  <header id="header" class="header fixed-top d-flex align-items-center">
+
+    <div class="d-flex align-items-center justify-content-between">
+      {% if role == 'manager' %}
+      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
+        {% elif role == 'member' %}
+        <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
+          {% endif %}
+        <img src="{% static 'chama/img/logo.png' %}" alt="">
+        <span class="d-none d-lg-block">Home</span>
+      </a>
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div><!-- End Logo -->
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+
+        <li class="nav-item dropdown pe-3">
+
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+            <img src="{{ activity.profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
+            <span class="d-none d-md-block dropdown-toggle ps-2">{{role}}</span>
+          </a><!-- End Profile Iamge Icon -->
+
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+            </li>
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+
+          </ul><!-- End Profile Dropdown Items -->
+        </li><!-- End Profile Nav -->
+
+      </ul>
+    </nav><!-- End Icons Navigation -->
+
+  </header><!-- End Header -->
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar" style="display: none;"  >
+
+    <div class="col-xl-4">
+
+      <div class="card">
+        <div class="card-body profile-card pt-4 d-flex flex-column align-items-center">
+
+          <img src="{{ activity.profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
+          <span>{{ role }}</span>
+          <div class="social-links mt-2">
+            {% if profile.twitter_handle != 'N/A' %}
+            <a href="{{profile.twitter_handle}}" class="twitter"><i class="bi bi-twitter"></i></a>
+            {% endif %}
+            {% if profile.facebook_handle != 'N/A' %}
+            <a href="{{profile.facebook_handle}}" class="facebook"><i class="bi bi-facebook"></i></a>
+            {% endif %}
+            {% if profile.linkedin_handle != 'N/A' %}
+            <a href="{{profile.linkedin_handle}}" class="linkedin"><i class="bi bi-linkedin"></i></a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </aside><!--End Sidebar -->
+
+  <main id="main" class="main">
+
+    {% if messages %}
+      <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+        {% for message in messages %}
+          {{ message }}
+        {% endfor %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+      <div>
+      <h1>about {{ activity.activity_name }}</h1>
+
+        <nav>
+          <ol class="breadcrumb">
+            {% if role == 'manager' %}
+            <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'manager:dashboard' %}">Home</a></li>
+            {% elif role == 'member' %}
+            <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'member:dashboard' %}">Home</a></li>
+            {% endif %}
+            <li class="breadcrumb-item">{{role}}</li>
+            <li class="breadcrumb-item active">about activity</li>
+          </ol>
+        </nav>
+      </div>
+
+    </div><!-- End Page Title -->
+
+    <section class="section profile">
+      <div class="row">
+        <div class="col-xl-12">
+
+          <div class="card">
+            <div class="card-body pt-3">
+              <!-- Bordered Tabs -->
+              <ul class="nav nav-tabs nav-tabs-bordered">
+
+                <li class="nav-item">
+                  <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#activity-overview">Overview</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity-description">Description</button>
+                </li>
+
+                <li class="nav-item"></li>
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity-settings">Activity Settings</button>
+                </li>
+
+              </ul>
+
+              <div class="tab-content pt-2">
+
+                <div class="tab-pane fade show active activity-overview" id="activity-overview">
+                  <h5 class="card-title">Activity Details</h5>
+                  
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">Description </div>
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_description }} </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">Activity Name </div>
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_name }} </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">Activity Type </div>
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_type }} </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">Share Price </div>
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_amount }} </div>
+                  </div>
+
+                  <div class="row mb-3">
+                    <div class="col-lg-3 col-md-4 label">Activity Frequency </div>
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_frequency }} </div>
+                  </div>
+
+                </div>
+
+                <div class="tab-pane fade activity-description pt-3" id="activity-description">
+                  <h5 class="card-title">Description</h5>
+                  <div class="row mb-3">
+                    <div class="col-lg-9 col-md-8">{{ activity.activity_description }} </div>
+                    </div>
+                </div>
+
+                <!-- editing and updating the tabs -->
+                {% if role == 'manager' %}
+                <div class="tab-pane fade edit-description pt-3" id="edit-description">
+                  <!-- update description Form -->
+                  <form action="" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="description" class="col-md-4 col-lg-3 col-form-label">Current description</label>
+                      <div class="col-md-8 col-lg-9">
+                        <div class="mb-3">{{ activity.activity_description }}</div>
+                        <input name="description" type="text" class="form-control" id="description" required>
+                      </div>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Update Description</button>
+                    </div>
+                  </form>
+
+                </div>
+                
+              </div><!-- End Bordered Tabs -->
+
+              <!-- chama controls, delete/suspend/restart/pause/start -->
+              {% if role == 'manager' %}
+              <div class="tab-pane fade activity-settings pt-3" id="activity-settings">
+                <div class="row mb-3">
+                  <!-- Accepting members -->
+                   {% if activity.accepting_new_members == 'Accepting Members' %}
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will stop accepting new members into this activity.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:new_activity_members' activity_name=activity.activity_name activity_id=activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Stop Accepting New Members">
+                    </form>
+                  </div>
+                  {% else %}
+                  <!-- accept new members -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will allow new members to join the activity.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:new_activity_members' activity_name=activity.activity_name activity_id=activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-success btn-sm" value="Accept New Members">
+                    </form>
+                  </div>
+                  {% endif %}
+
+                  <!-- Temporarily disable the chama -->
+                   {% if activity.is_active != 'inactive' %}
+                  <div class="col-lg-8 col-md-7 label mt-3">Suspending will halt all activities. You can reactivate later.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:deactivate_activate_activity' activity.activity_name activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Deactivate Chama">
+                    </form>
+                  </div>
+                  {% else %}
+                  <!-- reactivate disabled chama -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action will unsuspend the activity.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:deactivate_activate_activity' activity.activity_name activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-success btn-sm" value="Activate Chama">
+                    </form>
+                  </div>
+                  {% endif %}
+
+                   <!-- restart -->
+                   <div class="col-lg-8 col-md-7 label mt-3">This action will clear all the current activity data and restart it with all current members.</div>
+                   <div class="col-lg-4 col-md-5 mt-3">
+                     <form method="POST" action="{% url 'manager:restart_activity' activity.activity_name activity.activity_id %}">
+                         {% csrf_token %}
+                         <input type="submit" class="btn btn-danger btn-sm" value="Restart Chama">
+                     </form>
+                   </div>
+
+                  <!-- delete -->
+                  <div class="col-lg-8 col-md-7 label mt-3">This action cannot be undone, and all data associated with the activity will be lost.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'manager:delete_activity' activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Permanently Delete">
+                    </form>
+                  </div>
+
+
+                </div>
+                </div>
+              {% endif %}
+              {% endif %}
+
+              <!-- if member: activity settings add share/decrease shares auto_contribute toggle -->
+              <div class="tab-pane fade activity-settings pt-3" id="activity-settings">
+                {% if auto_contribute_status == 'active' %}
+                <div class="col-lg-8 col-md-7 label mt-3">This action will stop auto contributions for this activity.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'member:deactivate_auto_contributions' activity.activity_name activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-danger btn-sm" value="Stop Auto Contribution">
+                    </form>
+                  </div>
+                {% else %}
+                <div class="col-lg-8 col-md-7 label mt-3">This will allow automatic contributions for this activity on the contribution day, Hussle Free.</div>
+                  <div class="col-lg-4 col-md-5 mt-3">
+                    <form method="POST" action="{% url 'member:activate_auto_contributions' activity.activity_name activity.activity_id %}">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-success btn-sm" value="Activate Auto Contribute">
+                    </form>
+                  </div>
+                {% endif %}
+
+              
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main><!-- End #main -->
+
+{% endblock %}

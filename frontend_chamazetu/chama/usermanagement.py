@@ -22,26 +22,26 @@ from .tasks import sending_email
 load_dotenv()
 
 
-def validate_token(request, role=None):
+def validate_token(request):
     try:
         print("---------validating_token---------")
-        print(request.COOKIES.get(f"{role}_access_token"))
+        print(request.COOKIES.get("access_token"))
         jwt.decode(
-            request.COOKIES.get(f"{role}_access_token").split(" ")[1],
+            request.COOKIES.get("access_token").split(" ")[1],
             os.getenv("JWT_SECRET"),
             algorithms=["HS256"],
         )
         print("---------valid_token---------")
     except (InvalidTokenError, ExpiredSignatureError) as e:
         print("---------invalid_token---------")
-        return redirect(reverse("chama:signin", args=[role]))
+        return redirect(reverse("chama:signin"))
 
 
-def refresh_token(request, role):
+def refresh_token(request):
     print("---------refresh_token-PATH--------")
     print(request.path)  # /manager/chama/vuka
     try:
-        refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
+        refresh_token = request.COOKIES.get("refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
             refresh_token, os.getenv("JWT_SECRET"), algorithms=["HS256"]
@@ -50,7 +50,6 @@ def refresh_token(request, role):
         email_claim = decoded_token.get("sub")
         data = {
             "username": email_claim,
-            "role": role,
         }
 
         headers = {"Content-type": "application/json"}
@@ -63,7 +62,7 @@ def refresh_token(request, role):
         new_access_token = refresh_data["new_access_token"]
         response = HttpResponseRedirect(request.path)
         response.set_cookie(
-            f"{role}_access_token",
+            "access_token",
             f"Bearer {new_access_token}",
             secure=True,
             httponly=True,
@@ -72,17 +71,17 @@ def refresh_token(request, role):
         return response
     except (InvalidTokenError, ExpiredSignatureError) as e:
         print("---------invalid_token---------")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
     except Exception as e:
         print("---------error---------")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
 
 
-async def refresh_token_async(request, role):
+async def refresh_token_async(request):
     print("---------refresh_token-PATH--------")
     print(request.path)  # /manager/chama/vuka
     try:
-        refresh_token = request.COOKIES.get(f"{role}_refresh_token").split(" ")[1]
+        refresh_token = request.COOKIES.get("refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
             refresh_token, os.getenv("JWT_SECRET"), algorithms=["HS256"]
@@ -91,7 +90,6 @@ async def refresh_token_async(request, role):
         email_claim = decoded_token.get("sub")
         data = {
             "username": email_claim,
-            "role": role,
         }
 
         headers = {"Content-type": "application/json"}
@@ -104,7 +102,7 @@ async def refresh_token_async(request, role):
         new_access_token = refresh_data["new_access_token"]
         response = HttpResponseRedirect(request.path)
         response.set_cookie(
-            f"{role}_access_token",
+            "access_token",
             f"Bearer {new_access_token}",
             secure=True,
             httponly=True,
@@ -113,23 +111,23 @@ async def refresh_token_async(request, role):
         return response
     except (InvalidTokenError, ExpiredSignatureError) as e:
         print("---------invalid_token---------")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
     except Exception as e:
         print("---------error---------")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
 
 
-def get_user_email(role, id):
-    url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
+def get_user_email(id):
+    url = f"{os.getenv('api_url')}/users/email/{id}"
     resp = requests.get(url)
-    if resp.status_code == 200:
+    if resp.status_code == HTTPStatus.OK:
         user = resp.json()
         email = user["email"]
         return email
     return None
 
 
-def signin(request, role):
+def signin(request):
     if request.method == "POST":
         data = {
             "username": request.POST.get("email").strip().lower(),
@@ -138,41 +136,55 @@ def signin(request, role):
 
         # TODO: check if the user is already logged in and redirect to the dashboard or # remember me
         # TODO: if the user email is not the same as the payload of the token, signout the other user in the background
-        response = requests.post(
-            f"{os.getenv('api_url')}/auth/{role}s/login/", data=data
-        )
+        response = requests.post(f"{os.getenv('api_url')}/auth/login/", data=data)
 
         if response.status_code == HTTPStatus.OK:
             access_tokens = {}
             refresh_tokens = {}
-            access_tokens[role] = response.json()["access_token"]
-            refresh_tokens[role] = response.json()["refresh_token"]
+            access_tokens["access_token"] = response.json()["access_token"]
+            refresh_tokens["refresh_token"] = response.json()["refresh_token"]
             current_user = request.POST["email"].strip().lower()
 
-            # check if user is a member or manager
-            if role == "manager":
-                response = redirect(reverse("manager:dashboard"))
-            elif role == "member":
-                response = redirect(reverse("member:dashboard"))
+            # default role is member, if the user has not joined any chama, check if he has created any chama
+            # if he has created but not a member, redirect to manager dashboard, else redirect to member dashboard
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": f"Bearer {access_tokens.get('access_token')}",
+            }
+            initial_role = requests.get(
+                f"{os.getenv('api_url')}/users/active_role/{current_user}",
+            )
+            role = "member"
+            if initial_role.status_code == HTTPStatus.OK:
+                role = initial_role.json()["active_role"]
+
+            response = redirect(reverse(f"{role}:dashboard"))
 
             # successful login - store tokens - redirect to dashboard
             response.set_cookie(
-                f"current_{role}",
+                "current_user",
                 current_user,
                 secure=True,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
-                f"{role}_access_token",
-                f"Bearer {access_tokens.get(role)}",
+                "current_role",
+                role,
                 secure=True,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
-                f"{role}_refresh_token",
-                f"Bearer {refresh_tokens.get(role)}",
+                f"access_token",
+                f"Bearer {access_tokens.get('access_token')}",
+                secure=True,
+                httponly=True,
+                samesite="Strict",
+            )
+            response.set_cookie(
+                f"refresh_token",
+                f"Bearer {refresh_tokens.get('refresh_token')}",
                 secure=True,
                 httponly=True,
                 samesite="Strict",
@@ -180,16 +192,22 @@ def signin(request, role):
             return response
         else:
             # unsuccessful login - redirect to login page - send message to user - not verified
-            messages.error(request, f"user not a {role} or email not verified")
-            return render(request, f"chama/{role}login.html")
+            messages.error(request, f"email/password incorrect, please try again")
+            return render(request, f"chama/signin.html")
     else:
-        return render(request, f"chama/{role}login.html")
+        return render(request, f"chama/signin.html")
 
-    page = f"chama/{role}login.html"
+    page = f"chama/signin.html"
     return render(request, page)
 
 
-def signup(request, role):
+def switch_to(request, role):
+    response = HttpResponseRedirect(reverse(f"{role}:dashboard"))
+    response.set_cookie("current_role", role)
+    return response
+
+
+def signup(request):
     if request.method == "POST":
         first_name = request.POST["first_name"]
         last_name = request.POST["last_name"]
@@ -199,7 +217,7 @@ def signup(request, role):
 
         if password != confirm_password:
             messages.error(request, "passwords do not match")
-            return render(request, f"chama/{role}signup.html")
+            return render(request, f"chama/signup.html")
 
         data = {
             "first_name": first_name,
@@ -208,7 +226,6 @@ def signup(request, role):
             "password": password,
             "is_active": False,
             "email_verified": False,
-            "role": role,
         }
 
         headers = {"Content-type": "application/json"}
@@ -231,7 +248,6 @@ def signup(request, role):
                     "current_site": current_site,
                     "uid": urlsafe_base64_encode(force_bytes(current_user["id"])),
                     "token": current_user["activation_code"],
-                    "role": role,
                 },
             )
 
@@ -245,97 +261,85 @@ def signup(request, role):
                 "Account created successfully. Please check your email to activate your account.",
             )
             #  -------------------email confirmation-------------------------------------
-            role = role
-            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signin"))
         else:
             messages.error(request, "email already in use as manager/member")
-            return HttpResponseRedirect(reverse("chama:signup", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signup"))
 
-    page = f"chama/{role}signup.html"
+    page = f"chama/signup.html"
     return render(request, page)
 
 
-def signout(request, role):
+def signout(request):
     # TODO: in the server side, invalidate the token. create table for tokens blcklist/whitelist/delete
     response = HttpResponseRedirect(reverse("chama:index"))
-    response.delete_cookie(f"current_{role}")
-    response.delete_cookie(f"{role}_access_token")
-    response.delete_cookie(f"{role}_refresh_token")
+    response.delete_cookie(f"current_role")
+    response.delete_cookie(f"current_user")
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
     return response
 
 
 # validation of the signup jwt token (15 min lifespan)
-def verify_signup_token(request, token, role):
+def verify_signup_token(request, token):
     try:
         jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
         return True
     except InvalidTokenError as e:
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
 
 
 # the activation link sent to the user's email
-def activate(request, role, uidb64, token):
+def activate(request, uidb64, token):
     uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uidb64 to user id
-    user = get_user_email(role, uid)
+    user = get_user_email(uid)
 
-    if user is not None and verify_signup_token(
-        request, token, role
-    ):  # validate the jwt token here
+    if verify_signup_token(request, token):
         # activate user and redirect to home page
 
         print("---------activating_user---------")
         print(uid)
-        email_verified_resp = None
-        if role == "manager":
-            print("---------activating_manager---------")
-            email_verified_resp = requests.put(
-                f"{os.getenv('api_url')}/users/manager_email_verification/{uid}",
-                json={"user_email": user},
-            )
-        elif role == "member":
-            print("---------activating_member---------")
-            email_verified_resp = requests.put(
-                f"{os.getenv('api_url')}/users/member_email_verification/{uid}",
-                json={"user_email": user},
-            )
+        print(user)
+        email_verified_resp = requests.put(
+            f"{os.getenv('api_url')}/users/email_verification/{uid}",
+            json={"user_email": user},
+        )
 
-        if email_verified_resp.status_code == 200:
+        if email_verified_resp.status_code == HTTPStatus.OK:
             messages.success(
                 request, "Account activated successfully. You can now login."
             )
-            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signin"))
         else:
             messages.error(request, "Account activation failed")
-            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signin"))
     else:
         # TODO: if the token has expired, send another one - checking if the user is thne database and unverified
         messages.error(request, "Activation link has expired!")
-        return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+        return HttpResponseRedirect(reverse("chama:signin"))
 
 
 # changing password while logged out
-def forgot_password(request, role):
+def forgot_password(request):
     if request.method == "POST":
-        print("======pass role======")
-        print(role)
         email = (request.POST["email"]).strip()
 
-        user_resp = requests.get(f"{os.getenv('api_url')}/users/{role}/{email}")
-        if user_resp.status_code == 200:
+        user_resp = requests.get(f"{os.getenv('api_url')}/users/{email}")
+        if user_resp.status_code == HTTPStatus.OK:
             # TODO: call backend url to create an activation token and send email i;e signup
             return render(
                 request,
                 "chama/update_forgotten_passwords.html",
-                {"role": role, "user": user_resp.json()["email"]},
+                {"user": user_resp.json()["email"]},
             )
         else:
             messages.error(request, "User not found")
-            return HttpResponseRedirect(reverse("chama:forgot_password", args=[role]))
+            return HttpResponseRedirect(reverse("chama:forgot_password"))
 
-    return render(request, "chama/forgot_password_form.html", {"role": role})
+    return render(request, "chama/forgot_password_form.html")
 
 
-def update_forgotten_password(request, role):
+def update_forgotten_password(request):
     if request.method == "POST":
         email = request.POST["email"]
         password = request.POST["password"]
@@ -343,20 +347,18 @@ def update_forgotten_password(request, role):
 
         if password != confirm_password:
             messages.error(request, "passwords do not match")
-            return HttpResponseRedirect(
-                reverse("chama:update_forgotten_password", args=[role])
-            )
+            return HttpResponseRedirect(reverse("chama:update_forgotten_password"))
 
         data = {"email": email, "updated_password": password}
         updated_resp = requests.put(
-            f"{os.getenv('api_url')}/users/{role}/update_password", json=data
+            f"{os.getenv('api_url')}/users/update_password", json=data
         )
-        if updated_resp.status_code == 200:
+        if updated_resp.status_code == HTTPStatus.OK:
             messages.success(request, "password has been successfully updated")
-            return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+            return HttpResponseRedirect(reverse("chama:signin"))
         else:
             messages.error(request, "password update failed")
-            return HttpResponseRedirect(reverse("chama:forgot_password", args=[role]))
+            return HttpResponseRedirect(reverse("chama:forgot_password"))
 
     # might have to get a update forgotten password page
     return render(request, "chama/forgot_password_form.html")
@@ -369,7 +371,7 @@ def join_newsletter(request):
         response = requests.post(
             f"{os.getenv('api_url')}/newsletter/subscribe", json=data
         )
-        if response.status_code == 201:
+        if response.status_code == HTTPStatus.CREATED:
             print("---------newsletter_success---------")
             mail_subject = "chamaZetu Newsletter Subscription."
             message = render_to_string(

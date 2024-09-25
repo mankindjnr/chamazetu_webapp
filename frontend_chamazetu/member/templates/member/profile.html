@@ -29,7 +29,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'member' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -53,7 +53,6 @@
 
           <img src="{{ profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid">
           <span>{{profile.email}}</span>
-          <small>member</small>
           <div class="social-links mt-2">
             {% if profile.twitter_handle != 'N/A' %}
             <a href="https://twitter.com/{{profile.twitter_handle}}" target="_blank" class="twitter"><i class="bi bi-twitter"></i></a>
@@ -168,7 +167,7 @@
                 <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
 
                   <!-- Profile Edit Form -->
-                  <form action="{% url 'member:member_profile_updater' 'member' %}" method="POST" enctype="multipart/form-data">
+                  <form action="{% url 'member:profile_updater' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="row mb-3">
                       <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
@@ -202,7 +201,7 @@
                 </div>
 
                 <div class="tab-pane fade phone_number-edit pt-3" id="phone_number-edit">
-                  <form action="{% url 'member:member_profile_updater' 'member' %}" method="POST">
+                  <form action="{% url 'member:profile_updater' %}" method="POST">
                     {% csrf_token %}
                     
                     <div class="row mb-3">
@@ -222,7 +221,7 @@
                 </div>
 
                 <div class="tab-pane fade socials-edit pt-3" id="socials-edit">
-                  <form action="{% url 'member:member_profile_updater' 'member' %}" method="POST">
+                  <form action="{% url 'member:profile_updater' %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">

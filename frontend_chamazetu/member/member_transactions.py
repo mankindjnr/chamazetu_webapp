@@ -1,362 +1,481 @@
-import requests, jwt, json, os
+import requests, jwt, json, os, httpx, time
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.urls import reverse
 from django.contrib import messages
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from http import HTTPStatus
 
-from chama.decorate.tokens_in_cookies import tokens_in_cookies
-from chama.decorate.validate_refresh_token import validate_and_refresh_token
+from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
+from chama.decorate.validate_refresh_token import (
+    validate_and_refresh_token,
+    async_validate_and_refresh_token,
+)
 from chama.rawsql import execute_sql
 from .members import get_user_id
 from chama.chamas import get_chama_id
 from .tasks import (
-    update_chama_account_balance,
-    update_wallet_balance,
-    wallet_deposit,
-    stk_push_status,
-    after_succesful_chama_deposit,
+    mpesa_request,
 )
 from .members import (
     get_wallet_balance,
     get_member_expected_contribution,
     get_member_contribution_so_far,
     get_wallet_info,
+    get_wallet_id,
+    get_transaction_fee,
 )
+from .activities import get_activity_info
 from .transaction_code import generate_transaction_code
 
 load_dotenv()
 
 
 # ==========================================================
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
-def direct_deposit_to_chama(request):
-    if request.method == "POST":
-        amount = request.POST.get("amount", "").strip()
-        if not amount or not amount.replace(".", "", 1).isdigit():
-            messages.error(request, "Invalid amount.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-        amount = int(float(amount))
+# at this moment we will only check if there are token in the cookies
+# but we won't validate them to see if they are expired or not
+# this is avoid intrerrupting the user's flow, but we will generate a new headers to send to the api
+@async_tokens_in_cookies()
+async def from_wallet_to_activity(
+    request, chama_name, chama_id, activity_type, activity_id
+):
+    if request.method != "POST":
+        return redirect(reverse("member:dashboard"))
 
-        if amount < 10:
-            messages.error(request, "Invalid amount.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
+    current_user = request.COOKIES.get("current_user")
+    user_id = get_user_id(current_user)
+    amount = request.POST.get("amount", "").strip()
 
-        chama_id = get_chama_id(request.POST.get("chamaname"))
-        member_id = get_user_id("member", request.COOKIES.get("current_member"))
-        phone_number = (
-            request.POST.get("phonenumber")
-            if len(request.POST.get("phonenumber")) == 10
-            and request.POST.get("phonenumber").isdigit()
-            else None
+    # validate amount
+    if not is_valid_amount(amount):
+        return handle_error(
+            request, "invalid amount", chama_name, chama_id, activity_type, activity_id
         )
-        transaction_type = "deposit"
-        transaction_origin = request.POST.get("transaction_origin")
 
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
-        }
+    amount = int(float(amount))
 
-        if phone_number is not None:
-            depostinfo = {
-                "amount": amount,
-                "phone_number": phone_number[1:],
-                "recipient": request.POST.get("chamaname").replace(" ", "").upper(),
-                "description": "chamadeposit",
-            }
-
-            deposit_resp = requests.post(
-                f"{os.getenv('api_url')}/request/push", json=depostinfo
-            )
-            print("-----direct froom mpesa----")
-            if deposit_resp.status_code == HTTPStatus.CREATED:
-                # if the stk push was successfully sent
-                if "CheckoutRequestID" in deposit_resp.json():
-                    # all this function will depend on the result of the backend tasks -will listen to it and execute
-                    checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
-                    stk_push_status.apply_async(
-                        args=[
-                            checkoutrequestid,
-                            member_id,
-                            chama_id,
-                            amount,
-                            phone_number[1:],
-                            transaction_origin,
-                            headers,
-                        ],
-                        link=after_succesful_chama_deposit.s(),
-                    )
-
-                    messages.success(
-                        request,
-                        f"mpesa stkpush sent to 0{phone_number} for Ksh: {amount}.",
-                    )
-                    return HttpResponseRedirect(
-                        reverse(
-                            "member:access_chama", args=(request.POST.get("chamaname"),)
-                        )
-                    )
-                else:
-                    messages.error(request, "Failed to send stkpush, please try again.")
-                    return HttpResponseRedirect(
-                        reverse(
-                            "member:access_chama", args=(request.POST.get("chamaname"),)
-                        )
-                    )
-            else:
-                messages.error(request, "Failed to send stkpush, please try again.")
-                return HttpResponseRedirect(
-                    reverse(
-                        "member:access_chama", args=(request.POST.get("chamaname"),)
-                    )
-                )
-        else:
-            if amount <= 0:
-                messages.error(
-                    request, "amount has to be greater or equal to one shilling."
-                )
-            if phone_number is None:
-                messages.error(request, "Invalid phone number.")
-
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-
-    return redirect(reverse("member:dashboard"))
-
-
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
-def from_wallet_to_chama(request):
-    if request.method == "POST":
-        amount = request.POST.get("amount", "").strip()
-        if not amount or not amount.replace(".", "", 1).isdigit():
-            messages.error(request, "Invalid amount.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-
-        amount = int(float(amount))
-
-        if amount <= 0:
-            messages.error(request, "Invalid amount.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-
-        chama_id = get_chama_id(request.POST.get("chamaname"))
-        chama_name = request.POST.get("chamaname")
-        member_id = get_user_id("member", request.COOKIES.get("current_member"))
-        wallet_balance, wallet_number = get_wallet_info(request, member_id)
-        if wallet_balance is None:
-            messages.error(request, "Failed to get wallet balance.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-        if wallet_balance < 1 or wallet_balance < amount:
-            messages.error(request, "Insufficient funds.")
-            return HttpResponseRedirect(
-                reverse("member:access_chama", args=(request.POST.get("chamaname"),))
-            )
-
-        expected_contribution = difference_btwn_contributed_and_expected(
-            member_id, chama_id
+    # fetch wallet info
+    wallet_balance = get_wallet_balance(request)
+    if wallet_balance is None:
+        return handle_error(
+            request,
+            "failed to fetch wallet info",
+            chama_name,
+            chama_id,
+            activity_type,
+            activity_id,
         )
-        # make a unified wallet contribution
-        url = f"{os.getenv('api_url')}/members/unified_wallet_contribution"
-        data = {
-            "expected_contribution": expected_contribution,
-            "member_id": member_id,
-            "chama_id": chama_id,
-            "amount": amount,
-        }
-        resp = requests.post(url, json=data)
+
+    if wallet_balance < amount or amount <= 0:
+        return handle_error(
+            request,
+            "insufficient funds",
+            chama_name,
+            chama_id,
+            activity_type,
+            activity_id,
+        )
+
+    # get expected contribution
+    expected_contribution = difference_btwn_contributed_and_expected(
+        user_id, activity_id
+    )
+
+    if expected_contribution == 0:
+        return handle_error(
+            request,
+            "You have already contributed the expected amount",
+            chama_name,
+            chama_id,
+            activity_type,
+            activity_id,
+        )
+
+    # make a unified wallet contribution
+    # generate a transaction header
+    transaction_header = await get_transaction_header(request, current_user)
+
+    url = None
+    if activity_type == "merry-go-round":
+        url = f"{os.getenv('api_url')}/members/contribute/merry-go-round/{activity_id}"
+    else:
+        url = f"{os.getenv('api_url')}/members/contribute/generic/{activity_id}"
+
+    data = {
+        "expected_contribution": expected_contribution,
+        "amount": amount,
+    }
+
+    if transaction_header:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=data, headers=transaction_header)
         if resp.status_code == HTTPStatus.CREATED:
-            messages.success(request, "chama contribution successful.")
+            messages.success(request, "Activity contribution successful")
         else:
-            messages.error(request, "Failed to deposit, please try again later.")
+            messages.error(request, "Failed to contribute to activity")
 
-        return HttpResponseRedirect(
-            reverse("member:access_chama", args=(request.POST.get("chamaname"),))
+    return HttpResponseRedirect(
+        reverse(
+            "member:activities", args=[chama_name, chama_id, activity_type, activity_id]
         )
+    )
 
-    return redirect(reverse("member:dashboard"))
+
+def is_valid_amount(amount):
+    return amount and amount.replace(".", "", 1).isdigit() and float(amount) > 0
 
 
-# deposit to wallet
-def deposit_to_wallet(request):
+def handle_error(request, message, chama_name, chama_id, activity_type, activity_id):
+    messages.error(request, message)
+    return HttpResponseRedirect(
+        reverse(
+            "member:activities", args=[chama_name, chama_id, activity_type, activity_id]
+        )
+    )
+
+
+async def get_transaction_header(request, current_user):
+    url = f"{os.getenv('api_url')}/auth/refresh"
+    data = {
+        "username": current_user,
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(url, json=data)
+    if resp.status_code == HTTPStatus.CREATED:
+        return {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer Bearer {resp.json()['new_access_token']}",
+        }
+
+    return None
+
+
+# check the difference between the amount deposited and the amount expected within a chama contribution interval
+def difference_btwn_contributed_and_expected(user_id, activity_id):
+    amount_expected = get_member_expected_contribution(user_id, activity_id)
+    print("====expected: ", amount_expected)
+    amount_contributed_so_far = get_member_contribution_so_far(user_id, activity_id)
+    print("====contributed: ", amount_contributed_so_far)
+    remaining_balance = amount_expected - amount_contributed_so_far
+    print("====remaining: ", remaining_balance)
+    if remaining_balance < 0:
+        return 0
+
+    return remaining_balance
+
+
+# this function determines where a wallet transaction goes, either deposit or withdrawal to mpesa
+# Wrap the request calls with try-except to prevent read timeout errors
+@async_tokens_in_cookies()
+async def wallet_transactions(request):
     if request.method == "POST":
+        transaction_type = request.POST.get("transaction_type", "").strip()
         amount = request.POST.get("amount", "").strip()
-        if not amount or not amount.replace(".", "", 1).isdigit():
+        phone_number = request.POST.get("phonenumber", "").strip()
+
+        # validate amount
+        if not is_valid_amount(amount) or int(float(amount)) < 10:
             messages.error(request, "Invalid amount.")
             return redirect(reverse("member:dashboard"))
 
         amount = int(float(amount))
-        if amount < 10:
-            messages.error(request, "amount should be greater than ksh 10.")
-            return redirect(reverse("member:dashboard"))
 
-        phonenumber = request.POST.get("phonenumber", "").strip()
-        if not phonenumber or not phonenumber.isdigit() or len(phonenumber) != 10:
+        # validate phone number
+        if not phone_number or not phone_number.isdigit() or len(phone_number) != 10:
             messages.error(request, "Invalid phone number.")
             return redirect(reverse("member:dashboard"))
 
-        member_id = request.POST.get("member_id")
-        transaction_origin = "direct_deposit"
+        # route reqest based on transaction type
+        if transaction_type == "deposit":
+            return await deposit_to_wallet(request, amount, phone_number)
+        elif transaction_type == "withdrawal":
+            return await from_wallet_to_mpesa(request, amount, phone_number)
 
-        if not phonenumber:
-            messages.error(request, "Invalid phone number")
-            return redirect(reverse("member:dashboard"))
+    return redirect(reverse("member:dashboard"))
 
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
-        }
 
-        if amount >= 10:
-            depostinfo = {
-                "amount": amount,
-                "phone_number": phonenumber[1:],
-                "recipient": "wallet",
-                "description": "walletdeposit",
-            }
+async def deposit_to_wallet(request, amount, phonenumber):
+    user_id = get_user_id(request.COOKIES.get("current_user"))
+    wallet_id = get_wallet_id(user_id)
 
-            deposit_resp = requests.post(
-                f"{os.getenv('api_url')}/request/push", json=depostinfo
-            )
-            if deposit_resp.status_code == HTTPStatus.CREATED:
-                if "CheckoutRequestID" in deposit_resp.json():
-                    checkoutrequestid = deposit_resp.json()["CheckoutRequestID"]
+    if amount < 10:
+        messages.error(request, "amount should be greater than ksh 10.")
+        return redirect(reverse("member:dashboard"))
 
-                    stk_push_status.apply_async(
-                        args=[
-                            checkoutrequestid,
-                            member_id,
-                            "wallet",
-                            amount,
-                            phonenumber[1:],
-                            transaction_origin,
-                            headers,
-                        ],
-                        link=wallet_deposit.s(),
-                    )
+    if not wallet_id:
+        messages.error(request, "Failed to fetch wallet info.")
+        return redirect(reverse("member:dashboard"))
 
-                    messages.success(request, "mpesa request sent")
-                else:
-                    messages.error(
-                        request, "Failed to send mpesa request, please try again."
-                    )
-            else:
-                messages.error(
-                    request, "Failed to send mpesa request, please try again."
+    if amount >= 10:
+        async with httpx.AsyncClient(timeout=10) as client:
+            # record the transaction as pending before sending the request to mpesa
+            try:
+                pending_transaction = await client.post(
+                    f"{os.getenv('api_url')}/transactions/unprocessed_deposit",
+                    json={
+                        "amount": amount,
+                        "transaction_type": "unprocessed wallet deposit",
+                        "transaction_origin": f"254{phonenumber[1:]}",
+                        "transaction_destination": wallet_id,
+                        "user_id": user_id,
+                    },
                 )
 
-            return redirect(reverse("member:dashboard"))
+                if pending_transaction.status_code == HTTPStatus.CREATED:
+                    transaction_code = pending_transaction.json()["transaction_code"]
+
+                    # step 2: send stk push request to mpesa
+                    stk_request_resp = await client.post(
+                        f"{os.getenv('api_url')}/request/push",
+                        json={
+                            "amount": amount,
+                            "phone_number": f"254{phonenumber[1:]}",
+                            "transaction_destination": wallet_id,
+                            "transaction_code": transaction_code,
+                            "description": "loading wallet",
+                        },
+                    )
+
+                    if stk_request_resp.status_code == HTTPStatus.CREATED:
+                        messages.success(request, "Mpesa Request sent successfully.")
+                    else:
+                        messages.error(
+                            request, "Failed to send mpesa request, please try again."
+                        )
+
+                else:
+                    messages.error(
+                        request, "Failed to record transaction, please try again."
+                    )
+
+            except httpx.TimeoutException:
+                messages.error(request, "Failed to send mpesa request")
+            except httpx.RequestError as exc:
+                messages.error(request, "Failed to send mpesa request")
 
     return redirect(reverse("member:dashboard"))
 
 
 # ==========================================================
+# ==========================================================
 
 
-# check the difference between the amount deposited and the amount expected within a chama contribution interval
-def difference_btwn_contributed_and_expected(member_id, chama_id):
-    # get the amount expected
-    amount_expected = get_member_expected_contribution(member_id, chama_id)
-    # get the amount contributed so far
-    amount_contributed_so_far = get_member_contribution_so_far(chama_id, member_id)
-    expected_difference = amount_expected - amount_contributed_so_far
-    if expected_difference < 0:
-        return 0
+@async_tokens_in_cookies()
+async def from_wallet_to_select_activity(request, chama_id, chama_name):
+    if request.method != "POST":
+        return redirect(reverse("member:dashboard"))
+    if request.POST.get("activity_title") is None:
+        messages.error(request, "No activity selected")
+        return redirect(reverse("member:access_chama", args=[chama_name, chama_id]))
 
-    return expected_difference
+    current_user = request.COOKIES.get("current_user")
+    user_id = get_user_id(current_user)
+    amount = request.POST.get("amount", "").strip()
+    activity_id, activity_type = get_activity_info(request.POST.get("activity_title"))
 
+    # validate amount
+    if not is_valid_amount(amount):
+        return handle_error(
+            request, "invalid amount", chama_name, chama_id, activity_type, activity_id
+        )
 
-# retrieve the fines a member has
-def get_member_fines(member_id, chama_id):
-    url = f"{os.getenv('api_url')}/members/total_fines"
-    data = {"member_id": member_id, "chama_id": chama_id}
-    resp = requests.get(url, json=data)
-    if resp.status_code == HTTPStatus.OK:
-        return resp.json().get("total_fines")
-    return 0
+    amount = int(float(amount))
 
+    # fetch wallet info
+    wallet_balance = get_wallet_balance(request)
+    if wallet_balance is None:
+        return handle_error(
+            request,
+            "failed to fetch wallet info",
+            chama_name,
+            chama_id,
+            activity_type,
+            activity_id,
+        )
 
-def deposit_is_greater_than_difference(deposited, member_id, chama_id):
-    return int(deposited) > difference_btwn_contributed_and_expected(
-        member_id, chama_id
-    )
+    if wallet_balance < amount or amount <= 0:
+        return handle_error(
+            request,
+            "insufficient funds",
+            chama_name,
+            chama_id,
+            activity_type,
+            activity_id,
+        )
 
-
-# TODO: b2c
-def withdraw_from_wallet(request):
-    if request.method == "POST":
-        amount = request.POST.get("amount")
-        member_id = request.POST.get("member_id")
-        chama_name = ""
-        if request.POST.get("chama_name"):
-            chama_name = request.POST.get("chama_name")
-
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
-        }
-
-        url = f"{os.getenv('api_url')}/members/update_wallet_balance"
-        data = {
-            "member_id": member_id,
-            "transaction_destination": "",  # retrieve the wallet number,
-            "amount": amount,
-            "transaction_type": "withdrawn_from_wallet",
-        }
-
-
-# balance after repaying fines and missed contributions
-def balance_after_paying_fines_and_missed_contributions(
-    request, amount, member_id, chama_id, transaction_code, chama_name
-):
-
-    url = f"{os.getenv('api_url')}/members/repay_fines"
+    # get expected contribution
     expected_contribution = difference_btwn_contributed_and_expected(
-        member_id, chama_id
+        user_id, activity_id
     )
+
+    if expected_contribution == 0:
+        messages.error(request, "You have already contributed the expected amount")
+        return HttpResponseRedirect(
+            reverse("member:access_chama", args=[chama_name, chama_i])
+        )
+
+    # make a unified wallet contribution
+    # generate a transaction header
+    transaction_header = await get_transaction_header(request, current_user)
+
+    url = None
+    if activity_type == "merry-go-round":
+        url = f"{os.getenv('api_url')}/members/contribute/merry-go-round/{activity_id}"
+    elif activity_type == "table-banking":
+        url = f"{os.getenv('api_url')}/members/contribute/table-banking/{activity_id}"
+    else:
+        url = f"{os.getenv('api_url')}/members/contribute/generic/{activity_id}"
+
     data = {
         "expected_contribution": expected_contribution,
-        "member_id": member_id,
-        "chama_id": chama_id,
         "amount": amount,
     }
 
-    resp = requests.put(url, json=data)
+    if transaction_header:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=data, headers=transaction_header)
+        if resp.status_code == HTTPStatus.CREATED:
+            messages.success(request, "Activity contribution successful")
+        else:
+            messages.error(request, "Failed to contribute to activity")
 
-    # using the received amount and balance_after - update wallet, transaction and accout - bg task
-    if resp.status_code == HTTPStatus.OK:
-        balance = resp.json().get("balance_after_fines")  # no need to return it
-        messages.success(request, f"Fines and missed contributions of deducted.")
-        return balance  # return the amount left after paying fines
-    else:
-        return amount  # not sure if to return the amount if repayment fails or to return the initial amount
-
-    # if the wallet deposit fails, we return the amount to the user to try and deposit again by killing the transaction
-    messages.error(request, "Failed to deposit, please try again later.")
-    return HttpResponseRedirect(reverse("member:access_chama", args=(chama_name,)))
+    return HttpResponseRedirect(
+        reverse("member:access_chama", args=[chama_name, chama_id])
+    )
 
 
-# check if a member has fienes or missed contributions
-def member_has_fines_or_missed_contributions(member_id, chama_id):
-    url = f"{os.getenv('api_url')}/members/fines"
-    data = {"member_id": member_id, "chama_id": chama_id}
-    resp = requests.get(url, json=data)
-    if resp.status_code == HTTPStatus.OK:
-        has_fines = resp.json().get("has_fines")
-        print("=======has====")
-        return has_fines
-    return False
+# fixing a wallet deposit from mpesa
+@async_tokens_in_cookies()
+async def fix_mpesa_to_wallet_deposit(request):
+    if request.method == "POST":
+        amount = request.POST.get("amount", "").strip()
+        if not is_valid_amount(amount):
+            messages.error(request, "Invalid amount.")
+            return redirect(reverse("member:dashboard"))
+
+        phone_number = request.POST.get("phone_number", "").strip()
+        if not phone_number or not phone_number.isdigit() or len(phone_number) != 10:
+            messages.error(request, "Invalid phone number.")
+            return redirect(reverse("member:dashboard"))
+
+        receipt_number = (request.POST.get("receipt_number", "").strip()).upper()
+        if not receipt_number:
+            messages.error(request, "Invalid receipt number.")
+            return redirect(reverse("member:dashboard"))
+
+        print("====receipt_number: ", receipt_number)
+
+        transaction_headers = await get_transaction_header(
+            request, request.COOKIES.get("current_user")
+        )
+
+        # check if the transaction exists
+        transaction = requests.get(
+            f"{os.getenv('api_url')}/transactions/unprocessed_deposit/254{phone_number[1:]}/{amount}",
+            headers=transaction_headers,
+        )
+        if transaction.status_code == HTTPStatus.OK:
+            transaction_data = transaction.json()
+            if transaction_data["unprocessed_transaction_exists"]:
+                # Fix the transaction
+                transaction_code = transaction_data["transaction_code"]
+                update_transaction = requests.put(
+                    f"{os.getenv('api_url')}/callback/fix_unprocessed_deposit/{transaction_code}/{receipt_number}",
+                    headers=transaction_headers,
+                )
+                if update_transaction.status_code == HTTPStatus.OK:
+                    messages.success(request, "Transaction updated successfully.")
+                else:
+                    messages.error(
+                        request, "Failed to update transaction. confirm receipt number."
+                    )
+            else:
+                messages.error(request, "Transaction is being processed. Please wait.")
+        else:
+            messages.error(
+                request, "Failed to fetch transaction. please try again later."
+            )
+
+    return redirect(reverse("member:dashboard"))
+
+
+# ==========================================================
+# b2c transactions
+async def from_wallet_to_mpesa(request, amount, phone_number):
+    current_user = request.COOKIES.get("current_user")
+    user_id = get_user_id(current_user)
+
+    # fetch wallet info
+    wallet_balance = get_wallet_balance(request)
+    if wallet_balance is None:
+        messages.error(request, "failed to fetch wallet info")
+        return redirect(reverse("member:dashboard"))
+
+    # get the cost of the transaction
+    transaction_fee = get_transaction_fee(amount)
+    if transaction_fee is None:
+        messages.error(request, "Withdrawal failed. Please try again later.")
+        return redirect(reverse("member:dashboard"))
+
+    amount_to_withdraw = amount + transaction_fee
+
+    if wallet_balance < amount_to_withdraw or amount <= 0:
+        messages.error(
+            request, f"insufficient funds, transaction fee is Ksh {transaction_fee}"
+        )
+        return redirect(reverse("member:dashboard"))
+
+    # generate a transaction header
+    transaction_header = await get_transaction_header(request, current_user)
+
+    # first request to the withdrawal api
+    url_unprocessed = (
+        f"{os.getenv('api_url')}/transactions/unprocessed_wallet_withdrawal"
+    )
+    data_unprocessed = {
+        "amount": amount,
+        "transaction_destination": f"254{phone_number[1:]}",  # remove the 0
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            unprocessed_resp = await client.post(
+                url_unprocessed, json=data_unprocessed, headers=transaction_header
+            )
+
+            if unprocessed_resp.status_code == HTTPStatus.CREATED:
+                transaction_code = unprocessed_resp.json()["transaction_code"]
+
+                # second request to the send b2c api
+                url_mpesa = f"{os.getenv('api_url')}/request/send"
+                data_mpesa = {
+                    "amount": amount,
+                    "phone_number": f"254{phone_number[1:]}",
+                    "description": "wallet withdrawal",
+                    "originator_conversation_id": transaction_code,
+                }
+
+                # send the request to mpesa and handle errors
+                try:
+                    resp = await client.post(url_mpesa, json=data_mpesa)
+                    if resp.status_code == HTTPStatus.CREATED:
+                        messages.success(
+                            request, "Withdrawal request sent successfully"
+                        )
+                    else:
+                        messages.error(request, "Failed to send withdrawal request")
+                except httpx.RequestError:
+                    messages.error(request, "Failed to send withdrawal request")
+            else:
+                messages.error(
+                    request,
+                    "Failed to send withdrawal request. Please try again later.",
+                )
+    except httpx.RequestError as exc:
+        messages.error(request, "Failed to send withdrawal request")
+    except httpx.TimeoutException:
+        messages.error(request, "Failed to send withdrawal request")
+
+    return redirect(reverse("member:dashboard"))

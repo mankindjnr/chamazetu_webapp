@@ -1,0 +1,90 @@
+{% extends "member/members_list_base.html" %}
+{% load static %}
+
+{% block content %} 
+<!-- ======= Header ======= -->
+<header id="header" class="fixed-top">
+    <div class="container d-flex align-items-center">
+
+        <h3 class="logo me-auto"><a href="{% url 'member:access_chama' chama_name chama_id %}"><span>{{chama_name}} </span>Activities</h3>
+        <!-- Uncomment below if you prefer to use an image logo -->
+        <!-- <a href="index.html" class="logo me-auto me-lg-0"><img src="{% static 'member/img/logo.png' %}" alt="" class="img-fluid"></a>-->
+
+        <nav id="navbar" class="navbar order-last order-lg-0">
+            <ul>
+                <li><a href=""></a></li>
+                <li><a href="{% url 'member:access_chama' chama_name chama_id %}">chama dashboard</a></li>
+            </ul>
+    <i class="bi bi-list mobile-nav-toggle"></i>
+  </nav><!-- .navbar -->
+
+</div>
+</header><!-- End Header -->
+
+<main id="main">
+
+<!-- ======= Breadcrumbs ======= -->
+ <!-- messages after join trial -->
+ {% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" id="message_created_{{ forloop.counter }}">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+{% endif %}
+<!-- end messages -->
+<!-- End Breadcrumbs -->
+
+
+<!-- ======= Features Section ======= -->
+<section id="features" class="features">
+  <div class="container" data-aos="fade-up">
+
+    <div class="section-title">
+      <h4 class="mt-6"></h4>
+    </div>
+
+    <div class="row">
+        {% for activity in activities %}
+        <div class="col-lg-4 col-md-6 mt-4 mt-md-0" data-aos="fade-up" data-aos-delay="200">
+        <div class="card border-success mb-3">
+            
+            <div style="overflow-y: auto;">
+            <div class="icon-box d-flex justify-content-between">
+                <i class="bx bx-group" style="color: #ffbb2c;"></i>
+                <h3>{{ activity.name }}</h3>
+                <h3 class="ms-auto">{{ activity.type }}</h3>
+            </div>
+            </div>
+            <p></p>
+            <div class="card-footer bg-transparent border-success d-flex flex-column">
+              <ul  style="list-style-type: none; padding: 0; margin: 0;">
+                {% if activity.frequency == 'interval' %}
+                <li><i class="bx bx-check"></i> <strong>Frequency:</strong> Every {{ activity.interval }} days</li>
+                {% else %}
+                <li><i class="bx bx-check"></i> <strong>Frequency:</strong> {{ activity.frequency }}</li>
+                {% endif %}
+                <li><i class="bx bx-check"></i> <strong>Contribution Amount:</strong> Ksh. {{ activity.amount }}</li>
+                <li><i class="bx bx-check"></i> <strong>First Contribution Date:</strong> {{ activity.first_contribution_date }}</li>
+              </ul>
+              <hr>
+            <p>{{ activity.description }}</p>
+            <form action="{% url 'member:join_activity' chama_name activity.activity_id %}" method="post" class="d-flex align-items-center">
+              {% csrf_token %}
+              <input type="number" class="form-control form-control-sm me-2" placeholder="number of shares e.g 1" name="shares" id="shares" required min="1">
+              <button type="submit" class="btn btn-success btn-sm" id="join_activity">Join</button>
+            </form>
+            <!-- hidden form - it will be displayed by the btn above -->
+            </div>
+        </div>
+        </div>
+        {% endfor %}
+
+  </div>
+</section><!-- End Features Section -->
+
+</main><!-- End #main -->
+<!--  -->
+
+{% endblock %}

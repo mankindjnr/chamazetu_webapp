@@ -39,8 +39,8 @@ from chama.usermanagement import (
 load_dotenv()
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def members_tracker(request, chama_name):
     chama_id = get_chama_id(chama_name)
     interval = get_chama_contribution_interval(chama_id)["contribution_interval"]

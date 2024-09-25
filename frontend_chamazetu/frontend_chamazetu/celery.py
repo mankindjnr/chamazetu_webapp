@@ -23,47 +23,15 @@ app.conf.accept_content = ["json", "pickle"]
 
 # celery Beat settings
 app.conf.beat_schedule = {
-    # executed at midnight everyday
+    # executed a little past midnight everyday
     "update-contribution-days": {
-        "task": "chama.tasks.update_contribution_days",
-        "schedule": crontab(minute=40, hour=0),
+        "task": "chama.tasks.set_fines_and_update_activity_contribution_days",
+        "schedule": crontab(minute=30, hour=0),
     },
-    # every day - midnight - calculate daily mmf interests - midnight
-    "run_daily": {
-        "task": "chama.tasks.calculate_daily_mmf_interests",
-        "schedule": crontab(minute=15, hour=0),
-    },
-    # every week - resets weekly interests and adds the weekly interests to the principal
-    # every sat at midnight
-    "run_weekly": {
-        "task": "chama.tasks.reset_and_move_weekly_mmf_interests",
-        "schedule": crontab(minute=10, hour=0, day_of_week=6),
-    },
-    # every month - resets monthly interests
-    # every 1st of the month
-    "run_monthly": {
-        "task": "chama.tasks.reset_monthly_mmf_interests",
-        "schedule": crontab(minute=15, hour=0, day_of_month=1),
-    },
-    # few minutes after midnight - calculate missed contributions and update the fines
-    "run_fines": {
-        "task": "member.tasks.calculate_missed_contributions_fines",
-        "schedule": crontab(minute=0, hour=1),
-    },
-    # run at 2am every day
-    "run_pending_withdrawals": {
-        "task": "manager.tasks.fulfill_pending_withdrawal_requests",
-        "schedule": crontab(minute=0, hour=2),
-    },
-    # run at 11pm every day
-    "update_and_fix_callbacks": {
-        "task": "chama.tasks.run_update_and_fix_callbacks",
-        "schedule": crontab(minute=0, hour=23),
-    },
-    # run everyday at 9 pm
+    # run everyday at 12 noon
     "make_auto_contributions": {
         "task": "member.tasks.auto_contribute",
-        "schedule": crontab(minute=0, hour=10),
+        "schedule": crontab(minute=0, hour=12),
     },
 }
 

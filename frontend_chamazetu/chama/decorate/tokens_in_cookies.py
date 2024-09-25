@@ -13,13 +13,13 @@ If it is, await the coroutine before returning the response.
 
 
 # refresh here and store the tokens as well
-def tokens_in_cookies(role):
+def tokens_in_cookies():
     def decorator(func):
         def wrapper(request, *args, **kwargs):
-            access_token = request.COOKIES.get(f"{role}_access_token")
-            refresh_token = request.COOKIES.get(f"{role}_refresh_token")
+            access_token = request.COOKIES.get("access_token")
+            refresh_token = request.COOKIES.get("refresh_token")
             if not access_token or not refresh_token:
-                return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+                return HttpResponseRedirect(reverse("chama:signin"))
             response = func(request, *args, **kwargs)
             return response
 
@@ -28,14 +28,14 @@ def tokens_in_cookies(role):
     return decorator
 
 
-def async_tokens_in_cookies(role):
+def async_tokens_in_cookies():
     def decorator(func):
         @wraps(func)
         async def wrapper(request, *args, **kwargs):
-            access_token = request.COOKIES.get(f"{role}_access_token")
-            refresh_token = request.COOKIES.get(f"{role}_refresh_token")
+            access_token = request.COOKIES.get("access_token")
+            refresh_token = request.COOKIES.get(f"refresh_token")
             if not access_token or not refresh_token:
-                return HttpResponseRedirect(reverse("chama:signin", args=[role]))
+                return HttpResponseRedirect(reverse("chama:signin"))
             response = await func(request, *args, **kwargs)
             return response
 

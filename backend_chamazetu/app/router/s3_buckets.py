@@ -68,12 +68,10 @@ async def upload_profile_picture_to_s3(
 
     filename, file_extension = os.path.splitext(file.filename)
     if file_extension not in [".jpeg", ".jpg", ".png", ".JPEG", ".JPG", ".PNG"]:
-        print("===image if sector====")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only jpg/jpeg/png files are allowed",
         )
-    print("=======================")
 
     bucket_name = os.getenv("AWS_BUCKET_NAME")
     s3_client = client(
@@ -83,9 +81,6 @@ async def upload_profile_picture_to_s3(
     )
 
     try:
-        print("====try sector====")
-        print(f"Uploading to s3 buckets {file.filename}")
-
         # resize the image
         compressed_image_io = io.BytesIO()
         image = Image.open(img_io)
@@ -107,9 +102,7 @@ async def upload_profile_picture_to_s3(
 @router.delete("/profile-picture-delete", status_code=status.HTTP_200_OK)
 async def delete_from_s3(
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     bucket_name = os.getenv("AWS_BUCKET_NAME")
     s3_client = client(
@@ -132,49 +125,18 @@ async def delete_from_s3(
 
 
 # update profile pictre column for member/manager
-@router.put("/manager/update_profile_picture", status_code=status.HTTP_201_CREATED)
+@router.put("/update_profile_picture", status_code=status.HTTP_200_OK)
 async def update_profile_picture(
     profile: schemas.ProfilePicture,
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
         print("===update profile picture===")
         print(current_user.email)
         profile_picture_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/profile_pictures/{current_user.email}.jpeg"
 
-        user = db.query(models.Manager).filter_by(id=current_user.id).first()
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User not found",
-            )
-
-        user.profile_picture = profile_picture_url
-        db.commit()
-        db.refresh(user)
-        return user
-    except Exception as e:
-        db.rollback()
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Profile picture not updated",
-        )
-
-
-@router.put("/member/update_profile_picture", status_code=status.HTTP_201_CREATED)
-async def update_profile_picture(
-    profile: schemas.ProfilePicture,
-    db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
-):
-    try:
-        print("===update profile picture===")
-        profile_picture_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/profile_pictures/{profile.profile_picture_name}.jpeg"
-
-        user = db.query(models.Member).filter_by(id=current_user.id).first()
+        user = db.query(models.User).filter_by(id=current_user.id).first()
 
         if not user:
             raise HTTPException(

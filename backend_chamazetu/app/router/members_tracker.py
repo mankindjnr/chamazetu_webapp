@@ -27,9 +27,9 @@ async def get_members_daily_monthly_contribution(
         ).strftime("%Y-%m-%d")
         # get all members in a chama
         chama_members = (
-            db.query(models.Member)
-            .join(models.members_chamas_association)
-            .filter(models.members_chamas_association.c.chama_id == chama_id)
+            db.query(models.User)
+            .join(models.chama_user_association)
+            .filter(models.chama_user_association.c.chama_id == chama_id)
             .all()
         )
         members_daily_contribution = defaultdict(lambda: defaultdict(int))
@@ -81,9 +81,7 @@ async def get_chama_days_contribution_tracker(
     chama_id: int,
     dates_data: dict = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -96,9 +94,9 @@ async def get_chama_days_contribution_tracker(
 
         # get all members in a chama
         chama_members = (
-            db.query(models.Member)
-            .join(models.members_chamas_association)
-            .filter(models.members_chamas_association.c.chama_id == chama_id)
+            db.query(models.User)
+            .join(models.chama_user_association)
+            .filter(models.chama_user_association.c.chama_id == chama_id)
             .all()
         )
         chama_daily_contribution = defaultdict(lambda: defaultdict(int))
@@ -144,32 +142,3 @@ async def get_chama_days_contribution_tracker(
         raise HTTPException(
             status_code=400, detail="Failed to get chama days contribution tracker"
         )
-
-
-# get all the members in a chama, email and first name, last name
-@router.get(
-    "/chama_members/{chama_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=List[schemas.ChamaMembersList],
-)
-async def get_chama_members(
-    chama_id: int,
-    db: Session = Depends(database.get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
-):
-
-    try:
-        chama_members = (
-            db.query(models.Member)
-            .join(models.members_chamas_association)
-            .filter(models.members_chamas_association.c.chama_id == chama_id)
-            .all()
-        )
-
-        return [schemas.ChamaMembersList.from_orm(member) for member in chama_members]
-
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=400, detail="Failed to get chama members")

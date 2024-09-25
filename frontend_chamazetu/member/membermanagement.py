@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
+from http import HTTPStatus
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -29,52 +30,53 @@ from chama.usermanagement import (
 load_dotenv()
 
 
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def dashboard(request):
-    current_user = request.COOKIES.get("current_member")
-    member_id = int(get_user_id("member", current_user))
+    current_user = request.COOKIES.get("current_user")
+    current_role = request.COOKIES.get("current_role")
+    user_id = int(get_user_id(current_user))
+    print("===========member dashboard================")
+    print(current_user, ":", current_role, ":", user_id)
 
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
 
-    urls = [
-        (f"{os.getenv('api_url')}/members/chamas", {}),
-        (
-            f"{os.getenv('api_url')}/members/recent_transactions",
-            {"member_id": member_id},
-        ),
-        (f"{os.getenv('api_url')}/members/wallet_balance", {}),
-        (f"{os.getenv('api_url')}/members/recent_wallet_activity", {}),
-        (f"{os.getenv('api_url')}/users/member/{current_user}", None),
-    ]
+    resp = requests.get(f"{os.getenv('api_url')}/members/dashboard", headers=headers)
 
-    results = member_dashboard_threads(urls, headers)
-
-    if results["chamas"]:
+    if resp.status_code == HTTPStatus.OK:
+        dashboard_data = resp.json()
+        print("=======dashboard success=========")
+        # print(dashboard_data)
         return render(
             request,
             "member/dashboard.html",
             {
-                "current_user": {"current_user": current_user, "member_id": member_id},
-                "chamas": results["chamas"],
-                "my_recent_transactions": results["member_recent_transactions"],
-                "wallet_activity": results["wallet_activity"],
-                "user_profile": results["user_profile"],
+                "current_role": current_role,
+                "current_user": {"current_user": current_user, "user_id": user_id},
+                "chamas": dashboard_data["member_chamas"],
+                "my_recent_transactions": dashboard_data["recent_transactions"],
+                "sent_transactions": dashboard_data["sent_transactions"],
+                "wallet_balance": dashboard_data["wallet_balance"],
+                "zetucoins": dashboard_data["zetucoins"],
+                "recent_wallet_activity": dashboard_data["wallet_transactions"],
+                "profile_picture": dashboard_data["profile_picture"],
             },
         )
     else:
+        print("=======dashboard failed=========")
         return render(
             request,
             "member/dashboard.html",
             {
-                "current_user": {"current_user": current_user, "member_id": member_id},
-                "user_profile": results["user_profile"],
-                "wallet_activity": results["wallet_activity"],
+                "current_role": current_role,
+                "current_user": {"current_user": current_user, "user_id": user_id},
             },
         )
+
+    return reverse(f"{current_role}:dashboard")
 
 
 def member_dashboard_threads(urls, headers):
@@ -162,11 +164,10 @@ def organise_wallet_activity(wallet_activity):
 
 
 # updating password while logged in from profile page
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def change_password(request, user_id):
     if request.method == "POST":
-        role = request.POST.get("role")
         current_password = request.POST.get("password")
         new_password = request.POST.get("newpassword")
         confirm_password = request.POST.get("renewpassword")
@@ -175,7 +176,7 @@ def change_password(request, user_id):
             messages.error(request, "Passwords do not match")
             return redirect(reverse(f"{role}:profile", args=[user_id]))
 
-        url = f"{os.getenv('api_url')}/users/{role}/change_password"
+        url = f"{os.getenv('api_url')}/users/change_password"
         data = {
             "user_id": user_id,
             "old_password": current_password,
@@ -183,7 +184,7 @@ def change_password(request, user_id):
         }
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get(f'{role}_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
         response = requests.put(url, json=data, headers=headers)
 
@@ -199,10 +200,10 @@ def change_password(request, user_id):
     return redirect(reverse(f"{role}:profile", args=[user_id]))
 
 
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def profile(request, member_id):
-    full_profile = get_user_full_profile("member", member_id)
+    full_profile = get_user_full_profile(member_id)
     return render(request, "member/profile.html", {"profile": full_profile})
 
 

@@ -33,7 +33,7 @@
 
         <li class="nav-item dropdown pe-3">
 
-          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown"><i>{{ current_role }}</i>
             <img src="{{ profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
@@ -41,14 +41,25 @@
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
               <h6>{{ current_user }}</h6>
-              <span>manager</span>
+              <!-- <span>manager</span> -->
             </li>
             <li>
               <hr class="dropdown-divider">
             </li>
+            {% if current_role == "manager" %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'member' %}">
+                <i class="bi bi-house"></i>
+                <span>member dashboard</span>
+              </a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'manager:profile' manager_id %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'member:profile' manager_id %}">
                 <i class="bi bi-person"></i>
                 <span>My Profile</span>
               </a>
@@ -72,7 +83,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'manager' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -159,7 +170,7 @@
 
                   <div class="card-body">
                     <h5 class="card-title">Create a New Chama</h5>
-                    <form action="{% url 'manager:create_chama' %}" method="post" id="createChamaForm" novalidate>
+                    <form action="{% url 'manager:create_chama' %}" method="post" id="createChamaForm">
                         {% csrf_token %}
                         <div class="mb-3">
                             <label for="chama_name" class="form-label">Chama Name</label>
@@ -167,81 +178,40 @@
                             <small class="error-message"></small>
                         </div>
                         <div class="mb-3">
-                          <label for="chama_type" class="form-label">Chama Type</label>
-                          <input type="text" class="form-control" id="chama_type" name="chama_type" placeholder="investment saving merry-go-round" required>
+                          <label for="chama_type" class="form-label">Chama Tags</label>
+                          <input type="text" class="form-control" id="chama_tags" name="chama_tags" data-role="tagsinput" placeholder="e.g investment, saving, merry-go-round e.t.c" required>
                           <small class="error-message"></small>
                         </div>
 
                         <div class="mb-3">
                           <label for="category" class="form-label">Chama Category</label>
                           <select class="form-select" id="category" name="category" onchange="showOptions()">
-                              <option value="public">Public</option>
-                              <option value="private">Private</option>
+                            <option value="private">Private</option>
+                            <option value="public">Public</option>
                           </select>
                           <!-- helper message -->
                           <small id="categoryhelp" class="form-text text-muted"></small>
                         </div>
-                        <!--TODO: limit to 500 characters check with javascript and notify the use with small text -->
+                        <!--TODO: limit to 500 characters check with javascript and notify the use with a message-->
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" maxlength="500" required></textarea>
-                            <small id="descriptionHelp" class="form-text text-muted">max 500 characters</small>
+                            <textarea class="form-control" id="description" name="description" rows="3" minlength="30" maxlength="500" required></textarea>
+                            <small id="descriptionHelp" class="form-text text-muted">min 50 characters and max 500 characters</small>
                             <small class="error-message"></small>
                         </div>
 
                         <div class="mb-3">
-                            <label for="members" class="form-label">Number of Members</label> 
-                            <input type="number" class="form-control" id="members_allowed" name="members_allowed" min="1" placeholder="number of members" required>
-                            <div class="form-check">
-                              <input class="form-check-input" type="checkbox" id="noLimit" name="noLimit">
-                              <label class="form-check-label" for="noLimit"><b>No limit</b></label>
+                            <label for="members_allowed" class="form-label">Maximum Number of Members</label> 
+                            <div class="input-group">
+                              <input type="number" class="form-control" id="members_allowed" name="members_allowed" placeholder="Enter number of members" min="2" required>
+                              <div class="input-group-text">
+                                <input class="form-check-input" type="checkbox" id="noLimit" name="noLimit" value="noLimit">
+                                <label class="form-check-label ms-2" for="noLimit">No limit</label>
+                              </div>
                             </div>
                             <small class="error-message"></small>
                         </div>
-
-                        <div class="mb-3">
-                          <label for="share_price" class="form-label">Share price</label>
-                          <input type="number" class="form-control" id="share_price" name="share_price" placeholder="per member contribution" min="1" required>
-                        </div>
-
-                        <div class="mb-3">
-                          <label for="fine_per_share" class="form-label">Fine per Share</label>
-                          <input type="number" class="form-control" id="fine_per_share" name="fine_per_share" placeholder="fine for when users miss the deadline" min="1" required>
-                          <small class="error-message"></small>
-                        </div>
                         
-                        <!-- contribution frequency -->
-                        <!-- Frequency Selection -->
-                        <div class="mb-3">
-                          <label for="frequency" class="form-label">Contribution Frequency</label>
-                          <select class="form-select" id="frequency" name="frequency" onchange="showOptions()">
-                              <option value="daily">Daily</option>
-                              <option value="weekly">Weekly</option>
-                              <option value="monthly">Monthly</option>
-                              <!-- <option value="custom">custom</option> -->
-                          </select>
-                          <!-- helper message for the custom entry -->
-                          <small id="frequencyHelp" class="form-text text-muted"></small>
-                        </div>
-                        <!-- Weekly Options -->
-                        <div class="mb-3" id="weekly_options" style="display: none;">
-                            <label for="weekly_day" class="form-label">Select Day of Week</label>
-                            <select class="form-select" id="weekly_day" name="weekly_day">
-                                <option value="sunday">Sunday</option>
-                                <option value="monday">Monday</option>
-                                <option value="tuesday">Tuesday</option>
-                                <option value="wednesday">Wednesday</option>
-                                <option value="thursday">Thursday</option>
-                                <option value="friday">Friday</option>
-                                <option value="saturday">Saturday</option>
-                            </select>
-                        </div>
-                        <!-- Monthly Options -->
-                        <div class="mb-3" id="monthly_options" style="display: none;">
-                            <label for="monthly_date" class="form-label">Enter Date Of Contribution</label>
-                            <input type="number" class="form-control" id="monthly_day" name="monthly_day" min="1" max="31" placeholder="day of the month">
-                        </div>
-                        <!-- End Frequency Selection -->
                         
                         <div class="mb-3">
                           <label for="registration" class="form-label">Registration Fee</label>
@@ -249,29 +219,15 @@
                           <small class="error-message"></small>
                         </div>
                         <hr>
-
-                        <div class="row mb-3">
-                          <p><b>When will the chama start and when the first contribution will be</b></p>
-                          <div class="col-md-6">
-                              <label for="last_joining_date" class="form-label">Last day of joining</label>
-                              <input type="date" class="form-control" id="last_joining_date" name="last_joining_date" required>
-                          </div>
-                          <div class="col-md-6">
-                            <label for="first_contribution_date" class="form-label">First contribution date</label>
-                            <input type="date" class="form-control" id="first_contribution_date" name="first_contribution_date" required>
+                        
+                        <div class="mb-3">
+                          <p><b>Deadline for joining the chama</b></p>
+                          <label for="last_joining_date" class="form-label">Last day of joining</label>
+                          <input type="date" class="form-control" id="last_joining_date" name="last_joining_date" required>
                         </div>
-                        <small id="dateHelp" class="form-text text-muted">First contribution date should be past the final day of joining</small>
 
-                        </div>
                         <!-- checkbox -->
                         <hr>
-                        <div class="mb-3 form-check">
-                          <!-- a sentence notifying the manager -->
-                          <p><b>Check the box below if members can start joining immediately</b></p>
-                          <input type="checkbox" class="form-check-input" id="accepting_members" name="accepting_members">
-                          <label class="form-check-label" for="accepting_members">Accepting Members</label>
-                        </div>
-
                         <br/>
                         <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create Chama</button>
                     </form>
@@ -282,30 +238,50 @@
               </div>
               <!-- frequency script -->
               <script>
-                function showOptions() {
-                    var frequency = document.getElementById("frequency").value;
-                    if (frequency === "weekly") {
-                        document.getElementById("weekly_options").style.display = "block";
-                        //document.getElementById("bi_weekly_options").style.display = "none";
-                        document.getElementById("monthly_options").style.display = "none";
-                    } else if (frequency === "monthly") {
-                        document.getElementById("weekly_options").style.display = "none";
-                        //document.getElementById("bi_weekly_options").style.display = "none";
-                        document.getElementById("monthly_options").style.display = "block";
-                    } else {
-                        document.getElementById("weekly_options").style.display = "none";
-                        //document.getElementById("bi_weekly_options").style.display = "none";
-                        document.getElementById("monthly_options").style.display = "none";
-                    }
-                    // } else if (frequency === "custom") {
-                    //     document.getElementById("frequencyHelp").innerHTML = "you'll get to set the frequency later";
-                    // }
-                }
 
-                // no limit members or limit members
-                document.getElementById('noLimit').addEventListener('change', function() {
-                  document.getElementById('members_allowed').disabled = this.checked;
-              });
+                // DESCRIPTION CHARACTER COUNT
+                document.getElementById('description').addEventListener('input', function() {
+                var maxLength = 500;
+                var currentLength = this.value.length;
+
+                var charCountElement = document.getElementById('charCount');
+                charCountElement.textContent = currentLength + '/' + maxLength + ' characters';
+
+                // Display warning if the max length is reached
+                if (currentLength >= maxLength) {
+                    charCountElement.style.color = 'red';
+                } else {
+                    charCountElement.style.color = 'gray';
+                }
+            });
+
+              document.getElementById('createChamaForm').addEventListener('submit', function(event) {
+              var description = document.getElementById('description').value;
+              if (description.length > 500) {
+                  event.preventDefault(); // Prevent form submission
+                  alert('Description exceeds 500 characters.');
+              }
+            });
+
+            document.getElementById('members_allowed').addEventListener('input', function() {
+            var noLimitCheckbox = document.getElementById('noLimit');
+            if (this.value > 0) {
+                noLimitCheckbox.disabled = true;
+                noLimitCheckbox.checked = false; // Uncheck the checkbox if a number is entered
+            } else {
+                noLimitCheckbox.disabled = false;
+            }
+          });
+
+            document.getElementById('noLimit').addEventListener('change', function() {
+            var membersInput = document.getElementById('members_allowed');
+            if (this.checked) {
+                membersInput.value = ''; // Clear the input field when No Limit is checked
+                membersInput.disabled = true;
+            } else {
+                membersInput.disabled = false;
+            }
+          });
             </script>
           </div> <!-- the id hiding the form-->
 
@@ -318,14 +294,14 @@
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">{{ chama.chama_name }} <span>| {% if chama.is_active %} active {% else %} not active {% endif %} </span></h5>
+                  <h5 class="card-title">{{ chama.chama_name }} <span>| {% if chama.is_active == True %} active {% else %} not active {% endif %} </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <i class="bi bi-people-fill"></i>
                     </div>
                     <div class="ps-3">
-                      <h6>{{ chama.number_of_members }} members</h6>
+                      <h6>{{ chama.member_count }} members</h6>
 
                     </div>
                   </div>

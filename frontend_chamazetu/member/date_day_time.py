@@ -26,3 +26,9 @@ def extract_date_time(date):
     time = date_time.strftime("%H:%M:%S")
     day = date_time.strftime("%A")
     return {"date": date, "time": time, "day": day}
+
+
+def formatted_date(date):
+    # to datetime object
+    date = datetime.strptime(date, "%Y-%m-%d")
+    return date.strftime("%Y-%B-%d")

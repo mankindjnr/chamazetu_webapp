@@ -80,26 +80,6 @@ def set_contribution_date(first_contribution_date, chama_name):
     return None
 
 
-# update the contribution days for the chamas
-@shared_task
-def update_contribution_days():
-    """
-    Update the next contribution day for chamas
-    """
-    logger.info("==========chama/tasks.py: update_contribution_days()==========")
-    logger.info(f"Task ran at: {datetime.now()}")
-    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
-    response = requests.put(f"{os.getenv('api_url')}/chamas/update_contribution_days")
-    if response.status_code == HTTPStatus.OK:
-        return None
-    else:
-        logger.error(
-            f"Failed to update contribution days: {response.status_code}, {response.text}"
-        )
-
-    return None
-
-
 @shared_task
 def check_and_update_accepting_members_status():
     # TODO: we will be checking if today is past the last joining day, if it is we will update the chama to not accepting members
@@ -208,7 +188,7 @@ def fix_callback_and_transactions_mismatch(*args, **kwargs):
             f"{os.getenv('api_url')}/callback/fix_callback_transactions_table_mismatch"  # fix unprocessed transactions against the callback table
         )
         if response.status_code == HTTPStatus.OK:
-            return None
+            return True
         else:
             logger.error(
                 f"Failed to add fixing transactions: {response.status_code}, {response.text}"
@@ -227,3 +207,68 @@ def run_update_and_fix_callbacks():
     update_task = update_callback_transactions.s()
     fix_task = fix_callback_and_transactions_mismatch.s()
     return chain(update_task | fix_task)()
+
+
+# update the contribution days for chama activities
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def update_activities_contribution_days(*args, **kwargs):
+    """
+    Update the next contribution day for chamas
+    """
+    logger.info("==========chama/tasks.py: update_contribution_days()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/activities/update_contribution_days"
+    )
+
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to update contribution days: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.OK
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def set_fines_for_missed_contributions():
+    """
+    Set fines for late contributions
+    """
+    logger.info(
+        "==========chama/tasks.py: set_fines_for_missed_contributions()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/activities/set_fines_for_missed_contributions"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to set fines for missed contributions: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task
+def set_fines_and_update_activity_contribution_days():
+    """
+    Set fines for late contributions and update the next contribution day for chamas
+    """
+    logger.info(
+        "==========chama/tasks.py: set_fines_and_update_activity_contribution_days()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    set_fines_task = set_fines_for_missed_contributions.s()
+    update_task = update_activities_contribution_days.s()
+    return chain(set_fines_task | update_task)()

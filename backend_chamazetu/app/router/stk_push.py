@@ -9,13 +9,18 @@ from typing import List
 from zoneinfo import ZoneInfo
 import logging
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+
+
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/request", tags=["request"])
 
 transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
-
 
 load_dotenv()
 
@@ -24,6 +29,42 @@ consumer_key = os.getenv("CONSUMER_KEY")
 consumer_secret = os.getenv("CONSUMER_SECRET")
 shortcode = os.getenv("SHORTCODE")
 passkey = os.getenv("PASSKEY")
+initiator_name = os.getenv("INITIATOR_NAME")
+initiator_password = os.getenv("INITIATOR_PASSWORD")
+security_credential = os.getenv("SECURITY_CREDENTIAL")
+
+
+def load_public_key():
+    try:
+        with open(
+            "public_key.pem", "rb"
+        ) as cert_file:  # Or "ProductionCertificate.cer"
+            public_key = serialization.load_pem_public_key(
+                cert_file.read(), backend=default_backend()
+            )
+        print("Public key loaded successfully")
+        return public_key
+    except Exception as e:
+        print(f"Failed to load public key: {str(e)}")
+        return None
+
+
+def encrypt_security_credential(plaintext_password: str) -> str:
+    public_key = load_public_key()
+    if public_key is None:
+        raise Exception("Failed to load public key.")
+
+    # Encrypt the password
+    encrypted_password = public_key.encrypt(
+        plaintext_password.encode(),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+    # Return the base64 encoded encrypted string
+    return base64.b64encode(encrypted_password).decode("utf-8")
 
 
 async def generate_access_token():
@@ -55,19 +96,21 @@ async def stk_push(
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
     password, timestamp = generate_password()
-    callback_url = (
-        "https://chamazetu.com/callback"
-        if push_data.description != "Registration"
-        else "https://chamazetu.com/callback/registration"
-    )
+    # callback_url = (
+    #     "https://chamazetu.com/callback"
+    #     if push_data.description != "Registration"
+    #     else "https://chamazetu.com/callback/registration"
+    # )
+    callback_url = "https://chamazetu.com/api/callback/c2b"
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
-    phone_number = f"254{push_data.phone_number}"
+    phone_number = push_data.phone_number
     amount = push_data.amount
-    recipient = push_data.recipient
+    recipient = push_data.transaction_destination
     description = push_data.description
+    unprocessed_code = push_data.transaction_code
 
     payload = {
         "BusinessShortCode": shortcode,
@@ -78,7 +121,7 @@ async def stk_push(
         "PartyA": phone_number,
         "PartyB": shortcode,
         "PhoneNumber": phone_number,
-        "CallBackURL": callback_url,
+        "CallBackURL": f"{callback_url}/{unprocessed_code}",
         "AccountReference": recipient,
         "TransactionDesc": description,
     }
@@ -119,22 +162,7 @@ async def stk_push_status(checkout_request_id: str):
             response.raise_for_status()  # Raise exception for non-2xx status codes
             response_data = response.json()
 
-            if "ResultCode" in response_data:
-                result_code = response_data["ResultCode"]
-                if result_code == "1037":
-                    message = "1037 Timeout in completing transaction"
-                elif result_code == "1032":
-                    message = "1032 Transaction has been canceled by the user"
-                elif result_code == "1":
-                    message = "1 The balance is insufficient for the transaction"
-                elif result_code == "0":
-                    message = "0 The transaction was successful"
-                else:
-                    message = "Unknown result code: " + result_code
-            else:
-                message = "Error in response"
-
-            return {"message": message, "queryResponse": response_data}
+            return response_data
     except httpx.RequestError as e:
         transaction_error_logger.error(f"HTTP request error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to query STK push status")
@@ -144,3 +172,53 @@ async def stk_push_status(checkout_request_id: str):
     except ValueError as e:
         transaction_error_logger.error(f"Value error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to query STK push status")
+
+
+@router.post("/send", status_code=status.HTTP_201_CREATED)
+async def send_money(
+    send_data: schemas.SendMoneyBase = Body(...),
+):
+    token = await generate_access_token()
+    if not token:
+        raise HTTPException(status_code=500, detail="Failed to generate access token")
+
+    password, timestamp = generate_password()
+    url = os.getenv("B2C_URL")
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    phone_number = send_data.phone_number
+    amount = send_data.amount
+    description = send_data.description
+    originator_id = send_data.originator_conversation_id
+
+    payload = {
+        "OriginatorConversationID": originator_id,
+        "InitiatorName": initiator_name,
+        "SecurityCredential": security_credential,
+        "CommandID": "BusinessPayment",
+        "Amount": amount,
+        "PartyA": shortcode,
+        "PartyB": phone_number,
+        "Remarks": description,
+        "QueueTimeOutURL": "https://chamazetu.com/api/callback/b2c/queue",
+        "ResultURL": "https://chamazetu.com/api/callback/b2c/result",
+        "Occasion": "WITHDRAWAL",
+    }
+
+    print("==payload==\n", payload)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            print("=====sending======")
+            print(response.json())
+            return response.json()
+    except httpx.RequestError as e:
+        transaction_error_logger.error(f"HTTP request error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to send money")
+    except httpx.HTTPStatusError as e:
+        transaction_error_logger.error(f"HTTP status error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to send money")
+    except ValueError as e:
+        transaction_error_logger.error(f"Value error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to send money")

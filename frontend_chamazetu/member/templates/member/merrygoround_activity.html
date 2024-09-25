@@ -1,0 +1,498 @@
+{% extends "chama/loginBase.html" %}
+{% load static %}
+{% load dynamic_key %}
+
+{% block content %}
+  <header id="header" class="header fixed-top d-flex align-items-center">
+
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
+        <img src="{% static 'chama/img/favicon.png' %}" alt="">
+        <span class="d-none d-lg-block">Dashboard</span>
+      </a>
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div><!-- End Logo -->
+
+    <!-- <div class="search-bar">
+      <form class="search-form d-flex align-items-center" method="POST" action="#">
+        <input type="text" name="query" placeholder="Search" title="Enter search keyword">
+        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
+      </form>
+    </div> -->
+    <!-- End Search Bar -->
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+
+        <li class="nav-item d-block d-lg-none">
+          <a class="nav-link nav-icon search-bar-toggle " href="#">
+            <!-- <i class="bi bi-search"></i> -->
+          </a>
+        </li><!-- End Search Icon-->
+
+        <!-- wallet trigger button - the modal body is in main section to avoid conflicts -->
+        <!-- TODO: see if removing this would be good, only display the amount but deposit funcionality to be kept in main dashboard -->
+        <li class="nav-item dropdown">
+
+          <!-- <a class="nav-icon">
+            <button type="button" class="btn btn-dark bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletModal">
+              Ksh: {{ wallet.wallet_balance }}
+          </button> -->
+          <!-- Button trigger wallet deposit modal -->
+          <button type="button" class="btn btn-dark bi bi-wallet">Ksh: {{ wallet_balance }}</button>
+          </a>
+
+        </li>
+        <!-- End Wallet Nav -->
+
+        <li class="nav-item dropdown pe-3">
+
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+            <!-- <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle img-fluid"> -->
+            <i class="bi bi-person-circle">member</i>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a><!-- End Profile Iamge Icon -->
+
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+              <span>member</span>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'manager' %}">
+                  <i class="bi bi-house"></i>
+                  <span>manager dashboard</span>
+                </a>
+              </li>
+
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <!-- <li>
+              <a class="dropdown-item d-flex align-items-center" href="#">
+                <i class="bi bi-question-circle"></i>
+                <span>Need Help?</span>
+              </a>
+            </li> -->
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+
+          </ul><!-- End Profile Dropdown Items -->
+        </li><!-- End Profile Nav -->
+
+      </ul>
+    </nav><!-- End Icons Navigation -->
+
+  </header><!-- End Header -->
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+      <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-hand-coin-fill"></i>
+          <span>View Loans</span>
+          <span>request loan</span>
+        </a>
+      </li> -->
+
+      <li class="nav-item"></li>
+        <a class="nav-link collapsed" href="{% url 'member:access_chama' chama_name chama_id %}">
+          <i class="bx bx-group"></i>
+          <span>Chama Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-heading">Pages</li>
+
+      <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-hand-coin-fill"></i>
+          <span>Contribution Days Tracker</span>
+        </a>
+      </li> -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-receipt-line"></i>
+          <span>Account Transactions</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-close-circle-line"></i>
+          <span>Fines Tracker</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:view_activity_members' activity_name activity_id %}">
+          <i class="ri-group-2-line"></i>
+          <span>Activity Members</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_about_activity' activity_name activity_id %}">
+          <i class="ri-article-line"></i>
+          <span>About Activity</span> 
+        </a>
+      </li><!-- End about Page Nav -->
+
+    </ul>
+
+  </aside><!-- End Sidebar-->
+
+  <main id="main" class="main">
+
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+      <h1>{{ activity_name }}</h1>
+
+      <!-- messages after deposit trial -->
+      {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          {% for message in messages %}
+            {{ message }}
+          {% endfor %}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+      <!-- end messages -->
+      <div class="ml-auto">
+        <!-- Button trigger wallet deposit modal-->
+        <button type="button" class="btn btn-success btn-sm" id="activityTransactionBtn">
+          Contribute
+        </button>
+      </div>
+
+    </div><!-- End Page Title -->
+
+    <section class="section dashboard">
+      <div class="row">
+
+        <!-- Left side columns -->
+        <div class="col-lg-8">
+          <div class="row">
+
+            <!-- wallet form -->
+            <div class="col-12">
+              <div class="card" id="walletForm" style="display: none;">
+                <div class="card-body">
+                  <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button>
+                    <h5 class="card-title">Contribute from wallet to {{ activity_name }}</h5>
+                  <form action="{% url 'member:from_wallet_to_activity' chama_name chama_id activity_type activity_id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="amount" class="form-label">Amount</label>
+                      <div class="input-group">
+                        <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                        <input type="number" class="form-control" id="amount" name="amount" min="10" required>
+                        <small class="error-message"></small>
+                      </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('walletForm').style.display = 'none';">Close</button>
+                      <button type="submit" class="btn btn-outline-success btn-sm">Contribute</button>
+                    </div>
+
+                  </form>
+
+                </div>
+              </div>
+            </div>
+            <!-- End wallet form -->
+
+             <!-- check if chama.member_incurred_fines is greater than zero -->
+              <!-- member total fines-->
+               {% if my_fines != 0 %}
+              <div class="col-xxl-4 col-md-6">
+                <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
+
+                  <div class="card-body">
+                    <h5 class="card-title">missed contributions <span>& Fines</span></h5>
+
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <small>Ksh:</small>
+                      </div>
+                      <div class="ps-3">
+                        <h6>{{ my_fines }}</h6>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            <!-- end member fines card-->
+            {% else %}
+
+            <!-- Deposit Card -->
+              <div class="col-xxl-4 col-md-6">
+                <div class="card info-card sales-card">
+
+                  <div class="card-body">
+                    <h5 class="card-title">Contributions <span>| Today</span></h5>
+
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <small>Ksh:</small>
+                      </div>
+                      <div class="ps-3">
+                        <h6>{{ today_contributions }}</h6>
+                        <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div><!-- End deposit Card -->
+              {% endif %}
+
+
+
+            <!-- total deposited Card -->
+            <div class="col-xxl-4 col-md-6">
+              <div class="card info-card revenue-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Account <span>| available balance</span></h5> <!--switch to num of members joined -->
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small>Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <!-- <span class="text-success small pt-1 fw-bold">available balance</span> <span class="text-muted small pt-2 ps-1"></span> -->
+                      <h6>{{ account_balance}}</h6>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div><!-- End account Card -->
+
+            <!-- actitvity weekly -->
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <h5 class="card-title">chama weekly contributions <span>|Ksh</span></h5>
+                  <div>
+                    <hr>
+                    <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ contribution_date}}</button>
+                  </div>
+
+                  {% if weekly_headers %}
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        {% for header in weekly_headers %}
+                        <th scope="col">{{ header }}</th>
+                        {% endfor %}
+                      </tr>
+                    </thead>
+                    {% if weekly_contributions %}
+                    <tbody>
+                      {% for contribution in weekly_contributions %}
+                      <tr>
+                        {% for header in weekly_headers %}
+                        <td>{{ contribution|get_item:header }}</td>
+                        {% endfor %}
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    {% endif %}
+                  </table>
+                {% else %}
+
+                <table class="table table-success table-striped-columns">
+                  <thead>
+                    <tr>
+                      <th scope="col">members</th>
+                      <th scope="col">expected</th>
+                      <th scope="col">contributed</th>
+                      <th scope="col">sunday</th>
+                      <th scope="col">monday</th>
+                      <th scope="col">tuesday</th>
+                      <th scope="col">wednesday</th>
+                      <th scope="col">thursday</th>
+                      <th scope="col">friday</th>
+                      <th scope="col">saturday</th>
+                    </tr>
+                  </thead>
+                  {% if weekly_contributions %}
+                  <tbody>
+                    {% for contribution in weekly_contributions %}
+                    <tr>
+                      <th scope="row">{{ contribution.user_name }}</th>
+                      <td>{{ contribution.expected }}</td>
+                      <td>{{ contribution.contributed }}</td>
+                      <td>{{ contribution.Sunday }} </td>
+                      <td>{{ contribution.Monday }} </td>
+                      <td>{{ contribution.Tuesday }} </td>
+                      <td>{{ contribution.Wednesday }} </td>
+                      <td>{{ contribution.Thursday }}</td>
+                      <td>{{ contribution.Friday }}</td>
+                      <td>{{ contribution.Saturday }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  {% endif %}
+                </table>
+                {% endif %}
+
+                </div>
+
+              </div>
+            </div><!-- End weekly activity -->
+
+          </div>
+        </div><!-- End Left side columns -->
+
+        <!-- Right side columns -->
+        <div class="col-lg-4">
+
+          <!-- Recent Activity -->
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">Recent Transactions <span>|members</span></h5>
+              {% if recent_transactions %}
+              <div class="activity">
+                {% for transaction in recent_transactions %}
+
+                <div class="activity-item d-flex">
+                  <i class="ri-arrow-left-right-line"></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{{ transaction.user_name }}: {{ transaction.transaction_type }} of Ksh: {{ transaction.amount }} on {{ transaction.transaction_date }} at {{ transaction.transaction_time }}</p>
+                  </div>
+                </div><!-- End activity item-->
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div><!-- End Recent Activity -->
+
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">Activity account <span>| manager</span></h5>
+              {% if investment_activity %}
+              <div class="activity">
+                {% for activity in investment_activity %}
+
+                <div class="activity-item d-flex">
+                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{% if activity.transaction_type == 'deposit' %} Invested {% else %} Withdrew {% endif %} Ksh: {{ activity.amount }} on {{ activity.date }} at {{ activity.time }}</p>
+                  </div>
+                </div><!-- End activity item-->
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div><!-- End investment Activity -->          
+
+        </div><!-- End Right side columns -->
+
+      </div>
+      <!-- wallet Modal -->
+       <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const depositForm = document.getElementById('directDepositForm');
+        const amountInput = document.getElementById('amount');
+        const activityNameInput = document.getElementById('activityname');
+        const amountErrorMessage = amountInput.nextElementSibling; // Get the small element for amount error
+        const activityNameErrorMessage = activityNameInput.nextElementSibling; // Get the small element for activity name error
+      
+        depositForm.addEventListener('submit', function (event) {
+          // Clear previous error messages
+          amountErrorMessage.textContent = '';
+          activityNameErrorMessage.textContent = '';
+      
+          let formIsValid = true;
+      
+          // Validate amount
+          const amount = parseFloat(amountInput.value);
+          if (isNaN(amount) || amount < 1) {
+            event.preventDefault(); // Prevent form submission
+            amountErrorMessage.textContent = 'Amount must be at least 1 Ksh';
+            amountErrorMessage.style.color = 'red';
+            formIsValid = false;
+          }
+      
+          // Validate activity name
+          if (activityNameInput.value.trim() === '') {
+            event.preventDefault(); // Prevent form submission
+            activityNameErrorMessage.textContent = 'Activity name cannot be empty';
+            activityNameErrorMessage.style.color = 'red';
+            formIsValid = false;
+          }
+      
+          // If form is not valid, prevent submission
+          if (!formIsValid) {
+            event.preventDefault();
+          }
+        });
+      });
+      </script>
+
+    </section>
+
+    
+  </main><!-- End #main -->
+
+  <script>
+    // notification
+    document.addEventListener("DOMContentLoaded", function() {
+    var chama_created = document.getElementById("chama_created");
+    if (chama_created) {
+      setTimeout(function() {
+        chama_created.style.display = "none";
+      }, 6000);
+    }
+
+    let buttons = ["activityTransactionBtn", "selectActivityTransactionBtn"];
+      buttons.forEach(function(buttonid){
+        var button = document.getElementById(buttonid);
+        if (button) {
+          button.addEventListener("click", function() {
+            let form = document.getElementById("walletForm");
+            if (form) {
+              if (form.style.display === "none") {
+                form.style.display = "block";
+              } else {
+                form.style.display = "none";
+              }
+            } else {
+              console.log("transaction form not found");
+            }
+          });
+        } else {
+          console.log(buttonid + " not found");
+        }
+      });
+  });
+  </script>
+  
+
+
+ {% endblock %}

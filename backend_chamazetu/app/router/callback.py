@@ -22,6 +22,8 @@ router = APIRouter(prefix="/callback", tags=["callback"])
 transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
 
+nairobi_tz = ZoneInfo("Africa/Nairobi")
+
 
 # transaction status function
 async def check_transaction_status(transaction_id: str) -> dict:
@@ -234,55 +236,367 @@ async def update_callback_transactions(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# route will check the transactions table and retrieve transactions whose  transaction type is "unprocessed deposit", it will then compare those transactions against
-# the callback data table using the cehckout request id, if in the callback data that transaction is marked as success, it will update the transaction table to success
-# if not, it will update the transaction table to failed - later we can reverse all failed transactions
-@router.put("/fix_callback_transactions_table_mismatch", status_code=status.HTTP_200_OK)
-async def fix_mismatch_transactions(
+# if a user  deposits to mpesa and the amount doesn't reflect in the wallet, we can update that if they provide the transaction code
+@router.put(
+    "/fix_unprocessed_deposit/{transaction_code}/{receipt_number}",
+    status_code=status.HTTP_200_OK,
+)
+async def fix_unprocessed_deposit(
+    transaction_code: str,
+    receipt_number: str,
     db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
-        # Retrieve all unprocessed deposit transactions
-        unprocessed_deposits = (
-            db.query(models.Transaction)
-            .filter(models.Transaction.transaction_type == "unprocessed deposit")
-            .filter(models.Transaction.transaction_origin == "mpesa")
-            .filter(models.Transaction.transaction_completed == False)
-            .all()
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        # Retrieve the transaction
+        transaction = (
+            db.query(models.WalletTransaction)
+            .filter(models.WalletTransaction.transaction_code == transaction_code)
+            .first()
         )
 
-        if unprocessed_deposits:
-            for transaction in unprocessed_deposits:
-                checkout_request_id = transaction.transaction_code
+        if not transaction:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found.",
+            )
 
-                # Retrieve the callback data for the given checkout id
-                callback_data = (
-                    db.query(models.CallbackData)
-                    .filter(
-                        models.CallbackData.CheckoutRequestID == checkout_request_id
-                    )
-                    .first()
-                )
+        # check the status of the transaction using the receipt number
+        response = await check_transaction_status(receipt_number)
+        transaction_info_logger.info(f"Response: {response}")
 
-                if callback_data:
-                    if callback_data.Status == "Success":
-                        # the transaction needs to be reversed since it was not processed as it should have been
-                        transaction.transaction_completed = True
-                        transaction.needs_reversal = True
-                    else:
-                        # Update status to failed, the transaction was not successful - no further action needed
-                        transaction.transaction_type = "failed"
-                        transaction.needs_reversal = False
+        if response["ResponseCode"] == "0":
+            # Update transaction status to success
+            transaction.transaction_completed = True
+            transaction.transaction_code = receipt_number
+            transaction.transaction_type = "deposit"
 
-                    db.add(transaction)
+            # update the wallet balance
+            user.wallet_balance += transaction.amount
 
+            db.add(transaction)
+            db.add(user)
             db.commit()
-        return {"message": "Mismatch transactions updated successfully"}
+        else:
+            transaction_error_logger.error(f"Failed to update transaction: {response}")
+            raise HTTPException(
+                status_code=400, detail="Failed to update transaction status."
+            )
+
+        return {"message": "Transaction updated successfully."}
+    except HTTPException as http_exc:
+        transaction_error_logger.error(f"Failed to update transaction: {str(http_exc)}")
+        db.rollback()
+        raise http_exc
     except Exception as e:
         # Handle any other exceptions
         db.rollback()
-        transaction_error_logger.error(
-            f"Failed to update mismatch transactions: {str(e)}"
-        )
+        transaction_error_logger.error(f"Failed to update transaction: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def get_phone_number(result):
+    phone_number = result["Result"]["ResultParameters"]["ResultParameter"][2][
+        "Value"
+    ].split(" - ")[0]
+
+    if len(phone_number) == 10:
+        return f"254{phone_number[1:]}"
+
+    return phone_number
+
+
+def extract_originator_conversation_id(result: dict) -> str:
+    return result.get("Result", {}).get("OriginatorConversationID", "")
+
+
+def convert_date_format(date_str: str) -> str:
+    # Define the current format of the date string
+    current_format = "%d.%m.%Y %H:%M:%S"
+
+    # Define the desired output format
+    desired_format = "%Y-%m-%d %H:%M:%S"
+
+    # Parse the input date string into a datetime object
+    date_obj = datetime.strptime(date_str, current_format)
+
+    # Convert the datetime object to the desired string format
+    formatted_date = date_obj.strftime(desired_format)
+
+    return formatted_date
+
+
+def extract_result_parameters(result: dict) -> dict:
+    result_parameters = result["Result"]["ResultParameters"]["ResultParameter"]
+    extracted_result = {param["Key"]: param["Value"] for param in result_parameters}
+    return extracted_result
+
+
+@router.post("/b2c/result", status_code=status.HTTP_201_CREATED)
+async def b2c_result(result: dict, db: Session = Depends(database.get_db)):
+    try:
+        print("=====b2c result=====")
+        print(result)
+        transaction_info_logger.info(f"Result: {result}")
+        today = datetime.now(nairobi_tz).date()
+
+        phone_number = get_phone_number(result)
+        result_dict = extract_result_parameters(result)
+        originator_conversation_id = extract_originator_conversation_id(result)
+        completion_date = convert_date_format(
+            result_dict["TransactionCompletedDateTime"]
+        )
+
+        db.begin()
+        # retrieve unprocessed transactions from the database
+        unprocessed_withdrawal = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.transaction_type
+                    == "unprocessed wallet withdrawal",
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_code
+                    == originator_conversation_id,
+                    models.WalletTransaction.destination == phone_number,
+                    models.WalletTransaction.amount == result_dict["TransactionAmount"],
+                    func.date(models.WalletTransaction.transaction_date) == today,
+                )
+            )
+            .first()
+        )
+
+        if not unprocessed_withdrawal:
+            db.rollback()
+            raise HTTPException(
+                status_code=404, detail="Unprocessed withdrawal transaction not found"
+            )
+
+        # update user's wallet balance
+        user = (
+            db.query(models.User)
+            .filter(models.User.id == unprocessed_withdrawal.user_id)
+            .with_for_update()
+            .first()
+        )
+
+        if not user:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        chamazetu_fees = (
+            db.query(models.ChamazetuToMpesaFees)
+            .filter(
+                models.ChamazetuToMpesaFees.from_amount
+                <= result_dict["TransactionAmount"]
+            )
+            .filter(
+                models.ChamazetuToMpesaFees.to_amount
+                >= result_dict["TransactionAmount"]
+            )
+            .first()
+        )
+
+        if not chamazetu_fees:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Fee not found")
+
+        # TODO: remember to minus the transaction charges from the wallet balance as well
+        user.wallet_balance -= (
+            result_dict["TransactionAmount"] + chamazetu_fees.chamazetu_to_mpesa
+        )
+
+        # update the transaction status to processed as sent since its completed transaction
+        unprocessed_withdrawal.transaction_completed = True
+        unprocessed_withdrawal.transaction_type = "sent"
+        unprocessed_withdrawal.transaction_code = result_dict["TransactionReceipt"]
+        unprocessed_withdrawal.transaction_date = completion_date
+
+        # record the transaction in the B2CResults table
+        new_result = models.B2CResults(
+            originatorconversationid=originator_conversation_id,
+            conversationid=result.get("Result", {}).get("OriginatorConversationID", ""),
+            transactionid=result.get("Result", {}).get("TransactionID", ""),
+            resulttype=result.get("Result", {}).get("ResultType", ""),
+            resultcode=result.get("Result", {}).get("ResultCode", ""),
+            resultdesc=result.get("Result", {}).get("ResultDesc", ""),
+            transactionamount=result_dict["TransactionAmount"],
+            transactionreceipt=result_dict["TransactionReceipt"],
+            receiverpartypublicname=result_dict["ReceiverPartyPublicName"],
+            transactioncompleteddatetime=completion_date,
+            b2cutilityaccountavailablefunds=result_dict[
+                "B2CUtilityAccountAvailableFunds"
+            ],
+            b2cworkingaccountavailablefunds=result_dict[
+                "B2CWorkingAccountAvailableFunds"
+            ],
+            b2crecipientisregisteredcustomer=result_dict[
+                "B2CRecipientIsRegisteredCustomer"
+            ],
+            b2cchargespaidaccountavailablefunds=result_dict[
+                "B2CChargesPaidAccountAvailableFunds"
+            ],
+        )
+        db.bulk_save_objects([new_result])
+
+        if result_dict["TransactionAmount"] <= 100:
+            db.commit()
+            return {"message": "Transaction processed successfully."}
+
+        # calculate rewards coins
+        print("===fee difference:", chamazetu_fees.difference)
+        fee_difference = chamazetu_fees.difference
+        # calculate the reward coins at 1 shilling = 2.5 coins
+        reward_coins = fee_difference * 2.5
+        print("===reward coins:", reward_coins)
+        # cost of issued coins while redemption is at 10 coins = 1 shilling
+        cost_of_issued_coins = reward_coins * 0.1
+        print("===cost of issued coins:", cost_of_issued_coins)
+        # net charge after rewarding the user
+        net_charge = fee_difference - cost_of_issued_coins
+        print("===net charge:", net_charge)
+        # update the user's reward coins - zetucoins
+        user.zetucoins += int(reward_coins)
+        print("===user's reward coins:", user.zetucoins)
+
+        # update chamazetu's reward coins
+        chamazetu = (
+            db.query(models.ChamaZetu)
+            .filter(models.ChamaZetu.id == 1)
+            .with_for_update()
+            .first()
+        )
+        chamazetu.withdrawal_fees += net_charge
+        print("===chamazetu's withdrawal fees:", chamazetu.withdrawal_fees)
+        # how much shillings is the reward coins worth
+        chamazetu.reward_coins += cost_of_issued_coins
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update transaction")
+
+
+@router.post("/b2c/queue", status_code=status.HTTP_201_CREATED)
+async def b2c_queue(timeout: dict):
+    print("=====b2c timeout=====")
+    print(timeout)
+    transaction_error_logger.error(f"Failed to update transaction\n: {timeout}")
+    return {"message": "B2C timeout processed successfully."}
+
+
+@router.post("/c2b/{unprocessed_code}", status_code=status.HTTP_201_CREATED)
+async def c2b_callback(
+    unprocessed_code: str,
+    transaction_data: dict,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("======c2b callback=====")
+        response_code = transaction_data["Body"]["stkCallback"]["ResultCode"]
+        if not response_code == 0:
+            raise HTTPException(status_code=400, detail="The service request failed.")
+
+        today = datetime.now(nairobi_tz).date()
+        amount = int(
+            transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][0][
+                "Value"
+            ]
+        )
+        result_desc = transaction_data["Body"]["stkCallback"]["ResultDesc"]
+        mpesa_receipt_number = transaction_data["Body"]["stkCallback"][
+            "CallbackMetadata"
+        ]["Item"][1]["Value"]
+        transaction_date = datetime.strptime(
+            str(
+                transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3][
+                    "Value"
+                ]
+            ),
+            "%Y%m%d%H%M%S",
+        )
+        phone_number = str(
+            transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][4][
+                "Value"
+            ]
+        )
+
+        print("======c2b ata=====")
+        print(response_code, type(response_code))
+        print(amount, type(amount))
+        print(result_desc, type(result_desc))
+        print(
+            mpesa_receipt_number,
+        )
+        print(transaction_date, type(transaction_date))
+        print(phone_number, type(phone_number))
+
+        # retrieve unprocessed transaction from the database
+        unprocessed_deposit = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.transaction_type
+                    == "unprocessed wallet deposit",
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_code == unprocessed_code,
+                    func.date(models.WalletTransaction.transaction_date) == today,
+                    models.WalletTransaction.amount == amount,
+                    models.WalletTransaction.origin == phone_number,
+                )
+            )
+            .first()
+        )
+
+        if not unprocessed_deposit:
+            raise HTTPException(
+                status_code=404, detail="Unprocessed deposit transaction not found"
+            )
+
+        # update user's wallet balance
+        user = (
+            db.query(models.User)
+            .filter(models.User.id == unprocessed_deposit.user_id)
+            .first()
+        )
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.wallet_balance += amount
+
+        # update the transaction status to processed as deposit since its completed transaction
+        unprocessed_deposit.transaction_completed = True
+        unprocessed_deposit.transaction_type = "deposit"
+        unprocessed_deposit.transaction_code = mpesa_receipt_number
+        unprocessed_deposit.transaction_date = transaction_date
+
+        # record tthe transaction in the callback table
+        new_callback = models.CallbackData(
+            MerchantRequestID=transaction_data["Body"]["stkCallback"][
+                "MerchantRequestID"
+            ],
+            CheckoutRequestID=transaction_data["Body"]["stkCallback"][
+                "CheckoutRequestID"
+            ],
+            ResultCode=response_code,
+            ResultDesc=result_desc,
+            Amount=amount,
+            MpesaReceiptNumber=mpesa_receipt_number,
+            TransactionDate=transaction_date,
+            PhoneNumber=phone_number,
+            Purpose="wallet",
+            Status="Success",
+        )
+        db.add(new_callback)
+
+        db.commit()
+    except Exception as e:
+        print(e)
+        transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update transaction")

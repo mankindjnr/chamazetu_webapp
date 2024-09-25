@@ -4,11 +4,17 @@ from django.shortcuts import render
 from .managing import (
     dashboard,
     create_chama,
+    create_activity,
     profile,
     change_password,
     chama,
     view_chama_members,
     get_about_chama,
+    chama_activity,
+    new_activity_members,
+    deactivate_activate_activity,
+    restart_activity,
+    delete_activity,
 )
 
 from .chama_features_edit import (

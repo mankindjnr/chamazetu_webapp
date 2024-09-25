@@ -1,0 +1,33 @@
+<div class="modal fade" id="walletActivityModal" tabindex="-1" aria-labelledby="walletActivityLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="walletActivityLabel">Deposit from wallet to {{ activity.title }}</h1>
+          <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="{% url 'member:from_wallet_to_select_activity' chama_id chama_name %}" method="POST" id="directDepositForm">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="amount" class="form-label">Amount</label>
+              <div class="input-group">
+                <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                <input type="number" class="form-control" id="amount" name="amount" min="1" required>
+                <small class="error-message"></small>
+                </div>
+            </div>
+
+            <div class="mb-3" style="display: none;">
+              <label for="chamaname" class="form-label">Activity Name</label>
+              <input type="text" class="form-control" id="activity_title" name="activity_title" value="{{ activity.title }}" readonly required>
+              <small class="error-message"></small>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-outline-success btn-sm" onclick="this.disabled=true; this.form.submit();">Contribute</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>

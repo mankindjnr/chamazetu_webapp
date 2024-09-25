@@ -10,6 +10,7 @@ from collections import defaultdict
 from http import HTTPStatus
 import asyncio, aiohttp
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from zoneinfo import ZoneInfo
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import (
@@ -26,7 +27,7 @@ from chama.chamas import (
     get_next_contribution_date,
 )
 from chama.thread_urls import fetch_chama_data
-from .date_day_time import get_sunday_date, extract_date_time
+from .date_day_time import get_sunday_date, extract_date_time, formatted_date
 from .members import (
     get_member_expected_contribution,
     get_user_full_name,
@@ -44,7 +45,10 @@ from .tasks import (
     send_email_to_new_chama_member,
     auto_contribute,
 )
-from chama.tasks import update_contribution_days
+from chama.tasks import (
+    update_activities_contribution_days,
+    set_fines_and_update_activity_contribution_days,
+)
 
 from chama.usermanagement import (
     validate_token,
@@ -53,460 +57,218 @@ from chama.usermanagement import (
 
 load_dotenv()
 
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
-# viewing a chamas in the public dashboard where users can join
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
+
+# viewing chamas in the public dashboard where users can join
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def view_chama(request, chamaid):
-    data = {"chamaid": chamaid}
-    headers = {
-        "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
-    }
-
-    urls = [
-        (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/faqs/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/rules/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/mission/vision/{chamaid}", None),
-    ]
-
-    results = public_chama_threads(urls)
-
-    # resp = requests.get(f"{os.getenv('api_url')}/chamas/public_chama", json=data)
-    if results["public_chama"]:
-        manager_profile = get_user_full_profile(
-            "manager", results["public_chama"]["manager_id"]
-        )
-
-        # print(chama)
-
+    urls = f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}"
+    resp = requests.get(urls)
+    if resp.status_code == HTTPStatus.OK:
+        chama = resp.json()
+        print("=======logged public access========")
+        print(chama)
         return render(
             request,
             "chama/blog_chama.html",
             {
-                "role": "member" if headers else None,
-                "chama": results["public_chama"],
-                "manager": manager_profile,
-                "faqs": results["faqs"],
-                "rules": results["rules"],
-                "mission": results["mission"],
-                "vision": results["vision"],
+                "role": request.COOKIES.get("current_role"),
+                "chama": chama["public_chama"],
+                "rules": chama["rules"],
+                "faqs": chama["faqs"],
+                "about": chama["about"],
+                "manager": chama["manager"],
+                "activities": chama["activities"],
             },
         )
 
+    return redirect(reverse("chama:chamas"))
+
 
 # viewing a chamas in the member dashboard where they can interact with specifc chama
-@async_tokens_in_cookies("member")
-@async_validate_and_refresh_token("member")
-async def access_chama(request, chamaname):
-    chama_id = get_chama_id(chamaname)
-    current_user = request.COOKIES.get("current_member")
-    role = "member"
-
-    urls = [
-        (f"{os.getenv('api_url')}/chamas/{chama_id}", None),
-        (f"{os.getenv('api_url')}/transactions/recent/{chama_id}", None),
-        (f"{os.getenv('api_url')}/transactions/members/{chama_id}", None),
-        (f"{os.getenv('api_url')}/chamas/account_balance/{chama_id}", None),
-        (f"{os.getenv('api_url')}/chamas/today_deposits/{chama_id}", None),
-        (f"{os.getenv('api_url')}/investments/chamas/account_balance/{chama_id}", None),
-        (f"{os.getenv('api_url')}/investments/chamas/recent_activity/{chama_id}", None),
-        (f"{os.getenv('api_url')}/members/wallet_balance", None),
-        (f"{os.getenv('api_url')}/users/{role}/profile_picture", None),
-        (
-            f"{os.getenv('api_url')}/investments/chamas/monthly_interests/{chama_id}",
-            {"limit": 3},
-        ),
-    ]
-
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def access_chama(request, chamaname, chama_id):
+    current_user = request.COOKIES.get("current_user")
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
+    print("======headers======")
+    print(headers)
 
-    results = await access_chama_async(urls, headers)
+    chama = requests.get(
+        f"{os.getenv('api_url')}/members/chama_dashboard/{chama_id}", headers=headers
+    )
 
-    if results.get("chama"):
+    if chama.status_code == HTTPStatus.OK:
+        # set_fines_and_update_activity_contribution_days.delay()
+        # auto_contribute.delay()
+        chama_data = chama.json()
         return render(
             request,
             "member/chamadashboard.html",
             {
-                "current_user": {
-                    "current_user": current_user,
-                    "member_id": results.get("wallet")["member_id"],
-                },
-                "role": "member",
-                "chama": results.get("chama"),
-                "recent_transactions": results.get("recent_transactions"),
-                "activity": results.get("activity"),
-                "investment_activity": results.get("investment_activity"),
-                "mmf_withdrawal_activity": results.get("mmf_withdrawal_activity"),
-                "fund_performance": results.get("monthly_interests"),
-                "investment_data": results.get("investment_data"),
-                "wallet": results.get("wallet"),
-                "user_profile": results.get("user_profile"),
+                "current_user": current_user,
+                "chama_id": chama_data["chama_id"],
+                "chama_name": chama_data["chama_name"],
+                "wallet_balance": chama_data["wallet_balance"],
+                "account_balance": chama_data["account_balance"],
+                "available_balance": chama_data["available_balance"],
+                "total_fines": chama_data["total_fines"],
+                "chama_activities": chama_data["chama_activities"],
             },
         )
     else:
         messages.error(request, "Failed to access chama, try again later")
         return HttpResponseRedirect(reverse("member:dashboard"))
+    return HttpResponseRedirect(reverse("member:dashboard"))
 
 
-async def access_chama_async(urls, headers):
-    results = {}
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        tasks = []
-        for url, payload in urls:
-            if payload:
-                tasks.append(fetch_chama_data(session, url, results, data=payload))
-            else:
-                tasks.append(fetch_chama_data(session, url, results))
-
-        await asyncio.gather(*tasks)
-
-    chama = None
-    recent_activity = []
-    investment_activity = []
-    mmf_withdrawal_activity = []
-    members_weekly_transactions = []
-    wallet = []
-    monthly_interests = None
-    user_profile = {}
-    investment_data = None
-
-    # process the results of the threads
-    if results[urls[0][0]]["status"] == 200:
-        chama = results[urls[0][0]]["data"]["Chama"][0]
-        chama_id = get_chama_id(chama["chama_name"])
-        contribution_day_details = get_chama_contribution_day(chama_id)
-        chama["contribution_day"] = contribution_day_details["contribution_day"]
-        chama["contribution_date"] = contribution_day_details["contribution_date"]
-
-        if urls[1][0] in results and results[urls[1][0]]["status"] == 200:
-            if len(results[urls[1][0]]["data"]) > 0:
-                recent_activity = recent_transactions(results[urls[1][0]]["data"])
-        if urls[2][0] in results and results[urls[2][0]]["status"] == 200:
-            members_weekly_transactions = chama_weekly_contribution_activity(
-                results[urls[2][0]]["data"], chama_id
-            )
-        if urls[3][0] in results and results[urls[3][0]]["status"] == 200:
-            chama["account_balance"] = results[urls[3][0]]["data"]["account_balance"]
-        if urls[4][0] in results and results[urls[4][0]]["status"] == 200:
-            chama["today_deposits"] = results[urls[4][0]]["data"]["today_deposits"]
-            chama["member_incurred_fines"] = results[urls[4][0]]["data"]["total_fines"]
-        if urls[5][0] in results and results[urls[5][0]]["status"] == 200:
-            investment_data = results[urls[5][0]]["data"]
-        if urls[6][0] in results and results[urls[6][0]]["status"] == 200:
-            investment_activity = investment_activities(
-                results[urls[6][0]]["data"]["investment_activity"]
-            )
-            mmf_withdrawal_activity = organise_mmf_withdrawal_activity(
-                results[urls[6][0]]["data"]["mmf_withdrawal_activity"]
-            )
-        if urls[7][0] in results and results[urls[7][0]]["status"] == 200:
-            wallet = results[urls[7][0]]["data"]
-        if urls[8][0] in results and results[urls[8][0]]["status"] == 200:
-            wallet["member_id"] = results[urls[8][0]]["data"]["User_id"]
-            user_profile["profile_image"] = (
-                results[urls[8][0]]["data"]["profile_picture"]
-                if "profile_picture" in results[urls[8][0]]["data"]
-                else ""
-            )
-        if urls[9][0] in results and results[urls[9][0]]["status"] == 200:
-            monthly_interests = organise_monthly_performance(
-                results[urls[9][0]]["data"]
-            )
-
-    # return the processed results chama, transactions, members
-    return {
-        "chama": chama,
-        "recent_transactions": recent_activity,
-        "activity": members_weekly_transactions,
-        "investment_activity": investment_activity,
-        "mmf_withdrawal_activity": mmf_withdrawal_activity,
-        "monthly_interests": monthly_interests,
-        "investment_data": investment_data,
-        "wallet": wallet,
-        "user_profile": user_profile,
-    }
-
-
-# recent transactions for a chama updating date and time
-def recent_transactions(transactions):
-    recent_transactions = []
-    for transaction in transactions:
-        transaction["time"] = extract_date_time(transaction["date_of_transaction"])[
-            "time"
-        ]
-        transaction["date"] = extract_date_time(transaction["date_of_transaction"])[
-            "date"
-        ]
-        transaction["member_name"] = get_user_full_name(
-            "member", transaction["member_id"]
-        )
-        recent_transactions.append(transaction)
-
-        if len(recent_transactions) == 5:
-            break
-
-    return recent_transactions
-
-
-def investment_activities(activities):
-    invst_activity = []
-    # limit the loop to the first 3 activities
-    for activity in activities[:3]:
-        datetime_info = extract_date_time(activity["transaction_date"])
-        activity["time"] = datetime_info["time"]
-        activity["date"] = datetime_info["date"]
-        invst_activity.append(activity)
-
-    return invst_activity
-
-
-def organise_mmf_withdrawal_activity(withdrawal_activity):
-    organised_withdrawal_activity = []
-    for activity in withdrawal_activity:
-        datetime_info = extract_date_time(activity["withdrawal_date"])
-        # create a new dictionary for each activity with only the needed details
-
-        organised_activity = {
-            "amount": f"Ksh: {activity['amount']}",
-            "time": datetime_info["time"],
-            "date": datetime_info["date"],
-        }
-        organised_withdrawal_activity.append(organised_activity)
-
-    return organised_withdrawal_activity
-
-
-# retrieve members weekly transactions and arrange them by membe and daily transactions amount
-def chama_weekly_contribution_activity(members_weekly_transactions, chama_id):
-    members_daily_transactions = defaultdict(
-        lambda: defaultdict(lambda: defaultdict(int))
-    )
-
-    for key, value in members_weekly_transactions.items():
-        member_name = get_user_full_name("member", key)
-        for item in value:
-            day = extract_date_time(item["date_of_transaction"])["day"]
-            amount = item["amount"]
-            members_daily_transactions[member_name][key][day] += amount
-
-    chama_weekly_activity = organise_activity(members_daily_transactions, chama_id)
-
-    return chama_weekly_activity
-
-
-# organise the weekly transactions by member and every day of the week
-def organise_activity(members_daily_transactions, chama_id):
-    days = [
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-    ]
-
-    weekly_activity = []
-    for member_name, member_transactions in members_daily_transactions.items():
-        for member_id, daily_transactions in member_transactions.items():
-            member_activity = {"member_name": member_name, "member_id": member_id}
-            # ensure all days are represented in daily transactions
-            daily_transactions = {day: daily_transactions.get(day, 0) for day in days}
-            member_activity = {
-                "member_name": member_name,
-                "member_id": member_id,
-                **daily_transactions,
-            }
-
-            weekly_activity.append(member_activity)
-
-    # use thread pool to fetch expected contribution and member contribution in parallel
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        for activity in weekly_activity:
-            futures.append(
-                executor.submit(
-                    get_member_expected_contribution, activity["member_id"], chama_id
-                )
-            )
-            futures.append(
-                executor.submit(
-                    get_member_contribution_so_far, chama_id, activity["member_id"]
-                )
-            )
-
-        for i, activity in enumerate(weekly_activity):
-            activity["expected_contribution"] = futures[i * 2].result()
-            activity["contribution_so_far"] = futures[i * 2 + 1].result()
-
-    return weekly_activity
-
-
-def organise_monthly_performance(monthly_performance):
-    return [
-        {
-            "month": datetime(year=perf["year"], month=perf["month"], day=1).strftime(
-                "%B"
-            ),
-            "interest_earned": f"Ksh: {perf['interest_earned']:,.2f}",
-            **{
-                k: v
-                for k, v in perf.items()
-                if k not in ["year", "month", "interest_earned"]
-            },
-        }
-        for perf in monthly_performance
-    ]
-
-
-def organise_fines(fines):
-    fines_organised = []
-    for fine in fines:
-        fine["member_name"] = get_user_full_name("member", fine["member_id"])
-        fine["fine"] = f"Ksh: {fine['fine']}"
-        fine["total_expected_amount"] = f"Ksh: {fine['total_expected_amount']}"
-        del fine["member_id"]
-        fines_organised.append(fine)
-
-    return fines_organised
-
-
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
-def join_chama(request):
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def join_chama(request):
     if request.method == "POST":
         chama_name = request.POST.get("chamaname")
-        num_of_shares = request.POST.get("shares_num")
         reg_fee = request.POST.get("registration_fee")
-        phone_number = request.POST.get("phone_number")[1:]
+        phone_number = request.POST.get("phone_number")
         chama_id = get_chama_id(chama_name)
         registration_fee = get_chama_registration_fee(chama_id)
-        member_id = get_user_id("member", request.COOKIES.get("current_member"))
+        user_id = get_user_id(request.COOKIES.get("current_user"))
 
-        if len(phone_number) != 9:
+        if not phone_number or not phone_number.isdigit() or len(phone_number) != 10:
             messages.error(request, "Invalid phone number")
-            return HttpResponseRedirect(
-                reverse("chama:chamas", args={"role": "member"})
-            )
+            return HttpResponseRedirect(reverse("chama:chamas"))
 
         # confirm if the needed details are there, that is the chamaname, num_of_shares and the registration amount, also, retrieve the registration fee for that chama
-        if (
-            chama_name
-            and num_of_shares
-            and reg_fee
-            and request.COOKIES.get("member_access_token")
-        ):
-            # if everything is right, start the stk push and background tasks to check on the status of that transaction, if paid, add the member to the chama.
-            # send stk push
-            data = {
-                "phone_number": phone_number,
-                "amount": registration_fee,
-                "recipient": (chama_name.replace(" ", ""))[:12],
-                "description": "Registration",
-            }
+        if chama_name and reg_fee and request.COOKIES.get("access_token"):
+            timestamp = datetime.now(nairobi_tz).strftime("%Y%m%d%H%M%S")
 
             if registration_fee == 0:
-                url = f"{os.getenv('api_url')}/chamas/join"
+                url = f"{os.getenv('api_url')}/chamas/add_member"
                 data = {
                     "chama_id": chama_id,
-                    "member_id": member_id,
-                    "num_of_shares": num_of_shares,
+                    "user_id": user_id,
+                    "registration_fee": 0,
                 }
 
                 response = requests.post(url, json=data)
                 if response.status_code == HTTPStatus.CREATED:
                     # send_email_to_new_member
-                    send_email_to_new_chama_member.delay(member_id, chama_id)
+                    send_email_to_new_chama_member.delay(user_id)
                     messages.success(
                         request,
-                        "A confirmation email has been sent to you, please check your email",
+                        "A confirmation email has been sent to you, please check your inbox",
                     )
                     return HttpResponseRedirect(reverse("member:dashboard"))
 
-            url = f"{os.getenv('api_url')}/request/push"
             # before sending, confirm that the user is not already a member of that chama
-            if not member_already_in_chama(chama_id, member_id):
-                print("========not a member========")
-                print(data)
-                reg_resp = requests.post(url, json=data)
+            if not member_already_in_chama(chama_id, user_id):
+                # record unprocessed request
+                unprocessed_request = requests.post(
+                    f"{os.getenv('api_url')}/transactions/unprocessed_deposit",
+                    json={
+                        "amount": registration_fee,
+                        "transaction_type": "unprocessed registration fee",
+                        "transaction_origin": f"254{phone_number[1:]}",
+                        "transaction_destination": f"{chama_id}Registration",
+                        "user_id": user_id,
+                    },
+                )
 
-                if reg_resp.status_code == HTTPStatus.CREATED:
-                    # one bg task to add use to the member_chama table after we verify the payment status
-                    add_member_to_chama.delay(
-                        chama_id,
-                        member_id,
-                        num_of_shares,
-                        registration_fee,
-                        reg_resp.json()["CheckoutRequestID"],
+                if unprocessed_request.status_code == HTTPStatus.CREATED:
+                    reg_resp = requests.post(
+                        f"{os.getenv('api_url')}/request/push",
+                        json={
+                            "phone_number": f"254{phone_number[1:]}",
+                            "amount": registration_fee,
+                            "transaction_destination": (chama_name.replace(" ", ""))[
+                                :12
+                            ],
+                            "transaction_code": unprocessed_request.json()[
+                                "transaction_code"
+                            ],
+                            "description": "Registration",
+                        },
                     )
-                    messages.success(
-                        request,
-                        "A confirmation email has been sent to you, please check your email",
-                    )
-                    return HttpResponseRedirect(reverse("member:dashboard"))
+                    if reg_resp.status_code == HTTPStatus.CREATED:
+                        # one bg task to add use to the member_chama table after we verify the payment status
+                        add_member_to_chama.apply_async(
+                            args=(
+                                chama_id,
+                                user_id,
+                                registration_fee,
+                                reg_resp.json()["CheckoutRequestID"],
+                                unprocessed_request.json()["transaction_code"],
+                            )
+                        )
+                        messages.success(
+                            request,
+                            "Your chama registration request has been sent, please check your email for a confirmation message",
+                        )
+                        return HttpResponseRedirect(reverse("member:dashboard"))
+                    else:
+                        messages.error(
+                            request, "Failed to join chama, please try again later"
+                        )
                 else:
-                    messages.error(request, "Failed to join chama")
+                    messages.error(
+                        request, "Failed to record transaction, please try again later."
+                    )
             else:
                 messages.error(request, "You are already a member of this chama")
 
         else:
             messages.error(request, "Please fill in all the fields")
 
-    return HttpResponseRedirect(reverse("chama:chamas", args={"role": "member"}))
+    return HttpResponseRedirect(reverse("chama:chamas"))
 
 
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
-def view_chama_members(request, chama_name):
+@tokens_in_cookies()
+@validate_and_refresh_token()
+def view_chama_members(request, chama_name, chama_id):
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
 
-    chama_id = get_chama_id(chama_name)
     chama_members = requests.get(
-        f"{os.getenv('api_url')}/members_tracker/chama_members/{chama_id}",
+        f"{os.getenv('api_url')}/chamas/members/{chama_id}",
         headers=headers,
     )
+    print("=======chama members=========")
     print(chama_members.json())
     return render(
         request,
         "member/list_members.html",
         {
-            "chama_members": chama_members.json(),
-            "chama_name": chama_name,
+            "item_id": chama_id,
+            "members": chama_members.json(),
+            "title": chama_name,
         },
     )
 
 
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
-def get_about_chama(request, chama_name):
-    chama_id = get_chama_id(chama_name)
-    member_id = get_user_id("member", request.COOKIES.get("current_member"))
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def get_about_chama(request, chama_name, chama_id):
+    user_id = get_user_id(request.COOKIES.get("current_user"))
+    role = request.COOKIES.get("current_role")
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
     chama_data = requests.get(
         f"{os.getenv('api_url')}/chamas/about_chama/{chama_id}",
         headers=headers,
     )
-    auto_contribute_status = requests.get(
-        f"{os.getenv('api_url')}/members/auto_contribute_status/{chama_id}/{member_id}"
-    )
-    if auto_contribute_status.status_code == HTTPStatus.OK:
-        auto_contribute_status = auto_contribute_status.json()
 
     print("===================about================")
     if chama_data.status_code == HTTPStatus.OK:
-        chama = chama_details_organised(chama_data.json().get("chama"))
+        print(chama_data.json())
+        chama = chama_data.json().get("chama")
         rules = chama_data.json().get("rules")
         about = chama_data.json().get("about")
         faqs = chama_data.json().get("faqs")
@@ -515,17 +277,20 @@ def get_about_chama(request, chama_name):
             request,
             "chama/about_chama.html",
             {
-                "role": "member",
+                "profile_picture": chama_data.json().get("profile_picture"),
                 "chama": chama,
                 "rules": rules,
                 "about": about,
                 "faqs": faqs,
-                "member_id": member_id,
-                "auto_contribute_status": auto_contribute_status["status"],
+                "user_id": user_id,
+                "role": role,
+                "is_manager": chama_data.json().get("is_manager"),
+                "chama_id": chama_id,
+                "chama_data": chama_data.json(),
             },
         )
     else:
-        return redirect(reverse("member:dashboard"))
+        return redirect(reverse(f"{role}:dashboard"))
 
 
 def chama_details_organised(chama_details):
@@ -542,14 +307,6 @@ def chama_details_organised(chama_details):
     chama_details["registration_fee"] = (
         f"Ksh: {(chama_details['registration_fee']):,.2f}"
     )
-    chama_details["contribution_amount"] = (
-        f"Ksh: {(chama_details['contribution_amount']):,.2f}"
-    )
-    chama_details["contribution_interval"] = chama_details[
-        "contribution_interval"
-    ].capitalize()
-    chama_details["contribution_day"] = chama_details["contribution_day"].capitalize()
-    # chama_details["fine_per_share"] = f"Ksh: {(chama_details['fine_per_share']):,.2f}"
     chama_details["chama_created_on"] = extract_date_time(
         chama_details["date_created"]
     )["date"]
@@ -622,3 +379,29 @@ def auto_contribute_settings(request, chama_id, member_id, status):
             )
 
     return redirect(reverse("member:dashboard"))
+
+
+@tokens_in_cookies()
+@validate_and_refresh_token()
+def chama_activities(request, chama_name, chama_id):
+    resp = requests.get(
+        f"{os.getenv('api_url')}/activities/chama/{chama_id}",
+        headers={
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+        },
+    )
+
+    if resp.status_code == HTTPStatus.OK:
+        print("========activites    =========")
+        print(resp.json())
+        return render(
+            request,
+            "member/activities_list.html",
+            {"chama_id": chama_id, "activities": resp.json(), "chama_name": chama_name},
+        )
+    else:
+        messages.error(request, "Failed to fetch chama activities")
+        return HttpResponseRedirect(
+            reverse("member:access_chama", args=[chama_name, chama_id])
+        )

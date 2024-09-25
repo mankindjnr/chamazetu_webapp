@@ -22,7 +22,6 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# i have this in my .env IN_PROD="False" and IN_PROD="True" for production, i want DEBUG to be False in production AND True in development
 DEBUG = True
 
 ALLOWED_HOSTS = [
@@ -48,10 +47,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "django_celery_results",
     "django_celery_beat",
     "corsheaders",
-    "sslserver",
 ]
 
 MIDDLEWARE = [
@@ -201,6 +200,11 @@ LOGGING = {
         },
     },
     "handlers": {
+        "console": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
         "chama_file": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
