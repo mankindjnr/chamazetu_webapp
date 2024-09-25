@@ -11,6 +11,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
     event,
+    Sequence,
 )
 from sqlalchemy.orm import relationship
 from .database import Base, SessionLocal
@@ -18,6 +19,7 @@ from datetime import datetime
 from pytz import timezone
 import string
 import random
+import sqlalchemy as sa
 
 nairobi_tz = timezone("Africa/Nairobi")
 
@@ -26,86 +28,47 @@ def nairobi_now():
     return datetime.now(nairobi_tz).replace(tzinfo=None)
 
 
-def generate_wallet_number():
-    # generate two random uppercase letters
-    letters = "".join(random.choices(string.ascii_uppercase, k=2))
-    # generate four random digits
-    numbers = "".join(random.choices(string.digits, k=4))
-    # the wallet number
-    return f"W{letters}{numbers}"
+user_id_seq = Sequence("user_id_seq", start=940, increment=1)
+wallet_id_seq = Sequence("wallet_id_seq", start=470, increment=1)
+chama_code_seq = Sequence("chama_code_seq", start=490, increment=3)
 
-
-# ensure unique wallet number
-def generate_unique_wallet_number(session):
-    while True:
-        wallet_number = generate_wallet_number()
-        # check if the wallet number already exists in the database
-        if (
-            not session.query(Member)
-            .filter(Member.wallet_number == wallet_number)
-            .first()
-        ):
-            return wallet_number
-
-
-def generate_custom_member_id():
-    # adjust the starting point and increment logic as needed
-    start_value = 4700
-
-    # fetch the maximum current id and increment it
-    session = SessionLocal()
-    max_id = session.query(func.max(Member.id)).scalar()
-    session.close()
-
-    if max_id:
-        return max(max_id + 1, start_value)
-    else:
-        return start_value
-
-
-def generate_custom_manager_id():
-    # adjust the starting point and increment logic as needed
-    start_value = 9400
-
-    # fetch the maximum current id and increment it
-    session = SessionLocal()
-    max_id = session.query(func.max(Manager.id)).scalar()
-    session.close()
-
-    if max_id:
-        return max(max_id + 1, start_value)
-    else:
-        return start_value
-
-
-def generate_custom_chama_id():
-    # adjust the starting point and increment logic as needed
-    start_value = 4900
-
-    # fetch the maximum current id and increment it
-    session = SessionLocal()
-    max_id = session.query(func.max(Chama.id)).scalar()
-    session.close()
-
-    if max_id:
-        return max(max_id + 1, start_value)
-    else:
-        return start_value
-
-
-# Define the many-to-many relationship table between members and chamas
-members_chamas_association = Table(
-    "members_chamas",
+# define the many-to-many relationship table between chamas and users
+# add is_manager, is_member, is_secretary, is_signatory, is_treasurer, is_chairman, is_vice_chairman, is_organizer, is_member, is_admin, is_super_admin
+chama_user_association = Table(
+    "chamas_users",
     Base.metadata,
-    Column(
-        "member_id", Integer, ForeignKey("members.id"), primary_key=True, index=True
-    ),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True, index=True),
     Column("chama_id", Integer, ForeignKey("chamas.id"), primary_key=True, index=True),
-    Column("num_of_shares", Integer, nullable=False, default=1, index=True),
     Column("date_joined", DateTime, default=nairobi_now),
     Column("registration_fee_paid", Boolean, default=False),
-    UniqueConstraint("member_id", "chama_id", name="unique_member_chama"),
+    UniqueConstraint("user_id", "chama_id", name="unique_chama_user_relationship"),
 )
+
+# define the many-to-many relationship table between activities and users
+# where users can join multiple activities and activities can have multiple users
+activity_user_association = Table(
+    "activities_users",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True, index=True),
+    Column(
+        "activity_id",
+        Integer,
+        ForeignKey("activities.id"),
+        primary_key=True,
+        index=True,
+    ),
+    Column("shares", Integer, nullable=False, default=1, index=True),
+    Column("share_value", Integer, nullable=False, default=0, index=True),
+    Column("date_joined", DateTime, default=nairobi_now),
+    Column("is_active", Boolean, default=True),
+    Column("is_deleted", Boolean, default=False),
+    UniqueConstraint(
+        "user_id", "activity_id", name="unique_activity_user_relationship"
+    ),
+)
+
+# relationship between chamas and signatories/secrataries/treasurers/chairman/vice_chairman/organizers - one table
+
 
 # Define the many-to-many relationship table between chamas and investments one chama can have many investments and one investment can belong to many chamas
 chama_investment_association = Table(
@@ -116,12 +79,65 @@ chama_investment_association = Table(
 )
 
 
+# user model to replace the member and manager models below
+# TODO:user id to nulable false after production
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+        String,
+        nullable=True,
+        unique=True,
+        index=True,
+        default=lambda: f"940{next_user_id}",
+    )
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    email_verified = Column(Boolean, default=False)
+    phone_number = Column(String(12), nullable=True)
+    twitter = Column(String, nullable=True)
+    facebook = Column(String, nullable=True)
+    linkedin = Column(String, nullable=True)
+    profile_picture = Column(String, nullable=True)
+    password = Column(String, nullable=False)
+    date_joined = Column(DateTime, default=nairobi_now)
+    updated_at = Column(
+        DateTime,
+        default=nairobi_now,
+        onupdate=nairobi_now,
+    )
+    is_active = Column(Boolean, default=True)
+    is_deleted = Column(Boolean, default=False)
+
+    wallet_balance = Column(Integer, nullable=False, default=0)
+    wallet_id = Column(
+        String,
+        unique=True,
+        nullable=False,
+        index=True,
+        default=lambda: f"w470{next_wallet_id}",
+    )
+    zetucoins = Column(Integer, nullable=False, default=0)
+    auto_contributions = relationship("AutoContribution", back_populates="user")
+    wallet_transactions = relationship("WalletTransaction", back_populates="user")
+    chamas = relationship(
+        "Chama", secondary=chama_user_association, back_populates="user"
+    )
+    managed_chamas = relationship("Chama", back_populates="manager")
+    activities = relationship("Activity", back_populates="manager")
+    activities = relationship(
+        "Activity", secondary=activity_user_association, back_populates="users"
+    )
+    activities_transactions = relationship("ActivityTransaction", back_populates="user")
+    activity_fines = relationship("ActivityFine", back_populates="user")
+
+
 class Member(Base):
     __tablename__ = "members"
 
-    id = Column(
-        Integer, primary_key=True, index=True, default=generate_custom_member_id
-    )
+    id = Column(Integer, primary_key=True, index=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -132,7 +148,6 @@ class Member(Base):
     facebook = Column(String, nullable=True)
     linkedin = Column(String, nullable=True)
     profile_picture = Column(String, nullable=True)
-
     password = Column(String, nullable=False)
     date_joined = Column(DateTime, default=nairobi_now)
     updated_at = Column(
@@ -148,68 +163,49 @@ class Member(Base):
     wallet_balance = Column(Integer, nullable=False, default=0)
     wallet_number = Column(String(7), unique=True, nullable=False)
 
-    fines = relationship("Fine", back_populates="member")
-    auto_contributions = relationship("AutoContribution", back_populates="member")
-
-    # one to many with wallet transactions
-    wallet_transactions = relationship("Wallet_Transaction", back_populates="member")
-
     # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
-    transactions = relationship("Transaction", back_populates="member")
-    # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
-    chamas = relationship(
-        "Chama", secondary=members_chamas_association, back_populates="members"
-    )
-
-
-# event listener to generate unique wallet number before inserting a new member
-@event.listens_for(Member, "before_insert")
-def set_wallet_number(mapper, connection, target):
-    session = SessionLocal()
-    target.wallet_number = generate_unique_wallet_number(session)
-    session.close()
+    # transactions = relationship("Transaction", back_populates="member")
 
 
 class Chama(Base):
     __tablename__ = "chamas"
 
-    id = Column(Integer, primary_key=True, index=True, default=generate_custom_chama_id)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    chama_code = Column(
+        String,
+        nullable=False,
+        unique=True,
+        index=True,
+        default=lambda: f"490{next_chama_code}",
+    )
     chama_name = Column(String, index=True, unique=True, nullable=False)
     chama_type = Column(String, nullable=False)  # investment, savings, lending
     num_of_members_allowed = Column(String, nullable=False)
     description = Column(String(500), nullable=False)
-    date_created = Column(DateTime, default=nairobi_now)
-    updated_at = Column(
-        DateTime,
-        default=nairobi_now,
-        onupdate=nairobi_now,
-    )
+    date_created = Column(DateTime, nullable=False, default=nairobi_now)
+    updated_at = Column(DateTime, nullable=False, default=nairobi_now)
+    is_active = Column(Boolean, nullable=False, default=True)
     registration_fee = Column(Integer, nullable=False)
-    contribution_amount = Column(Integer, index=True, nullable=False)
-    contribution_interval = Column(
-        String, nullable=False
-    )  # daily, weekly, monthly, custom
-    contribution_day = Column(
-        String, nullable=False
-    )  # tuesday, friday, 1st, 15th or every first saturday of the month
-    is_active = Column(
-        Boolean, default=False
-    )  # chama is active on start cycle day (auto/manual)
-    accepting_members = Column(
-        Boolean, nullable=False
-    )  # chama is accepting new members
+    accepting_members = Column(Boolean, nullable=False, default=True)
     last_joining_date = Column(DateTime, nullable=False)
-    first_contribution_date = Column(DateTime, nullable=False)
     restart = Column(Boolean, default=False)  # chama has restarted
+    restart_date = Column(DateTime, nullable=True)
     is_deleted = Column(Boolean, default=False)
     verified_chama = Column(Boolean, default=True)  # bluecheckmark -reputable manager
-    account_name = Column(String, nullable=False)
     category = Column(String, nullable=False)  # private or public onlyy
-    fine_per_share = Column(Integer, index=True, nullable=False)
+    manager_id = Column(Integer, ForeignKey("users.id"))
 
+    # relationships
+    manager = relationship("User", back_populates="managed_chamas")
+    activities = relationship("Activity", back_populates="chama")
+    activity_contribution_date = relationship(
+        "ActivityContributionDate", back_populates="chama"
+    )
+    user = relationship(
+        "User", secondary=chama_user_association, back_populates="chamas"
+    )
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
-    fines = relationship("Fine", back_populates="chama")
     chama_contribution_day = relationship(
         "ChamaContributionDay", cascade="all,delete", back_populates="chama"
     )
@@ -219,91 +215,153 @@ class Chama(Base):
     chama_accounts = relationship(
         "Chama_Account", cascade="all,delete", back_populates="chama"
     )
-
-    # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
-    transactions = relationship("Transaction", back_populates="chama")
-    # one to many relationship with investment_performance
     investments_performance = relationship(
         "Investment_Performance", back_populates="chama"
     )
-    # one to many relations with mmfs transactions
     money_market_fund = relationship("MMF", back_populates="chama")
-    # Define the one-to-many relationship between manager and chamas(1 manager can have many chamas)
-    manager_id = Column(Integer, ForeignKey("managers.id"))
-    manager = relationship("Manager", back_populates="chamas")
-    # Define the many-to-many relationship between members and chamas(many members can belong to many chamas)
-
     daily_interest = relationship("Daily_Interest", back_populates="chama")
     monthly_interest = relationship("Monthly_Interest", back_populates="chama")
-    auto_contributions = relationship("AutoContribution", back_populates="chama")
-
-    members = relationship(
-        "Member", secondary=members_chamas_association, back_populates="chamas"
-    )
-    # Define the many-to-many relationship between chamas and investments one chama can have many investments and one investment can belong to many chamas
     available_investments = relationship(
         "Available_Investment",
         secondary=chama_investment_association,
         back_populates="chamas",
     )
+    activity_fines = relationship("ActivityFine", back_populates="chama")
 
 
-class Manager(Base):
-    __tablename__ = "managers"
-
-    id = Column(
-        Integer, primary_key=True, index=True, default=generate_custom_manager_id
-    )
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
-    email_verified = Column(Boolean, default=False)
-
-    phone_number = Column(String(12), nullable=True)
-    twitter = Column(String, nullable=True)
-    facebook = Column(String, nullable=True)
-    linkedin = Column(String, nullable=True)
-    profile_picture = Column(String, nullable=True)
-
-    date_joined = Column(DateTime, default=nairobi_now)
-    updated_at = Column(
-        DateTime,
-        default=nairobi_now,
-        onupdate=nairobi_now,
-    )
-    is_active = Column(Boolean, default=True)
-    is_manager = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
-
-    # Define the one-to-many relationship between manager and chamas(1 manager can have many chamas)
-    chamas = relationship("Chama", back_populates="manager")
+# listen to the before_insert event to automatically set chama_code
+@event.listens_for(Chama, "before_insert")
+def set_chama_code(mapper, connection, target):
+    next_chama_code = connection.execute(
+        sa.text("SELECT nextval('chama_code_seq')")
+    ).scalar()
+    target.chama_code = f"490{next_chama_code}"
 
 
-class Transaction(Base):
-    __tablename__ = "transactions"
+# listen to the before_insert event to automatically set user_id
+@event.listens_for(User, "before_insert")
+def set_user_id(mapper, connection, target):
+    next_user_id = connection.execute(user_id_seq)
+    target.user_id = f"940{next_user_id}"
+
+
+@event.listens_for(User, "before_insert")
+def set_wallet_id(mapper, connection, target):
+    next_wallet_id = connection.execute(wallet_id_seq)
+    target.wallet_id = f"w470{next_wallet_id}"
+
+
+# activities created by manager for members in a chama
+class Activity(Base):
+    __tablename__ = "activities"
 
     id = Column(Integer, primary_key=True, index=True)
-    amount = Column(Integer, nullable=False)
-    phone_number = Column(String(12), nullable=False)
-    date_of_transaction = Column(DateTime, default=nairobi_now)
-    updated_at = Column(
-        DateTime,
-        default=nairobi_now,
-        onupdate=nairobi_now,
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    manager_id = Column(Integer, ForeignKey("users.id"))
+    activity_title = Column(String, nullable=False)
+    activity_type = Column(String, nullable=False)
+    # make description nullable
+    activity_description = Column(String, nullable=False)
+    activity_amount = Column(Integer, nullable=False)
+    fine = Column(Integer, nullable=False)
+    frequency = Column(String, nullable=False)
+    interval = Column(String, nullable=False)
+    contribution_day = Column(String, nullable=False)
+    restart = Column(Boolean, default=False)
+    restart_date = Column(DateTime, nullable=True)
+    accepting_members = Column(Boolean, nullable=False, default=True)
+    first_contribution_date = Column(DateTime, nullable=False, default=nairobi_now)
+    last_joining_date = Column(DateTime, nullable=False, default=nairobi_now)
+    creation_date = Column(DateTime, nullable=False, default=nairobi_now)
+    updated_at = Column(DateTime, nullable=False, default=nairobi_now)
+    is_active = Column(Boolean, nullable=False, default=True)
+    is_deleted = Column(Boolean, default=False)
+    mandatory = Column(Boolean, default=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="activities")
+    manager = relationship("User", back_populates="activities")
+    auto_contributions = relationship("AutoContribution", back_populates="activity")
+    activity_contribution_date = relationship(
+        "ActivityContributionDate", cascade="all,delete", back_populates="activity"
     )
+    users = relationship(
+        "User", secondary=activity_user_association, back_populates="activities"
+    )
+    activity_accounts = relationship("Activity_Account", back_populates="activity")
+    activities_transactions = relationship(
+        "ActivityTransaction", back_populates="activities"
+    )
+    activity_fines = relationship("ActivityFine", back_populates="activity")
+
+
+# activty accounts
+class Activity_Account(Base):
+    __tablename__ = "activity_accounts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
+    account_balance = Column(Float, nullable=False)
+    activity = relationship("Activity", back_populates="activity_accounts")
+
+
+# activity contribution date tracker
+class ActivityContributionDate(Base):
+    __tablename__ = "activity_contribution_dates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"), nullable=False)
+    activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
+    activity_title = Column(String, nullable=False)
+    activity_type = Column(String, nullable=False)
+    frequency = Column(String, nullable=False)
+    previous_contribution_date = Column(DateTime, nullable=False)
+    next_contribution_date = Column(DateTime, nullable=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="activity_contribution_date")
+    activity = relationship("Activity", back_populates="activity_contribution_date")
+
+
+class ActivityTransaction(Base):
+    __tablename__ = "activities_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    amount = Column(Integer, nullable=False)
+    origin = Column(String, nullable=False)
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    transaction_date = Column(DateTime, default=nairobi_now)
+    updated_at = Column(DateTime, default=nairobi_now)
     transaction_completed = Column(Boolean, default=False)
     transaction_code = Column(String, nullable=False)
-    transaction_type = Column(String, nullable=False)  # deposit, withdrawal,etc
+    transaction_type = Column(String, nullable=False)  # deposit
     is_reversed = Column(Boolean, default=False)
     needs_reversal = Column(Boolean, default=False)
-    transaction_origin = Column(String, nullable=False)  # wallet/mpesa etc
-    # Define the one-to-many relationship between chama and transactions(1 chama can have many transactions)
-    chama_id = Column(Integer, ForeignKey("chamas.id"))
-    chama = relationship("Chama", back_populates="transactions")
-    # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
-    member_id = Column(Integer, ForeignKey("members.id"))
-    member = relationship("Member", back_populates="transactions")
+
+    # relationships
+    user = relationship("User", back_populates="activities_transactions")
+    activities = relationship("Activity", back_populates="activities_transactions")
+
+
+# members wallet transactions
+# deposit to wallet, wallet to wallet and withdrawal from wallet
+class WalletTransaction(Base):
+    __tablename__ = "wallet_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    amount = Column(Integer, nullable=False)
+    origin = Column(String, nullable=False)  # wallet_number, chama_id
+    destination = Column(String, nullable=False)  # wallet_number, phone_number
+    # deposited, withdrawn,received, sent
+    transaction_type = Column(String, nullable=False)
+    transaction_date = Column(DateTime, default=nairobi_now)
+    transaction_completed = Column(Boolean, default=False)
+    transaction_code = Column(String, nullable=False)
+
+    # relationships
+    user = relationship("User", back_populates="wallet_transactions")
 
 
 class CallbackData(Base):
@@ -322,12 +380,34 @@ class CallbackData(Base):
     Status = Column(String, nullable=False)
 
 
+# b2cresults
+class B2CResults(Base):
+    __tablename__ = "b2c_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    resulttype = Column(Integer, nullable=False)
+    resultcode = Column(Integer, nullable=False)
+    resultdesc = Column(String, nullable=False)
+    originatorconversationid = Column(String, nullable=False)
+    conversationid = Column(String, nullable=False)
+    transactionid = Column(String, nullable=False)
+    transactionamount = Column(Integer, nullable=False)
+    transactionreceipt = Column(String, nullable=False)
+    receiverpartypublicname = Column(String, nullable=False)
+    transactioncompleteddatetime = Column(DateTime, nullable=False)
+    b2cutilityaccountavailablefunds = Column(Float, nullable=False)
+    b2cworkingaccountavailablefunds = Column(Float, nullable=False)
+    b2crecipientisregisteredcustomer = Column(String, nullable=False)
+    b2cchargespaidaccountavailablefunds = Column(Float, nullable=False)
+
+
 class Chama_Account(Base):
     __tablename__ = "chama_accounts"
 
     id = Column(Integer, primary_key=True, index=True)
     chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
-    account_balance = Column(Integer, nullable=False)
+    account_balance = Column(Float, nullable=False)
+    available_balance = Column(Float, nullable=False)
 
     chama = relationship("Chama", back_populates="chama_accounts")
 
@@ -424,35 +504,19 @@ class MMF(Base):
     chama = relationship("Chama", back_populates="money_market_fund")
 
 
-# members wallet transactions
-class Wallet_Transaction(Base):
-    __tablename__ = "wallet_transactions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    amount = Column(Integer, nullable=False)
-    transaction_type = Column(String, nullable=False)  # moved, deposited, withdrawn
-    transaction_date = Column(DateTime, default=nairobi_now)
-    transaction_completed = Column(Boolean, default=False)
-    transaction_code = Column(String, nullable=False)
-    transaction_destination = Column(String, nullable=False)  # wallet_number, chama_id
-    # one to many relationship - one member can make multiple wallet transactions
-    member_id = Column(Integer, ForeignKey("members.id"))
-    member = relationship("Member", back_populates="wallet_transactions")
-
-
 # auto contrbution data
 class AutoContribution(Base):
     __tablename__ = "auto_contributions"
 
     id = Column(Integer, primary_key=True, index=True)
-    member_id = Column(Integer, ForeignKey("members.id"))
-    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
     expected_amount = Column(Integer, nullable=False)
     next_contribution_date = Column(DateTime, default=nairobi_now, nullable=False)
 
     # relationships
-    member = relationship("Member", back_populates="auto_contributions")  # one to many
-    chama = relationship("Chama", back_populates="auto_contributions")  # one to many
+    activity = relationship("Activity", back_populates="auto_contributions")
+    user = relationship("User", back_populates="auto_contributions")  # one to many
 
 
 # this table will have chama and its next contribution date
@@ -483,7 +547,7 @@ class About_Chama(Base):
     __tablename__ = "about_chama"
 
     id = Column(Integer, primary_key=True, index=True)
-    manager_id = Column(Integer, ForeignKey("managers.id"))
+    manager_id = Column(Integer, ForeignKey("users.id"))
     chama_id = Column(Integer, ForeignKey("chamas.id"))
     twitter = Column(String, nullable=True)
     facebook = Column(String, nullable=True)
@@ -501,22 +565,25 @@ class Rule(Base):
     chama = relationship("Chama", back_populates="rules")
 
 
-class Fine(Base):
-    __tablename__ = "fines"
+class ActivityFine(Base):
+    __tablename__ = "activity_fines"
 
     id = Column(Integer, primary_key=True, index=True)
     chama_id = Column(Integer, ForeignKey("chamas.id"))
-    member_id = Column(Integer, ForeignKey("members.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
     fine = Column(Integer, nullable=False)
+    missed_amount = Column(Integer, nullable=False)
+    expected_repayment = Column(Integer, nullable=False)
     fine_reason = Column(String, nullable=False)
     fine_date = Column(DateTime, nullable=False)
     is_paid = Column(Boolean, default=False)
     paid_date = Column(DateTime, nullable=True)  # date fine was paid in total
-    total_expected_amount = Column(
-        Integer, nullable=False
-    )  # fine + missed contribution + interest if any
-    chama = relationship("Chama", back_populates="fines")
-    member = relationship("Member", back_populates="fines")
+
+    # relationships
+    chama = relationship("Chama", back_populates="activity_fines")
+    user = relationship("User", back_populates="activity_fines")
+    activity = relationship("Activity", back_populates="activity_fines")
 
 
 class Faq(Base):
@@ -555,3 +622,24 @@ class NewsletterSubscription(Base):
     date_subscribed = Column(DateTime, default=nairobi_now)
     is_subscribed = Column(Boolean, default=True)
     date_unsubscribed = Column(DateTime, nullable=True)
+
+
+class ChamazetuToMpesaFees(Base):
+    __tablename__ = "chamazetu_to_mpesa_fees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    from_amount = Column(Integer, nullable=False)
+    to_amount = Column(Integer, nullable=False)
+    b2c = Column(Integer, nullable=False)
+    c2c = Column(Integer, nullable=False)
+    chamazetu_to_mpesa = Column(Integer, nullable=False)
+    difference = Column(Integer, nullable=False)
+
+
+class ChamaZetu(Base):
+    __tablename__ = "chamazetu"
+
+    id = Column(Integer, primary_key=True, index=True)
+    registration_fees = Column(Float, nullable=False)
+    withdrawal_fees = Column(Float, nullable=False)
+    reward_coins = Column(Float, nullable=False)

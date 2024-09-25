@@ -15,7 +15,10 @@
   
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Roboto:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
-  
+
+    <!-- bootstrap css cdn-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <!-- Vendor CSS Files -->
     <link href="{% static 'chama/vendor/animate.css/animate.min.css' %}" rel="stylesheet">
     <link href="{% static 'chama/vendor/aos/aos.css' %}" rel="stylesheet">
@@ -61,20 +64,17 @@
     
           <nav id="navbar" class="navbar order-last order-lg-0">
             <ul>
-              {% if role %}
-                <li><a href="{% url 'member:dashboard' %}">Dashboard</a></li>
+              {% if role == 'member' %}
+                <li><a href="{% url 'member:dashboard' %}">member dashboard</a></li>
+              {% elif role == 'manager' %}
+                <li><a href="{% url 'manager:dashboard' %}">manager dashboard</a></li>
               {% else %}
               <li><a href="{% url 'chama:index' %}" class="active">Home</a></li>
     
-              <li><a href="{% url 'chama:signin' 'manager' %}" target="_blank" rel="noopener noreferrer">manager login</a></li>
-              <li><a href="{% url 'chama:signin' 'member' %}" target="_blank" rel="noopener noreferrer">member login</a></li>
+              <li><a href="{% url 'chama:signin' %}" target="_blank" rel="noopener noreferrer">login</a></li>
               <li><a href="{% url 'chama:chamas' %}" target="_blank" rel="noopener noreferrer">public chamas</a></li>
               <li><a href="#">Services</a></li>
-              <li class="dropdown"><a href="#"><span>signup</span> <i class="bi bi-chevron-down"></i></a>
-                <ul>
-                  <li><a href="{% url 'chama:signup' 'manager' %}" target="_blank" rel="noopener noreferrer">Manager Account</a></li>
-                  <li><a href="{% url 'chama:signup' 'member' %}" target="_blank" rel="noopener noreferrer">Member Account</a></li>
-                </ul>
+              <li><a href="{% url 'chama:signup' %}" target="_blank" rel="noopener noreferrer">signup</a></li>
               </li>
               {% endif %}
     
@@ -84,11 +84,13 @@
     
           <div class="header-social-links d-flex">
             <a href="https://x.com/chamazetu" class="twitter"><i class="bu bi-twitter"></i></a>
-            <a href="#" class="facebook"><i class="bu bi-facebook"></i></a>
+            <a href="" class="facebook"><i class="bu bi-facebook"></i></a>
             <a href="" class="linkedin"><i class="bu bi-linkedin"></i></i></a>
+            {% if role != 'member' %}
             <div class="member-login">
-              <a href="{% url 'chama:signin' 'member' %}" target="_blank" rel="noopener noreferrer">login</a>
+              <a href="{% url 'chama:signin' %}" target="_blank" rel="noopener noreferrer">login</a>
             </div>
+            {% endif %}
           </div>
     
         </div>
@@ -97,7 +99,7 @@
     {% block content %}{% endblock %}
 
     <!-- ======= Footer ======= -->
-  
+  {% if role != 'member' %}
     <footer id="footer">
 
         <div class="footer-top">
@@ -166,9 +168,12 @@
           </div>
         </div>
       </footer><!-- End Footer -->
+  {% endif %}
     
       <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
-    
+      <!-- bootstrap js cdn -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
       <!-- Vendor JS Files -->
       <script src="{% static 'chama/vendor/aos/aos.js' %}"></script>
       <script src="{% static 'chama/vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>

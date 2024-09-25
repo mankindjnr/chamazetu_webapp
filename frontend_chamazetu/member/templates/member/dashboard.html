@@ -33,9 +33,9 @@
         <li class="nav-item dropdown">
 
           <a class="nav-icon">
-            <button type="button" class="btn btn-dark bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletModal">
-              Ksh: {{ wallet_activity.wallet_balance }}
-          </button>
+          <button type="button" class="btn btn-dark ri-coin-line" style="color: bisque;" data-bs-toggle="modal" data-bs-target="">
+            ZetuCoins: {{ zetucoins }}
+        </button>
           </a>
 
         </li>
@@ -43,22 +43,33 @@
 
         <li class="nav-item dropdown pe-3">
 
-          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{{ user_profile.profile_image }}" alt="Profile" class="rounded-circle">
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown"><i>{{ current_role }}</i>
+            <img src="{{ profile_picture }}" alt="Profile" class="rounded-circle">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Image Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
               <h6>{{ current_user.current_user }}</h6>
-              <span>member</span>
+              <!-- <span>{{ current_role }}</span> -->
             </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% if current_role == 'member' %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'manager' %}">
+                <i class="bi bi-house"></i>
+                <span>manager dashboard</span>
+              </a>
+            </li>
+            {% endif %}
             <li>
               <hr class="dropdown-divider">
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'member:profile' current_user.member_id %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'member:profile' current_user.user_id %}">
                 <i class="bi bi-person"></i>
                 <span>My Profile</span>
               </a>
@@ -72,7 +83,7 @@
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'member' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -99,8 +110,8 @@
           {% if chamas %}
           {% for chama in chamas %}
           <li>
-              <a href="{% url 'member:access_chama' chama.chama_name %}">
-              <i class="bi bi-circle"></i><span>{{ chama.chama_name }}</span>
+              <a href="{% url 'member:access_chama' chama.chama_name chama.chama_id %}">
+              <i class="bx bx-group"></i><span>{{ chama.chama_name }}</span>
             </a>
           </li>
           {% endfor %}
@@ -113,6 +124,39 @@
           {% endif %}
         </ul>
       </li><!-- End Components Nav -->
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'chama:chamas' %}">
+          <i class="bi bi-people"></i><span>View chamas</span>
+        </a>
+      </li>
+      <li>
+        <hr class="dropdown-divider" style="color: red;">
+      </li>
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="#selfServiceForm" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="selfServiceForm">
+          <i class="ri-question-line"></i><span>Self Service</span>
+        </a>
+        <div class="collapse" id="selfServiceForm">
+          <form class="p-3" action="{% url 'member:fix_mpesa_to_wallet_deposit' %}" method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="amount" class="form-label">Deposited Amount</label>
+              <input type="number" class="form-control form-control-sm me-2" id="amount" name="amount" required>
+            </div>
+            <div class="mb-3">
+              <label for="receipt_number" class="form-label">Mpesa Receipt Number</label>
+              <input type="text" class="form-control form-control-sm me-2" id="receipt_number" name="receipt_number" placeholder="mpesa code i.e SID7HI18" required>
+            </div>
+            <div class="mb-3">
+              <label for="phone_number" class="form-label">Phone Number</label>
+              <input type="text" class="form-control form-control-sm me-2" id="phone_number" name="phone_number" minlength="10" maxlength="10" placeholder="0712345678" required>
+            </div>
+            <div class="d-flex justify-content-end">
+              <button type="submit" class="btn btn-sm btn-outline-success">Fix Transaction</button>
+          </div>
+          </form>
+        </div>
+      </li>
 
     </ul>
 
@@ -131,7 +175,7 @@
 
     <div class="pagetitle d-flex justify-content-between align-items-center">
       <h1>Home</h1>
-      <a type="button" class="btn btn-info btn-sm" href="{% url 'chama:chamas' 'member' %}">chamas</a>
+      <button type="button" id="transactionFormBtn" class="btn btn-dark bi bi-wallet"> Ksh: {{ wallet_balance }}</button>
     </div><!-- End Page Title -->
 
 
@@ -139,22 +183,73 @@
       <div class="row">
 
         <!-- Left side columns -->
-        <div class="col-lg-8">
+        <div class="col-lg-8"> <!-- Left side columns -->
           <div class="row">
+
+            <!-- wallet form -->
+            <div class="col-12">
+              <div class="card" id="walletForm" style="display: none;">
+                <div class="card-body">
+                  <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button>
+                    <h5 class="card-title">Wallet</h5>
+                  <form action="{% url 'member:wallet_transactions' %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="amount" class="form-label">Amount</label>
+                      <div class="input-group">
+                        <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                        <input type="number" class="form-control" id="amount" name="amount" min="10" required>
+                        <small class="error-message"></small>
+                      </div>
+                    </div>
+
+                    <!-- select between withdrawal and deposit -->
+                    <div class="mb-3">
+                      <label for="transaction_type" class="form-label">Transaction Type</label>
+                      <select class="form-select" id="transaction_type" name="transaction_type" required>
+                        <option value=""></option>
+                        <option value="deposit">Deposit</option>
+                        <option value="withdrawal">Send</option>
+                      </select>
+                    </div>
+
+                    <div class="mb-3">
+                      <label for="phonenumber" class="form-label">Phone Number</label>
+                      <div class="input-group">
+                        <!-- <span class="input-group-text" id="basic-addon1">+254</span> -->
+                        <input type="number" class="form-control" id="phonenumber" name="phonenumber" minlength="10" maxlength="10" placeholder="0723456789" required>
+                        <small class="error-message"></small>
+                      </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('walletForm').style.display = 'none';">Close</button>
+                      <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
+                    </div>
+
+                  </form>
+
+                </div>
+              </div>
+            </div>
+            
+            <!-- End wallet form -->
+
+
 
             <!-- chama Card -->
             {% if chamas %}
             {% for chama in chamas %}
             <div class="col-xxl-4 col-md-6">
-              <a href="{% url 'member:access_chama' chama.chama_name %}" style="text-decoration: none; color: inherit;">
+              <a href="{% url 'member:access_chama' chama.chama_name chama.chama_id %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">{{ chama.chama_type }} <span>| {{ chama.contribution_interval }}</span></h5>
+                  <h5 class="card-title" style="color: aquamarine;" >{{ chama.category }} <span>|</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="bi bi-people-fill"></i>
+                      <i class="bx bx-group"></i>
                     </div>
                     <div class="ps-3" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                       <h6>{{ chama.chama_name }}</h6>
@@ -189,7 +284,7 @@
                     </div>
                   </div>
                   <hr>
-                  <a href="{% url 'chama:chamas' 'member' %}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">View chamas</a>
+                  <a href="{% url 'chama:chamas' %}" class="btn btn-outline-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">View chamas</a>
 
                 </div>
               </div>
@@ -207,29 +302,23 @@
                   <table class="table">
                     <thead>
                       <tr>
-                        <th scope="col">Chama</th>
+                        <th scope="col">Activity Name</th>
+                        <th scope="col">Activity Type</th>
                         <th scope="col">Amount</th>
                         <th scope="col">Type</th>
                         <th scope="col">Date</th>
                         <th scope="col">Time</th>
-                        <th scope="col">Origin</th>
-                        <th scope="col">Status</th>
                       </tr>
                     </thead>
                     {% for transaction in my_recent_transactions %}
                     <tbody>
                       <tr>
-                        <th scope="row">{{ transaction.chama_name }}</th>
-                        <td>{{ transaction.amount }}</td>
+                        <th scope="row">{{ transaction.activity_title }}</th>
+                        <td>{{ transaction.activity_type }}</td>
+                        <td>{{ transaction.transaction_amount }}</td>
                         <td>{{ transaction.transaction_type }}</td>
-                        <td>{{ transaction.date }}</td>
-                        <td>{{ transaction.time }}</td>
-                        <td>{{ transaction.transaction_origin }}</td>
-                        {% if transaction.status == 'Completed' %}
-                        <td><span class="badge bg-success">{{ transaction.status}}</span></td>
-                        {% else %}
-                        <td><span class="badge bg-danger">{{ transaction.status}}</span></td>
-                        {% endif %}
+                        <td>{{ transaction.transaction_date }}</td>
+                        <td>{{ transaction.transaction_time }}</td>
                       </tr>
                     </tbody>
                     {% endfor %}
@@ -251,15 +340,37 @@
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">Wallet activity <span>|</span></h5>
-              {% if wallet_activity.recent_wallet_activity %}
+              <h5 class="card-title">Wallet Deposit <span>| inbound </span></h5>
+              {% if recent_wallet_activity %}
               <div class="activity">
-                {% for activity in wallet_activity.recent_wallet_activity %}
+                {% for activity in recent_wallet_activity %}
 
                 <div class="activity-item d-flex">
-                  <i class='bi bi-circle-fill activity-badge text-primary align-self-start'></i>
+                  <i class='ri-arrow-left-right-line align-self-start'></i>
                   <div class="activity-content">
-                    <p class="text-dark">{{ activity.amount }} {{ activity.transaction_type }} on {{ activity.date }} at {{ activity.time }} </p>
+                    <p class="text-dark">{{ activity.transaction_type }} Ksh {{ activity.transaction_amount }} on {{ activity.transaction_date }} at {{ activity.transaction_time }} </p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+            </div>
+          </div>
+
+          <div class="card">
+
+            <div class="card-body">
+              <h5 class="card-title">Wallet Transfers <span>| outbound </span></h5>
+
+              {% if sent_transactions %}
+              <div class="activity">
+                {% for transaction in sent_transactions %}
+
+                <div class="activity-item d-flex">
+                  <i class='ri-arrow-left-right-line align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">sent Ksh {{ transaction.transaction_amount }} on {{ transaction.transaction_date }} at {{ transaction.transaction_time }} to {{ transaction.receiver_name }} {{ transaction.receiver_phone }} </p>
                   </div>
                 </div>
                 {% endfor %}
@@ -297,8 +408,32 @@
     </section>
       <!-- MODALS -->
     <!-- wallet Modal -->
-    {% include 'member/modals/wallet_modal.html' %}
   </main><!-- End #main -->
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      let buttons = ["transactionFormBtn"];
+      buttons.forEach(function(buttonid){
+        var button = document.getElementById(buttonid);
+        if (button) {
+          button.addEventListener("click", function() {
+            let form = document.getElementById("walletForm");
+            if (form) {
+              if (form.style.display === "none") {
+                form.style.display = "block";
+              } else {
+                form.style.display = "none";
+              }
+            } else {
+              console.log("transaction form not found");
+            }
+          });
+        } else {
+          console.log(buttonid + " not found");
+        }
+      });
+  });
+  </script>
 
 
  {% endblock %}

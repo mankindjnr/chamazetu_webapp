@@ -2,11 +2,11 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h1 class="modal-title fs-5" id="walletModalLabel">Deposit to your wallet</h1>
+          <h1 class="modal-title fs-5" id="walletModalLabel">Wallet</h1>
           <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form action="{% url 'member:deposit_to_wallet' %}" method="POST" id="directDepositForm" novalidate>
+          <form action="{% url 'member:deposit_to_wallet' %}" method="POST" id="directDepositForm">
             {% csrf_token %}
             <div class="mb-3">
               <label for="amount" class="form-label">Amount</label>
@@ -17,6 +17,14 @@
                 </div>
             </div>
 
+            <!-- select between withdrawal and deposit -->
+            <div class="mb-3">
+              <label for="transaction_type" class="form-label">Transaction Type</label>
+              <select class="form-select" id="transaction_type" name="transaction_type" required>
+                <option value="deposit">Deposit</option>
+                <option value="withdrawal">Withdrawal</option>
+              </select>
+
             <div class="mb-3">
               <label for="phonenumber" class="form-label">Phone number</label>
               <div class="input-group">
@@ -26,16 +34,6 @@
               </div>
             </div>
 
-            <div class="mb-3" style="display: none;">
-              <label for="member" class="form-label">member</label>
-              <input type="text" class="form-control" id="member_id" name="member_id" value="{{ current_user.member_id }}" readonly required>
-            </div>
-            {% if chama %}
-            <div class="mb-3" style="display: none;">
-              <label for="member" class="form-label">chamaname</label>
-              <input type="text" class="form-control" id="chama_name" name="chama_name" value="{{ chama.chama_name }}" required readonly>
-            </div>
-            {% endif %}
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-dark btn-sm" data-bs-dismiss="modal">Close</button>
           <button type="submit" class="btn btn-outline-success btn-sm" onclick="this.disabled=true; this.form.submit();">Deposit</button>

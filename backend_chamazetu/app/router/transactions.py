@@ -9,7 +9,7 @@ import logging
 
 
 from .. import schemas, database, utils, oauth2, models
-from .members import generateWalletNumber
+from .members import generateWalletNumber, generate_transaction_code
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -19,116 +19,273 @@ transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
 
 
-# create deposit transaction for a logged in member to chama
+# record a pending deposit transaction from mpesa
 @router.post(
-    "/direct_deposit",
+    "/unprocessed_deposit",
     status_code=status.HTTP_201_CREATED,
-    response_model=schemas.TransactionResp,
-)
-async def create_deposit_transaction(
-    transaction: schemas.DirectTransactionBase = Body(...),
-    db: Session = Depends(database.get_db),
-):
-    try:
-        with db.begin():
-            transaction_dict = transaction.dict()
-            transaction_dict["transaction_type"] = "deposit"
-            transaction_dict["member_id"] = transaction.member_id
-            transaction_dict["transaction_completed"] = True
-            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz).replace(
-                tzinfo=None
-            )
-            transaction_dict["updated_at"] = datetime.now(nairobi_tz).replace(
-                tzinfo=None
-            )
-            transaction_dict["transaction_code"] = transaction.transaction_code
-
-            new_transaction = models.Transaction(**transaction_dict)
-            db.add(new_transaction)
-            db.flush()  # flush to get the id of the transaction and trigger constraints
-            db.refresh(new_transaction)
-
-        return new_transaction
-
-    except Exception as e:
-        print("------direct deposit error--------")
-        transaction_error_logger.error(f"Failed to create transaction: {e}")
-        raise HTTPException(status_code=400, detail="Failed to create transaction")
-
-
-@router.post(
-    "/before_processing_direct_deposit",
-    status_code=status.HTTP_201_CREATED,
-    response_model=schemas.TransactionResp,
+    response_model=schemas.UnprocessedWalletDepositResp,
 )
 async def create_unprocessed_deposit_transaction(
-    transaction: schemas.BeforeProcessingBase = Body(...),
+    transaction: schemas.UnprocessedWalletDepositBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
     try:
-        print("===========before processing ===========")
-        with db.begin():
-            transaction_dict = transaction.dict()
-            transaction_dict["transaction_type"] = transaction.transaction_type
-            transaction_dict["member_id"] = transaction.member_id
-            transaction_dict["transaction_completed"] = False
-            transaction_dict["date_of_transaction"] = datetime.now(nairobi_tz).replace(
-                tzinfo=None
-            )
-            transaction_dict["updated_at"] = datetime.now(nairobi_tz).replace(
-                tzinfo=None
-            )
-            transaction_dict["transaction_code"] = transaction.transaction_code
+        user = (
+            db.query(models.User).filter(models.User.id == transaction.user_id).first()
+        )
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-            new_transaction = models.Transaction(**transaction_dict)
-            db.add(new_transaction)
-            db.flush()  # flush to get the id of the transaction and trigger constraints
-            db.refresh(new_transaction)
+        transaction_code = generate_transaction_code(
+            transaction.transaction_type, transaction.transaction_destination
+        )
+        unprocessed_transaction = {
+            "user_id": transaction.user_id,
+            "amount": transaction.amount,
+            "origin": transaction.transaction_origin,
+            "destination": transaction.transaction_destination,
+            "transaction_type": transaction.transaction_type,
+            "transaction_date": datetime.now(nairobi_tz).replace(
+                tzinfo=None, microsecond=0
+            ),
+            "transaction_completed": False,
+            "transaction_code": transaction_code,
+        }
 
-        return new_transaction
+        new_transaction = models.WalletTransaction(**unprocessed_transaction)
+        db.add(new_transaction)
+        db.commit()
+        db.refresh(new_transaction)
 
+        return {"transaction_code": transaction_code}
     except Exception as e:
-        print("------direct deposit error--------")
         transaction_error_logger.error(f"Failed to create unprocessed transaction: {e}")
         raise HTTPException(
             status_code=400, detail="Failed to create unprocessed transaction"
         )
 
 
-@router.post(
-    "/before_processing_wallet_deposit",
-    status_code=status.HTTP_201_CREATED,
+# use phone_number and amount to see if an unprocessed transaction exists
+@router.get(
+    "/unprocessed_deposit/{phone_number}/{amount}",
+    status_code=status.HTTP_200_OK,
 )
-async def create_unprocessed_deposit_transaction(
-    wallet_transaction: schemas.UnprocessedWalletDepositBase = Body(...),
+async def check_unprocessed_deposit_transaction(
+    phone_number: str,
+    amount: int,
     db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        print("===========before processing ===========")
-        with db.begin():
-            wallet_transaction_dict = wallet_transaction.dict()
-            wallet_transaction_dict["transaction_completed"] = False
-            wallet_transaction_dict["transaction_date"] = datetime.now(
-                nairobi_tz
-            ).replace(tzinfo=None)
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-            new_wallet_transaction = models.Wallet_Transaction(
-                **wallet_transaction_dict
+        # we will also check if the transaction has happened atleast 5 minutes ago
+        five_minutes_ago = datetime.now(nairobi_tz) - timedelta(minutes=5)
+
+        unprocessed_transaction = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.origin == phone_number,
+                    models.WalletTransaction.destination == user.wallet_id,
+                    models.WalletTransaction.amount == amount,
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_date <= five_minutes_ago,
+                    models.WalletTransaction.transaction_type
+                    == "unprocessed wallet deposit",
+                )
             )
-            db.add(new_wallet_transaction)
-            db.flush()  # flush to get the id of the transaction and trigger constraints
-            db.refresh(new_wallet_transaction)
+            .first()
+        )
 
-        return new_wallet_transaction
+        if not unprocessed_transaction:
+            return {"unprocessed_transaction_exists": False}
 
+        return {
+            "unprocessed_transaction_exists": True,
+            "transaction_code": unprocessed_transaction.transaction_code,
+        }
     except Exception as e:
-        print("------direct wallet deposit error--------")
+        transaction_error_logger.error(f"Failed to check unprocessed transaction: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to check unprocessed transaction"
+        )
+
+
+# create an unprocessed withdrawal transaction
+@router.post(
+    "/unprocessed_wallet_withdrawal",
+    status_code=status.HTTP_201_CREATED,
+    response_model=schemas.UnprocessedWalletWithdrawalResp,
+)
+async def create_unprocessed_withdrawal_transaction(
+    transaction: schemas.UnprocessedWalletWithdrawalBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    try:
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        transaction_code = generate_transaction_code(
+            "unprocessed wallet withdrawal", transaction.transaction_destination
+        )
+        unprocessed_transaction = {
+            "user_id": current_user.id,
+            "amount": transaction.amount,
+            "origin": user.wallet_id,
+            "destination": transaction.transaction_destination,
+            "transaction_type": "unprocessed wallet withdrawal",
+            "transaction_date": datetime.now(nairobi_tz).replace(
+                tzinfo=None, microsecond=0
+            ),
+            "transaction_completed": False,
+            "transaction_code": transaction_code,
+        }
+
+        new_transaction = models.WalletTransaction(**unprocessed_transaction)
+        db.add(new_transaction)
+        db.commit()
+        db.refresh(new_transaction)
+
+        return {"transaction_code": transaction_code}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to create unprocessed transaction: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to create unprocessed transaction"
+        )
+
+
+@router.put(
+    "/process_unprocessed_withdrawal",
+    status_code=status.HTTP_200_OK,
+)
+async def process_unprocessed_withdrawal_transaction(
+    transaction: schemas.ProcessUnprocessedWalletWithdrawalBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.Member = Depends(oauth2.get_current_user),
+):
+    try:
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        unprocessed_transaction = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.transaction_code
+                    == transaction.unprocessed_transaction_code,
+                    models.WalletTransaction.amount == transaction.amount,
+                    models.WalletTransaction.transaction_completed == False,
+                )
+            )
+            .first()
+        )
+        if not unprocessed_transaction:
+            raise HTTPException(
+                status_code=404, detail="Unprocessed transaction not found"
+            )
+
+        # update the wallet balance
+        user.wallet_balance -= transaction.amount
+
+        # update the unprocessed transaction
+        unprocessed_transaction.transaction_completed = True
+        unprocessed_transaction.transaction_code = transaction.mpesa_receipt_number
+        unprocessed_transaction.transaction_date = datetime.now(nairobi_tz).replace(
+            tzinfo=None, microsecond=0
+        )
+        unprocessed_transaction.transaction_type = "processed"
+
+        db.commit()
+        return {"message": "Transaction processed successfully"}
+    except Exception as e:
         transaction_error_logger.error(
-            f"Failed to create unprocessed wallet transaction: {e}"
+            f"Failed to process unprocessed transaction: {e}"
         )
         raise HTTPException(
-            status_code=400, detail="Failed to create unprocessed wallet transaction"
+            status_code=400, detail="Failed to process unprocessed transaction"
         )
+
+
+# update the wallet balance after a successful mpesa transaction and update the unprocessed transaction
+@router.put(
+    "/load_wallet",
+    status_code=status.HTTP_200_OK,
+    response_model=schemas.LoadWalletResp,
+)
+async def load_wallet(
+    deposit: schemas.LoadWalletBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        with db.begin():
+            user = (
+                db.query(models.User)
+                .filter(models.User.id == deposit.user_id)
+                .with_for_update()
+                .first()
+            )
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            unprocessed_transaction = (
+                db.query(models.WalletTransaction)
+                .filter(
+                    and_(
+                        models.WalletTransaction.user_id == deposit.user_id,
+                        models.WalletTransaction.transaction_code
+                        == deposit.unprocessed_code,
+                        models.WalletTransaction.amount == deposit.amount,
+                        models.WalletTransaction.transaction_completed == False,
+                    )
+                )
+                .with_for_update()
+                .first()
+            )
+            if not unprocessed_transaction:
+                raise HTTPException(
+                    status_code=404, detail="Unprocessed transaction not found"
+                )
+
+            transaction_date = datetime.now(nairobi_tz).replace(
+                tzinfo=None, microsecond=0
+            )
+            new_wallet_transaction = models.WalletTransaction(
+                amount=deposit.amount,
+                transaction_type="deposit",
+                origin=deposit.transaction_origin,
+                destination=deposit.wallet_id,
+                user_id=deposit.user_id,
+                transaction_completed=True,
+                transaction_date=transaction_date,
+                transaction_code=deposit.transaction_code,
+            )
+
+            db.add(new_wallet_transaction)
+
+            # update the wallet balance
+            user.wallet_balance += deposit.amount
+
+            # update the unprocessed transaction
+            unprocessed_transaction.transaction_completed = True
+            unprocessed_transaction.transaction_date = transaction_date
+            unprocessed_transaction.transaction_type = "processed"
+
+            db.commit()
+
+        return {"amount": deposit.amount, "transaction_code": deposit.transaction_code}
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to load wallet: {e}")
+        raise HTTPException(status_code=400, detail="Failed to create transaction")
 
 
 # create a deposit transaction from wallet to chama

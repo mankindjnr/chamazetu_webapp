@@ -20,55 +20,50 @@ async def create_user(
 ):
 
     # email to lowercase
-    email = (user.email).lower()
-    member_check = db.query(models.Member).filter(models.Member.email == email).first()
-    manager_check = (
-        db.query(models.Manager).filter(models.Manager.email == email).first()
-    )
-    if member_check or manager_check:
-        raise HTTPException(status_code=400, detail="user already exists")
+    try:
+        email = (user.email).lower()
+        new_user = db.query(models.User).filter(models.User.email == email).first()
+        print("new user", new_user)
 
-    dbtable = (user.role).capitalize().strip()
+        if new_user:
+            raise HTTPException(status_code=400, detail="user already exists")
 
-    user.password = utils.hash_password(user.password)
+        user.password = utils.hash_password(user.password)
+        user_dict = user.dict()
+        user_dict["profile_picture"] = (
+            "https://chamazetu-web.s3.eu-north-1.amazonaws.com/profile_pictures/tree_grow_money.jpg"
+        )
+        date = datetime.now(nairobi_tz).replace(tzinfo=None)
+        user_dict["date_joined"] = date
+        user_dict["updated_at"] = date
 
-    ModelClass = getattr(
-        models, dbtable
-    )  # dynamically get the class from the models module
-    user_dict = user.dict()
-    del user_dict[
-        "role"
-    ]  # remove the role from the dictionary since we don't have it in the model
-    # adding a field
-    user_dict["profile_picture"] = (
-        "https://chamazetu-web.s3.eu-north-1.amazonaws.com/profile_pictures/tree_grow_money.jpg"
-    )
-    user_dict["date_joined"] = datetime.now(nairobi_tz).replace(tzinfo=None)
-    user_dict["updated_at"] = datetime.now(nairobi_tz).replace(tzinfo=None)
+        new_user = models.User(**user_dict)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
 
-    new_user = ModelClass(**user_dict)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    # send email verification after checking the integrity of the details
-    activation_token = await oauth2.create_access_token(
-        data={"sub": new_user.email, "csrf": str(uuid.uuid4())}
-    )
-    return {
-        "User": [
-            {
-                "id": new_user.id,
-                "email": new_user.email,
-                "activation_code": activation_token,
-                "created_at": new_user.date_joined,
-            }
-        ]
-    }
+        # send email verification after checking the integrity of the details
+        activation_token = await oauth2.create_access_token(
+            data={"sub": new_user.email, "csrf": str(uuid.uuid4())}
+        )
+        return {
+            "User": [
+                {
+                    "id": new_user.id,
+                    "email": new_user.email,
+                    "activation_code": activation_token,
+                    "created_at": new_user.date_joined,
+                }
+            ]
+        }
+    except Exception as e:
+        print("=====sgnup error=====")
+        print(e)
+        db.rollback()
 
 
 # update member email to true after email verification
-@router.put("/member_email_verification/{uid}", status_code=status.HTTP_200_OK)
+@router.put("/email_verification/{uid}", status_code=status.HTTP_200_OK)
 async def update_email_verification(
     uid: int,
     user_email: schemas.UserEmailActvationBase = Body(...),
@@ -76,8 +71,8 @@ async def update_email_verification(
 ):
     email = (user_email.dict()["user_email"]).lower()
     user = (
-        db.query(models.Member)
-        .filter(and_(models.Member.id == uid, models.Member.email == email))
+        db.query(models.User)
+        .filter(and_(models.User.id == uid, models.User.email == email))
         .first()
     )
 
@@ -99,12 +94,8 @@ async def update_email_verification(
 ):
     email = (user_email.dict()["user_email"]).lower()
     user = (
-        db.query(models.Manager)
-        .filter(
-            and_(
-                models.Manager.id == uid, models.Manager.email == user_email.user_email
-            )
-        )
+        db.query(models.User)
+        .filter(and_(models.User.id == uid, models.User.email == user_email.user_email))
         .first()
     )
 
@@ -119,7 +110,7 @@ async def update_email_verification(
 
 @router.get("/member")
 async def get_user(
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
     db: Session = Depends(get_db),
 ):
     return {"email": current_user.email}
@@ -127,7 +118,7 @@ async def get_user(
 
 @router.get("/manager")
 async def get_user(
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
     db: Session = Depends(get_db),
 ):
     return {"email": current_user.email}
@@ -135,25 +126,13 @@ async def get_user(
 
 #      ======================might switch back to email instead of id=======================
 # get member/manager id by email
-@router.get("/{role}/profile_picture")
+@router.get("/profile_picture")
 async def get_user_by_email(
-    role: str,
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
-    user = None
-    if role == "member":
-        user = (
-            db.query(models.Member).filter(models.Member.id == current_user.id).first()
-        )
-    elif role == "manager":
-        user = (
-            db.query(models.Manager)
-            .filter(models.Manager.id == current_user.id)
-            .first()
-        )
+
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -161,17 +140,12 @@ async def get_user_by_email(
 
 
 # get user id
-@router.get("/id/{role}/{email}")
+@router.get("/id/{email}")
 async def get_user_id_by_email(
-    role: str,
     email: str,
     db: Session = Depends(get_db),
 ):
-    user = None
-    if role == "member":
-        user = db.query(models.Member).filter(models.Member.email == email).first()
-    elif role == "manager":
-        user = db.query(models.Manager).filter(models.Manager.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -179,33 +153,27 @@ async def get_user_id_by_email(
 
 
 # get member names by id
-@router.get("/names/member/{id}")
-async def get_member_names_by_id(id: int, db: Session = Depends(get_db)):
-    member = db.query(models.Member).filter(models.Member.id == id).first()
-    if not member:
+@router.get("/names/{user_id}")
+async def get_member_names_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
         raise HTTPException(status_code=404, detail="Member not found")
-    return {"first_name": member.first_name, "last_name": member.last_name}
+    return {"first_name": user.first_name, "last_name": user.last_name}
 
 
 # get manager/member phone_number by id
-@router.get("/phone_number/{role}/{id}")
-async def get_phone_number_by_id(id: int, role: str, db: Session = Depends(get_db)):
-    if role == "member":
-        user = db.query(models.Member).filter(models.Member.id == id).first()
-    elif role == "manager":
-        user = db.query(models.Manager).filter(models.Manager.id == id).first()
+@router.get("/phone_number/{id}")
+async def get_phone_number_by_id(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"phone_number": user.phone_number}
 
 
-# get member email by id
-@router.get("/email/{role}/{id}")
-async def get_email_by_id(id: int, role: str, db: Session = Depends(get_db)):
-    if role == "member":
-        user = db.query(models.Member).filter(models.Member.id == id).first()
-    elif role == "manager":
-        user = db.query(models.Manager).filter(models.Manager.id == id).first()
+# get user email by id
+@router.get("/email/{user_id}")
+async def get_email_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"email": user.email}
@@ -214,32 +182,19 @@ async def get_email_by_id(id: int, role: str, db: Session = Depends(get_db)):
 # get manager names by id
 @router.get("/names/manager/{id}")
 async def get_manager_names_by_id(id: int, db: Session = Depends(get_db)):
-    manager = db.query(models.Manager).filter(models.Manager.id == id).first()
+    manager = db.query(models.User).filter(models.User.id == id).first()
     if not manager:
         raise HTTPException(status_code=404, detail="Manager not found")
     return {"first_name": manager.first_name, "last_name": manager.last_name}
 
 
 # retrieve an active manager/member to esnure the user exists in the database before them to replace a forgotten password - TODO: send email with activation code
-@router.get("/{role}/{email}")
+@router.get("/{email}")
 async def confirm_user_exists_with_email(
-    role: str,
     email: str,
     db: Session = Depends(get_db),
 ):
-
-    if role == "member":
-        print("========i'm  member======")
-        user = (
-            db.query(models.Member).filter(models.Member.email == email.lower()).first()
-        )
-    elif role == "manager":
-        print("========i'm  manager======")
-        user = (
-            db.query(models.Manager)
-            .filter(models.Manager.email == email.lower())
-            .first()
-        )
+    user = db.query(models.User).filter(models.User.email == email.lower()).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="user not found")
@@ -248,9 +203,8 @@ async def confirm_user_exists_with_email(
 
 
 # resetting password - forgotten password
-@router.put("/{role}/update_password", status_code=status.HTTP_200_OK)
+@router.put("/update_password", status_code=status.HTTP_200_OK)
 async def update_users_password(
-    role: str,
     updated_data: schemas.UpdatePasswordBase = Body(...),
     db: Session = Depends(get_db),
 ):
@@ -260,16 +214,7 @@ async def update_users_password(
         email = user_dict["email"]
         new_password = utils.hash_password(user_dict["updated_password"])
 
-        if role == "member":
-            print("========pass  member======")
-            updated_user = (
-                db.query(models.Member).filter(models.Member.email == email).first()
-            )
-        elif role == "manager":
-            print("========pass  manager======")
-            updated_user = (
-                db.query(models.Manager).filter(models.Manager.email == email).first()
-            )
+        updated_user = db.query(models.User).filter(models.User.email == email).first()
 
         if updated_user:
             updated_user.password = new_password
@@ -282,16 +227,12 @@ async def update_users_password(
 
 
 # get users full_profile
-@router.get("/full_profile/{role}/{id}", status_code=status.HTTP_200_OK)
+@router.get("/full_profile/{id}", status_code=status.HTTP_200_OK)
 async def get_user_full_profile(
-    role: str,
     id: int,
     db: Session = Depends(get_db),
 ):
-    if role == "member":
-        user = db.query(models.Member).filter(models.Member.id == id).first()
-    elif role == "manager":
-        user = db.query(models.Manager).filter(models.Manager.id == id).first()
+    user = db.query(models.User).filter(models.User.id == id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {
@@ -312,25 +253,13 @@ async def get_user_full_profile(
 
 
 # retrive a users profile picture
-@router.get("/profile_picture/{role}", status_code=status.HTTP_200_OK)
+@router.get("/profile_picture", status_code=status.HTTP_200_OK)
 async def get_user_profile_picture(
-    role: str,
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
     db: Session = Depends(get_db),
 ):
-    user = None
-    if role == "member":
-        user = (
-            db.query(models.Member).filter(models.Member.id == current_user.id).first()
-        )
-    elif role == "manager":
-        user = (
-            db.query(models.Manager)
-            .filter(models.Manager.id == current_user.id)
-            .first()
-        )
+    user = db.query(models.User).filter(models.User.id == current_user.id).first()
+
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -338,14 +267,11 @@ async def get_user_profile_picture(
 
 
 # changing password
-@router.put("/{role}/change_password", status_code=status.HTTP_201_CREATED)
+@router.put("/change_password", status_code=status.HTTP_201_CREATED)
 async def change_password(
-    role: str,
     password_data: schemas.ChangePasswordBase = Body(...),
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -370,37 +296,21 @@ async def change_password(
 
 # update members table with new phone number
 @router.put(
-    "/{role}/update_phone_number",
+    "/update_phone_number",
     status_code=status.HTTP_200_OK,
     response_model=schemas.SuccessBase,
 )
 async def update_member_phone_number(
-    role: str,
     phone_number_data: schemas.PhoneNumberBase = Body(...),
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
         phone_number_dict = phone_number_data.dict()
         new_phone_number = phone_number_dict["phone_number"]
 
-        user = None
-
-        if role == "member":
-            user = (
-                db.query(models.Member)
-                .filter(models.Member.id == current_user.id)
-                .first()
-            )
-        elif role == "manager":
-            user = (
-                db.query(models.Manager)
-                .filter(models.Manager.id == current_user.id)
-                .first()
-            )
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="user not found")
@@ -421,36 +331,21 @@ async def update_member_phone_number(
 
 # update members table with twitter
 @router.put(
-    "/{role}/update_twitter_handle",
+    "/update_twitter_handle",
     status_code=status.HTTP_200_OK,
     response_model=schemas.SuccessBase,
 )
 async def update_twitter(
-    role: str,
     twitter_data: schemas.TwitterBase = Body(...),
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
         twitter_dict = twitter_data.dict()
         new_twitter = twitter_dict["twitter"]
 
-        user = None
-        if role == "member":
-            user = (
-                db.query(models.Member)
-                .filter(models.Member.id == current_user.id)
-                .first()
-            )
-        elif role == "manager":
-            user = (
-                db.query(models.Manager)
-                .filter(models.Manager.id == current_user.id)
-                .first()
-            )
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="user not found")
@@ -469,37 +364,21 @@ async def update_twitter(
 
 # update members table with facebook
 @router.put(
-    "/{role}/update_facebook_handle",
+    "/update_facebook_handle",
     status_code=status.HTTP_200_OK,
     response_model=schemas.SuccessBase,
 )
 async def update_member_facebook(
-    role: str,
     facebook_data: schemas.FacebookBase = Body(...),
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
         facebook_dict = facebook_data.dict()
         new_facebook = facebook_dict["facebook"]
 
-        user = None
-
-        if role == "member":
-            user = (
-                db.query(models.Member)
-                .filter(models.Member.id == current_user.id)
-                .first()
-            )
-        elif role == "manager":
-            user = (
-                db.query(models.Manager)
-                .filter(models.Manager.id == current_user.id)
-                .first()
-            )
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
 
         if not user:
             raise HTTPException(status_code=404, detail="user not found")
@@ -518,38 +397,21 @@ async def update_member_facebook(
 
 # update members table with linkedin
 @router.put(
-    "/{role}/update_linkedin_handle",
+    "/update_linkedin_handle",
     status_code=status.HTTP_200_OK,
     response_model=schemas.SuccessBase,
 )
 async def update_member_linkedin(
-    role: str,
     linkedin_data: schemas.LinkedinBase = Body(...),
     db: Session = Depends(get_db),
-    current_user: Union[models.Member, models.Manager] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
         linkedin_dict = linkedin_data.dict()
         new_linkedin = linkedin_dict["linkedin"]
 
-        user = None
-
-        if role == "member":
-            user = (
-                db.query(models.Member)
-                .filter(models.Member.id == current_user.id)
-                .first()
-            )
-        elif role == "manager":
-            user = (
-                db.query(models.Manager)
-                .filter(models.Manager.id == current_user.id)
-                .first()
-            )
-
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
         if not user:
             raise HTTPException(status_code=404, detail="user not found")
 
@@ -563,3 +425,28 @@ async def update_member_linkedin(
         print(e)
         db.rollback()
         raise HTTPException(status_code=400, detail="Failed to update user's linkedin")
+
+
+# checking users active role by checking if he has joined a chama or created one
+@router.get("/active_role/{email}", status_code=status.HTTP_200_OK)
+async def get_active_role(
+    email: str,
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not being found")
+
+    chamas_managing = (
+        db.query(models.Chama).filter(models.Chama.manager_id == user.id).all()
+    )
+    # check if the user has joined a chama from the chama_user_association table
+    chama_joined = (
+        db.query(models.User).filter(models.User.id == user.id).first().chamas
+    )
+
+    if chamas_managing and not chama_joined:
+        return {"active_role": "manager"}
+
+    return {"active_role": "member"}

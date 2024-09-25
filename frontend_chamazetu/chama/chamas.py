@@ -14,9 +14,9 @@ load_dotenv()
 
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist
-def get_all_chamas(request, role=None):
+def get_all_chamas(request):
     chamas_resp = requests.get(
-        f"{os.getenv('api_url')}/chamas/active_accepting_members_chamas"
+        f"{os.getenv('api_url')}/chamas/actively_accepting_members_chamas"
     )
     chamas = None
     if chamas_resp.status_code == HTTPStatus.OK:
@@ -26,7 +26,7 @@ def get_all_chamas(request, role=None):
         request,
         "chama/allchamas.html",
         {
-            "role": role,
+            "role": request.COOKIES.get("current_role"),
             "chamas": chamas,
         },
     )
@@ -34,35 +34,27 @@ def get_all_chamas(request, role=None):
 
 # public chama access
 def get_chama(request, chamaid):
-
-    urls = [
-        (f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/faqs/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/rules/{chamaid}", None),
-        (f"{os.getenv('api_url')}/chamas/mission/vision/{chamaid}", None),
-    ]
-
-    results = public_chama_threads(urls)
-
-    if results["public_chama"]:
-        manager_profile = get_user_full_profile(
-            "manager", results["public_chama"]["manager_id"]
-        )
-
+    urls = f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}"
+    resp = requests.get(urls)
+    if resp.status_code == HTTPStatus.OK:
+        chama = resp.json()
+        print("=======logged public access========")
+        print(chama)
         return render(
             request,
             "chama/blog_chama.html",
             {
-                "chama": results["public_chama"],
-                "manager": manager_profile,
-                "faqs": results["faqs"],
-                "rules": results["rules"],
-                "mission": results["mission"],
-                "vision": results["vision"],
+                "role": request.COOKIES.get("current_role"),
+                "chama": chama["public_chama"],
+                "rules": chama["rules"],
+                "faqs": chama["faqs"],
+                "about": chama["about"],
+                "manager": chama["manager"],
+                "activities": chama["activities"],
             },
         )
-    # if the chama is not found, return a 404 page or refresh the page
-    return HttpResponse("Chama not found")
+
+    return redirect(reverse("chama:chamas"))
 
 
 def public_chama_threads(urls):
@@ -314,4 +306,4 @@ def get_chama_registration_fee(chama_id):
     resp = requests.get(f"{os.getenv('api_url')}/chamas/registration_fee/{chama_id}")
     if resp.status_code == HTTPStatus.OK:
         return resp.json()["registration_fee"]
-    return 0
+    return None

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
 from sqlalchemy import func, update, and_, table, column, desc
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, aliased
 from typing import Union
 from datetime import datetime
 from datetime import timedelta
 from zoneinfo import ZoneInfo
-import logging, random
+import logging, random, time
 from typing import List
 from uuid import uuid4
 
@@ -19,27 +19,268 @@ transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
 
 
-# get wallet number and balance
-@router.get("/wallet_info/{member_id}", status_code=status.HTTP_200_OK)
-async def get_wallet_info(
-    member_id: int,
+# member dashboard
+@router.get("/dashboard", status_code=status.HTTP_200_OK)
+async def member_dashboard(
     db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
-        member = db.query(models.Member).filter(models.Member.id == member_id).first()
+        member = db.query(models.User).filter(models.User.id == current_user.id).first()
 
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
 
+        member_recent_transactions = (
+            db.query(
+                models.Activity.activity_title,
+                models.Activity.activity_type,
+                models.ActivityTransaction.amount,
+                models.ActivityTransaction.transaction_type,
+                models.ActivityTransaction.transaction_date,
+            )
+            .join(
+                models.ActivityTransaction,
+                models.Activity.id == models.ActivityTransaction.activity_id,
+            )
+            .filter(
+                and_(
+                    models.ActivityTransaction.user_id == current_user.id,
+                    models.ActivityTransaction.transaction_completed == True,
+                )
+            )
+            .order_by(desc(models.ActivityTransaction.transaction_date))
+            .limit(3)
+        )
+
+        wallet_transactions = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.transaction_completed == True,
+                    models.WalletTransaction.transaction_type == "deposit",
+                )
+            )
+            .order_by(desc(models.WalletTransaction.transaction_date))
+            .limit(3)
+            .all()
+        )
+
+        # sent transactions will be from the B2CResults table and will be filtered through the transactionreceipt and transaction_code from wallet_transactions
+        # so we will use two tables
+
+        sent_transactions = (
+            db.query(
+                models.B2CResults.transactionreceipt,
+                models.B2CResults.transactionid,
+                models.B2CResults.transactioncompleteddatetime,
+                models.B2CResults.transactionamount,
+                models.B2CResults.receiverpartypublicname,
+            )
+            .filter(
+                and_(
+                    models.B2CResults.transactionreceipt
+                    == models.WalletTransaction.transaction_code,
+                    models.WalletTransaction.user_id == current_user.id,
+                )
+            )
+            .order_by(desc(models.B2CResults.transactioncompleteddatetime))
+            .limit(3)
+            .all()
+        )
+
+        member_chamas = (
+            db.query(models.Chama)
+            .join(
+                models.chama_user_association,
+                models.Chama.id == models.chama_user_association.c.chama_id,
+            )
+            .filter(models.chama_user_association.c.user_id == current_user.id)
+            .all()
+        )
+
+        user_profile = (
+            db.query(models.User.profile_picture)
+            .filter(models.User.id == current_user.id)
+            .scalar()
+        )
+
+        member_chamas_data = [
+            {
+                "chama_id": chama.id,
+                "chama_name": chama.chama_name,
+                "category": chama.category,
+            }
+            for chama in member_chamas
+        ]
+
+        recent_transactions = [
+            {
+                "activity_title": transaction.activity_title,
+                "activity_type": transaction.activity_type,
+                "transaction_amount": transaction.amount,
+                "transaction_type": transaction.transaction_type,
+                "transaction_date": transaction.transaction_date.strftime("%d-%B-%Y"),
+                "transaction_time": transaction.transaction_date.strftime("%H:%M:%S"),
+            }
+            for transaction in member_recent_transactions
+        ]
+
+        wallet_transactions_data = [
+            {
+                "transaction_type": transaction.transaction_type,
+                "transaction_date": transaction.transaction_date.strftime("%d-%B-%Y"),
+                "transaction_time": transaction.transaction_date.strftime("%H:%M:%S"),
+                "transaction_amount": transaction.amount,
+            }
+            for transaction in wallet_transactions
+        ]
+
+        # receiverpartypublicname = 254720090889 - AMOS NJOROGE KAIRU
+
+        sent_transactions_data = [
+            {
+                "transaction_receipt": transaction.transactionreceipt,
+                "transaction_id": transaction.transactionid,
+                "transaction_date": transaction.transactioncompleteddatetime.strftime(
+                    "%d-%B-%Y"
+                ),
+                "transaction_time": transaction.transactioncompleteddatetime.strftime(
+                    "%H:%M:%S"
+                ),
+                "transaction_amount": transaction.transactionamount,
+                "receiver_phone": (transaction.receiverpartypublicname).split("-")[0],
+                "receiver_name": (transaction.receiverpartypublicname).split("-")[1],
+            }
+            for transaction in sent_transactions
+        ]
+
         return {
-            "wallet_number": member.wallet_number,
             "wallet_balance": member.wallet_balance,
+            "zetucoins": member.zetucoins,
+            "recent_transactions": recent_transactions,
+            "wallet_transactions": wallet_transactions_data,
+            "sent_transactions": sent_transactions_data,
+            "member_chamas": member_chamas_data,
+            "profile_picture": user_profile,
         }
 
     except Exception as e:
-        transaction_error_logger.error(f"Failed to get wallet info {e}")
-        raise HTTPException(status_code=400, detail="Failed to get wallet info")
+        transaction_error_logger.error(f"Failed to get member dashboard {e}")
+        raise HTTPException(status_code=400, detail="Failed to get member dashboard")
+
+
+# get a members chama dashboard
+@router.get("/chama_dashboard/{chama_id}", status_code=status.HTTP_200_OK)
+async def chama_dashboard(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        a_chama_member = (
+            db.query(models.chama_user_association)
+            .filter(
+                and_(
+                    models.chama_user_association.c.chama_id == chama_id,
+                    models.chama_user_association.c.user_id == current_user.id,
+                )
+            )
+            .first()
+        )
+
+        print("=======", a_chama_member)
+        if not a_chama_member:
+            raise HTTPException(status_code=404, detail="Member not in chama")
+
+        # for readbaility
+        ActivityContribution = aliased(models.ActivityContributionDate)
+        ActivityUserAssoc = aliased(models.activity_user_association)
+
+        chama_activities = (
+            db.query(
+                ActivityContribution.next_contribution_date,
+                ActivityContribution.activity_title,
+                ActivityContribution.activity_type,
+                ActivityUserAssoc.c.activity_id,
+            )
+            .join(
+                ActivityUserAssoc,
+                ActivityContribution.activity_id == ActivityUserAssoc.c.activity_id,
+            )
+            .filter(
+                and_(
+                    ActivityContribution.chama_id == chama_id,
+                    ActivityUserAssoc.c.user_id == current_user.id,
+                )
+            )
+            .order_by(desc(ActivityContribution.next_contribution_date))
+            .all()
+        )
+        print("====chama activities====")
+
+        user_wallet_balance = (
+            db.query(models.User.wallet_balance)
+            .filter(models.User.id == current_user.id)
+            .scalar()
+        )
+        print("====user wallet balance====")
+
+        if not user_wallet_balance:
+            user_wallet_balance = 0.0
+        print(user_wallet_balance)
+
+        chama_total_fines = (
+            db.query(func.coalesce(func.sum(models.ActivityFine.expected_repayment), 0))
+            .filter(models.ActivityFine.chama_id == chama_id)
+            .filter(models.ActivityFine.user_id == current_user.id)
+            .filter(models.ActivityFine.is_paid == False)
+            .scalar()
+        )
+        print("====chama total fines====")
+
+        # have a table to track the total fines paid instead of calculating it every time
+        chama_account = (
+            db.query(models.Chama_Account)
+            .filter(models.Chama_Account.chama_id == chama_id)
+            .first()
+        )
+        activities_data = [
+            {
+                "contribution_date": activity.next_contribution_date.strftime(
+                    "%d-%B-%Y"
+                ),
+                "title": activity.activity_title,
+                "type": activity.activity_type,
+                "activity_id": activity.activity_id,
+            }
+            for activity in chama_activities
+        ]
+        print("====chama activities====")
+        print(activities_data)
+
+        return {
+            "chama_name": chama.chama_name,
+            "chama_id": chama.id,
+            "chama_activities": activities_data,
+            "wallet_balance": user_wallet_balance,
+            "total_fines": chama_total_fines,
+            "account_balance": chama_account.account_balance,
+            "available_balance": chama_account.available_balance,
+        }
+    except HTTPException as e:
+        transaction_error_logger.error(f"Failed to get chama dashboard {e}")
+        raise
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get chama dashboard {e}")
+        raise HTTPException(status_code=400, detail="Failed to get chama dashboard")
 
 
 # get all chamas a member is connected to using member id
@@ -49,70 +290,70 @@ async def get_wallet_info(
     response_model=List[schemas.MemberChamasResp],
 )
 async def get_member_chamas(
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
     db: Session = Depends(database.get_db),
 ):
 
     try:
+        print("=====getting member chamas=====")
+        print(current_user.id)
         member_chamas = (
             db.query(models.Chama)
             .join(
-                models.members_chamas_association,
-                models.Chama.id == models.members_chamas_association.c.chama_id,
+                models.chama_user_association,
+                models.Chama.id == models.chama_user_association.c.chama_id,
             )
-            .filter(models.members_chamas_association.c.member_id == current_user.id)
+            .filter(models.chama_user_association.c.user_id == current_user.id)
             .all()
         )
+        transaction_info_logger.info("Member chamas retrieved")
+        transaction_info_logger.info(member_chamas)
 
         return [schemas.MemberChamasResp.from_orm(chama) for chama in member_chamas]
 
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(f"Failed to get member chamas {e}")
         raise HTTPException(status_code=400, detail="Failed to get member chamas")
 
 
 # get members number of shares in a certain chama
 @router.get(
-    "/expected_contribution",
+    "/expected_contribution/{user_id}/{activity_id}",
     status_code=status.HTTP_200_OK,
     response_model=schemas.MemberSharesResp,
 )
 async def get_member_shares(
-    shares_data: schemas.MemberSharesBase = Body(...),
+    user_id: int,
+    activity_id: int,
     db: Session = Depends(database.get_db),
 ):
-
     try:
-        shares_dict = shares_data.dict()
-        chama_id = shares_dict["chama_id"]
-        member_id = shares_dict["member_id"]
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
 
-        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-        if not chama:
-            raise HTTPException(status_code=404, detail="Chama not found")
-
-        chama_share_price = chama.contribution_amount
-
-        member_shares = (
-            db.query(models.members_chamas_association)
+        user_shares = (
+            db.query(models.activity_user_association)
             .filter(
                 and_(
-                    models.members_chamas_association.c.chama_id == chama_id,
-                    models.members_chamas_association.c.member_id == member_id,
+                    models.activity_user_association.c.user_id == user_id,
+                    models.activity_user_association.c.activity_id == activity_id,
                 )
             )
             .first()
         )
 
-        if not member_shares:
-            raise HTTPException(status_code=404, detail="Member shares not found")
+        if not user_shares:
+            raise HTTPException(status_code=404, detail="user shares not found")
 
-        member_expected_contribution = chama_share_price * member_shares.num_of_shares
+        expected_contribution = user_shares.shares * activity.activity_amount
 
-        return {"member_expected_contribution": member_expected_contribution}
+        return {"expected_contribution": expected_contribution}
 
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(f"Failed to get member shares {e}")
         raise HTTPException(
             status_code=400, detail="Failed to get members expected contribution amount"
         )
@@ -120,57 +361,372 @@ async def get_member_shares(
 
 # what a member has contributed to a chama from previous chama day to the next chama day
 @router.get(
-    "/member_contribution_so_far",
+    "/contribution_so_far/{user_id}/{activity_id}",
     status_code=status.HTTP_200_OK,
     response_model=schemas.MemberContributionResp,
 )
 async def get_member_contribution_so_far(
-    member_data: schemas.MemberContributionBase = Body(...),
+    user_id: int,
+    activity_id: int,
     db: Session = Depends(database.get_db),
 ):
 
     try:
-        member_dict = member_data.dict()
-        chama_id = member_dict["chama_id"]
-        member_id = member_dict["member_id"]
-        previous_contribution_date = datetime.strptime(
-            member_dict["previous_contribution_date"], "%d-%m-%Y"
-        ).date()
-        upcoming_contribution_date = datetime.strptime(
-            member_dict["upcoming_contribution_date"], "%d-%m-%Y"
-        ).date()
+        contribution_dates = (
+            db.query(models.ActivityContributionDate)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .first()
+        )
+        prev_contribution_date = contribution_dates.previous_contribution_date.date()
+        next_contribution_date = contribution_dates.next_contribution_date.date()
 
-        member_contribution = (
-            db.query(func.sum(models.Transaction.amount))
+        # rewrite the above query to sum the amount using coalesce
+        total_contributions = (
+            db.query(func.coalesce(func.sum(models.ActivityTransaction.amount), 0))
             .filter(
                 and_(
-                    models.Transaction.chama_id == chama_id,
-                    models.Transaction.member_id == member_id,
-                    models.Transaction.transaction_completed == True,
-                    models.Transaction.is_reversed == False,
-                    models.Transaction.transaction_type == "deposit",
-                    func.date(models.Transaction.date_of_transaction)
-                    > previous_contribution_date,
-                    func.date(models.Transaction.date_of_transaction)
-                    <= upcoming_contribution_date,
+                    models.ActivityTransaction.user_id == user_id,
+                    models.ActivityTransaction.activity_id == activity_id,
+                    models.ActivityTransaction.transaction_completed == True,
+                    models.ActivityTransaction.transaction_type == "contribution",
+                    models.ActivityTransaction.is_reversed == False,
+                    func.date(models.ActivityTransaction.transaction_date)
+                    > prev_contribution_date,
+                    func.date(models.ActivityTransaction.transaction_date)
+                    <= next_contribution_date,
                 )
             )
             .scalar()
         )
 
-        if not member_contribution:
-            member_contribution = 0
-
-        return {"member_contribution": member_contribution}
-
+        return {"total_contribution": total_contributions}
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(f"Failed to get member contribution so far {e}")
         raise HTTPException(
             status_code=400, detail="Failed to get members contribution so far"
         )
 
 
-# mre recent transactions all round
+# make a contribution to the merry_go_round activity should unified contribution, pays fines and contributes to remaining expected amount
+@router.post(
+    "/contribute/merry-go-round/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def contribute_to_merry_go_round(
+    activity_id: int,
+    contrib_data: schemas.ContributeToActivityBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        expected_amount = contrib_data.expected_contribution
+        amount = contrib_data.amount
+        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        wallet_id = (
+            db.query(models.User.wallet_id)
+            .filter(models.User.id == current_user.id)
+            .scalar()
+        )
+
+        fines = (
+            db.query(models.ActivityFine)
+            .filter(
+                and_(
+                    models.ActivityFine.activity_id == activity_id,
+                    models.ActivityFine.user_id == current_user.id,
+                    models.ActivityFine.is_paid == False,
+                )
+            )
+            .order_by(models.ActivityFine.fine_date)
+            .with_for_update()  # lock the rows for update
+            .all()
+        )
+
+        total_fines_repaid = 0
+        amount_contributed = 0
+
+        with db.begin_nested():
+            if fines:
+                for fine in fines:
+                    fine_transaction_code = generate_transaction_code(
+                        "manual_fine_repayment", wallet_id
+                    )
+
+                    if amount >= fine.expected_repayment:
+                        amount -= fine.expected_repayment
+                        fine_amount_repaid = fine.expected_repayment
+                        fine.is_paid = True
+                        fine.paid_date = transaction_date
+                        fine.expected_repayment = 0
+                    else:
+                        fine.expected_repayment -= amount
+                        fine_amount_repaid = amount
+                        amount = 0
+
+                    total_fines_repaid += fine_amount_repaid
+
+                    # record the fine transaction
+                    fine_transaction_data = {
+                        "user_id": current_user.id,
+                        "amount": fine_amount_repaid,
+                        "origin": wallet_id,
+                        "activity_id": activity_id,
+                        "transaction_date": transaction_date,
+                        "updated_at": transaction_date,
+                        "transaction_completed": True,
+                        "transaction_code": fine_transaction_code,
+                        "transaction_type": "late contribution",
+                    }
+                    new_fine_transaction = models.ActivityTransaction(
+                        **fine_transaction_data
+                    )
+                    db.add(new_fine_transaction)
+
+                    if amount == 0:
+                        break
+
+            # if after fine repayment, the member has some amount left, we contribute towards the expected amount
+            user_record = (
+                db.query(models.User).filter(models.User.id == current_user.id).first()
+            )
+            if amount > 0 and expected_amount > 0:
+                transaction_code = generate_transaction_code(
+                    "manual_contribution", wallet_id
+                )
+
+                if amount > expected_amount:
+                    amount = expected_amount
+
+                # record the transaction
+                transaction_data = {
+                    "user_id": current_user.id,
+                    "amount": amount,
+                    "origin": wallet_id,
+                    "activity_id": activity_id,
+                    "transaction_date": transaction_date,
+                    "updated_at": transaction_date,
+                    "transaction_completed": True,
+                    "transaction_code": transaction_code,
+                    "transaction_type": "contribution",
+                }
+                new_transaction = models.ActivityTransaction(**transaction_data)
+                db.add(new_transaction)
+
+                amount_contributed = amount
+
+            # update the wallet balance
+            user_record = (
+                db.query(models.User).filter(models.User.id == current_user.id).first()
+            )
+            activity = (
+                db.query(models.Activity)
+                .filter(models.Activity.id == activity_id)
+                .first()
+            )
+            user_record.wallet_balance -= amount_contributed + total_fines_repaid
+
+            # update the activity account balance
+            activity_account = (
+                db.query(models.Activity_Account)
+                .filter(models.Activity_Account.activity_id == activity_id)
+                .first()
+            )
+            activity_account.account_balance += total_fines_repaid + amount_contributed
+
+            # update the chama account balance
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == activity.chama_id)
+                .first()
+            )
+            chama_account.account_balance += total_fines_repaid + amount_contributed
+
+            db.commit()
+
+    except HTTPException as http_exc:
+        db.rollback()
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to contribute to merry go round {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to contribute to merry go round"
+        )
+
+
+# contribute t the generic activities
+@router.post(
+    "/contribute/generic/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def contribute_to_merry_go_round(
+    activity_id: int,
+    contrib_data: schemas.ContributeToActivityBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        expected_amount = contrib_data.expected_contribution
+        amount = contrib_data.amount
+        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        wallet_id = (
+            db.query(models.User.wallet_id)
+            .filter(models.User.id == current_user.id)
+            .scalar()
+        )
+
+        fines = (
+            db.query(models.ActivityFine)
+            .filter(
+                and_(
+                    models.ActivityFine.activity_id == activity_id,
+                    models.ActivityFine.user_id == current_user.id,
+                    models.ActivityFine.is_paid == False,
+                )
+            )
+            .order_by(models.ActivityFine.fine_date)
+            .with_for_update()  # lock the rows for update
+            .all()
+        )
+
+        total_fines_repaid = 0
+        amount_contributed = 0
+
+        with db.begin_nested():
+            if fines:
+                for fine in fines:
+                    fine_transaction_code = generate_transaction_code(
+                        "manual_fine_repayment", wallet_id
+                    )
+
+                    if amount >= fine.expected_repayment:
+                        amount -= fine.expected_repayment
+                        fine_amount_repaid = fine.expected_repayment
+                        fine.is_paid = True
+                        fine.paid_date = transaction_date
+                        fine.expected_repayment = 0
+                    else:
+                        fine.expected_repayment -= amount
+                        fine_amount_repaid = amount
+                        amount = 0
+
+                    total_fines_repaid += fine_amount_repaid
+
+                    # record the fine transaction
+                    fine_transaction_data = {
+                        "user_id": current_user.id,
+                        "amount": fine_amount_repaid,
+                        "origin": wallet_id,
+                        "activity_id": activity_id,
+                        "transaction_date": transaction_date,
+                        "updated_at": transaction_date,
+                        "transaction_completed": True,
+                        "transaction_code": fine_transaction_code,
+                        "transaction_type": "late contribution",
+                    }
+                    new_fine_transaction = models.ActivityTransaction(
+                        **fine_transaction_data
+                    )
+                    db.add(new_fine_transaction)
+
+                    if amount == 0:
+                        break
+
+            # if after fine repayment, the member has some amount left, we contribute towards the expected amount
+            user_record = (
+                db.query(models.User).filter(models.User.id == current_user.id).first()
+            )
+            if amount > 0 and expected_amount > 0:
+                transaction_code = generate_transaction_code(
+                    "manual_contribution", wallet_id
+                )
+
+                if amount > expected_amount:
+                    amount = expected_amount
+
+                # record the transaction
+                transaction_data = {
+                    "user_id": current_user.id,
+                    "amount": amount,
+                    "origin": wallet_id,
+                    "activity_id": activity_id,
+                    "transaction_date": transaction_date,
+                    "updated_at": transaction_date,
+                    "transaction_completed": True,
+                    "transaction_code": transaction_code,
+                    "transaction_type": "contribution",
+                }
+                new_transaction = models.ActivityTransaction(**transaction_data)
+                db.add(new_transaction)
+
+                amount_contributed = amount
+
+            # update the wallet balance
+            user_record = (
+                db.query(models.User).filter(models.User.id == current_user.id).first()
+            )
+            activity = (
+                db.query(models.Activity)
+                .filter(models.Activity.id == activity_id)
+                .first()
+            )
+            user_record.wallet_balance -= amount_contributed + total_fines_repaid
+
+            # update the activity account balance
+            activity_account = (
+                db.query(models.Activity_Account)
+                .filter(models.Activity_Account.activity_id == activity_id)
+                .first()
+            )
+            activity_account.account_balance += total_fines_repaid + amount_contributed
+
+            # update the chama account balance
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == activity.chama_id)
+                .first()
+            )
+            chama_account.account_balance += total_fines_repaid + amount_contributed
+
+            db.commit()
+
+    except HTTPException as http_exc:
+        db.rollback()
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to contribute to activity{e}")
+        raise HTTPException(status_code=400, detail="Failed to contribute to activity")
+
+
+# generate transaction code
+def generate_transaction_code(transaction_type, wallet_id):
+    # define a prefix for each transaction
+    prefixes = {
+        "auto_contribution": "AC",
+        "auto_late_contribution": "ALC",
+        "manual_contribution": "MC",
+        "manual_fine_repayment": "MFR",
+        "unprocessed wallet deposit": "UWD",
+        "unprocessed registration fee": "URF",
+        "unprocessed wallet withdrawal": "UWW",
+    }
+
+    # get the current timestamp - date - month - year - hour - minute - second
+    timestamp = datetime.now(nairobi_tz).strftime("%d%m%Y%H%M%S")
+    # generate a random 4-digit number to ensure uniqueness
+    unique_number = random.randint(1000, 9999)
+
+    # get the prefix for the transaction type
+    # for unknown transaction types, use UNX
+    prefix = prefixes.get(transaction_type, "UNX")
+
+    # create the transaction code
+    transaction_code = f"{prefix}_{wallet_id}-{timestamp}-{unique_number}"
+    return transaction_code
+
+
+# more recent transactions all round
 @router.get(
     "/recent_transactions",
     status_code=status.HTTP_200_OK,
@@ -179,7 +735,7 @@ async def get_member_contribution_so_far(
 async def get_recent_transactions(
     member_data: schemas.MemberRecentTransactionBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -193,7 +749,7 @@ async def get_recent_transactions(
                     models.Transaction.transaction_type != "processed",
                 )
             )
-            .order_by(desc(models.Transaction.date_of_transaction))
+            .order_by(desc(models.Transaction.transaction_date))
             .limit(4)
             .all()
         )
@@ -203,7 +759,7 @@ async def get_recent_transactions(
                 amount=transaction.amount,
                 chama_id=transaction.chama_id,
                 transaction_type=transaction.transaction_type,
-                date_of_transaction=transaction.date_of_transaction,
+                transaction_date=transaction.transaction_date,
                 transaction_origin=transaction.transaction_origin,
                 transaction_completed=transaction.transaction_completed,
             )
@@ -238,8 +794,8 @@ async def deposit_to_wallet(
 
         with db.begin_nested():
             member = (
-                db.query(models.Member)
-                .filter(models.Member.id == member_id)
+                db.query(models.User)
+                .filter(models.User.id == member_id)
                 .with_for_update()
                 .first()
             )
@@ -296,13 +852,11 @@ async def deposit_to_wallet(
 )
 async def get_member_wallet_balance(
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
-        member = (
-            db.query(models.Member).filter(models.Member.id == current_user.id).first()
-        )
+        member = db.query(models.User).filter(models.User.id == current_user.id).first()
 
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
@@ -310,7 +864,7 @@ async def get_member_wallet_balance(
         return {"wallet_balance": member.wallet_balance}
 
     except Exception as e:
-        print(e)
+        transaction_error_logger.error(f"Failed to get members wallet balance {e}")
         raise HTTPException(
             status_code=400, detail="Failed to get members wallet balance"
         )
@@ -324,7 +878,7 @@ async def get_member_wallet_balance(
 )
 async def get_recent_wallet_activity(
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -439,7 +993,7 @@ async def unified_wallet_contribution(
                     fine_transaction_data = {
                         "amount": fine_amount_repaid,
                         "phone_number": wallet_number,
-                        "date_of_transaction": transaction_date,
+                        "transaction_date": transaction_date,
                         "updated_at": transaction_date,
                         "transaction_completed": True,
                         "transaction_code": fine_transaction_code,
@@ -472,7 +1026,7 @@ async def unified_wallet_contribution(
             # if after fine repayment, the member has some amount left, we contribute towards the expected amount
             # this is both a wallet and trasaction record
             member_record = (
-                db.query(models.Member).filter(models.Member.id == member_id).first()
+                db.query(models.User).filter(models.User.id == member_id).first()
             )
             if amount > 0 and expected_amount > 0:
                 transaction_code = generate_transaction_code(
@@ -486,7 +1040,7 @@ async def unified_wallet_contribution(
                 transaction_data = {
                     "amount": amount,
                     "phone_number": member_record.wallet_number,
-                    "date_of_transaction": transaction_date,
+                    "transaction_date": transaction_date,
                     "updated_at": transaction_date,
                     "transaction_completed": True,
                     "transaction_code": transaction_code,
@@ -519,7 +1073,7 @@ async def unified_wallet_contribution(
 
             # update the wallet balance
             member_record = (
-                db.query(models.Member).filter(models.Member.id == member_id).first()
+                db.query(models.User).filter(models.User.id == member_id).first()
             )
             member_record.wallet_balance -= amount_contributed + total_fines_repaid
 
@@ -543,149 +1097,6 @@ async def unified_wallet_contribution(
         raise HTTPException(
             status_code=400, detail="unified wallet contribution failed"
         )
-
-
-# TODO: FIX LATER TO ONE WITH ABOVE OR BETTER IN RECORD FINE FROM MPESA ONLY
-@router.put(
-    "/repay_fines_from_mpesa",
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.MemberFineResp,
-)
-async def repay_fines(
-    fine_data: schemas.MemberMpesaFineBase = Body(...),
-    db: Session = Depends(database.get_db),
-):
-    try:
-        transaction_info_logger.info("===========repaying fines===========")
-        fine_dict = fine_data.dict()
-        chama_id = fine_dict["chama_id"]
-        member_id = fine_dict["member_id"]
-        amount = fine_dict["amount"]
-        phone_number = fine_dict["phone_number"]
-        transaction_code = fine_dict["transaction_code"]
-
-        fines = (
-            db.query(models.Fine)
-            .filter(
-                and_(
-                    models.Fine.chama_id == chama_id,
-                    models.Fine.member_id == member_id,
-                    models.Fine.is_paid == False,
-                )
-            )
-            .order_by(models.Fine.fine_date)
-            .with_for_update()
-            .all()
-        )
-
-        if not fines:
-            #  this means the member has no fines to pay so we return the amount to the member fror the transaction to be completed
-            return {"balance_after_fines": amount}
-
-        total_fines_repaid = 0
-        with db.begin_nested():
-            for fine in fines:
-                transaction_info_logger.info(f"fine amout {fine.total_expected_amount}")
-                transaction_info_logger.info(f"paying with {amount}")
-
-                fine_transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
-
-                if amount >= fine.total_expected_amount:
-                    amount -= fine.total_expected_amount
-                    fine_amount_repaid = fine.total_expected_amount
-                    fine.is_paid = True
-                    fine.paid_date = fine_transaction_date
-                    fine.total_expected_amount = 0
-                else:
-                    fine.total_expected_amount -= amount
-                    fine_amount_repaid = amount
-                    amount = 0
-
-                total_fines_repaid += fine_amount_repaid
-
-                # record the fine transaction
-                fine_transaction_data = {
-                    "amount": fine_amount_repaid,
-                    "phone_number": phone_number,
-                    "date_of_transaction": fine_transaction_date,
-                    "updated_at": fine_transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_type": "fine deduction",
-                    "transaction_origin": "direct_deposit",
-                    "chama_id": chama_id,
-                    "member_id": member_id,
-                }
-                new_fine_transaction = models.Transaction(**fine_transaction_data)
-                db.add(new_fine_transaction)
-
-                if amount == 0:
-                    break
-
-            # update the chama account balance
-            chama_account = (
-                db.query(models.Chama_Account)
-                .filter(models.Chama_Account.chama_id == chama_id)
-                .first()
-            )
-            chama_account.account_balance += total_fines_repaid
-
-            db.commit()
-
-        transaction_info_logger.info("===========mpesa fines repaid===========")
-        # now return the balance after fines have been deducted from the initial amount
-        return {"balance_after_fines": amount}
-    except Exception as e:
-        transaction_error_logger.error(f"Failed to repay fines {e}")
-        db.rollback()
-        raise HTTPException(status_code=400, detail="Failed to repay fines")
-
-
-# ================================================================
-
-
-# checking if a member has any fines to pay in a chama
-@router.get(
-    "/fines",
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.MemberFinesResp,
-)
-async def check_fines(
-    fine_data: schemas.MemberFines = Body(...),
-    db: Session = Depends(database.get_db),
-):
-    try:
-        fine_dict = fine_data.dict()
-        chama_id = fine_dict["chama_id"]
-        member_id = fine_dict["member_id"]
-
-        fines = (
-            db.query(models.Fine)
-            .filter(
-                and_(
-                    models.Fine.chama_id == chama_id,
-                    models.Fine.member_id == member_id,
-                    models.Fine.is_paid == False,
-                )
-            )
-            .all()
-        )
-
-        if not fines:
-            # return false if the member has no fines to pay
-            return {"has_fines": False}
-
-        total_fine_amount = 0
-        for fine in fines:
-            total_fine_amount += fine.total_expected_amount
-
-        # return true if the member has fines to pay
-
-        return {"has_fines": total_fine_amount > 0}
-
-    except Exception as e:
-        transaction_error_logger.error(f"Failed to check fines {e}")
-        raise HTTPException(status_code=400, detail="Failed to check fines")
 
 
 # retrieve the amount of fines a member has in a chama
@@ -735,14 +1146,14 @@ async def check_chama_membership(
     try:
         chama_dict = chama_data.dict()
         chama_id = chama_dict["chama_id"]
-        member_id = chama_dict["member_id"]
+        user_id = chama_dict["member_id"]
 
         chama_membership = (
-            db.query(models.members_chamas_association)
+            db.query(models.chama_user_association)
             .filter(
                 and_(
-                    models.members_chamas_association.c.chama_id == chama_id,
-                    models.members_chamas_association.c.member_id == member_id,
+                    models.chama_user_association.c.chama_id == chama_id,
+                    models.chama_user_association.c.user_id == user_id,
                 )
             )
             .first()
@@ -857,23 +1268,21 @@ async def setting_members_contribution_fines(
             )
 
             members = (
-                db.query(models.Member)
-                .join(models.members_chamas_association)
-                .options(joinedload(models.Member.chamas))
-                .filter(models.members_chamas_association.c.chama_id == chama_id)
-                .filter(
-                    models.members_chamas_association.c.registration_fee_paid == True
-                )
+                db.query(models.User)
+                .join(models.chama_user_association)
+                .options(joinedload(models.User.chamas))
+                .filter(models.chama_user_association.c.chama_id == chama_id)
+                .filter(models.chama_user_association.c.registration_fee_paid == True)
                 .all()
             )
 
             for member in members:
                 member_chama = (
-                    db.query(models.members_chamas_association)
+                    db.query(models.chama_user_association)
                     .filter(
                         and_(
-                            models.members_chamas_association.c.member_id == member.id,
-                            models.members_chamas_association.c.chama_id == chama_id,
+                            models.chama_user_association.c.member_id == member.id,
+                            models.chama_user_association.c.chama_id == chama_id,
                         )
                     )
                     .first()
@@ -891,9 +1300,9 @@ async def setting_members_contribution_fines(
                             models.Transaction.transaction_type == "deposit",
                             models.Transaction.transaction_completed == True,
                             models.Transaction.is_reversed == False,
-                            func.date(models.Transaction.date_of_transaction)
+                            func.date(models.Transaction.transaction_date)
                             > second_last_contribution_datetime.date(),
-                            func.date(models.Transaction.date_of_transaction)
+                            func.date(models.Transaction.transaction_date)
                             <= last_contribution_datetime.date(),
                         )
                     )
@@ -980,43 +1389,66 @@ async def get_member_fine(
 
 
 # create an auto contribution for a member in a chama
-@router.post("/auto_contribute", status_code=status.HTTP_201_CREATED)
+@router.post("/auto_contribute/{activity_id}", status_code=status.HTTP_201_CREATED)
 async def set_auto_contribute(
-    auto_contribute_data: schemas.AutoContributeBase = Body(...),
+    activity_id: int,
     db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        chama_id = auto_contribute_data.chama_id
-        member_id = auto_contribute_data.member_id
-        expected_amount = auto_contribute_data.expected_amount
-        next_contribution_date = auto_contribute_data.next_contribution_date
+        # add a record to the auto_contribution table
+        contribution_amount = (
+            db.query(models.Activity.activity_amount)
+            .filter(models.Activity.id == activity_id)
+            .one_or_none()
+        )
+        if not contribution_amount:
+            raise HTTPException(status_code=404, detail="Activity not found")
 
-        auto_contribution = (
-            db.query(models.AutoContribution)
+        print("contrib:", contribution_amount)
+
+        # users shares in this activity from tha activites_user_association table
+        user_shares = (
+            db.query(models.activity_user_association.c.shares)
             .filter(
                 and_(
-                    models.AutoContribution.chama_id == chama_id,
-                    models.AutoContribution.member_id == member_id,
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_id == current_user.id,
                 )
             )
-            .first()
+            .one_or_none()
         )
 
-        if auto_contribution:
+        print("user shares:", user_shares)
+
+        if not user_shares:
             raise HTTPException(
-                status_code=400, detail="Auto contribution already set for this member"
+                status_code=404, detail="User shares in this activity not found"
+            )
+
+        # retrieve the next contribtion date for this activity
+        next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+        if not next_contribution_date:
+            raise HTTPException(
+                status_code=404, detail="Next contribution date not found"
             )
 
         auto_contribution_data = {
-            "chama_id": chama_id,
-            "member_id": member_id,
-            "expected_amount": expected_amount,
+            "user_id": current_user.id,
+            "activity_id": activity_id,
+            "expected_amount": contribution_amount[0] * user_shares[0],
             "next_contribution_date": next_contribution_date,
         }
 
         new_auto_contribution = models.AutoContribution(**auto_contribution_data)
         db.add(new_auto_contribution)
+
         db.commit()
+
         return {"message": "Auto contribution set successfully"}
     except Exception as e:
         db.rollback()
@@ -1024,34 +1456,33 @@ async def set_auto_contribute(
         raise HTTPException(status_code=400, detail="Failed to set auto contribution")
 
 
-# stop auto contribution for a member in a chama by removing the record from the auto_contribution table
-@router.delete(
-    "/auto_contribute/{chama_id}/{member_id}", status_code=status.HTTP_200_OK
-)
+# stop auto contribution for a user in an activity by removing the record from the auto_contribution table
+@router.delete("/auto_contribute/{activity_id}", status_code=status.HTTP_200_OK)
 async def stop_auto_contribute(
-    chama_id: int,
-    member_id: int,
+    activity_id: int,
     db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        auto_contribution = (
+        auto_record = (
             db.query(models.AutoContribution)
             .filter(
                 and_(
-                    models.AutoContribution.chama_id == chama_id,
-                    models.AutoContribution.member_id == member_id,
+                    models.AutoContribution.activity_id == activity_id,
+                    models.AutoContribution.user_id == current_user.id,
                 )
             )
             .first()
         )
 
-        if not auto_contribution:
+        if not auto_record:
             raise HTTPException(
                 status_code=404, detail="Auto contribution record not found"
             )
 
-        db.delete(auto_contribution)
+        db.delete(auto_record)
         db.commit()
+
         return {"message": "Auto contribution stopped successfully"}
     except Exception as e:
         db.rollback()
@@ -1061,11 +1492,11 @@ async def stop_auto_contribute(
 
 # check if autocontribute status is set for a member in a chama
 @router.get(
-    "/auto_contribute_status/{chama_id}/{member_id}", status_code=status.HTTP_200_OK
+    "/auto_contribute_status/{activity_id}/{user_id}", status_code=status.HTTP_200_OK
 )
 async def check_auto_contribute_status(
-    chama_id: int,
-    member_id: int,
+    activity_id: int,
+    user_id: int,
     db: Session = Depends(database.get_db),
 ):
     try:
@@ -1073,8 +1504,8 @@ async def check_auto_contribute_status(
             db.query(models.AutoContribution)
             .filter(
                 and_(
-                    models.AutoContribution.chama_id == chama_id,
-                    models.AutoContribution.member_id == member_id,
+                    models.AutoContribution.activity_id == activity_id,
+                    models.AutoContribution.user_id == user_id,
                 )
             )
             .first()
@@ -1091,9 +1522,13 @@ async def check_auto_contribute_status(
         )
 
 
-# auto contribution for a member in a chama
+# making auto contribution to an activity
+# 1. get all the records of auto coontribution whose next_day_contribution_date is today and the member has a wallet balance > 0
+# 2. retrieve any fines the users has and deduct from the wallet balance
+# 3. if any bal after fine repayment, move on to make a contribution to the activity either partially or fully depending on the wallet balance
+# 4. update the wallet balance and the activity account balance and the chama account balance
 @router.post(
-    "/make_auto_contributions",
+    "/make_activity_auto_contributions",
     status_code=status.HTTP_201_CREATED,
 )
 async def make_auto_contributions(
@@ -1101,200 +1536,279 @@ async def make_auto_contributions(
 ):
 
     try:
-        transaction_info_logger.info("===========auto contribution starting===========")
         today = datetime.now(nairobi_tz).date()
 
-        members = (
-            db.query(models.AutoContribution)
-            .filter(func.date(models.AutoContribution.next_contribution_date) == today)
+        # retrieve all auto_records whose next_contribution_date is today and the member has a wallet balance > 0
+        auto_records = (
+            db.query(
+                models.AutoContribution,
+                models.User.wallet_balance,
+                models.User.wallet_id,
+                models.User.id,
+                models.AutoContribution.activity_id,
+                models.AutoContribution.expected_amount,
+                models.Activity.chama_id,
+            )
+            .join(models.User, models.User.id == models.AutoContribution.user_id)
+            .join(
+                models.Activity,
+                models.Activity.id == models.AutoContribution.activity_id,
+            )
+            .filter(
+                and_(
+                    func.date(models.AutoContribution.next_contribution_date) > today,
+                    models.User.wallet_balance > 0,
+                )
+            )
             .all()
         )
-        transaction_info_logger.info(f"members {len(members)}")
-        if not members:
-            return {"message": "No members to auto contribute"}
 
-        transactions = []
-        wallet_transactions = []
-        member_updates = []
+        if not auto_records:
+            return {"message": "No auto contributions to make today"}
+
+        # display the records
+        print("=====autorecords=====")
+        for record in auto_records:
+            print(record)
+        print()
+
+        # fetch user fines in bulk for all users involved
+        user_ids = [record.id for record in auto_records]
+        activity_ids = [record.activity_id for record in auto_records]
+        fines = (
+            db.query(models.ActivityFine)
+            .filter(
+                models.ActivityFine.user_id.in_(user_ids),
+                models.ActivityFine.is_paid == False,
+                models.ActivityFine.activity_id.in_(activity_ids),
+            )
+            .all()
+        )
+
+        print("=====fines=====")
+        for fine in fines:
+            print(fine)
+        print()
+
+        # organize fines by the user_id
+        fines_by_user = {}
+        for fine in fines:
+            fines_by_user.setdefault(fine.user_id, []).append(fine)
+
+        print("=====fines by user=====")
+        for user_id, user_fines in fines_by_user.items():
+            print(user_id, user_fines)
+        print()
+
+        activity_transactions = []
+        user_updates = []
+        activity_updates = {}
         chama_updates = {}
 
         with db.begin_nested():
-            for member in members:
-                wallet_number = generateWalletNumber(db, member.member_id)
-                transaction_info_logger.info(
-                    f"==={member.member_id} wallet number {wallet_number}"
-                )
-                wallet_balance = (
-                    db.query(models.Member.wallet_balance)
-                    .filter(models.Member.id == member.member_id)
-                    .scalar()
-                )
-                transaction_info_logger.info(
-                    f"==={member.member_id} wallet balance {wallet_balance}"
-                )
+            for record in auto_records:
+                expected_amount = record.expected_amount
+                wallet_balance = record.wallet_balance
+                wallet_id = record.wallet_id
+                total_fines_repaid = 0
 
-                # here we will check if user has already made any deposits/contributions and update the expected amount
-                expected_amount = difference_between_contributed_and_expected(
-                    db, member.member_id, member.chama_id, member.expected_amount
-                )
-                transaction_info_logger.info(f"===expected amount {expected_amount}")
+                # get fines for the user if any
+                user_fines = fines_by_user.get(record.id, [])
+                print("===user fines===\n", user_fines)
 
-                # skip if the expected amount is 0
-                if expected_amount <= 0:
-                    continue
-
-                # retrieve the fines for the member
-                member_fines = (
-                    db.query(models.Fine)
-                    .filter(
-                        and_(
-                            models.Fine.member_id == member.member_id,
-                            models.Fine.chama_id == member.chama_id,
-                            models.Fine.is_paid == False,
-                        )
-                    )
-                    .all()
-                )
-
-                if not member_fines:
-                    if wallet_balance < expected_amount:
-                        continue
-
-                total_fines_deducted = 0
-
-                # deduct fines from the wallet
-                for fine in member_fines:
-                    fine_amount_deducted = min(
-                        wallet_balance, fine.total_expected_amount
-                    )
+                # deduct fines from the wallet balance
+                for fine in user_fines:
+                    print("===wallet balance===", wallet_balance)
+                    fine_amount_deducted = min(wallet_balance, fine.expected_repayment)
                     wallet_balance -= fine_amount_deducted
-                    fine.total_expected_amount -= fine_amount_deducted
-                    total_fines_deducted += fine_amount_deducted
+                    fine.expected_repayment -= fine_amount_deducted
+                    total_fines_repaid += fine_amount_deducted
+                    print("===fine amount deducted===", fine_amount_deducted)
+                    print("===fine expected repayment===", fine.expected_repayment)
+                    print("===wallet balance after fine deduction===", wallet_balance)
+                    print("===total fines repaid===", total_fines_repaid)
 
-                    # update the fine record
-                    if fine.total_expected_amount == 0:
+                    if fine.expected_repayment == 0:
                         fine.is_paid = True
-                        fine.paid_date = datetime.now(nairobi_tz).replace(tzinfo=None)
+                        fine.paid_date = datetime.now(nairobi_tz).replace(
+                            tzinfo=None, microsecond=0
+                        )
 
+                    # lof fine repayment transaction
                     transaction_code = generate_transaction_code(
-                        "auto_repay", wallet_number, "fine"
+                        "auto_late_contribution", wallet_id
                     )
-                    transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
-
-                    transactions.append(
-                        models.Transaction(
+                    transaction_date = datetime.now(nairobi_tz).replace(
+                        tzinfo=None, microsecond=0
+                    )
+                    activity_transactions.append(
+                        models.ActivityTransaction(
+                            user_id=record.id,
                             amount=fine_amount_deducted,
-                            phone_number=wallet_number,
-                            date_of_transaction=transaction_date,
+                            origin=wallet_id,
+                            activity_id=record.activity_id,
+                            transaction_date=transaction_date,
                             updated_at=transaction_date,
                             transaction_completed=True,
                             transaction_code=transaction_code,
-                            transaction_type="fine deduction",
-                            transaction_origin="wallet",
-                            chama_id=member.chama_id,
-                            member_id=member.member_id,
+                            transaction_type="late contribution",
                         )
                     )
 
-                    wallet_transactions.append(
-                        models.Wallet_Transaction(
-                            amount=fine_amount_deducted,
-                            transaction_type="fine deduction",
-                            transaction_date=transaction_date,
-                            transaction_completed=True,
-                            transaction_code=transaction_code,
-                            transaction_destination=member.chama_id,
-                            member_id=member.member_id,
-                        )
-                    )
-
+                    print("last wallet balance", wallet_balance)
                     if wallet_balance == 0:
                         break
 
-                actual_contribution = min(expected_amount, wallet_balance)
-                if actual_contribution > 0:
-                    # process contribution
-                    transaction_code = generate_transaction_code(
-                        "auto_deposit", wallet_number, member.chama_id
+                # skip if no balance left after fines
+                if wallet_balance == 0:
+                    # update the wallet balance
+                    user_updates.append(
+                        {
+                            "user_id": record.id,
+                            "wallet_balance": wallet_balance,
+                        }
                     )
-                    transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
 
-                    transactions.append(
-                        models.Transaction(
+                    # update activity account balance
+                    activity_updates[record.activity_id] = (
+                        activity_updates.get(record.activity_id, 0) + total_fines_repaid
+                    )
+
+                    # update chama account balance
+                    chama_updates[record.chama_id] = (
+                        chama_updates.get(record.chama_id, 0) + total_fines_repaid
+                    )
+                    continue
+
+                print("==expected==", expected_amount)
+                print("==wallet balance==", wallet_balance)
+                # calculate contribution
+                contributed_so_far = get_member_activity_contribution_so_far(
+                    record.id, record.activity_id, db
+                )["total_contribution"]
+                print("==so far==", contributed_so_far)
+                remaining_contribution = max(0, expected_amount - contributed_so_far)
+                print("==remaining==", remaining_contribution)
+
+                # Actual contribution based on remaining wallet balance
+                actual_contribution = min(remaining_contribution, wallet_balance)
+                if actual_contribution > 0:
+                    transaction_code = generate_transaction_code(
+                        "auto_contribution", wallet_id
+                    )
+                    transaction_date = datetime.now(nairobi_tz).replace(
+                        tzinfo=None, microsecond=0
+                    )
+                    activity_transactions.append(
+                        models.ActivityTransaction(
+                            user_id=record.id,
                             amount=actual_contribution,
-                            phone_number=wallet_number,
-                            date_of_transaction=transaction_date,
+                            origin=wallet_id,
+                            activity_id=record.activity_id,
+                            transaction_date=transaction_date,
                             updated_at=transaction_date,
                             transaction_completed=True,
                             transaction_code=transaction_code,
-                            transaction_type="deposit",
-                            transaction_origin="wallet",
-                            chama_id=member.chama_id,
-                            member_id=member.member_id,
-                        )
-                    )
-
-                    wallet_transactions.append(
-                        models.Wallet_Transaction(
-                            amount=actual_contribution,
-                            transaction_type="moved to chama",
-                            transaction_date=transaction_date,
-                            transaction_completed=True,
-                            transaction_code=transaction_code,
-                            transaction_destination=member.chama_id,
-                            member_id=member.member_id,
+                            transaction_type="contribution",
                         )
                     )
 
                     wallet_balance -= actual_contribution
 
                 # update the wallet balance
-                member_updates.append(
+                user_updates.append(
                     {
-                        "member_id": member.member_id,
+                        "user_id": record.id,
                         "wallet_balance": wallet_balance,
                     }
                 )
 
-                # update the chama account balance
-                if member.chama_id not in chama_updates:
-                    chama_updates[member.chama_id] = (
-                        actual_contribution + total_fines_deducted
-                    )
-                else:
-                    chama_updates[member.chama_id] += (
-                        actual_contribution + total_fines_deducted
-                    )
+                # update activity account balance
+                activity_updates[record.activity_id] = (
+                    activity_updates.get(record.activity_id, 0)
+                    + actual_contribution
+                    + total_fines_repaid
+                )
+
+                # update chama account balance
+                chama_updates[record.chama_id] = (
+                    chama_updates.get(record.chama_id, 0)
+                    + actual_contribution
+                    + total_fines_repaid
+                )
 
             # update the database bulk
-            db.bulk_save_objects(transactions)
-            db.bulk_save_objects(wallet_transactions)
+            db.bulk_save_objects(activity_transactions)
 
             # update the wallet balances
-            for update in member_updates:
-                db.query(models.Member).filter(
-                    models.Member.id == update["member_id"]
+            for update in user_updates:
+                db.query(models.User).filter(
+                    models.User.id == update["user_id"]
                 ).update({"wallet_balance": update["wallet_balance"]})
 
-            # update the chama account balances
-            for chama_id, amount in chama_updates.items():
-                db.query(models.Chama_Account).filter(
-                    models.Chama_Account.chama_id == chama_id
+            # update the activity account balances
+            for activity_id, amount in activity_updates.items():
+                db.query(models.Activity_Account).filter(
+                    models.Activity_Account.id == activity_id
                 ).update(
                     {
-                        models.Chama_Account.account_balance: models.Chama_Account.account_balance
+                        "account_balance": models.Activity_Account.account_balance
                         + amount
                     }
                 )
 
+            # update the chama account balances in bulk
+            for chama_id, amount in chama_updates.items():
+                db.query(models.Chama_Account).filter(
+                    models.Chama_Account.id == chama_id
+                ).update(
+                    {"account_balance": models.Chama_Account.account_balance + amount}
+                )
+
             db.commit()
 
-        transaction_info_logger.info("===========auto contribution ending===========")
-        return {"message": "Auto contribution completed successfully"}
+        return {"message": "Auto contributions made successfully"}
     except Exception as e:
         db.rollback()
-        transaction_error_logger.error(f"Failed to auto contribute {e}")
-        raise HTTPException(status_code=400, detail="Failed to auto contribute")
+        transaction_error_logger.error(f"Failed to make auto contributions {e}")
+        raise HTTPException(status_code=400, detail="Failed to make auto contributions")
+
+
+def get_member_activity_contribution_so_far(user_id, activity_id, db):
+    try:
+        contribution_dates = (
+            db.query(models.ActivityContributionDate)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .first()
+        )
+        prev_contribution_date = contribution_dates.previous_contribution_date.date()
+        next_contribution_date = contribution_dates.next_contribution_date.date()
+
+        # rewrite the above query to sum the amount using coalesce
+        total_contributions = (
+            db.query(func.coalesce(func.sum(models.ActivityTransaction.amount), 0))
+            .filter(
+                and_(
+                    models.ActivityTransaction.user_id == user_id,
+                    models.ActivityTransaction.activity_id == activity_id,
+                    models.ActivityTransaction.transaction_completed == True,
+                    models.ActivityTransaction.transaction_type == "contribution",
+                    models.ActivityTransaction.is_reversed == False,
+                    func.date(models.ActivityTransaction.transaction_date)
+                    > prev_contribution_date,
+                    func.date(models.ActivityTransaction.transaction_date)
+                    <= next_contribution_date,
+                )
+            )
+            .scalar()
+        )
+
+        return {"total_contribution": total_contributions}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get member contribution so far {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get members contribution so far"
+        )
 
 
 def difference_between_contributed_and_expected(
@@ -1329,9 +1843,9 @@ def difference_between_contributed_and_expected(
                 models.Transaction.transaction_type == "deposit",
                 models.Transaction.transaction_completed == True,
                 models.Transaction.is_reversed == False,
-                func.date(models.Transaction.date_of_transaction)
+                func.date(models.Transaction.transaction_date)
                 > prev_contribution_date.date(),
-                func.date(models.Transaction.date_of_transaction)
+                func.date(models.Transaction.transaction_date)
                 <= upcoming_contribution_date.date(),
             )
         )
@@ -1339,46 +1853,6 @@ def difference_between_contributed_and_expected(
     )
 
     return expected_amount - total_contribution
-
-
-def generate_transaction_code(transaction_type, origin, destination):
-    # Get current month abbreviation in uppercase
-    month_prefix = datetime.now(nairobi_tz).strftime("%b").upper()
-
-    # Determine transaction prefix based on transaction type
-    if transaction_type.lower() == "deposit":
-        prefix = f"{month_prefix}DEPO"
-    elif transaction_type.lower() == "withdrawal":
-        prefix = f"{month_prefix}DRAW"
-    elif transaction_type.lower() == "auto_deposit":
-        prefix = f"{month_prefix}ADEP"
-    elif transaction_type.lower() == "auto_repay":
-        prefix = f"{month_prefix}AREP"
-    elif transaction_type.lower() == "fine_repay":
-        prefix = f"{month_prefix}FREP"
-    elif transaction_type.lower() == "moved_to_wallet":
-        prefix = f"{month_prefix}MTOW"
-    elif transaction_type.lower() == "deposited_to_wallet":
-        prefix = f"{month_prefix}DTOW"
-    elif transaction_type.lower() == "withdrawn_from_wallet":
-        prefix = f"{month_prefix}WFRW"
-    elif transaction_type.lower() == "moved_to_chama":
-        prefix = f"{month_prefix}MTCH"
-    else:
-        raise ValueError("Invalid transaction type. Use 'deposit' or 'withdrawal'.")
-
-    # Generate timestamp
-    timestamp = datetime.now(nairobi_tz).strftime("%Y%m%d%H%M%S")
-
-    # Generate random element
-    random_element = "".join(
-        random.choices("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", k=5)
-    )
-
-    # Construct transaction code
-    transaction_code = f"{prefix}{timestamp}_{random_element}_{origin}_{destination}"
-
-    return transaction_code
 
 
 # retrieve the wallet number
@@ -1393,9 +1867,7 @@ async def get_wallet_number(
 
     try:
         wallet_number = (
-            db.query(models.Member.wallet_number)
-            .filter(models.Member.id == member_id)
-            .scalar()
+            db.query(models.User.wallet_id).filter(models.User.id == member_id).scalar()
         )
 
         return {"wallet_number": wallet_number}
@@ -1406,8 +1878,35 @@ async def get_wallet_number(
 
 def generateWalletNumber(db, member_id):
     wallet_number = (
-        db.query(models.Member.wallet_number)
-        .filter(models.Member.id == member_id)
-        .scalar()
+        db.query(models.User.wallet_id).filter(models.User.id == member_id).scalar()
     )
     return wallet_number
+
+
+# retrieve the transaction_fee for a transaction from the chamazetu_to_mpesa table
+@router.get(
+    "/chamazetu_to_mpesa_fee/{amount}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chamazetu_to_mpesa_fee(
+    amount: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("==========fees=========")
+        transaction_fee = (
+            db.query(models.ChamazetuToMpesaFees.chamazetu_to_mpesa)
+            .filter(
+                and_(
+                    models.ChamazetuToMpesaFees.from_amount <= amount,
+                    models.ChamazetuToMpesaFees.to_amount >= amount,
+                )
+            )
+            .scalar()
+        )
+
+        return {"transaction_fee": transaction_fee}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get transaction fee {e}")
+        raise HTTPException(status_code=400, detail="Failed to get transaction fee")

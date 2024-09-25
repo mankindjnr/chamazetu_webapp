@@ -13,11 +13,12 @@
     </div><!-- End Logo -->
 
     <div class="search-bar">
-      <form class="search-form d-flex align-items-center" method="POST" action="#">
+      <!-- <form class="search-form d-flex align-items-center" method="POST" action="#">
         <input type="text" name="query" placeholder="Search" title="Enter search keyword">
         <button type="submit" title="Search"><i class="bi bi-search"></i></button>
-      </form>
-    </div><!-- End Search Bar -->
+      </form> -->
+    </div>
+    <!-- End Search Bar -->
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
@@ -31,7 +32,8 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
+            <i class="bi bi-person">manager</i>
+            <img src="{{ profile_picture }}" alt="Profile" class="rounded-circle img-fluid">
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
@@ -39,16 +41,6 @@
             <li class="dropdown-header">
               <h6>{{ current_user }}</h6>
               <span>manager</span>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'manager:profile' manager_id %}">
-                <i class="bi bi-person"></i>
-                <span>My Profile</span>
-              </a>
             </li>
             <li>
               <hr class="dropdown-divider">
@@ -65,11 +57,17 @@
               </a>
             </li> -->
             <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:switch_to' 'member' %}">
+                <i class="bi bi-house"></i>
+                <span>member dashboard</span>
+              </a>
+            </li>
+            <li>
               <hr class="dropdown-divider">
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' 'manager' %}">
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
@@ -91,23 +89,9 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:members_tracker' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
-          <span>Members Tracker</span> 
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:fines_tracker' chama.chama_name 'manager' %}">
-          <i class="bi bi-grid"></i>
-          <span>Fines Tracker</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:view_chama_members' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
-          <span>members list</span> 
+        <a class="nav-link collapsed" href="{% url 'manager:view_chama_members' chama_name %}">
+          <i class="ri-group-2-line"></i>
+          <span>Chama Members</span> 
         </a>
       </li>
 
@@ -115,13 +99,13 @@
       <li class="nav-item">
         <a class="nav-link collapsed" href="#">
           <i class="bi bi-grid"></i>
-          <span>Daily performance</span> 
+          <span>MMF performance</span> 
         </a>
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:get_about_chama' chama.chama_name %}">
-          <i class="bi bi-grid"></i>
+        <a class="nav-link collapsed" href="{% url 'member:get_about_chama' chama_name chama_id %}">
+          <i class="ri-article-line"></i>
           <span>About chama</span> 
         </a>
       </li><!-- End about Page Nav -->
@@ -131,13 +115,13 @@
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">
-    {% if chama %}
+    
     <div class="pagetitle d-flex justify-content-between align-items-center">
-      <h1>{{ chama.chama_name}}</h1>
+      <h1>{{ chama_name}}</h1>
 
-        <div class="search-bar">
+        <div class="alert-dismissible fade show">
           {% if messages %}
-          <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+          <div class="alert alert-success alert-dismissible fade show" role="alert" id="activity_created">
             {% for messages in messages %}
               <strong>{{ messages }}</strong>
             {% endfor %}
@@ -146,12 +130,14 @@
           {% endif %}
         </div>
       
-      <div class="ml-auto"></div>
+      <div class="ml-auto">
+        <button type="button" class="btn btn-success btn-sm" id="showFormBtn2">New Activity</button>
+      </div>
 
 
 
     </div><!-- End Page Title -->
-
+    
     <section class="section dashboard">
       <div class="row">
 
@@ -159,23 +145,370 @@
         <div class="col-lg-8">
           <div class="row">
 
-            <!-- Sales Card -->
+            <!-- creating activity form-->
+            <!-- TODO: introduce js checks before submission refuse sql injection elements i.e undescore -->
+            <div id="activityForm" style="display: none;">
+              <div class="col-xxl-4 col-xl-12">
+
+                <div class="card info-card customers-card">
+
+                  <div class="card-body">
+                    <h5 class="card-title">Create a New Activity</h5>
+                    <form action="{% url 'manager:create_activity' chama_id %}" method="post" id="createActivityForm" novalidate>
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="activity_title" class="form-label">Activity Title *</label>
+                            <input type="text" class="form-control" id="activity_title" name="activity_title" required>
+                            <small class="error-message" id="titleError" style="color: red; display: none;">Please enter a title for the activity</small>
+                        </div>
+                        <div class="mb-3">
+                          <label for="activity_type" class="form-label">Activity Type *</label>
+                          <select class="form-select" id="activity_type" name="activity_type" onchange="showActivityOptions()">
+                            <option value="merry-go-round">merry-go-round</option>
+                            <option value="saving">Saving</option>
+                            <option value="welfare">Welfare</option>
+                          </select>
+                          <!-- helper message -->
+                          <small id="categoryhelp" class="form-text text-muted"></small>
+                        </div>
+
+                        <!--TODO: limit to 500 characters check with javascript and notify the use with small text -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" minlength="50" maxlength="300"></textarea>
+                            <small id="descriptionHelp" class="form-text text-muted">min 30 characters and max 300 characters</small>
+                            <small class="error-message" id="descriptionError" style="color: red; display: none;">Please enter a description</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                          <label for="share_price" class="form-label">Contribution Amount Per Share *</label>
+                          <input type="number" class="form-control" id="share_price" name="share_price" placeholder="one share amount e.g 300" min="100" required>
+                          <small class="error-message" id="shareError" style="color: red; display: none;">Please enter a valid amount</small>
+                          <!-- help message -->
+                          <small id="shareHelp" class="form-text text-muted">Minimum amount is 100</small>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="fine" class="form-label">Fine for late contribution per share *</label>
+                          <input type="number" class="form-control" id="fine" name="fine" placeholder="enter 0 if no fines" min="0" required>
+                          <small class="error-message" id="fineError" style="color: red; display: none;">Please enter a valid fine amount</small>
+                        </div>
+
+                        <!-- contribution frequency -->
+                        <hr style="color: aqua;">
+                        <div class="mb-3">
+                          <label for="frequency" class="form-label">Contribution Frequency *</label>
+                          <select class="form-select" id="frequency" name="frequency" onchange="showFrequencyOptions()">
+                              <option value="daily">Daily</option>
+                              <option value="weekly">Weekly</option>
+                              <option value="monthly">Monthly</option>
+                              <option value="interval">Custom</option>
+                          </select>
+                          <!-- helper message for the custom entry -->
+                          <small id="frequencyHelp" class="form-text text-muted"></small>
+                          <small class="error-message" id="freqError" style="color: red; display: none;">Please select a frequency</small>
+                        </div>
+
+                        <!-- Weekly Options -->
+                        <div class="mb-3" id="weekly_options" style="display: none;">
+                            <label for="weekly_day" class="form-label">Select Day of Week</label>
+                            <select class="form-select" id="weekly_day" name="weekly_day">
+                              <option value=""></option>
+                                <option value="sunday">Sunday</option>
+                                <option value="monday">Monday</option>
+                                <option value="tuesday">Tuesday</option>
+                                <option value="wednesday">Wednesday</option>
+                                <option value="thursday">Thursday</option>
+                                <option value="friday">Friday</option>
+                                <option value="saturday">Saturday</option>
+                            </select>
+                        </div>
+                        <!-- Monthly Options -->
+                        <div class="mb-3" id="monthly_options" style="display: none;">
+                            <label for="monthly_date" class="form-label">Select Day of Month</label>
+                            <div class="row">
+                              <div class="col-md-6">
+                                <label for="monthly_week" class="form-label">Week</label>
+                                <select class="form-select" id="monthly_week" name="monthly_week">
+                                  <option value=""></option>
+                                    <option value="first">First</option>
+                                    <option value="second">Second</option>
+                                    <option value="third">Third</option>
+                                    <option value="fourth">Fourth</option>
+                                    <option value="last">Last</option>
+                                    <option value="">Clear</option>
+                                </select>
+                              </div>
+                              <div class="col-md-6">
+                                <label for="monthly_day" class="form-label">Day</label>
+                                <select class="form-select" id="monthly_day" name="monthly_day">
+                                  <option value=""></option>
+                                    <option value="sunday">Sunday</option>
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="">Clear</option>
+                                </select>
+                            </div>
+                          </div>
+                          <div class="mt-3">
+                            <label for="monthly_specific_date" class="form-label">Or select a Specific Date</label>
+                            <input type="number" class="form-control" id="monthly_specific_date" name="monthly_specific_date" min="1" max="31" placeholder="Day of the month (e.g 21)">
+                          </div>
+                          <small class="error-message" id="monthlyFreqError" style="color: red; display: none;">Please select a week, day or specific date for the monthly contribution</small>
+                        </div>
+
+                        <!-- custom frequency options -->
+                        <div class="mb-3" id="interval_options" style="display: none;">
+                          <label for="custom_frequency" class="form-label">Enter Custom Interval (In Days)</label>
+                          <input type="number" class="form-control" id="custom_frequency" name="custom_frequency" placeholder="enter number of days" min="1">
+                          <small class="form-text text-muted">E.g., enter 10 for a 10-day interval</small>
+                        </div>
+                        <hr style="color: aqua;">
+                        <!-- End Frequency Selection -->
+                        
+                        <div class="mb-3">
+                          <label for="mandatory_activity" class="form-label">Mandatory Activity *</label>
+                          <br/><small id="joinHelp" class="form-text text-muted" style="color: darkgoldenrod;">Mandatory activities require all members to join</small>
+                          <div class="input-group">
+                            <div class="input-group-text">
+                              <input type="checkbox" class="form-check-input" id="mandatory" name="mandatory" value="mandatory" onclick="toggleCheckBox('yes')">
+                              <label class="form-check-label ms-2" for="mandatory">Mandatory</label>
+                            </div>
+                            <div class="input-group-text">
+                              <input type="checkbox" class="form-check-input" id="not_mandatory" name="not_mandatory" value="not_mandatory" onclick="toggleCheckBox('no')">
+                              <label class="form-check-label ms-2" for="not_mandatory">Not Mandatory</label>
+                            </div>
+                          </div>
+                          <small class="error-message" id="joinError" style="color: red; display: none;">Please select if the activity is mandatory or not</small>
+                        </div>
+
+                        <hr>
+                        
+                        <div class="row mb-3">
+                          <p><b>Deadline for joining this activity and when the first contribution will be</b></p>
+                          <div class="col-md-6">
+                              <label for="last_joining_date" class="form-label">Last day of joining *</label>
+                              <input type="date" class="form-control" id="last_joining_date" name="last_joining_date" required>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="first_contribution_date" class="form-label">First contribution date</label>
+                            <input type="date" class="form-control" id="first_contribution_date" name="first_contribution_date" required>
+                          </div>
+                          <small id="dateHelp" class="form-text text-muted">First contribution date should be after the final day of joining</small>
+                        </div>
+
+                        <!-- checkbox -->
+                        <hr>
+                        <br/>
+                        <button type="submit" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create Activity</button>
+                    </form>
+                </div>
+                
+                </div>
+
+              </div>
+              <!-- frequency script -->
+              <script>
+                // frequency options
+                function showFrequencyOptions() {
+                  var frequency = document.getElementById('frequency').value;
+
+                  // use querySelector to target interval_options div
+                  var intervalOptions = document.querySelector('#interval_options');
+
+                  if (frequency === "weekly"){
+                    document.getElementById('weekly_options').style.display = 'block';
+                    document.getElementById('monthly_options').style.display = 'none';
+                    intervalOptions.style.display = 'none';
+                  } else if (frequency === "monthly"){
+                    document.getElementById('weekly_options').style.display = 'none';
+                    document.getElementById('monthly_options').style.display = 'block';
+                    intervalOptions.style.display = 'none';
+                  } else if (frequency === "interval"){
+                    document.getElementById('weekly_options').style.display = 'none';
+                    document.getElementById('monthly_options').style.display = 'none';
+                    intervalOptions.style.display = 'block';
+                  } else {
+                    document.getElementById('weekly_options').style.display = 'none';
+                    document.getElementById('monthly_options').style.display = 'none';
+                    intervalOptions.style.display = 'none';
+                  }
+
+                }
+                
+                // validate form before submission
+                document.getElementById('createActivityForm').addEventListener('submit', function(event){
+                  var frequency = document.getElementById('frequency').value;
+                  var customFrequency = document.getElementById('custom_frequency').value;
+                  var description = document.getElementById('description').value;
+                  var activityTitle = document.getElementById('activity_title').value;
+                  var titleError = document.getElementById('titleError');
+                  var fine = document.getElementById('fine').value;
+                  var descriptionError = document.getElementById('descriptionError');
+                  var monthlyFreqError = document.getElementById('monthlyFreqError');
+                  var freqError = document.getElementById('freqError');
+                  var sharePrice = document.getElementById('share_price').value;
+                  var shareError = document.getElementById('shareError');
+                  var fineError = document.getElementById('fineError');
+
+
+                  if (frequency === 'interval' && customFrequency === '1'){
+                    event.preventDefault();
+                    alert('Please enter a valid number of days for the custom interval');
+                  }
+
+                  // ensure title is not empty
+                  if (activityTitle === ''){
+                    event.preventDefault();
+                    titleError.style.display = 'block'; // Display error message
+                  } else {
+                    titleError.style.display = 'none'; // Hide error message
+                  }
+
+                  // ensure share price is not empty
+                  if (sharePrice === '' || sharePrice < 100){
+                    event.preventDefault();
+                    shareError.style.display = 'block'; // Display error message
+                  } else {
+                    shareError.style.display = 'none'; // Hide error message
+                  }
+
+                  // ensure fine is not empty
+                  if (fine === '' || fine < 0){
+                    event.preventDefault();
+                    fineError.style.display = 'block'; // Display error message
+                  } else {
+                    fineError.style.display = 'none'; // Hide error message
+                  }
+
+                  //validate frequency related fields
+                  if (frequency === 'weekly'){
+                    var weeklyDay = document.getElementById('weekly_day').value;
+                    if (!weeklyDay){
+                      event.preventDefault();
+                      alert('Please select a day of the week for the weekly contribution');
+                      return;
+                    }
+                  }
+
+                  if (frequency === 'monthly'){
+                    var monthlyWeek = document.getElementById('monthly_week').value;
+                    var monthlyDay = document.getElementById('monthly_day').value;
+                    var monthlySpecificDate = document.getElementById('monthly_specific_date').value;
+
+                    if ((!monthlyWeek || !monthlyDay) && !monthlySpecificDate === ''){
+                      event.preventDefault();
+                      monthlyFreqError.style.display = 'block'; // Display error message
+                    } else {
+                      monthlyFreqError.style.display = 'none'; // Hide error message
+                    }
+                  }
+
+                  // validate custom interval
+                  if (frequency === 'interval' && (customFrequency === '' || customFrequency <= 0)){
+                    event.preventDefault();
+                    alert('Please enter a valid number of days for the custom interval');
+                  }
+
+                  // ensure mandatory or not mandatory is selected
+                  var mandatory = document.getElementById('mandatory').checked;
+                  var not_mandatory = document.getElementById('not_mandatory').checked;
+                  var joinError = document.getElementById('joinError');
+
+                  if (!mandatory && !not_mandatory){
+                    event.preventDefault();
+                    joinError.style.display = 'block'; // Display error message
+                  } else {
+                    joinError.style.display = 'none'; // Hide error message
+                  }
+                });
+
+                document.getElementById("monthly_specific_date").addEventListener('input', function() {
+                // If a specific date is selected, disable week/day selection
+                var isDateSelected = this.value.length > 0;
+                document.getElementById("monthly_week").disabled = isDateSelected;
+                document.getElementById("monthly_day").disabled = isDateSelected;
+              });
+
+              document.getElementById("monthly_week").addEventListener('change', function() {
+                  // If week/day is selected, clear and disable specific date input
+                  if (this.value !== ''){
+                    document.getElementById("monthly_specific_date").value = '';
+                    document.getElementById("monthly_specific_date").disabled = true;
+                  } else {
+                    document.getElementById("monthly_specific_date").disabled = false;
+                  }
+              });
+
+              document.getElementById("monthly_day").addEventListener('change', function() {
+                  // If week/day is selected, clear and disable specific date input
+                  if (this.value !== ''){
+                    document.getElementById("monthly_specific_date").value = '';
+                    document.getElementById("monthly_specific_date").disabled = true;
+                  } else {
+                    document.getElementById("monthly_specific_date").disabled = false;
+                  }
+              });
+
+                // DESCRIPTION CHARACTER COUNT
+                document.getElementById('description').addEventListener('input', function() {
+                var maxLength = 300;
+                var currentLength = this.value.length;
+
+                var charCountElement = document.getElementById('charCount');
+                charCountElement.textContent = currentLength + '/' + maxLength + ' characters';
+
+                // Display warning if the max length is reached
+                if (currentLength >= maxLength) {
+                  charCountElement.style.color = 'red';
+                    } else {
+                        charCountElement.style.color = 'gray';
+                    }
+                  });
+
+              //mandatory checkbox
+              function toggleCheckBox(selected){
+                var mandatory = document.getElementById('mandatory');
+                var not_mandatory = document.getElementById('not_mandatory');
+
+                if (selected === 'yes'){
+                  not_mandatory.checked = false;
+                } else {
+                  mandatory.checked = false;
+                }
+              }
+
+                document.getElementById('createActivityForm').addEventListener('submit', function(event) {
+                var description = document.getElementById('description').value;
+                if (description.length > 300) {
+                    event.preventDefault(); // Prevent form submission
+                    alert('Description exceeds 500 characters.');
+                }
+              });
+
+            </script>
+          </div> 
+          <!-- the id hiding the form-->
+
+          <!-- End creating activity form-->
+        {% if activities %}
+            <!-- missed contributions Card -->
             <div class="col-xxl-4 col-md-6">
-              <div class="card info-card sales-card">
+              <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
                 <div class="card-body">
-                  <h5 class="card-title">Deposits <span>| Today</span></h5>
+                  <h5 class="card-title">Missed Contributions<span><b>|</b>Fines</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      {% if chama.today_deposits %}
-                      <h6>{{ chama.today_deposits }}</h6>
-                      {% else %}
-                      <h6>0</h6>
-                      {% endif %}
+                      <h6>{{ total_fines }}</h6>
                       <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
                     </div>
@@ -183,29 +516,32 @@
                 </div>
 
               </div>
-            </div><!-- End today deposits Card -->
+            </div><!-- End missed contributions Card -->
 
-            <!-- total deposited Card -->
+            <!-- chama account displaying available and total bal -->
+
             <div class="col-xxl-4 col-md-6">
-              <div class="card info-card revenue-card">
+              <div class="card info-card sales-card" style="background-color: rgb(10, 9, 9);">
 
                 <div class="card-body">
-                  <h5 class="card-title">Account <span>| current</span></h5> <!--switch to num of members joined -->
+                  <h5 class="card-title">Account<span><b> | </b>current</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <h6>{{ chama.account_balance }}</h6>
-                      <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+                      <span class="text-success small pt-1 fw-bold">Total Balance</span> <span class="small pt-2 ps-1">{{ general_account }}</span><br/>
+                      <span class="text-success small pt-1 fw-bold">Available Balance</span> <span class="small pt-2 ps-1">0</span>
 
                     </div>
                   </div>
                 </div>
 
               </div>
-            </div><!-- End account Card -->
+            </div>
+
+            <!-- end of account card -->
 
             <!-- investment Card -->
             <div class="col-xxl-4 col-xl-12">
@@ -313,47 +649,33 @@
                   </div>
               </div>
             </div><!-- End investments Card -->
-          
 
-            <!-- performance monthly -->
-            <div class="col-12">
-              <div class="card recent-sales overflow-auto">
+            <!-- list the activities -->
+            {% for activity in activities %}
+            <div class="col-xxl-4 col-md-6">
+              <a href="{% url 'manager:chama_activity' activity.activity_id %}" style="text-decoration: none; color: inherit;">
+              <div class="card info-card sales-card" style="background-color: rgb(147, 33, 218);">
 
                 <div class="card-body">
-                  <h5 class="card-title">Fund performance <span>|monthly</span></h5>
+                  <h5 class="card-title">{{ activity.title }}<span><b> | </b>{{ activity.contribution_date }}</span></h5>
 
-                  <table class="table">
-                    <thead>
-                      <!-- TODO: they will become buttons that users can select to see monthly performance -->
-                      <!-- <tr>
-                        <th scope="col">3 months</th>
-                        <th scope="col">6 months</th>
-                        <th scope="col">12 months</th>
-                      </tr> -->
-                      <tr>
-                        <th scope="col">month</th>
-                        <th scope="col">interest earned</th>
-                        <th scope="col">Total investment</th>
-                      </tr>
-                      
-                    </thead>
-                    <tbody>
-                      {% if fund_performance %}
-                      {% for performance in fund_performance %}
-                      <tr>
-                        <td>{{ performance.month }}</td>
-                        <td class="text-primary">{{ performance.interest_earned}}</td>
-                        <td>Ksh {{ performance.total_amount_invested }}</td>
-                      </tr>
-                      {% endfor %}
-                      {% endif %}
-                    </tbody>
-                  </table>
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class='bx bxs-group'></small>
+                    </div>
+                    <div class="ps-3">
+                      <h6>{{ activity.type }}</h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
+                    </div>
+                  </div>
                 </div>
 
               </div>
-            </div><!-- End fund performance -->
+              </a>
+            </div>
+            {% endfor %}
+            <!-- end of the activities -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -361,35 +683,11 @@
         <!-- Right side columns -->
         <div class="col-lg-4">
 
-          <!-- Recent Activity -->
-          <div class="card">
-
-            <div class="card-body">
-              <h5 class="card-title">Recent Activity <span>|</span></h5>
-
-              {% if recent_transactions %}
-              <div class="activity">
-                {% for transaction in recent_transactions %}
-                <div class="activity-item d-flex">
-                  <i class='bi bi-circle-fill activity-badge text-success align-self-start'></i>
-                  <div class="activity-content">
-                    <p class="fw-bold text-dark">{{ transaction.member_name }} {{ transaction.transaction_type }} Ksh: {{ transaction.amount }} on {{ transaction.date }} at {{ transaction.time }}</p>
-                  </div>
-                </div>
-                {% endfor %}
-                <!-- End activity item-->
-
-              </div>
-              {% endif %}
-
-            </div>
-          </div><!-- End Recent Activity -->
-
           <!-- investment Report -->
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">investment Activity <span>|</span></h5>
+              <h5 class="card-title">MMF Activity <span>|</span></h5>
               {% if investment_activity %}
               <div class="activity">
                 {% for activity in investment_activity %}
@@ -412,7 +710,7 @@
           <div class="card">
 
           <div class="card-body">
-            <h5 class="card-title">Investment Withdrawal Activity <span>|</span></h5>
+            <h5 class="card-title">MMF Withdrawal Activity <span>|</span></h5>
             {% if mmf_withdrawal_activity %}
             <div class="activity">
               {% for activity in mmf_withdrawal_activity %}
@@ -436,17 +734,67 @@
 
       </div>
     </section>
-    {% else %}
-    <!-- redirect home, this chama does not exists -->
-    <div class="alert alert-danger" role="alert">
-      <h4 class="alert-heading">No chama found!</h4>
-      <p>It seems you have not created a chama yet. Please create a chama to continue.</p>
-      <hr>
-      <p class="mb-0">Click <a href="{% url 'manager:createchama' %}">here</a> to create a chama.</p>
+  {% else %} 
+  <div class="col-xxl-4 col-xl-12">
+
+    <div id="createForm" class="card info-card customers-card">
+
+      <div class="card-body">
+        <h5 class="card-title">No activities available </h5>
+
+        <div class="d-flex align-items-center">
+          <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+            <i class="bi bi-people"></i>
+          </div>
+          <div class="ps-3">
+            <span class="text-muted small pt-1 fw-bold">
+              It seems you have not created an activity for your chama yet. e.g merry-go-round, saving, welfare e.t.c.
+              Please create an activity to get started.
+            </span>
+
+          </div>
+        </div>
+        <button id="showFormBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create</button>
+      </div>
     </div>
-    {% endif %}
+
+  </div>
+
+  {% endif %}
 
   </main><!-- End #main -->
+  <script>
+    // notification
+    document.addEventListener("DOMContentLoaded", function() {
+  var activity_created = document.getElementById("activity_created");
+  if (activity_created) {
+    setTimeout(function() {
+      activity_created.style.display = "none";
+    }, 5000);
+  }
+
+  let buttons = ["showFormBtn", "showFormBtn2"];
+  buttons.forEach(function(buttonid){
+    var button = document.getElementById(buttonid);
+    if (button) {
+      button.addEventListener("click", function() {
+        let form = document.getElementById("activityForm");
+        if (form) {
+          if (form.style.display === "none") {
+            form.style.display = "block";
+          } else {
+            form.style.display = "none";
+          }
+        } else {
+          console.log("activityForm not found");
+        }
+      });
+    } else {
+      console.log(buttonid + " not found");
+    }
+  });
+});
+  </script>
   
 
  {% endblock %}

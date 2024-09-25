@@ -21,7 +21,7 @@
       <div class="modal fade" id="joinChamaModal" tabindex="-1" aria-labelledby="joinChamaModalLabel" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header text-bg-success">
               <h1 class="modal-title fs-5" id="joinChamaModalLabel">Become a member</h1>
               <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -36,19 +36,13 @@
                   <label for="registration_fee" class="form-label">Registration Fee</label>
                   <input type="number" class="form-control" id="registration_fee" name="registration_fee" value="{{chama.registration_fee}}" required readonly>
                   <!-- helper message to the user -->
-                  <div id="shares_num" class="form-text">Amount you have to pay to prior to becoming a member</div>
+                  <div id="shares_num" class="form-text">Amount you have to pay prior to becoming a member</div>
                 </div>
                 <div class="mb-3">
                   <label for="phone_number" class="form-label">Phone Number</label>
-                  <input type="number" class="form-control" id="phone_number" name="phone_number" minlength="9" maxlength="9" required>
+                  <input type="number" class="form-control" id="phone_number" name="phone_number" placeholder="0712345678" minlength="10" maxlength="10" required>
                   <!-- helper message to the user -->
                   <div id="shares_num" class="form-text">Phone number to pay from.</div>
-                </div>
-                <div class="mb-3">
-                  <label for="shares" class="form-label">Number of shares</label>
-                  <input type="number" class="form-control" id="shares_num" name="shares_num" value="1" min="1" required>
-                  <!-- helper message to the user -->
-                  <div id="shares_num" class="form-text">Enter the number of shares you want to have in this chama</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -60,7 +54,7 @@
         </div>
       </div>
       {% else %}
-      <a type="button" href="{% url 'chama:signin' 'member' %}" class="btn btn-dark">Login to join</a>
+      <a type="button" href="{% url 'chama:signin' %}" class="btn btn-dark">Login to join</a>
 
       {% endif %}
     </div>
@@ -83,42 +77,55 @@
 
         <div class="row">
           
-          <div class="card" style="width: 18rem;">
-            <img src="{{ manager.profile_image }}" class="img-fluid" alt="">
-            <div class="card-body">
-              <h5 class="card-title">manager: {{ manager.first_name }} {{ manager.last_name }}</h5>
-              <p class="bi bi-twitter-x">{% if manager.twitter_handle != 'N/A' %} {{ manager.twitter_handle }} {% endif %}</p>
-              <p class="bi bi-facebook">{% if manager.facebook_handle != 'N/A' %} {{ memmanagerber.facebook_handle }} {% endif %}</p>
-              <p class="bi bi-linkedin">{% if manager.linkedin_handle != 'N/A' %} {{ manager.linkedin_handle }} {% endif %}</p>
-              
-              <!-- <a href="#" class="btn btn-primary">all chamas they manage</a> for now we will let users search the all chamas page by manager -->
+          <div class="col-lg-3">
+            <div class="card" >
+              <img src="{{ manager.profile_image }}" class="img-fluid" alt="">
+              <div class="card-body">
+                <h5 class="card-title">manager: {{ manager.name }}</h5>
+                <p class="bi bi-twitter-x">{% if manager.twitter_handle != 'N/A' %} {{ manager.twitter_handle }} {% endif %}</p>
+                <p class="bi bi-facebook">{% if manager.facebook_handle != 'N/A' %} {{ memmanagerber.facebook_handle }} {% endif %}</p>
+                <p class="bi bi-linkedin">{% if manager.linkedin_handle != 'N/A' %} {{ manager.linkedin_handle }} {% endif %}</p>
+              </div>
             </div>
           </div>
 
-          <!-- <div class="col-lg-6">
-            <img src="{% static 'chama/img/chamablog/about-img.jpg' %}" class="img-fluid" alt="">
-          </div> -->
-
-          <div class="col-lg-6 pt-4 pt-lg-0">
-            <h3>{{ chama.chama_name }}</h3>
-            <p class="fst-italic">
-              chama overview.
-            </p>
-            <ul>
-              <li>Maximum number of members allowed: {% if chama.num_of_members_allowed == 'infinite' %}no limit {% else %} {{ chama.num_of_members_allowed }} {% endif %} </li>
-              <!-- <li>Minimum number of members required: {{ chama.min_num_of_members }} </li> -->
-              <!-- <li>Chama creation date: {{ chama.registration_date }} </li> -->
-              <!-- <li>number of members so far</li> -->
-              <li>Registration fee: {{ chama.registration_fee }}</li>
-              <li>Contribution per share: {{ chama.contribution_amount }} </li>
-              <li>Contribution intervals: {{ chama.contribution_interval }} </li>
-              <li>Chama contribution day: {{ chama.contribution_day }} </li>
-              <li>Chama type: {{ chama.chama_type }} </li>
-            </ul>
-            <p>
-              {{ chama.description }}
-            </p>
+          <div class="col-lg-4">
+          <div class="card mb-3" style="height: 355px;">
+            <div class="card-header text-bg-success">Description</div>
+            <div class="card-body" style="overflow-y: auto;">
+              Created on: {{ chama.date_created }}<br/>
+              <hr>
+              <p class="card-text">{{ chama.description }}</p>
+            </div>
           </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="card mb-3" style="height: 355px;">
+              <div class="card-header text-bg-success">Activities</div>
+              <div class="card-body" style="overflow-y: auto;">
+                {% for activity in activities %}
+                <ol class="list-group ">
+                  <li class="list-group-item d-flex justify-content-between align-items-start mb-2">
+                    <div class="ms-2 me-auto">
+                      <div class="fw-bold text-info">{{activity.type}}</div>
+                      Created on: {{ activity.creation_date }}<br/>
+                      Contribution amount per share: Ksh {{activity.amount}}<br/>
+                      Late contribution fine per share: Ksh {{activity.fine}}<br/>
+                      Contribution frequency: {{activity.frequency}}<br/>
+                    </div>
+                    <span class="badge text-bg-primary rounded-pill"></span>
+                  </li>
+                </ol>
+                {% endfor %}
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+          
         </div>
 
       </div>

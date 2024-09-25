@@ -16,14 +16,14 @@ load_dotenv()
 
 # TODO: Introduce try and catch for all the functions or other error handling methods
 # member login
-@router.post("/members/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.Token)
 async def login(
     user_credentials: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(database.get_db),
 ):
     user = (
-        db.query(models.Member)
-        .filter(models.Member.email == (user_credentials.username).lower())
+        db.query(models.User)
+        .filter(models.User.email == (user_credentials.username).lower())
         .first()
     )
 
@@ -43,12 +43,8 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
         )
 
-    access_token = await oauth2.create_access_token(
-        data={"sub": user.email, "role": "member"}
-    )
-    refresh_token = await oauth2.create_refresh_token(
-        data={"sub": user.email, "role": "member"}
-    )
+    access_token = await oauth2.create_access_token(data={"sub": user.email})
+    refresh_token = await oauth2.create_refresh_token(data={"sub": user.email})
 
     return {
         "access_token": access_token,
@@ -57,61 +53,20 @@ async def login(
     }
 
 
-# manager login
-@router.post("/managers/login", response_model=schemas.Token)
-async def login(
-    user_credentials: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(database.get_db),
-):
-    user = (
-        db.query(models.Manager)
-        .filter(models.Manager.email == (user_credentials.username).lower())
-        .first()
-    )
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
-        )
-
-    if not user.is_active or not user.email_verified:
-        print("User not active or not verified")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="user not active or not verified",
-        )
-
-    if not utils.verify_password(user_credentials.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Credentials"
-        )
-
-    access_token = await oauth2.create_access_token(
-        data={"sub": user.email, "role": "manager"}
-    )
-    refresh_token = await oauth2.create_refresh_token(
-        data={"sub": user.email, "role": "manager"}
-    )
-
-    payload = jwt.decode(access_token, os.getenv("JWT_SECRET"), algorithms="HS256")
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
-
-
-@router.post("/refresh", response_model=schemas.refreshedToken)
+@router.post(
+    "/refresh",
+    response_model=schemas.refreshedToken,
+    status_code=status.HTTP_201_CREATED,
+)
 async def new_access_token(
     token_data: schemas.TokenData = Body(...),
 ):
 
-    print("==========refreshes*****************")
+    print("**********refreshes************")
     try:
         logging.info(f"token_data: {token_data}")
         new_access_token = await oauth2.create_access_token(
-            data={"sub": token_data.username, "role": token_data.role}
+            data={"sub": token_data.username}
         )
         return {"new_access_token": new_access_token, "refreshed_token_type": "bearer"}
     except Exception as e:
@@ -132,7 +87,7 @@ async def check_token(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# whenthe token is invalid or expired the route above will raise an exception
+# when the token is invalid or expired the route above will raise an exception
 
 
 # this is for logout, currently not working but everything else is working

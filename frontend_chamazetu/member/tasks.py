@@ -146,8 +146,8 @@ def wallet_withdrawal(headers, amount, member_id, transaction_code):
 
 
 @shared_task
-def update_users_profile_image(headers, role, new_profile_image_name):
-    url = f"{os.getenv('api_url')}/bucket-uploads/{role}/update_profile_picture"
+def update_users_profile_image(headers, new_profile_image_name):
+    url = f"{os.getenv('api_url')}/bucket-uploads/update_profile_picture"
 
     data = {
         "profile_picture_name": new_profile_image_name,
@@ -155,7 +155,7 @@ def update_users_profile_image(headers, role, new_profile_image_name):
 
     response = requests.put(url, json=data, headers=headers)
     if response.status_code == HTTPStatus.OK:
-        return None
+        return True
     else:
         logger.error(
             f"Failed to update profile picture: {response.status_code}, {response.text}"
@@ -163,58 +163,67 @@ def update_users_profile_image(headers, role, new_profile_image_name):
     return None
 
 
-# the status of this in the table will be processed later in the day(bg)
-@shared_task(bind=True, max_retries=3)
-def record_wallet_transaction_before_processing(
-    checkoutrequestid, member_id, destination, amount
+@shared_task(bind=True)
+def mpesa_request(
+    self, amount, checkoutrequestid, user_id, phonenumber, destination, transaction_code
 ):
-    # record the transaction in the database
-    url = f"{os.getenv('api_url')}/transactions/before_processing_wallet_deposit"
-    data = {
-        "amount": amount,
-        "transaction_type": "unprocessed wallet deposit",
-        "transaction_code": checkoutrequestid,
-        "transaction_destination": get_member_wallet_number(member_id),
-        "member_id": member_id,
-    }
+    max_retries = 3
+    delay_before_check = 13  # first try after 13 seconds
+    retry_delay = 5  # retry after 5 seconds
 
-    response = requests.post(url, json=data)
-    if response.status_code == HTTPStatus.CREATED:
-        return True
-    else:
-        logger.error(
-            f"Failed to record stk push transaction: {checkoutrequestid} {response.status_code}, {response.text}"
-        )
-        response.raise_for_status()
-    return None
+    # wait a few seconds to allow the mpesa to process the request
+    time.sleep(delay_before_check)
 
+    for attempt in range(1, max_retries + 1):
+        try:
+            # check te status
+            status_url = f"{os.getenv('api_url')}/request/status/{checkoutrequestid}"
+            response = requests.get(status_url)
 
-# the status of this in the table will be processed later in the day(bg)
-@shared_task(bind=True, max_retries=3)
-def record_transaction_before_processing(
-    checkoutrequestid, member_id, destination, amount, phone_number, transaction_origin
-):
-    # record the transaction in the database
-    url = f"{os.getenv('api_url')}/transactions/before_processing_direct_deposit"
-    data = {
-        "amount": amount,
-        "member_id": member_id,
-        "chama_id": destination,
-        "phone_number": f"254{phone_number}",
-        "transaction_origin": "mpesa",
-        "transaction_code": checkoutrequestid,
-        "transaction_type": "unprocessed deposit",
-    }
+            if response.status_code == HTTPStatus.OK:
+                print("=======\n", response.json(), "\n========")
+                query_response = response.json()
+                print("=========\n", query_response, "\n=========")
 
-    response = requests.post(url, json=data)
-    if response.status_code == HTTPStatus.CREATED:
-        return True
-    else:
-        logger.error(
-            f"Failed to record stk push transaction: {checkoutrequestid} {response.status_code}, {response.text}"
-        )
-        response.raise_for_status()
-    return None
+                # if the stk push was a success
+                if query_response.get("ResultCode") == "0":
+                    print("stk push was successful")
+
+                    load_wallet = requests.put(
+                        f"{os.getenv('api_url')}/transactions/load_wallet",
+                        json={
+                            "amount": amount,
+                            "unprocessed_code": transaction_code,
+                            "wallet_id": destination,
+                            "transaction_origin": phonenumber,
+                            "transaction_code": checkoutrequestid,
+                            "user_id": user_id,
+                        },
+                    )
+
+                    if load_wallet.status_code == HTTPStatus.OK:
+                        print("wallet loaded successfully")
+                        return True
+                    else:
+                        print("failed to load wallet")
+                        return False
+
+                else:
+                    print("stk push failed")
+                    return False
+
+            # if the request failed
+            else:
+                print("failed to check status")
+                print(response.text)
+                return False
+
+        except Exception as e:
+            print(f"failed to check status: {e}")
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+
+    return False
 
 
 @shared_task(bind=True, max_retries=3)
@@ -466,57 +475,54 @@ def balance_after_paying_fines_and_missed_contributions(
 
 
 # check on the status of the registration fee payment
-def registration_fee_status(
-    checkoutrequestid,
-):
-    time.sleep(60)
-    for _ in range(3):
+def registration_fee_status(checkoutrequestid):
+    max_retries = 3
+    delay_before_check = 10  # first try after 10 seconds
+    retry_delay = 5  # retry after 5 seconds
+
+    time.sleep(delay_before_check)
+
+    for attempt in range(1, max_retries + 1):
         try:
-            response = requests.get(
-                f"{os.getenv('api_url')}/request/status/{checkoutrequestid}",
-            )
+            status_url = f"{os.getenv('api_url')}/request/status/{checkoutrequestid}"
+            response = requests.get(status_url)
+
             if response.status_code == HTTPStatus.OK:
-                if response.json()["queryResponse"]["ResultCode"] == "0":
+                query_response = response.json()
+                if query_response.get("ResultCode") == "0":
                     return True
                 else:
                     return False
+
             else:
-                time.sleep(30)
+                raise Exception("Failed to check status")
+
         except Exception as e:
-            try:
-                self.retry(exc=e, countdown=30)
-            except MaxRetriesExceededError:
+            if attempt < max_retries:
+                time.sleep(retry_delay)
+            else:
                 raise Exception("Max retries exceeded")
 
 
 # this will call the backend with member data to add them to chama if the payment is successful
-@shared_task(bind=True, max_retries=3, default_retry_delay=40)
+@shared_task(bind=True, max_retries=3, default_retry_delay=10)
 def add_member_to_chama(
-    self, chama_id, member_id, num_of_shares, registration_fee, checkoutid
+    self, chama_id, user_id, registration_fee, checkoutid, unprocessed_code
 ):
     try:
         if registration_fee_status(checkoutid):
-            # call a bg task to update the call back data from pending to success
-            update_pending_registration_callback_data.delay(checkoutid)
-            # call the backend to add the member to the chama
-            url = f"{os.getenv('api_url')}/chamas/join"
+            url = f"{os.getenv('api_url')}/chamas/become_a_chama_member"
             data = {
                 "chama_id": chama_id,
-                "member_id": member_id,
-                "num_of_shares": num_of_shares,
+                "user_id": user_id,
+                "registration_fee": registration_fee,
+                "unprocessed_code": unprocessed_code,
             }
-
             response = requests.post(url, json=data)
             if response.status_code == HTTPStatus.CREATED:
-                pass
-                # send_email_to_new_member(member_id, chama_id) - to the member login page
-                send_email_to_new_chama_member.delay(member_id, chama_id)
-                # bg task to deposit the registration fee to the chama account minus 9.4% transaction fee
-                # TODO: call another bg task to update chamazetu accounts with the 9.4% transaction fee - business account
-                amount = int(registration_fee - (0.094 * registration_fee))
-                update_chama_account_balance.delay(chama_id, amount, "deposit")
+                send_email_to_new_chama_member.delay(user_id)
+                return True
             else:
-                # if the request was unsuccessful, retry the task
                 raise Exception("Failed to add member to chama")
     except Exception as e:
         try:
@@ -533,11 +539,11 @@ def update_pending_registration_callback_data(checkoutid):
 
 
 @shared_task
-def send_email_to_new_chama_member(member_id, chama_id):
-    email = get_user_email("member", member_id)
-    user_name = get_user_full_name("member", member_id)
+def send_email_to_new_chama_member(user_id):
+    email = get_user_email(user_id)
+    user_name = get_user_full_name(user_id)
     if email:
-        direct_to_page = "https://chamazetu.com/signin/member"
+        direct_to_page = "https://chamazetu.com/signin/"
         mail_subject = "You have successfully joined a chama"
         message = render_to_string(
             "chama/joinedChamaSuccess.html",
@@ -555,18 +561,21 @@ def send_email_to_new_chama_member(member_id, chama_id):
     return None
 
 
-@shared_task
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
 def auto_contribute():
     logger.info("==========member/tasks.py: auto_contribute()==========")
     logger.info(f"Task ran at: {datetime.now()}")
     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/members/make_activity_auto_contributions"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to auto contribute: {e}")
+        raise self.retry(exc=e)
 
-    url = f"{os.getenv('api_url')}/members/make_auto_contributions"
-    response = requests.post(url)
-    if response.status_code == HTTPStatus.CREATED:
-        return True
-    else:
-        logger.error(
-            f"Failed to auto contribute: {response.status_code}, {response.text}"
-        )
-    return None
+    return response.status_code == HTTPStatus.CREATED

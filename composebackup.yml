@@ -1,0 +1,140 @@
+version: '3.9'
+
+services:
+  chamazetu_database:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD={POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+      - POSTGRES_INITDB_ARGS=--auth=scram-sha-256
+    volumes:
+      - chamazetu_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - chamazetu_network
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    restart: always
+    environment:
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_HOST=chamazetu_database
+      - AUTH_TYPE=scram-sha-256
+      - POOL_MODE=transaction
+      - LISTEN_PORT=6432
+    ports:
+      - "6432:6432"
+    depends_on:
+      - chamazetu_database
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+    networks:
+      - chamazetu_network
+
+  message_broker:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - TZ=Africa/Nairobi
+    networks:
+      - chamazetu_network
+
+  chamazetu_frontend_database:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${FRONTEND_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${FRONTEND_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${FRONTEND_POSTGRES_DB}
+    volumes:
+      - frontend_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - chamazetu_network
+
+  chamazetu_frontend:
+    build:
+      context: ./frontend_chamazetu
+    command: >
+      sh -c "python manage.py collectstatic --no-input && gunicorn frontend_chamazetu.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    volumes:
+      - ./frontend_chamazetu:/app/frontend/
+      - ./staticfiles:/app/frontend/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - chamazetu_frontend_database
+      - message_broker
+    environment:
+      - TZ=Africa/Nairobi
+    networks:
+      - chamazetu_network
+
+  chamazetu_backend:
+    build:
+      context: ./backend_chamazetu
+    command: uvicorn app.main:app --host 0.0.0.0 --port 9400 --reload
+    volumes:
+      - ./backend_chamazetu:/app/backend/
+    ports:
+      - "9400:9400"
+    depends_on:
+      - message_broker
+      - chamazetu_database
+      - pgbouncer
+    environment:
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME}
+    networks:
+      - chamazetu_network
+
+  celery_worker:
+    build:
+      context: ./frontend_chamazetu
+    command: celery -A frontend_chamazetu.celery worker --pool=solo -l INFO
+    volumes:
+      - ./frontend_chamazetu:/app/frontend/
+    depends_on:
+      - chamazetu_frontend_database
+      - message_broker
+    environment:
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
+      - C_FORCE_ROOT=true
+    networks:
+      - chamazetu_network
+
+  celery_beat_scheduler:
+    build:
+      context: ./frontend_chamazetu
+    command: celery -A frontend_chamazetu.celery beat -l INFO
+    volumes:
+      - ./frontend_chamazetu:/app/frontend/
+    depends_on:
+      - chamazetu_frontend_database
+      - message_broker
+    environment:
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${FRONTEND_POSTGRES_USER}:${FRONTEND_POSTGRES_PASSWORD}@chamazetu_frontend_database:5432/${FRONTEND_POSTGRES_DB}
+    networks:
+      - chamazetu_network
+
+volumes:
+  redis_data:
+  chamazetu_data:
+  frontend_data:
+
+
+networks:
+  chamazetu_network:
+    driver: bridge

@@ -15,13 +15,13 @@ from chama.chamas import get_chama_contribution_day, get_previous_contribution_d
 load_dotenv()
 
 
-@tokens_in_cookies("member")
-@validate_and_refresh_token("member")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def get_member_recent_transactions(request):
     url = f"{os.getenv('api_url')}/members/recent_transactions"
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
     response = requests.get(url, headers=headers)
 
@@ -36,15 +36,25 @@ def get_wallet_balance(request):
     url = f"{os.getenv('api_url')}/members/wallet_balance"
     headers = {
         "Content-type": "application/json",
-        "Authorization": f"Bearer {request.COOKIES.get('member_access_token')}",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
-
     response = requests.get(url, headers=headers)
     if response.status_code == HTTPStatus.OK:
         wallet_balance = response.json()["wallet_balance"]
         return wallet_balance
     else:
         return None
+
+
+def get_wallet_id(user_id):
+    url = f"{os.getenv('api_url')}/members/wallet_number/{user_id}"
+    response = requests.get(url)
+
+    if response.status_code == HTTPStatus.OK:
+        wallet_id = response.json()["wallet_number"]
+        return wallet_id
+
+    return None
 
 
 def get_wallet_info(request, member_id):
@@ -65,17 +75,18 @@ def get_member_wallet_number(member_id):
         return wallet_number
 
 
-def get_member_expected_contribution(member_id, chama_id):
-    url = f"{os.getenv('api_url')}/members/expected_contribution"
-    data = {"member_id": member_id, "chama_id": chama_id}
-    resp = requests.get(url, json=data)
+def get_member_expected_contribution(user_id, activity_id):
+    url = (
+        f"{os.getenv('api_url')}/members/expected_contribution/{user_id}/{activity_id}"
+    )
+    resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
-        return resp.json()["member_expected_contribution"]
+        return resp.json()["expected_contribution"]
     return None
 
 
-def get_user_id(role, email):
-    url = f"{os.getenv('api_url')}/users/id/{role}/{email}"
+def get_user_id(email):
+    url = f"{os.getenv('api_url')}/users/id/{email}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -84,8 +95,8 @@ def get_user_id(role, email):
     return None
 
 
-def get_user_full_name(role, id):
-    url = f"{os.getenv('api_url')}/users/names/{role}/{id}"
+def get_user_full_name(user_id):
+    url = f"{os.getenv('api_url')}/users/names/{user_id}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -94,8 +105,8 @@ def get_user_full_name(role, id):
     return None
 
 
-def get_user_email(role, id):
-    url = f"{os.getenv('api_url')}/users/email/{role}/{id}"
+def get_user_email(user_id):
+    url = f"{os.getenv('api_url')}/users/email/{user_id}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -104,8 +115,8 @@ def get_user_email(role, id):
     return None
 
 
-def get_user_phone_number(role, id):
-    url = f"{os.getenv('api_url')}/users/phone_number/{role}/{id}"
+def get_user_phone_number(id):
+    url = f"{os.getenv('api_url')}/users/phone_number/{id}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -114,8 +125,8 @@ def get_user_phone_number(role, id):
     return None
 
 
-def get_user_full_profile(role, id):
-    url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
+def get_user_full_profile(id):
+    url = f"{os.getenv('api_url')}/users/full_profile/{id}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -123,8 +134,8 @@ def get_user_full_profile(role, id):
     return None
 
 
-def get_user_profile_image(role, id):
-    url = f"{os.getenv('api_url')}/users/full_profile/{role}/{id}"
+def get_user_profile_image(id):
+    url = f"{os.getenv('api_url')}/users/full_profile/{id}"
     resp = requests.get(url)
     if resp.status_code == HTTPStatus.OK:
         user = resp.json()
@@ -132,26 +143,12 @@ def get_user_profile_image(role, id):
     return None
 
 
-def get_member_contribution_so_far(chama_id, member_id):
-    upcoming_contribution_datetime = get_chama_contribution_day(chama_id)[
-        "contribution_date"
-    ]
-    upcoming_contribution_date = (
-        datetime.strptime(upcoming_contribution_datetime, "%d-%B-%Y")
-    ).strftime("%d-%m-%Y")
-    previous_contribution_date = get_previous_contribution_date(chama_id)
-
-    data = {
-        "chama_id": chama_id,
-        "member_id": member_id,
-        "upcoming_contribution_date": upcoming_contribution_date,
-        "previous_contribution_date": previous_contribution_date,
-    }
+def get_member_contribution_so_far(user_id, activity_id):
     resp = requests.get(
-        f"{os.getenv('api_url')}/members/member_contribution_so_far", json=data
+        f"{os.getenv('api_url')}/members/contribution_so_far/{user_id}/{activity_id}"
     )
     if resp.status_code == HTTPStatus.OK:
-        return resp.json()["member_contribution"]
+        return resp.json()["total_contribution"]
 
     return 0
 
@@ -160,5 +157,17 @@ def member_already_in_chama(chama_id, member_id):
     data = {"chama_id": chama_id, "member_id": member_id}
     resp = requests.get(f"{os.getenv('api_url')}/members/member_in_chama", json=data)
     if resp.status_code == HTTPStatus.OK:
+        print("====member_in_chama: ", resp.json())
         return resp.json()["is_member"]
-    return False
+
+    return None
+
+
+def get_transaction_fee(amount):
+    print("====get_transaction_fee: ", amount)
+    url = f"{os.getenv('api_url')}/members/chamazetu_to_mpesa_fee/{amount}"
+    response = requests.get(url)
+    if response.status_code == HTTPStatus.OK:
+        print("====get_transaction_fee: ", response.json())
+        return response.json()["transaction_fee"]
+    return None

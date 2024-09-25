@@ -11,6 +11,7 @@ from .usermanagement import (
     validate_token,
     refresh_token,
     signin,
+    switch_to,
     signup,
     signout,
     verify_signup_token,

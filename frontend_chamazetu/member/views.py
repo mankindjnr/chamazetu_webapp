@@ -9,12 +9,21 @@ from .member_chama import (
     view_chama_members,
     get_about_chama,
     auto_contribute_settings,
+    chama_activities,
+)
+from .activities import (
+    join_activity,
+    access_activity,
+    view_activity_members,
+    get_about_activity,
+    activate_auto_contributions,
+    deactivate_auto_contributions,
 )
 from .member_transactions import (
-    direct_deposit_to_chama,
-    from_wallet_to_chama,
-    deposit_to_wallet,
-    withdraw_from_wallet,
+    from_wallet_to_activity,
+    from_wallet_to_select_activity,
+    wallet_transactions,
+    fix_mpesa_to_wallet_deposit,
 )
 from .members_activity import members_tracker, fines_tracker
-from .profile_update import member_profile_updater, manager_profile_updater
+from .profile_update import profile_updater

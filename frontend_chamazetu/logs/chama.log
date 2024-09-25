@@ -685,3 +685,1023 @@ INFO 2024-08-12 10:00:00,075 tasks Nairobi: 2024-08-12 10:00:00.075603+03:00
 INFO 2024-08-12 10:23:56,582 tasks ==========chama/tasks.py: update_contribution_days()==========
 INFO 2024-08-12 10:23:56,592 tasks Task ran at: 2024-08-12 10:23:56.592391
 INFO 2024-08-12 10:23:56,592 tasks Nairobi: 2024-08-12 10:23:56.592759+03:00
+INFO 2024-08-12 12:00:00,024 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-12 12:00:00,026 tasks Task ran at: 2024-08-12 12:00:00.026368
+INFO 2024-08-12 12:00:00,026 tasks Date: 2024-08-12
+INFO 2024-08-12 12:00:00,027 tasks Time: 12:00:00.027037
+INFO 2024-08-12 12:00:00,027 tasks Nairobi: 2024-08-12 12:00:00.027765+03:00
+INFO 2024-08-12 12:00:00,204 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-12 12:00:00,205 tasks Task ran at: 2024-08-12 12:00:00.204955
+INFO 2024-08-12 12:00:00,205 tasks Nairobi: 2024-08-12 12:00:00.205314+03:00
+INFO 2024-08-20 10:46:26,456 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-20 10:46:26,456 tasks Task ran at: 2024-08-20 10:46:26.456801
+INFO 2024-08-20 10:46:26,457 tasks Nairobi: 2024-08-20 10:46:26.457303+03:00
+ERROR 2024-08-20 10:46:26,462 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fc1a49adb40>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-20 10:46:26,498 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-20 10:46:26,498 tasks Task ran at: 2024-08-20 10:46:26.498797
+INFO 2024-08-20 10:46:26,499 tasks Date: 2024-08-20
+INFO 2024-08-20 10:46:26,499 tasks Time: 10:46:26.499313
+INFO 2024-08-20 10:46:26,499 tasks Nairobi: 2024-08-20 10:46:26.499549+03:00
+INFO 2024-08-20 12:00:00,063 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-20 12:00:00,064 tasks Task ran at: 2024-08-20 12:00:00.064371
+INFO 2024-08-20 12:00:00,064 tasks Date: 2024-08-20
+INFO 2024-08-20 12:00:00,065 tasks Time: 12:00:00.065392
+INFO 2024-08-20 12:00:00,065 tasks Nairobi: 2024-08-20 12:00:00.065650+03:00
+INFO 2024-08-20 12:00:00,092 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-20 12:00:00,093 tasks Task ran at: 2024-08-20 12:00:00.093738
+INFO 2024-08-20 12:00:00,095 tasks Nairobi: 2024-08-20 12:00:00.095177+03:00
+INFO 2024-08-20 14:00:00,112 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-20 14:00:00,113 tasks Task ran at: 2024-08-20 14:00:00.112980
+INFO 2024-08-20 14:00:00,113 tasks Date: 2024-08-20
+INFO 2024-08-20 14:00:00,113 tasks Time: 14:00:00.113795
+INFO 2024-08-20 14:00:00,114 tasks Nairobi: 2024-08-20 14:00:00.114480+03:00
+INFO 2024-08-20 16:00:00,110 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-20 16:00:00,131 tasks Task ran at: 2024-08-20 16:00:00.131382
+INFO 2024-08-20 16:00:00,132 tasks Date: 2024-08-20
+INFO 2024-08-20 16:00:00,132 tasks Time: 16:00:00.132401
+INFO 2024-08-20 16:00:00,132 tasks Nairobi: 2024-08-20 16:00:00.132668+03:00
+INFO 2024-08-20 18:00:00,147 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-20 18:00:00,160 tasks Task ran at: 2024-08-20 18:00:00.160880
+INFO 2024-08-20 18:00:00,161 tasks Date: 2024-08-20
+INFO 2024-08-20 18:00:00,161 tasks Time: 18:00:00.161891
+INFO 2024-08-20 18:00:00,162 tasks Nairobi: 2024-08-20 18:00:00.162305+03:00
+INFO 2024-08-21 10:01:44,376 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-21 10:01:44,436 tasks Task ran at: 2024-08-21 10:01:44.436746
+INFO 2024-08-21 10:01:44,437 tasks Nairobi: 2024-08-21 10:01:44.437079+03:00
+INFO 2024-08-21 10:01:49,564 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-21 10:01:49,564 tasks Task ran at: 2024-08-21 10:01:49.564880
+INFO 2024-08-21 10:01:49,565 tasks Date: 2024-08-21
+INFO 2024-08-21 10:01:49,566 tasks Time: 10:01:49.565993
+INFO 2024-08-21 10:01:49,566 tasks Nairobi: 2024-08-21 10:01:49.566508+03:00
+INFO 2024-08-21 12:00:00,104 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-21 12:00:00,159 tasks Task ran at: 2024-08-21 12:00:00.159071
+INFO 2024-08-21 12:00:00,159 tasks Date: 2024-08-21
+INFO 2024-08-21 12:00:00,159 tasks Time: 12:00:00.159700
+INFO 2024-08-21 12:00:00,160 tasks Nairobi: 2024-08-21 12:00:00.160040+03:00
+INFO 2024-08-21 12:00:00,226 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-21 12:00:00,228 tasks Task ran at: 2024-08-21 12:00:00.227978
+INFO 2024-08-21 12:00:00,229 tasks Nairobi: 2024-08-21 12:00:00.228944+03:00
+INFO 2024-08-21 14:00:00,055 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-21 14:00:00,056 tasks Task ran at: 2024-08-21 14:00:00.056309
+INFO 2024-08-21 14:00:00,056 tasks Date: 2024-08-21
+INFO 2024-08-21 14:00:00,057 tasks Time: 14:00:00.057112
+INFO 2024-08-21 14:00:00,057 tasks Nairobi: 2024-08-21 14:00:00.057411+03:00
+INFO 2024-08-21 16:00:00,154 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-21 16:00:00,208 tasks Task ran at: 2024-08-21 16:00:00.208049
+INFO 2024-08-21 16:00:00,208 tasks Date: 2024-08-21
+INFO 2024-08-21 16:00:00,208 tasks Time: 16:00:00.208569
+INFO 2024-08-21 16:00:00,208 tasks Nairobi: 2024-08-21 16:00:00.208788+03:00
+INFO 2024-08-21 18:00:00,030 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-21 18:00:00,031 tasks Task ran at: 2024-08-21 18:00:00.031355
+INFO 2024-08-21 18:00:00,032 tasks Date: 2024-08-21
+INFO 2024-08-21 18:00:00,032 tasks Time: 18:00:00.032465
+INFO 2024-08-21 18:00:00,032 tasks Nairobi: 2024-08-21 18:00:00.032838+03:00
+INFO 2024-08-22 09:45:30,231 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-22 09:45:30,233 tasks Task ran at: 2024-08-22 09:45:30.233904
+INFO 2024-08-22 09:45:30,234 tasks Nairobi: 2024-08-22 09:45:30.234309+03:00
+ERROR 2024-08-22 09:45:30,314 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f4c8bbe8d60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-22 09:45:30,321 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-22 09:45:30,321 tasks Task ran at: 2024-08-22 09:45:30.321752
+INFO 2024-08-22 09:45:30,322 tasks Date: 2024-08-22
+INFO 2024-08-22 09:45:30,322 tasks Time: 09:45:30.322346
+INFO 2024-08-22 09:45:30,322 tasks Nairobi: 2024-08-22 09:45:30.322583+03:00
+INFO 2024-08-22 10:00:00,184 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-22 10:00:00,185 tasks Task ran at: 2024-08-22 10:00:00.185713
+INFO 2024-08-22 10:00:00,186 tasks Date: 2024-08-22
+INFO 2024-08-22 10:00:00,188 tasks Time: 10:00:00.188138
+INFO 2024-08-22 10:00:00,189 tasks Nairobi: 2024-08-22 10:00:00.189458+03:00
+INFO 2024-08-22 12:00:00,150 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-22 12:00:00,169 tasks Task ran at: 2024-08-22 12:00:00.169100
+INFO 2024-08-22 12:00:00,170 tasks Date: 2024-08-22
+INFO 2024-08-22 12:00:00,171 tasks Time: 12:00:00.171213
+INFO 2024-08-22 12:00:00,171 tasks Nairobi: 2024-08-22 12:00:00.171816+03:00
+INFO 2024-08-22 12:00:00,225 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-22 12:00:00,226 tasks Task ran at: 2024-08-22 12:00:00.226503
+INFO 2024-08-22 12:00:00,227 tasks Nairobi: 2024-08-22 12:00:00.227740+03:00
+INFO 2024-08-22 14:00:00,046 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-22 14:00:00,064 tasks Task ran at: 2024-08-22 14:00:00.063894
+INFO 2024-08-22 14:00:00,065 tasks Date: 2024-08-22
+INFO 2024-08-22 14:00:00,065 tasks Time: 14:00:00.065597
+INFO 2024-08-22 14:00:00,090 tasks Nairobi: 2024-08-22 14:00:00.066364+03:00
+INFO 2024-08-22 16:00:00,166 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-22 16:00:00,206 tasks Task ran at: 2024-08-22 16:00:00.206547
+INFO 2024-08-22 16:00:00,207 tasks Date: 2024-08-22
+INFO 2024-08-22 16:00:00,208 tasks Time: 16:00:00.208200
+INFO 2024-08-22 16:00:00,208 tasks Nairobi: 2024-08-22 16:00:00.208634+03:00
+INFO 2024-08-23 09:54:29,694 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-23 09:54:29,762 tasks Task ran at: 2024-08-23 09:54:29.762751
+INFO 2024-08-23 09:54:29,763 tasks Nairobi: 2024-08-23 09:54:29.763267+03:00
+ERROR 2024-08-23 09:54:29,769 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f43acaf5690>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-23 09:54:29,811 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 09:54:29,812 tasks Task ran at: 2024-08-23 09:54:29.812311
+INFO 2024-08-23 09:54:29,812 tasks Date: 2024-08-23
+INFO 2024-08-23 09:54:29,813 tasks Time: 09:54:29.813059
+INFO 2024-08-23 09:54:29,813 tasks Nairobi: 2024-08-23 09:54:29.813333+03:00
+INFO 2024-08-23 10:00:00,153 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 10:00:00,154 tasks Task ran at: 2024-08-23 10:00:00.153980
+INFO 2024-08-23 10:00:00,154 tasks Date: 2024-08-23
+INFO 2024-08-23 10:00:00,154 tasks Time: 10:00:00.154507
+INFO 2024-08-23 10:00:00,154 tasks Nairobi: 2024-08-23 10:00:00.154711+03:00
+INFO 2024-08-23 12:00:00,044 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 12:00:00,045 tasks Task ran at: 2024-08-23 12:00:00.045039
+INFO 2024-08-23 12:00:00,045 tasks Date: 2024-08-23
+INFO 2024-08-23 12:00:00,045 tasks Time: 12:00:00.045747
+INFO 2024-08-23 12:00:00,046 tasks Nairobi: 2024-08-23 12:00:00.046653+03:00
+INFO 2024-08-23 12:00:00,139 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-23 12:00:00,140 tasks Task ran at: 2024-08-23 12:00:00.140221
+INFO 2024-08-23 12:00:00,156 tasks Nairobi: 2024-08-23 12:00:00.156128+03:00
+INFO 2024-08-23 14:00:00,213 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 14:00:00,213 tasks Task ran at: 2024-08-23 14:00:00.213649
+INFO 2024-08-23 14:00:00,213 tasks Date: 2024-08-23
+INFO 2024-08-23 14:00:00,214 tasks Time: 14:00:00.214122
+INFO 2024-08-23 14:00:00,214 tasks Nairobi: 2024-08-23 14:00:00.214584+03:00
+INFO 2024-08-23 16:00:00,076 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 16:00:00,077 tasks Task ran at: 2024-08-23 16:00:00.077194
+INFO 2024-08-23 16:00:00,077 tasks Date: 2024-08-23
+INFO 2024-08-23 16:00:00,079 tasks Time: 16:00:00.079555
+INFO 2024-08-23 16:00:00,081 tasks Nairobi: 2024-08-23 16:00:00.080696+03:00
+INFO 2024-08-23 18:00:00,024 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-23 18:00:00,082 tasks Task ran at: 2024-08-23 18:00:00.082767
+INFO 2024-08-23 18:00:00,083 tasks Date: 2024-08-23
+INFO 2024-08-23 18:00:00,083 tasks Time: 18:00:00.083808
+INFO 2024-08-23 18:00:00,084 tasks Nairobi: 2024-08-23 18:00:00.084151+03:00
+INFO 2024-08-25 09:38:04,084 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-25 09:38:04,084 tasks Task ran at: 2024-08-25 09:38:04.084929
+INFO 2024-08-25 09:38:04,085 tasks Nairobi: 2024-08-25 09:38:04.085175+03:00
+ERROR 2024-08-25 09:38:04,087 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f09219effa0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-25 09:38:04,118 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-25 09:38:04,118 tasks Task ran at: 2024-08-25 09:38:04.118813
+INFO 2024-08-25 09:38:04,119 tasks Date: 2024-08-25
+INFO 2024-08-25 09:38:04,119 tasks Time: 09:38:04.119417
+INFO 2024-08-25 09:38:04,119 tasks Nairobi: 2024-08-25 09:38:04.119672+03:00
+INFO 2024-08-25 10:00:00,022 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-25 10:00:00,043 tasks Task ran at: 2024-08-25 10:00:00.043367
+INFO 2024-08-25 10:00:00,043 tasks Date: 2024-08-25
+INFO 2024-08-25 10:00:00,044 tasks Time: 10:00:00.044252
+INFO 2024-08-25 10:00:00,045 tasks Nairobi: 2024-08-25 10:00:00.044996+03:00
+INFO 2024-08-25 12:00:00,017 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-25 12:00:00,030 tasks Task ran at: 2024-08-25 12:00:00.030610
+INFO 2024-08-25 12:00:00,031 tasks Date: 2024-08-25
+INFO 2024-08-25 12:00:00,031 tasks Time: 12:00:00.031555
+INFO 2024-08-25 12:00:00,032 tasks Nairobi: 2024-08-25 12:00:00.032076+03:00
+INFO 2024-08-25 12:00:00,092 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-25 12:00:00,092 tasks Task ran at: 2024-08-25 12:00:00.092900
+INFO 2024-08-25 12:00:00,094 tasks Nairobi: 2024-08-25 12:00:00.094023+03:00
+INFO 2024-08-25 14:00:00,044 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-25 14:00:00,045 tasks Task ran at: 2024-08-25 14:00:00.045855
+INFO 2024-08-25 14:00:00,046 tasks Date: 2024-08-25
+INFO 2024-08-25 14:00:00,047 tasks Time: 14:00:00.047018
+INFO 2024-08-25 14:00:00,047 tasks Nairobi: 2024-08-25 14:00:00.047357+03:00
+INFO 2024-08-26 08:32:27,758 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-26 08:32:27,759 tasks Task ran at: 2024-08-26 08:32:27.759154
+INFO 2024-08-26 08:32:27,759 tasks Date: 2024-08-26
+INFO 2024-08-26 08:32:27,759 tasks Time: 08:32:27.759720
+INFO 2024-08-26 08:32:27,760 tasks Nairobi: 2024-08-26 08:32:27.760184+03:00
+INFO 2024-08-26 08:32:27,942 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-26 08:32:27,943 tasks Task ran at: 2024-08-26 08:32:27.943177
+INFO 2024-08-26 08:32:27,943 tasks Nairobi: 2024-08-26 08:32:27.943401+03:00
+ERROR 2024-08-26 08:32:27,946 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f34952ae4a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-26 10:00:00,187 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-26 10:00:00,188 tasks Task ran at: 2024-08-26 10:00:00.188440
+INFO 2024-08-26 10:00:00,190 tasks Date: 2024-08-26
+INFO 2024-08-26 10:00:00,191 tasks Time: 10:00:00.191312
+INFO 2024-08-26 10:00:00,192 tasks Nairobi: 2024-08-26 10:00:00.192327+03:00
+INFO 2024-08-26 12:00:00,024 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-26 12:00:00,048 tasks Task ran at: 2024-08-26 12:00:00.048379
+INFO 2024-08-26 12:00:00,048 tasks Nairobi: 2024-08-26 12:00:00.048931+03:00
+INFO 2024-08-26 12:00:00,189 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-26 12:00:00,189 tasks Task ran at: 2024-08-26 12:00:00.189555
+INFO 2024-08-26 12:00:00,190 tasks Date: 2024-08-26
+INFO 2024-08-26 12:00:00,192 tasks Time: 12:00:00.191979
+INFO 2024-08-26 12:00:00,194 tasks Nairobi: 2024-08-26 12:00:00.193948+03:00
+INFO 2024-08-26 14:00:00,065 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-26 14:00:00,066 tasks Task ran at: 2024-08-26 14:00:00.065942
+INFO 2024-08-26 14:00:00,066 tasks Date: 2024-08-26
+INFO 2024-08-26 14:00:00,068 tasks Time: 14:00:00.068659
+INFO 2024-08-26 14:00:00,069 tasks Nairobi: 2024-08-26 14:00:00.068980+03:00
+INFO 2024-08-27 13:23:19,543 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-27 13:23:19,580 tasks Task ran at: 2024-08-27 13:23:19.580916
+INFO 2024-08-27 13:23:19,581 tasks Date: 2024-08-27
+INFO 2024-08-27 13:23:19,582 tasks Time: 13:23:19.581869
+INFO 2024-08-27 13:23:19,582 tasks Nairobi: 2024-08-27 13:23:19.582824+03:00
+INFO 2024-08-27 13:23:19,828 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-27 13:23:19,828 tasks Task ran at: 2024-08-27 13:23:19.828479
+INFO 2024-08-27 13:23:19,828 tasks Nairobi: 2024-08-27 13:23:19.828770+03:00
+ERROR 2024-08-27 13:23:19,832 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fae4c5eada0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-27 14:00:00,052 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-27 14:00:00,056 tasks Task ran at: 2024-08-27 14:00:00.056586
+INFO 2024-08-27 14:00:00,057 tasks Date: 2024-08-27
+INFO 2024-08-27 14:00:00,059 tasks Time: 14:00:00.059127
+INFO 2024-08-27 14:00:00,060 tasks Nairobi: 2024-08-27 14:00:00.060097+03:00
+INFO 2024-08-27 16:00:00,023 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-27 16:00:00,068 tasks Task ran at: 2024-08-27 16:00:00.068583
+INFO 2024-08-27 16:00:00,068 tasks Date: 2024-08-27
+INFO 2024-08-27 16:00:00,069 tasks Time: 16:00:00.069238
+INFO 2024-08-27 16:00:00,069 tasks Nairobi: 2024-08-27 16:00:00.069583+03:00
+INFO 2024-08-27 18:00:00,073 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-27 18:00:00,086 tasks Task ran at: 2024-08-27 18:00:00.086421
+INFO 2024-08-27 18:00:00,087 tasks Date: 2024-08-27
+INFO 2024-08-27 18:00:00,087 tasks Time: 18:00:00.087910
+INFO 2024-08-27 18:00:00,088 tasks Nairobi: 2024-08-27 18:00:00.088615+03:00
+INFO 2024-08-28 09:58:20,472 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-28 09:58:20,495 tasks Task ran at: 2024-08-28 09:58:20.495351
+INFO 2024-08-28 09:58:20,495 tasks Nairobi: 2024-08-28 09:58:20.495753+03:00
+ERROR 2024-08-28 09:58:20,499 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fb289464ee0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-08-28 09:58:20,563 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 09:58:20,564 tasks Task ran at: 2024-08-28 09:58:20.564081
+INFO 2024-08-28 09:58:20,564 tasks Date: 2024-08-28
+INFO 2024-08-28 09:58:20,564 tasks Time: 09:58:20.564556
+INFO 2024-08-28 09:58:20,564 tasks Nairobi: 2024-08-28 09:58:20.564781+03:00
+INFO 2024-08-28 10:00:00,174 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 10:00:00,174 tasks Task ran at: 2024-08-28 10:00:00.174762
+INFO 2024-08-28 10:00:00,175 tasks Date: 2024-08-28
+INFO 2024-08-28 10:00:00,175 tasks Time: 10:00:00.175182
+INFO 2024-08-28 10:00:00,175 tasks Nairobi: 2024-08-28 10:00:00.175375+03:00
+INFO 2024-08-28 12:00:00,025 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 12:00:00,087 tasks Task ran at: 2024-08-28 12:00:00.087770
+INFO 2024-08-28 12:00:00,088 tasks Date: 2024-08-28
+INFO 2024-08-28 12:00:00,088 tasks Time: 12:00:00.088734
+INFO 2024-08-28 12:00:00,089 tasks Nairobi: 2024-08-28 12:00:00.089216+03:00
+INFO 2024-08-28 12:00:00,097 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-08-28 12:00:00,098 tasks Task ran at: 2024-08-28 12:00:00.098521
+INFO 2024-08-28 12:00:00,099 tasks Nairobi: 2024-08-28 12:00:00.098886+03:00
+INFO 2024-08-28 14:00:00,093 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 14:00:00,094 tasks Task ran at: 2024-08-28 14:00:00.094312
+INFO 2024-08-28 14:00:00,094 tasks Date: 2024-08-28
+INFO 2024-08-28 14:00:00,094 tasks Time: 14:00:00.094938
+INFO 2024-08-28 14:00:00,095 tasks Nairobi: 2024-08-28 14:00:00.095181+03:00
+INFO 2024-08-28 16:00:00,219 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 16:00:00,228 tasks Task ran at: 2024-08-28 16:00:00.228188
+INFO 2024-08-28 16:00:00,230 tasks Date: 2024-08-28
+INFO 2024-08-28 16:00:00,232 tasks Time: 16:00:00.231972
+INFO 2024-08-28 16:00:00,232 tasks Nairobi: 2024-08-28 16:00:00.232610+03:00
+INFO 2024-08-28 18:00:00,895 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 18:00:00,953 tasks Task ran at: 2024-08-28 18:00:00.953627
+INFO 2024-08-28 18:00:00,954 tasks Date: 2024-08-28
+INFO 2024-08-28 18:00:00,954 tasks Time: 18:00:00.954354
+INFO 2024-08-28 18:00:00,954 tasks Nairobi: 2024-08-28 18:00:00.954595+03:00
+INFO 2024-08-28 20:00:00,019 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-08-28 20:00:00,083 tasks Task ran at: 2024-08-28 20:00:00.083161
+INFO 2024-08-28 20:00:00,084 tasks Date: 2024-08-28
+INFO 2024-08-28 20:00:00,085 tasks Time: 20:00:00.085065
+INFO 2024-08-28 20:00:00,086 tasks Nairobi: 2024-08-28 20:00:00.086020+03:00
+INFO 2024-09-01 10:29:33,961 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-01 10:29:33,988 tasks Task ran at: 2024-09-01 10:29:33.988595
+INFO 2024-09-01 10:29:33,989 tasks Nairobi: 2024-09-01 10:29:33.988956+03:00
+ERROR 2024-09-01 10:29:33,992 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f8ef4171bd0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-01 10:29:34,151 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-01 10:29:34,151 tasks Task ran at: 2024-09-01 10:29:34.151696
+INFO 2024-09-01 10:29:34,152 tasks Date: 2024-09-01
+INFO 2024-09-01 10:29:34,152 tasks Time: 10:29:34.152246
+INFO 2024-09-01 10:29:34,152 tasks Nairobi: 2024-09-01 10:29:34.152497+03:00
+INFO 2024-09-01 12:00:00,716 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-01 12:00:00,730 tasks Task ran at: 2024-09-01 12:00:00.730594
+INFO 2024-09-01 12:00:00,731 tasks Date: 2024-09-01
+INFO 2024-09-01 12:00:00,732 tasks Time: 12:00:00.732263
+INFO 2024-09-01 12:00:00,732 tasks Nairobi: 2024-09-01 12:00:00.732842+03:00
+INFO 2024-09-01 12:00:00,789 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-01 12:00:00,790 tasks Task ran at: 2024-09-01 12:00:00.790450
+INFO 2024-09-01 12:00:00,791 tasks Nairobi: 2024-09-01 12:00:00.791077+03:00
+INFO 2024-09-02 09:19:36,446 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 09:19:36,448 tasks Task ran at: 2024-09-02 09:19:36.448802
+INFO 2024-09-02 09:19:36,449 tasks Date: 2024-09-02
+INFO 2024-09-02 09:19:36,450 tasks Time: 09:19:36.450252
+INFO 2024-09-02 09:19:36,450 tasks Nairobi: 2024-09-02 09:19:36.450611+03:00
+INFO 2024-09-02 09:19:36,509 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-02 09:19:36,509 tasks Task ran at: 2024-09-02 09:19:36.509491
+INFO 2024-09-02 09:19:36,509 tasks Nairobi: 2024-09-02 09:19:36.509849+03:00
+ERROR 2024-09-02 09:19:36,515 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0229e79e10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-02 10:00:00,323 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 10:00:00,324 tasks Task ran at: 2024-09-02 10:00:00.324073
+INFO 2024-09-02 10:00:00,324 tasks Date: 2024-09-02
+INFO 2024-09-02 10:00:00,324 tasks Time: 10:00:00.324564
+INFO 2024-09-02 10:00:00,324 tasks Nairobi: 2024-09-02 10:00:00.324794+03:00
+INFO 2024-09-02 12:00:00,023 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-02 12:00:00,088 tasks Task ran at: 2024-09-02 12:00:00.088558
+INFO 2024-09-02 12:00:00,089 tasks Nairobi: 2024-09-02 12:00:00.088998+03:00
+INFO 2024-09-02 12:00:00,297 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 12:00:00,298 tasks Task ran at: 2024-09-02 12:00:00.298582
+INFO 2024-09-02 12:00:00,299 tasks Date: 2024-09-02
+INFO 2024-09-02 12:00:00,299 tasks Time: 12:00:00.299885
+INFO 2024-09-02 12:00:00,300 tasks Nairobi: 2024-09-02 12:00:00.300521+03:00
+INFO 2024-09-02 14:00:00,142 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 14:00:00,152 tasks Task ran at: 2024-09-02 14:00:00.152660
+INFO 2024-09-02 14:00:00,153 tasks Date: 2024-09-02
+INFO 2024-09-02 14:00:00,153 tasks Time: 14:00:00.153500
+INFO 2024-09-02 14:00:00,153 tasks Nairobi: 2024-09-02 14:00:00.153831+03:00
+INFO 2024-09-02 16:00:00,076 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 16:00:00,077 tasks Task ran at: 2024-09-02 16:00:00.077675
+INFO 2024-09-02 16:00:00,078 tasks Date: 2024-09-02
+INFO 2024-09-02 16:00:00,078 tasks Time: 16:00:00.078406
+INFO 2024-09-02 16:00:00,078 tasks Nairobi: 2024-09-02 16:00:00.078658+03:00
+INFO 2024-09-02 18:00:00,093 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-02 18:00:00,118 tasks Task ran at: 2024-09-02 18:00:00.118113
+INFO 2024-09-02 18:00:00,118 tasks Date: 2024-09-02
+INFO 2024-09-02 18:00:00,119 tasks Time: 18:00:00.119391
+INFO 2024-09-02 18:00:00,120 tasks Nairobi: 2024-09-02 18:00:00.120149+03:00
+INFO 2024-09-03 07:40:08,009 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-03 07:40:08,010 tasks Task ran at: 2024-09-03 07:40:08.010266
+INFO 2024-09-03 07:40:08,010 tasks Nairobi: 2024-09-03 07:40:08.010508+03:00
+ERROR 2024-09-03 07:40:08,013 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f8a5eca08b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-03 07:40:08,017 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 07:40:08,017 tasks Task ran at: 2024-09-03 07:40:08.017563
+INFO 2024-09-03 07:40:08,017 tasks Date: 2024-09-03
+INFO 2024-09-03 07:40:08,017 tasks Time: 07:40:08.017960
+INFO 2024-09-03 07:40:08,018 tasks Nairobi: 2024-09-03 07:40:08.018148+03:00
+INFO 2024-09-03 08:00:00,023 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 08:00:00,024 tasks Task ran at: 2024-09-03 08:00:00.024848
+INFO 2024-09-03 08:00:00,025 tasks Date: 2024-09-03
+INFO 2024-09-03 08:00:00,026 tasks Time: 08:00:00.026169
+INFO 2024-09-03 08:00:00,026 tasks Nairobi: 2024-09-03 08:00:00.026521+03:00
+INFO 2024-09-03 10:00:00,253 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 10:00:00,278 tasks Task ran at: 2024-09-03 10:00:00.278471
+INFO 2024-09-03 10:00:00,280 tasks Date: 2024-09-03
+INFO 2024-09-03 10:00:00,281 tasks Time: 10:00:00.280971
+INFO 2024-09-03 10:00:00,281 tasks Nairobi: 2024-09-03 10:00:00.281636+03:00
+INFO 2024-09-03 12:00:00,028 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-03 12:00:00,067 tasks Task ran at: 2024-09-03 12:00:00.067824
+INFO 2024-09-03 12:00:00,068 tasks Nairobi: 2024-09-03 12:00:00.068397+03:00
+INFO 2024-09-03 12:00:00,277 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 12:00:00,277 tasks Task ran at: 2024-09-03 12:00:00.277901
+INFO 2024-09-03 12:00:00,278 tasks Date: 2024-09-03
+INFO 2024-09-03 12:00:00,278 tasks Time: 12:00:00.278425
+INFO 2024-09-03 12:00:00,278 tasks Nairobi: 2024-09-03 12:00:00.278762+03:00
+INFO 2024-09-03 13:08:12,970 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:08:12,994 tasks Task ran at: 2024-09-03 13:08:12.994272
+INFO 2024-09-03 13:08:12,995 tasks Nairobi: 2024-09-03 13:08:12.995016+03:00
+ERROR 2024-09-03 13:08:13,024 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:08:17,164 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:08:17,164 tasks Task ran at: 2024-09-03 13:08:17.164724
+INFO 2024-09-03 13:08:17,167 tasks Nairobi: 2024-09-03 13:08:17.166917+03:00
+ERROR 2024-09-03 13:08:17,184 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:09:34,779 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:09:34,780 tasks Task ran at: 2024-09-03 13:09:34.780279
+INFO 2024-09-03 13:09:34,781 tasks Nairobi: 2024-09-03 13:09:34.780981+03:00
+ERROR 2024-09-03 13:09:34,806 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:10:15,358 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:10:15,359 tasks Task ran at: 2024-09-03 13:10:15.359151
+INFO 2024-09-03 13:10:15,360 tasks Nairobi: 2024-09-03 13:10:15.360579+03:00
+ERROR 2024-09-03 13:10:15,397 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:11:41,101 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:11:41,102 tasks Task ran at: 2024-09-03 13:11:41.102839
+INFO 2024-09-03 13:11:41,103 tasks Nairobi: 2024-09-03 13:11:41.103546+03:00
+ERROR 2024-09-03 13:11:41,126 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:14:52,307 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:14:52,307 tasks Task ran at: 2024-09-03 13:14:52.307925
+INFO 2024-09-03 13:14:52,308 tasks Nairobi: 2024-09-03 13:14:52.308259+03:00
+ERROR 2024-09-03 13:14:52,343 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:20:22,665 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:20:22,666 tasks Task ran at: 2024-09-03 13:20:22.666216
+INFO 2024-09-03 13:20:22,666 tasks Nairobi: 2024-09-03 13:20:22.666815+03:00
+ERROR 2024-09-03 13:20:22,700 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:21:06,822 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:21:06,823 tasks Task ran at: 2024-09-03 13:21:06.823367
+INFO 2024-09-03 13:21:06,824 tasks Nairobi: 2024-09-03 13:21:06.824740+03:00
+ERROR 2024-09-03 13:21:06,849 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:23:21,776 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:23:21,777 tasks Task ran at: 2024-09-03 13:23:21.777033
+INFO 2024-09-03 13:23:21,777 tasks Nairobi: 2024-09-03 13:23:21.777656+03:00
+ERROR 2024-09-03 13:23:21,830 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:29:10,429 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:29:10,435 tasks Task ran at: 2024-09-03 13:29:10.435747
+INFO 2024-09-03 13:29:10,436 tasks Nairobi: 2024-09-03 13:29:10.436172+03:00
+ERROR 2024-09-03 13:29:10,541 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:31:14,680 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:31:14,680 tasks Task ran at: 2024-09-03 13:31:14.680881
+INFO 2024-09-03 13:31:14,681 tasks Nairobi: 2024-09-03 13:31:14.681206+03:00
+ERROR 2024-09-03 13:31:14,737 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:36:44,762 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:36:44,762 tasks Task ran at: 2024-09-03 13:36:44.762804
+INFO 2024-09-03 13:36:44,763 tasks Nairobi: 2024-09-03 13:36:44.763208+03:00
+ERROR 2024-09-03 13:36:44,804 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:41:17,180 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:41:17,182 tasks Task ran at: 2024-09-03 13:41:17.182015
+INFO 2024-09-03 13:41:17,186 tasks Nairobi: 2024-09-03 13:41:17.186814+03:00
+ERROR 2024-09-03 13:41:17,219 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:42:02,260 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:42:02,260 tasks Task ran at: 2024-09-03 13:42:02.260667
+INFO 2024-09-03 13:42:02,261 tasks Nairobi: 2024-09-03 13:42:02.261294+03:00
+ERROR 2024-09-03 13:42:02,306 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:44:16,343 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:44:16,345 tasks Task ran at: 2024-09-03 13:44:16.345853
+INFO 2024-09-03 13:44:16,347 tasks Nairobi: 2024-09-03 13:44:16.347234+03:00
+ERROR 2024-09-03 13:44:16,392 tasks Failed to update contribution days: 400, {"detail":"Failed to update activity contribution days"}
+INFO 2024-09-03 13:54:01,688 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:54:01,688 tasks Task ran at: 2024-09-03 13:54:01.688868
+INFO 2024-09-03 13:54:01,689 tasks Nairobi: 2024-09-03 13:54:01.689186+03:00
+INFO 2024-09-03 13:55:11,849 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:55:11,850 tasks Task ran at: 2024-09-03 13:55:11.850297
+INFO 2024-09-03 13:55:11,850 tasks Nairobi: 2024-09-03 13:55:11.850660+03:00
+INFO 2024-09-03 13:55:51,699 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 13:55:51,699 tasks Task ran at: 2024-09-03 13:55:51.699516
+INFO 2024-09-03 13:55:51,699 tasks Nairobi: 2024-09-03 13:55:51.699782+03:00
+INFO 2024-09-03 14:00:00,107 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 14:00:00,108 tasks Task ran at: 2024-09-03 14:00:00.108200
+INFO 2024-09-03 14:00:00,108 tasks Date: 2024-09-03
+INFO 2024-09-03 14:00:00,109 tasks Time: 14:00:00.109282
+INFO 2024-09-03 14:00:00,109 tasks Nairobi: 2024-09-03 14:00:00.109807+03:00
+INFO 2024-09-03 14:34:15,125 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 14:34:15,125 tasks Task ran at: 2024-09-03 14:34:15.125363
+INFO 2024-09-03 14:34:15,125 tasks Nairobi: 2024-09-03 14:34:15.125675+03:00
+INFO 2024-09-03 14:37:05,267 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-03 14:37:05,268 tasks Task ran at: 2024-09-03 14:37:05.268196
+INFO 2024-09-03 14:37:05,268 tasks Nairobi: 2024-09-03 14:37:05.268488+03:00
+INFO 2024-09-03 16:00:00,093 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 16:00:00,094 tasks Task ran at: 2024-09-03 16:00:00.094191
+INFO 2024-09-03 16:00:00,094 tasks Date: 2024-09-03
+INFO 2024-09-03 16:00:00,095 tasks Time: 16:00:00.094999
+INFO 2024-09-03 16:00:00,095 tasks Nairobi: 2024-09-03 16:00:00.095281+03:00
+INFO 2024-09-03 18:00:00,037 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-03 18:00:00,095 tasks Task ran at: 2024-09-03 18:00:00.095825
+INFO 2024-09-03 18:00:00,096 tasks Date: 2024-09-03
+INFO 2024-09-03 18:00:00,096 tasks Time: 18:00:00.096523
+INFO 2024-09-03 18:00:00,096 tasks Nairobi: 2024-09-03 18:00:00.096781+03:00
+INFO 2024-09-04 07:22:47,313 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-04 07:22:47,359 tasks Task ran at: 2024-09-04 07:22:47.359341
+INFO 2024-09-04 07:22:47,359 tasks Date: 2024-09-04
+INFO 2024-09-04 07:22:47,360 tasks Time: 07:22:47.360083
+INFO 2024-09-04 07:22:47,360 tasks Nairobi: 2024-09-04 07:22:47.360399+03:00
+INFO 2024-09-04 07:22:49,760 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-04 07:22:49,760 tasks Task ran at: 2024-09-04 07:22:49.760932
+INFO 2024-09-04 07:22:49,761 tasks Nairobi: 2024-09-04 07:22:49.761168+03:00
+INFO 2024-09-04 08:00:00,086 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-04 08:00:00,087 tasks Task ran at: 2024-09-04 08:00:00.087067
+INFO 2024-09-04 08:00:00,087 tasks Date: 2024-09-04
+INFO 2024-09-04 08:00:00,087 tasks Time: 08:00:00.087611
+INFO 2024-09-04 08:00:00,087 tasks Nairobi: 2024-09-04 08:00:00.087871+03:00
+INFO 2024-09-09 08:50:06,941 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-09 08:50:06,974 tasks Task ran at: 2024-09-09 08:50:06.974383
+INFO 2024-09-09 08:50:06,975 tasks Nairobi: 2024-09-09 08:50:06.974973+03:00
+ERROR 2024-09-09 08:50:06,979 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f3ed4160c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-09 08:50:07,083 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 08:50:07,084 tasks Task ran at: 2024-09-09 08:50:07.084198
+INFO 2024-09-09 08:50:07,084 tasks Date: 2024-09-09
+INFO 2024-09-09 08:50:07,084 tasks Time: 08:50:07.084724
+INFO 2024-09-09 08:50:07,085 tasks Nairobi: 2024-09-09 08:50:07.085046+03:00
+INFO 2024-09-09 10:00:00,062 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 10:00:00,121 tasks Task ran at: 2024-09-09 10:00:00.121221
+INFO 2024-09-09 10:00:00,121 tasks Date: 2024-09-09
+INFO 2024-09-09 10:00:00,121 tasks Time: 10:00:00.121849
+INFO 2024-09-09 10:00:00,122 tasks Nairobi: 2024-09-09 10:00:00.122095+03:00
+INFO 2024-09-09 12:00:00,095 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 12:00:00,112 tasks Task ran at: 2024-09-09 12:00:00.111903
+INFO 2024-09-09 12:00:00,112 tasks Date: 2024-09-09
+INFO 2024-09-09 12:00:00,114 tasks Time: 12:00:00.114641
+INFO 2024-09-09 12:00:00,115 tasks Nairobi: 2024-09-09 12:00:00.115108+03:00
+INFO 2024-09-09 12:00:00,128 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-09 12:00:00,129 tasks Task ran at: 2024-09-09 12:00:00.129880
+INFO 2024-09-09 12:00:00,133 tasks Nairobi: 2024-09-09 12:00:00.133359+03:00
+INFO 2024-09-09 14:04:17,552 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 14:04:17,678 tasks Task ran at: 2024-09-09 14:04:17.678689
+INFO 2024-09-09 14:04:17,679 tasks Date: 2024-09-09
+INFO 2024-09-09 14:04:17,679 tasks Time: 14:04:17.679350
+INFO 2024-09-09 14:04:17,679 tasks Nairobi: 2024-09-09 14:04:17.679637+03:00
+INFO 2024-09-09 17:46:17,808 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 17:46:17,853 tasks Task ran at: 2024-09-09 17:46:17.853140
+INFO 2024-09-09 17:46:17,853 tasks Date: 2024-09-09
+INFO 2024-09-09 17:46:17,853 tasks Time: 17:46:17.853891
+INFO 2024-09-09 17:46:17,854 tasks Nairobi: 2024-09-09 17:46:17.854143+03:00
+INFO 2024-09-09 18:00:00,237 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-09 18:00:00,258 tasks Task ran at: 2024-09-09 18:00:00.258626
+INFO 2024-09-09 18:00:00,259 tasks Date: 2024-09-09
+INFO 2024-09-09 18:00:00,260 tasks Time: 18:00:00.260317
+INFO 2024-09-09 18:00:00,261 tasks Nairobi: 2024-09-09 18:00:00.260988+03:00
+INFO 2024-09-10 08:15:29,940 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-10 08:15:29,941 tasks Task ran at: 2024-09-10 08:15:29.941090
+INFO 2024-09-10 08:15:29,942 tasks Nairobi: 2024-09-10 08:15:29.942515+03:00
+ERROR 2024-09-10 08:15:30,047 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fd51a6819c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-10 08:15:30,066 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 08:15:30,067 tasks Task ran at: 2024-09-10 08:15:30.067537
+INFO 2024-09-10 08:15:30,068 tasks Date: 2024-09-10
+INFO 2024-09-10 08:15:30,068 tasks Time: 08:15:30.068592
+INFO 2024-09-10 08:15:30,069 tasks Nairobi: 2024-09-10 08:15:30.069053+03:00
+INFO 2024-09-10 10:00:00,330 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 10:00:00,357 tasks Task ran at: 2024-09-10 10:00:00.357822
+INFO 2024-09-10 10:00:00,358 tasks Date: 2024-09-10
+INFO 2024-09-10 10:00:00,358 tasks Time: 10:00:00.358568
+INFO 2024-09-10 10:00:00,358 tasks Nairobi: 2024-09-10 10:00:00.358858+03:00
+INFO 2024-09-10 12:00:00,076 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 12:00:00,089 tasks Task ran at: 2024-09-10 12:00:00.089434
+INFO 2024-09-10 12:00:00,089 tasks Date: 2024-09-10
+INFO 2024-09-10 12:00:00,090 tasks Time: 12:00:00.090008
+INFO 2024-09-10 12:00:00,090 tasks Nairobi: 2024-09-10 12:00:00.090263+03:00
+INFO 2024-09-10 12:00:00,154 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-10 12:00:00,155 tasks Task ran at: 2024-09-10 12:00:00.155667
+INFO 2024-09-10 12:00:00,157 tasks Nairobi: 2024-09-10 12:00:00.157111+03:00
+INFO 2024-09-10 14:00:00,120 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 14:00:00,163 tasks Task ran at: 2024-09-10 14:00:00.163452
+INFO 2024-09-10 14:00:00,164 tasks Date: 2024-09-10
+INFO 2024-09-10 14:00:00,164 tasks Time: 14:00:00.164625
+INFO 2024-09-10 14:00:00,165 tasks Nairobi: 2024-09-10 14:00:00.165123+03:00
+INFO 2024-09-10 16:00:00,119 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 16:00:00,173 tasks Task ran at: 2024-09-10 16:00:00.173411
+INFO 2024-09-10 16:00:00,173 tasks Date: 2024-09-10
+INFO 2024-09-10 16:00:00,174 tasks Time: 16:00:00.174152
+INFO 2024-09-10 16:00:00,174 tasks Nairobi: 2024-09-10 16:00:00.174440+03:00
+INFO 2024-09-10 18:00:00,039 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-10 18:00:00,039 tasks Task ran at: 2024-09-10 18:00:00.039550
+INFO 2024-09-10 18:00:00,039 tasks Date: 2024-09-10
+INFO 2024-09-10 18:00:00,040 tasks Time: 18:00:00.040196
+INFO 2024-09-10 18:00:00,048 tasks Nairobi: 2024-09-10 18:00:00.048645+03:00
+INFO 2024-09-11 09:32:50,374 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-11 09:32:50,400 tasks Task ran at: 2024-09-11 09:32:50.400416
+INFO 2024-09-11 09:32:50,400 tasks Nairobi: 2024-09-11 09:32:50.400752+03:00
+ERROR 2024-09-11 09:32:50,403 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fe3a7de1450>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-11 09:32:50,431 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-11 09:32:50,431 tasks Task ran at: 2024-09-11 09:32:50.431801
+INFO 2024-09-11 09:32:50,432 tasks Date: 2024-09-11
+INFO 2024-09-11 09:32:50,432 tasks Time: 09:32:50.432392
+INFO 2024-09-11 09:32:50,432 tasks Nairobi: 2024-09-11 09:32:50.432637+03:00
+INFO 2024-09-11 10:00:00,102 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-11 10:00:00,104 tasks Task ran at: 2024-09-11 10:00:00.104156
+INFO 2024-09-11 10:00:00,104 tasks Date: 2024-09-11
+INFO 2024-09-11 10:00:00,105 tasks Time: 10:00:00.105828
+INFO 2024-09-11 10:00:00,106 tasks Nairobi: 2024-09-11 10:00:00.106567+03:00
+INFO 2024-09-11 12:00:00,032 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-11 12:00:00,086 tasks Task ran at: 2024-09-11 12:00:00.085824
+INFO 2024-09-11 12:00:00,087 tasks Nairobi: 2024-09-11 12:00:00.086918+03:00
+INFO 2024-09-11 12:00:00,233 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-11 12:00:00,234 tasks Task ran at: 2024-09-11 12:00:00.234299
+INFO 2024-09-11 12:00:00,234 tasks Date: 2024-09-11
+INFO 2024-09-11 12:00:00,235 tasks Time: 12:00:00.235197
+INFO 2024-09-11 12:00:00,235 tasks Nairobi: 2024-09-11 12:00:00.235656+03:00
+INFO 2024-09-11 14:00:00,164 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-11 14:00:00,181 tasks Task ran at: 2024-09-11 14:00:00.181380
+INFO 2024-09-11 14:00:00,182 tasks Date: 2024-09-11
+INFO 2024-09-11 14:00:00,183 tasks Time: 14:00:00.183137
+INFO 2024-09-11 14:00:00,184 tasks Nairobi: 2024-09-11 14:00:00.183878+03:00
+INFO 2024-09-11 14:03:37,962 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-11 14:03:37,963 tasks Task ran at: 2024-09-11 14:03:37.963304
+INFO 2024-09-11 14:03:37,963 tasks Nairobi: 2024-09-11 14:03:37.963743+03:00
+INFO 2024-09-11 16:00:00,091 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-11 16:00:00,107 tasks Task ran at: 2024-09-11 16:00:00.107269
+INFO 2024-09-11 16:00:00,108 tasks Date: 2024-09-11
+INFO 2024-09-11 16:00:00,109 tasks Time: 16:00:00.109320
+INFO 2024-09-11 16:00:00,111 tasks Nairobi: 2024-09-11 16:00:00.110990+03:00
+INFO 2024-09-12 11:03:04,121 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-12 11:03:04,150 tasks Task ran at: 2024-09-12 11:03:04.150146
+INFO 2024-09-12 11:03:04,150 tasks Nairobi: 2024-09-12 11:03:04.150729+03:00
+ERROR 2024-09-12 11:03:04,155 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f35a1db5900>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-12 11:03:04,173 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 11:03:04,176 tasks Task ran at: 2024-09-12 11:03:04.174987
+INFO 2024-09-12 11:03:04,177 tasks Date: 2024-09-12
+INFO 2024-09-12 11:03:04,177 tasks Time: 11:03:04.177609
+INFO 2024-09-12 11:03:04,178 tasks Nairobi: 2024-09-12 11:03:04.178133+03:00
+INFO 2024-09-12 12:00:00,122 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 12:00:00,176 tasks Task ran at: 2024-09-12 12:00:00.176648
+INFO 2024-09-12 12:00:00,177 tasks Date: 2024-09-12
+INFO 2024-09-12 12:00:00,177 tasks Time: 12:00:00.177634
+INFO 2024-09-12 12:00:00,178 tasks Nairobi: 2024-09-12 12:00:00.177989+03:00
+INFO 2024-09-12 12:00:00,211 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-12 12:00:00,212 tasks Task ran at: 2024-09-12 12:00:00.212325
+INFO 2024-09-12 12:00:00,213 tasks Nairobi: 2024-09-12 12:00:00.212889+03:00
+ERROR 2024-09-12 12:00:00,281 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f7a10c94310>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-12 14:00:00,124 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 14:00:00,169 tasks Task ran at: 2024-09-12 14:00:00.169078
+INFO 2024-09-12 14:00:00,169 tasks Date: 2024-09-12
+INFO 2024-09-12 14:00:00,169 tasks Time: 14:00:00.169662
+INFO 2024-09-12 14:00:00,169 tasks Nairobi: 2024-09-12 14:00:00.169910+03:00
+INFO 2024-09-12 16:00:00,033 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 16:00:00,053 tasks Task ran at: 2024-09-12 16:00:00.053062
+INFO 2024-09-12 16:00:00,056 tasks Date: 2024-09-12
+INFO 2024-09-12 16:00:00,059 tasks Time: 16:00:00.058780
+INFO 2024-09-12 16:00:00,062 tasks Nairobi: 2024-09-12 16:00:00.061976+03:00
+INFO 2024-09-12 18:00:00,149 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 18:00:00,150 tasks Task ran at: 2024-09-12 18:00:00.150071
+INFO 2024-09-12 18:00:00,150 tasks Date: 2024-09-12
+INFO 2024-09-12 18:00:00,150 tasks Time: 18:00:00.150899
+INFO 2024-09-12 18:00:00,151 tasks Nairobi: 2024-09-12 18:00:00.151134+03:00
+INFO 2024-09-12 20:00:00,164 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-12 20:00:00,193 tasks Task ran at: 2024-09-12 20:00:00.193315
+INFO 2024-09-12 20:00:00,194 tasks Date: 2024-09-12
+INFO 2024-09-12 20:00:00,196 tasks Time: 20:00:00.196006
+INFO 2024-09-12 20:00:00,196 tasks Nairobi: 2024-09-12 20:00:00.196671+03:00
+INFO 2024-09-13 08:32:29,590 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-13 08:32:29,695 tasks Task ran at: 2024-09-13 08:32:29.694351
+INFO 2024-09-13 08:32:29,695 tasks Date: 2024-09-13
+INFO 2024-09-13 08:32:29,695 tasks Time: 08:32:29.695809
+INFO 2024-09-13 08:32:29,696 tasks Nairobi: 2024-09-13 08:32:29.696063+03:00
+INFO 2024-09-13 08:32:32,212 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-13 08:32:32,212 tasks Task ran at: 2024-09-13 08:32:32.212843
+INFO 2024-09-13 08:32:32,213 tasks Nairobi: 2024-09-13 08:32:32.213236+03:00
+INFO 2024-09-13 10:00:00,560 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-13 10:00:00,573 tasks Task ran at: 2024-09-13 10:00:00.573540
+INFO 2024-09-13 10:00:00,574 tasks Date: 2024-09-13
+INFO 2024-09-13 10:00:00,574 tasks Time: 10:00:00.574509
+INFO 2024-09-13 10:00:00,574 tasks Nairobi: 2024-09-13 10:00:00.574758+03:00
+INFO 2024-09-13 12:00:00,081 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-13 12:00:00,128 tasks Task ran at: 2024-09-13 12:00:00.128778
+INFO 2024-09-13 12:00:00,129 tasks Nairobi: 2024-09-13 12:00:00.129136+03:00
+INFO 2024-09-13 12:00:01,739 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-13 12:00:01,740 tasks Task ran at: 2024-09-13 12:00:01.740875
+INFO 2024-09-13 12:00:01,741 tasks Date: 2024-09-13
+INFO 2024-09-13 12:00:01,742 tasks Time: 12:00:01.742321
+INFO 2024-09-13 12:00:01,743 tasks Nairobi: 2024-09-13 12:00:01.743022+03:00
+INFO 2024-09-15 09:44:05,478 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-15 09:44:05,598 tasks Task ran at: 2024-09-15 09:44:05.598825
+INFO 2024-09-15 09:44:05,599 tasks Nairobi: 2024-09-15 09:44:05.599226+03:00
+ERROR 2024-09-15 09:44:05,775 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f771196db10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-15 09:44:05,804 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-15 09:44:05,804 tasks Task ran at: 2024-09-15 09:44:05.804815
+INFO 2024-09-15 09:44:05,805 tasks Date: 2024-09-15
+INFO 2024-09-15 09:44:05,805 tasks Time: 09:44:05.805243
+INFO 2024-09-15 09:44:05,805 tasks Nairobi: 2024-09-15 09:44:05.805462+03:00
+INFO 2024-09-15 10:00:00,075 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-15 10:00:00,076 tasks Task ran at: 2024-09-15 10:00:00.076740
+INFO 2024-09-15 10:00:00,080 tasks Date: 2024-09-15
+INFO 2024-09-15 10:00:00,082 tasks Time: 10:00:00.082760
+INFO 2024-09-15 10:00:00,083 tasks Nairobi: 2024-09-15 10:00:00.083698+03:00
+INFO 2024-09-15 12:00:00,063 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-15 12:00:00,090 tasks Task ran at: 2024-09-15 12:00:00.090444
+INFO 2024-09-15 12:00:00,090 tasks Date: 2024-09-15
+INFO 2024-09-15 12:00:00,091 tasks Time: 12:00:00.091312
+INFO 2024-09-15 12:00:00,091 tasks Nairobi: 2024-09-15 12:00:00.091730+03:00
+INFO 2024-09-15 12:00:00,182 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-15 12:00:00,183 tasks Task ran at: 2024-09-15 12:00:00.183582
+INFO 2024-09-15 12:00:00,188 tasks Nairobi: 2024-09-15 12:00:00.188542+03:00
+INFO 2024-09-16 09:43:02,659 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-16 09:43:02,659 tasks Task ran at: 2024-09-16 09:43:02.659548
+INFO 2024-09-16 09:43:02,659 tasks Date: 2024-09-16
+INFO 2024-09-16 09:43:02,660 tasks Time: 09:43:02.660054
+INFO 2024-09-16 09:43:02,660 tasks Nairobi: 2024-09-16 09:43:02.660290+03:00
+INFO 2024-09-16 09:43:02,670 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-16 09:43:02,671 tasks Task ran at: 2024-09-16 09:43:02.671187
+INFO 2024-09-16 09:43:02,671 tasks Nairobi: 2024-09-16 09:43:02.671436+03:00
+ERROR 2024-09-16 09:43:02,674 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fcd9e093a30>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-16 09:48:44,514 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-16 09:48:44,549 tasks Task ran at: 2024-09-16 09:48:44.549370
+INFO 2024-09-16 09:48:44,550 tasks Nairobi: 2024-09-16 09:48:44.550208+03:00
+INFO 2024-09-16 10:00:00,161 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-16 10:00:00,165 tasks Task ran at: 2024-09-16 10:00:00.165702
+INFO 2024-09-16 10:00:00,166 tasks Date: 2024-09-16
+INFO 2024-09-16 10:00:00,166 tasks Time: 10:00:00.166702
+INFO 2024-09-16 10:00:00,167 tasks Nairobi: 2024-09-16 10:00:00.167137+03:00
+INFO 2024-09-17 09:16:14,920 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-17 09:16:14,941 tasks Task ran at: 2024-09-17 09:16:14.941073
+INFO 2024-09-17 09:16:14,941 tasks Nairobi: 2024-09-17 09:16:14.941444+03:00
+ERROR 2024-09-17 09:16:14,945 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f9f4c76e3e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-17 09:16:15,008 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 09:16:15,008 tasks Task ran at: 2024-09-17 09:16:15.008590
+INFO 2024-09-17 09:16:15,008 tasks Date: 2024-09-17
+INFO 2024-09-17 09:16:15,009 tasks Time: 09:16:15.009196
+INFO 2024-09-17 09:16:15,009 tasks Nairobi: 2024-09-17 09:16:15.009471+03:00
+INFO 2024-09-17 09:25:45,506 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 09:25:45,506 tasks Task ran at: 2024-09-17 09:25:45.506439
+INFO 2024-09-17 09:25:45,507 tasks Nairobi: 2024-09-17 09:25:45.506961+03:00
+INFO 2024-09-17 09:25:45,518 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 09:25:45,519 tasks Task ran at: 2024-09-17 09:25:45.519163
+INFO 2024-09-17 09:25:45,519 tasks Nairobi: 2024-09-17 09:25:45.519470+03:00
+ERROR 2024-09-17 09:25:45,577 tasks Failed to set fines for missed contributions: 400, {"detail":"Failed to set fines"}
+INFO 2024-09-17 09:37:37,807 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 09:37:37,808 tasks Task ran at: 2024-09-17 09:37:37.808508
+INFO 2024-09-17 09:37:37,808 tasks Nairobi: 2024-09-17 09:37:37.808878+03:00
+INFO 2024-09-17 09:37:37,830 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 09:37:37,832 tasks Task ran at: 2024-09-17 09:37:37.832503
+INFO 2024-09-17 09:37:37,834 tasks Nairobi: 2024-09-17 09:37:37.834236+03:00
+INFO 2024-09-17 09:50:12,639 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 09:50:12,654 tasks Task ran at: 2024-09-17 09:50:12.654789
+INFO 2024-09-17 09:50:12,655 tasks Nairobi: 2024-09-17 09:50:12.655348+03:00
+INFO 2024-09-17 09:50:12,670 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 09:50:12,670 tasks Task ran at: 2024-09-17 09:50:12.670788
+INFO 2024-09-17 09:50:12,671 tasks Nairobi: 2024-09-17 09:50:12.671477+03:00
+INFO 2024-09-17 09:55:33,273 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 09:55:33,274 tasks Task ran at: 2024-09-17 09:55:33.274319
+INFO 2024-09-17 09:55:33,274 tasks Nairobi: 2024-09-17 09:55:33.274649+03:00
+INFO 2024-09-17 09:55:33,300 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 09:55:33,301 tasks Task ran at: 2024-09-17 09:55:33.301440
+INFO 2024-09-17 09:55:33,302 tasks Nairobi: 2024-09-17 09:55:33.302317+03:00
+INFO 2024-09-17 10:00:00,183 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 10:00:00,200 tasks Task ran at: 2024-09-17 10:00:00.200004
+INFO 2024-09-17 10:00:00,200 tasks Date: 2024-09-17
+INFO 2024-09-17 10:00:00,200 tasks Time: 10:00:00.200794
+INFO 2024-09-17 10:00:00,201 tasks Nairobi: 2024-09-17 10:00:00.201270+03:00
+INFO 2024-09-17 10:04:00,739 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 10:04:00,741 tasks Task ran at: 2024-09-17 10:04:00.741523
+INFO 2024-09-17 10:04:00,742 tasks Nairobi: 2024-09-17 10:04:00.742434+03:00
+INFO 2024-09-17 10:04:00,769 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 10:04:00,770 tasks Task ran at: 2024-09-17 10:04:00.770647
+INFO 2024-09-17 10:04:00,771 tasks Nairobi: 2024-09-17 10:04:00.771811+03:00
+INFO 2024-09-17 10:07:26,629 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 10:07:26,629 tasks Task ran at: 2024-09-17 10:07:26.629761
+INFO 2024-09-17 10:07:26,630 tasks Nairobi: 2024-09-17 10:07:26.630062+03:00
+INFO 2024-09-17 10:07:26,658 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 10:07:26,659 tasks Task ran at: 2024-09-17 10:07:26.659118
+INFO 2024-09-17 10:07:26,659 tasks Nairobi: 2024-09-17 10:07:26.659549+03:00
+INFO 2024-09-17 10:10:14,096 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 10:10:14,097 tasks Task ran at: 2024-09-17 10:10:14.097409
+INFO 2024-09-17 10:10:14,098 tasks Nairobi: 2024-09-17 10:10:14.097932+03:00
+INFO 2024-09-17 10:10:14,122 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 10:10:14,123 tasks Task ran at: 2024-09-17 10:10:14.123712
+INFO 2024-09-17 10:10:14,126 tasks Nairobi: 2024-09-17 10:10:14.125891+03:00
+INFO 2024-09-17 10:10:14,205 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-17 10:10:14,206 tasks Task ran at: 2024-09-17 10:10:14.206935
+INFO 2024-09-17 10:10:14,208 tasks Nairobi: 2024-09-17 10:10:14.208210+03:00
+INFO 2024-09-17 10:22:04,352 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-17 10:22:04,353 tasks Task ran at: 2024-09-17 10:22:04.353206
+INFO 2024-09-17 10:22:04,353 tasks Nairobi: 2024-09-17 10:22:04.353438+03:00
+INFO 2024-09-17 10:22:04,368 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-17 10:22:04,369 tasks Task ran at: 2024-09-17 10:22:04.369303
+INFO 2024-09-17 10:22:04,369 tasks Nairobi: 2024-09-17 10:22:04.369654+03:00
+INFO 2024-09-17 10:22:04,399 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-17 10:22:04,400 tasks Task ran at: 2024-09-17 10:22:04.400199
+INFO 2024-09-17 10:22:04,401 tasks Nairobi: 2024-09-17 10:22:04.401022+03:00
+INFO 2024-09-17 12:00:00,132 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 12:00:00,133 tasks Task ran at: 2024-09-17 12:00:00.133340
+INFO 2024-09-17 12:00:00,134 tasks Date: 2024-09-17
+INFO 2024-09-17 12:00:00,134 tasks Time: 12:00:00.134259
+INFO 2024-09-17 12:00:00,134 tasks Nairobi: 2024-09-17 12:00:00.134476+03:00
+INFO 2024-09-17 12:00:00,197 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-17 12:00:00,198 tasks Task ran at: 2024-09-17 12:00:00.198911
+INFO 2024-09-17 12:00:00,200 tasks Nairobi: 2024-09-17 12:00:00.200106+03:00
+INFO 2024-09-17 14:00:00,151 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 14:00:00,195 tasks Task ran at: 2024-09-17 14:00:00.195670
+INFO 2024-09-17 14:00:00,196 tasks Date: 2024-09-17
+INFO 2024-09-17 14:00:00,197 tasks Time: 14:00:00.197275
+INFO 2024-09-17 14:00:00,197 tasks Nairobi: 2024-09-17 14:00:00.197597+03:00
+INFO 2024-09-17 16:00:00,109 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 16:00:00,110 tasks Task ran at: 2024-09-17 16:00:00.110732
+INFO 2024-09-17 16:00:00,111 tasks Date: 2024-09-17
+INFO 2024-09-17 16:00:00,112 tasks Time: 16:00:00.111813
+INFO 2024-09-17 16:00:00,112 tasks Nairobi: 2024-09-17 16:00:00.112881+03:00
+INFO 2024-09-17 18:00:00,027 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-17 18:00:00,051 tasks Task ran at: 2024-09-17 18:00:00.051121
+INFO 2024-09-17 18:00:00,051 tasks Date: 2024-09-17
+INFO 2024-09-17 18:00:00,052 tasks Time: 18:00:00.052303
+INFO 2024-09-17 18:00:00,053 tasks Nairobi: 2024-09-17 18:00:00.052943+03:00
+INFO 2024-09-18 07:38:18,217 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-18 07:38:18,218 tasks Task ran at: 2024-09-18 07:38:18.218005
+INFO 2024-09-18 07:38:18,218 tasks Nairobi: 2024-09-18 07:38:18.218304+03:00
+ERROR 2024-09-18 07:38:18,482 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f19ee177a00>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-18 07:38:18,491 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 07:38:18,491 tasks Task ran at: 2024-09-18 07:38:18.491742
+INFO 2024-09-18 07:38:18,492 tasks Date: 2024-09-18
+INFO 2024-09-18 07:38:18,492 tasks Time: 07:38:18.492512
+INFO 2024-09-18 07:38:18,493 tasks Nairobi: 2024-09-18 07:38:18.492924+03:00
+INFO 2024-09-18 08:00:00,114 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 08:00:00,129 tasks Task ran at: 2024-09-18 08:00:00.129868
+INFO 2024-09-18 08:00:00,130 tasks Date: 2024-09-18
+INFO 2024-09-18 08:00:00,132 tasks Time: 08:00:00.132079
+INFO 2024-09-18 08:00:00,132 tasks Nairobi: 2024-09-18 08:00:00.132496+03:00
+INFO 2024-09-18 08:11:48,213 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-18 08:11:48,214 tasks Task ran at: 2024-09-18 08:11:48.214654
+INFO 2024-09-18 08:11:48,216 tasks Nairobi: 2024-09-18 08:11:48.216801+03:00
+INFO 2024-09-18 08:11:48,227 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-18 08:11:48,227 tasks Task ran at: 2024-09-18 08:11:48.227745
+INFO 2024-09-18 08:11:48,228 tasks Nairobi: 2024-09-18 08:11:48.228837+03:00
+INFO 2024-09-18 08:11:48,475 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-18 08:11:48,475 tasks Task ran at: 2024-09-18 08:11:48.475555
+INFO 2024-09-18 08:11:48,475 tasks Nairobi: 2024-09-18 08:11:48.475889+03:00
+INFO 2024-09-18 08:23:35,960 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-18 08:23:35,961 tasks Task ran at: 2024-09-18 08:23:35.961276
+INFO 2024-09-18 08:23:35,961 tasks Nairobi: 2024-09-18 08:23:35.961828+03:00
+INFO 2024-09-18 08:23:35,973 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-18 08:23:35,977 tasks Task ran at: 2024-09-18 08:23:35.977510
+INFO 2024-09-18 08:23:35,979 tasks Nairobi: 2024-09-18 08:23:35.978901+03:00
+INFO 2024-09-18 08:23:36,100 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-18 08:23:36,101 tasks Task ran at: 2024-09-18 08:23:36.101496
+INFO 2024-09-18 08:23:36,102 tasks Nairobi: 2024-09-18 08:23:36.102469+03:00
+INFO 2024-09-18 08:23:42,960 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-18 08:23:42,960 tasks Task ran at: 2024-09-18 08:23:42.960802
+INFO 2024-09-18 08:23:42,961 tasks Nairobi: 2024-09-18 08:23:42.961166+03:00
+INFO 2024-09-18 08:23:42,987 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-18 08:23:42,988 tasks Task ran at: 2024-09-18 08:23:42.988270
+INFO 2024-09-18 08:23:42,989 tasks Nairobi: 2024-09-18 08:23:42.989202+03:00
+INFO 2024-09-18 08:23:43,045 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-18 08:23:43,048 tasks Task ran at: 2024-09-18 08:23:43.046891
+INFO 2024-09-18 08:23:43,049 tasks Nairobi: 2024-09-18 08:23:43.049325+03:00
+INFO 2024-09-18 08:40:51,447 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-18 08:40:51,448 tasks Task ran at: 2024-09-18 08:40:51.447992
+INFO 2024-09-18 08:40:51,448 tasks Nairobi: 2024-09-18 08:40:51.448349+03:00
+INFO 2024-09-18 08:40:51,463 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-18 08:40:51,463 tasks Task ran at: 2024-09-18 08:40:51.463402
+INFO 2024-09-18 08:40:51,463 tasks Nairobi: 2024-09-18 08:40:51.463709+03:00
+INFO 2024-09-18 08:40:51,552 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-18 08:40:51,558 tasks Task ran at: 2024-09-18 08:40:51.558416
+INFO 2024-09-18 08:40:51,558 tasks Nairobi: 2024-09-18 08:40:51.558817+03:00
+INFO 2024-09-18 08:41:34,603 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-18 08:41:34,603 tasks Task ran at: 2024-09-18 08:41:34.603528
+INFO 2024-09-18 08:41:34,603 tasks Nairobi: 2024-09-18 08:41:34.603849+03:00
+INFO 2024-09-18 08:41:34,623 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-18 08:41:34,629 tasks Task ran at: 2024-09-18 08:41:34.629339
+INFO 2024-09-18 08:41:34,630 tasks Nairobi: 2024-09-18 08:41:34.630140+03:00
+INFO 2024-09-18 08:41:34,668 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-18 08:41:34,668 tasks Task ran at: 2024-09-18 08:41:34.668869
+INFO 2024-09-18 08:41:34,669 tasks Nairobi: 2024-09-18 08:41:34.669440+03:00
+INFO 2024-09-18 10:00:00,341 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 10:00:00,359 tasks Task ran at: 2024-09-18 10:00:00.358969
+INFO 2024-09-18 10:00:00,359 tasks Date: 2024-09-18
+INFO 2024-09-18 10:00:00,359 tasks Time: 10:00:00.359693
+INFO 2024-09-18 10:00:00,360 tasks Nairobi: 2024-09-18 10:00:00.360076+03:00
+INFO 2024-09-18 12:00:00,061 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 12:00:00,067 tasks Task ran at: 2024-09-18 12:00:00.067772
+INFO 2024-09-18 12:00:00,068 tasks Date: 2024-09-18
+INFO 2024-09-18 12:00:00,068 tasks Time: 12:00:00.068883
+INFO 2024-09-18 12:00:00,069 tasks Nairobi: 2024-09-18 12:00:00.069296+03:00
+INFO 2024-09-18 12:00:00,155 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-18 12:00:00,156 tasks Task ran at: 2024-09-18 12:00:00.156490
+INFO 2024-09-18 12:00:00,156 tasks Nairobi: 2024-09-18 12:00:00.156924+03:00
+INFO 2024-09-18 14:00:00,132 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 14:00:00,180 tasks Task ran at: 2024-09-18 14:00:00.180808
+INFO 2024-09-18 14:00:00,181 tasks Date: 2024-09-18
+INFO 2024-09-18 14:00:00,181 tasks Time: 14:00:00.181484
+INFO 2024-09-18 14:00:00,181 tasks Nairobi: 2024-09-18 14:00:00.181755+03:00
+INFO 2024-09-18 16:00:00,019 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 16:00:00,020 tasks Task ran at: 2024-09-18 16:00:00.020615
+INFO 2024-09-18 16:00:00,024 tasks Date: 2024-09-18
+INFO 2024-09-18 16:00:00,025 tasks Time: 16:00:00.025842
+INFO 2024-09-18 16:00:00,026 tasks Nairobi: 2024-09-18 16:00:00.026162+03:00
+INFO 2024-09-18 18:00:00,017 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-18 18:00:00,078 tasks Task ran at: 2024-09-18 18:00:00.078425
+INFO 2024-09-18 18:00:00,079 tasks Date: 2024-09-18
+INFO 2024-09-18 18:00:00,079 tasks Time: 18:00:00.079395
+INFO 2024-09-18 18:00:00,079 tasks Nairobi: 2024-09-18 18:00:00.079672+03:00
+INFO 2024-09-19 08:32:27,380 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-19 08:32:27,381 tasks Task ran at: 2024-09-19 08:32:27.381645
+INFO 2024-09-19 08:32:27,382 tasks Date: 2024-09-19
+INFO 2024-09-19 08:32:27,383 tasks Time: 08:32:27.383045
+INFO 2024-09-19 08:32:27,383 tasks Nairobi: 2024-09-19 08:32:27.383448+03:00
+INFO 2024-09-19 08:32:27,572 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-19 08:32:27,572 tasks Task ran at: 2024-09-19 08:32:27.572360
+INFO 2024-09-19 08:32:27,572 tasks Nairobi: 2024-09-19 08:32:27.572616+03:00
+ERROR 2024-09-19 08:32:27,575 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f0178a0d3f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-19 10:00:01,452 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-19 10:00:01,502 tasks Task ran at: 2024-09-19 10:00:01.502245
+INFO 2024-09-19 10:00:01,502 tasks Date: 2024-09-19
+INFO 2024-09-19 10:00:01,502 tasks Time: 10:00:01.502833
+INFO 2024-09-19 10:00:01,503 tasks Nairobi: 2024-09-19 10:00:01.503064+03:00
+INFO 2024-09-19 16:18:03,931 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-19 16:18:03,931 tasks Task ran at: 2024-09-19 16:18:03.931922
+INFO 2024-09-19 16:18:03,932 tasks Nairobi: 2024-09-19 16:18:03.932270+03:00
+ERROR 2024-09-19 16:18:03,936 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f2d40666bc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-19 16:18:04,045 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-19 16:18:04,045 tasks Task ran at: 2024-09-19 16:18:04.045664
+INFO 2024-09-19 16:18:04,046 tasks Date: 2024-09-19
+INFO 2024-09-19 16:18:04,046 tasks Time: 16:18:04.046288
+INFO 2024-09-19 16:18:04,046 tasks Nairobi: 2024-09-19 16:18:04.046690+03:00
+INFO 2024-09-20 10:50:45,385 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-20 10:50:45,405 tasks Task ran at: 2024-09-20 10:50:45.405927
+INFO 2024-09-20 10:50:45,406 tasks Nairobi: 2024-09-20 10:50:45.406306+03:00
+ERROR 2024-09-20 10:50:45,409 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fe9e808ec80>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-20 10:50:45,517 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-20 10:50:45,517 tasks Task ran at: 2024-09-20 10:50:45.517908
+INFO 2024-09-20 10:50:45,518 tasks Date: 2024-09-20
+INFO 2024-09-20 10:50:45,518 tasks Time: 10:50:45.518479
+INFO 2024-09-20 10:50:45,518 tasks Nairobi: 2024-09-20 10:50:45.518806+03:00
+INFO 2024-09-20 11:22:14,267 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-20 11:22:14,368 tasks Task ran at: 2024-09-20 11:22:14.368077
+INFO 2024-09-20 11:22:14,368 tasks Date: 2024-09-20
+INFO 2024-09-20 11:22:14,368 tasks Time: 11:22:14.368580
+INFO 2024-09-20 11:22:14,368 tasks Nairobi: 2024-09-20 11:22:14.368783+03:00
+INFO 2024-09-20 12:00:00,016 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-20 12:00:00,017 tasks Task ran at: 2024-09-20 12:00:00.017058
+INFO 2024-09-20 12:00:00,017 tasks Nairobi: 2024-09-20 12:00:00.017902+03:00
+INFO 2024-09-20 12:00:00,327 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-20 12:00:00,328 tasks Task ran at: 2024-09-20 12:00:00.328301
+INFO 2024-09-20 12:00:00,328 tasks Date: 2024-09-20
+INFO 2024-09-20 12:00:00,329 tasks Time: 12:00:00.329114
+INFO 2024-09-20 12:00:00,329 tasks Nairobi: 2024-09-20 12:00:00.329510+03:00
+INFO 2024-09-20 14:00:00,044 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-20 14:00:00,061 tasks Task ran at: 2024-09-20 14:00:00.061317
+INFO 2024-09-20 14:00:00,061 tasks Date: 2024-09-20
+INFO 2024-09-20 14:00:00,062 tasks Time: 14:00:00.062143
+INFO 2024-09-20 14:00:00,062 tasks Nairobi: 2024-09-20 14:00:00.062398+03:00
+INFO 2024-09-20 14:03:43,207 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-20 14:03:43,208 tasks Task ran at: 2024-09-20 14:03:43.208475
+INFO 2024-09-20 14:03:43,208 tasks Nairobi: 2024-09-20 14:03:43.208922+03:00
+INFO 2024-09-20 14:03:43,217 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-20 14:03:43,217 tasks Task ran at: 2024-09-20 14:03:43.217311
+INFO 2024-09-20 14:03:43,217 tasks Nairobi: 2024-09-20 14:03:43.217676+03:00
+INFO 2024-09-20 14:03:43,416 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-20 14:03:43,416 tasks Task ran at: 2024-09-20 14:03:43.416824
+INFO 2024-09-20 14:03:43,417 tasks Nairobi: 2024-09-20 14:03:43.417129+03:00
+INFO 2024-09-20 16:00:00,135 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-20 16:00:00,198 tasks Task ran at: 2024-09-20 16:00:00.198296
+INFO 2024-09-20 16:00:00,198 tasks Date: 2024-09-20
+INFO 2024-09-20 16:00:00,199 tasks Time: 16:00:00.199036
+INFO 2024-09-20 16:00:00,199 tasks Nairobi: 2024-09-20 16:00:00.199298+03:00
+INFO 2024-09-23 10:19:49,863 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-23 10:19:49,884 tasks Task ran at: 2024-09-23 10:19:49.884804
+INFO 2024-09-23 10:19:49,885 tasks Date: 2024-09-23
+INFO 2024-09-23 10:19:49,885 tasks Time: 10:19:49.885413
+INFO 2024-09-23 10:19:49,885 tasks Nairobi: 2024-09-23 10:19:49.885675+03:00
+INFO 2024-09-23 10:19:50,095 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-23 10:19:50,096 tasks Task ran at: 2024-09-23 10:19:50.096015
+INFO 2024-09-23 10:19:50,096 tasks Nairobi: 2024-09-23 10:19:50.096589+03:00
+ERROR 2024-09-23 10:19:50,100 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fceab0c9f60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-23 12:00:00,076 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-23 12:00:00,117 tasks Task ran at: 2024-09-23 12:00:00.117598
+INFO 2024-09-23 12:00:00,118 tasks Nairobi: 2024-09-23 12:00:00.118337+03:00
+INFO 2024-09-23 12:00:00,368 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-23 12:00:00,368 tasks Task ran at: 2024-09-23 12:00:00.368671
+INFO 2024-09-23 12:00:00,369 tasks Date: 2024-09-23
+INFO 2024-09-23 12:00:00,369 tasks Time: 12:00:00.369323
+INFO 2024-09-23 12:00:00,369 tasks Nairobi: 2024-09-23 12:00:00.369555+03:00
+INFO 2024-09-23 14:00:00,055 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-23 14:00:00,093 tasks Task ran at: 2024-09-23 14:00:00.093204
+INFO 2024-09-23 14:00:00,093 tasks Date: 2024-09-23
+INFO 2024-09-23 14:00:00,094 tasks Time: 14:00:00.093993
+INFO 2024-09-23 14:00:00,094 tasks Nairobi: 2024-09-23 14:00:00.094305+03:00
+INFO 2024-09-23 16:00:00,637 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-23 16:00:01,706 tasks Task ran at: 2024-09-23 16:00:01.705912
+INFO 2024-09-23 16:00:01,706 tasks Date: 2024-09-23
+INFO 2024-09-23 16:00:01,706 tasks Time: 16:00:01.706838
+INFO 2024-09-23 16:00:01,707 tasks Nairobi: 2024-09-23 16:00:01.707236+03:00
+INFO 2024-09-23 18:00:00,147 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-23 18:00:00,192 tasks Task ran at: 2024-09-23 18:00:00.192199
+INFO 2024-09-23 18:00:00,192 tasks Date: 2024-09-23
+INFO 2024-09-23 18:00:00,193 tasks Time: 18:00:00.193331
+INFO 2024-09-23 18:00:00,193 tasks Nairobi: 2024-09-23 18:00:00.193771+03:00
+INFO 2024-09-24 08:42:19,352 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 08:42:19,386 tasks Task ran at: 2024-09-24 08:42:19.386728
+INFO 2024-09-24 08:42:19,387 tasks Date: 2024-09-24
+INFO 2024-09-24 08:42:19,387 tasks Time: 08:42:19.387325
+INFO 2024-09-24 08:42:19,387 tasks Nairobi: 2024-09-24 08:42:19.387584+03:00
+INFO 2024-09-24 08:42:19,432 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-24 08:42:19,432 tasks Task ran at: 2024-09-24 08:42:19.432870
+INFO 2024-09-24 08:42:19,433 tasks Nairobi: 2024-09-24 08:42:19.433320+03:00
+ERROR 2024-09-24 08:42:19,440 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fddcf65f100>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-24 08:56:37,431 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-24 08:56:37,431 tasks Task ran at: 2024-09-24 08:56:37.431939
+INFO 2024-09-24 08:56:37,432 tasks Nairobi: 2024-09-24 08:56:37.432578+03:00
+INFO 2024-09-24 08:56:37,448 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-24 08:56:37,449 tasks Task ran at: 2024-09-24 08:56:37.449365
+INFO 2024-09-24 08:56:37,451 tasks Nairobi: 2024-09-24 08:56:37.451348+03:00
+INFO 2024-09-24 08:56:37,872 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-24 08:56:37,876 tasks Task ran at: 2024-09-24 08:56:37.876255
+INFO 2024-09-24 08:56:37,877 tasks Nairobi: 2024-09-24 08:56:37.877754+03:00
+INFO 2024-09-24 08:57:10,079 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-24 08:57:10,080 tasks Task ran at: 2024-09-24 08:57:10.080241
+INFO 2024-09-24 08:57:10,080 tasks Nairobi: 2024-09-24 08:57:10.080746+03:00
+INFO 2024-09-24 08:57:10,110 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-24 08:57:10,110 tasks Task ran at: 2024-09-24 08:57:10.110544
+INFO 2024-09-24 08:57:10,110 tasks Nairobi: 2024-09-24 08:57:10.110798+03:00
+INFO 2024-09-24 08:57:10,218 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-24 08:57:10,218 tasks Task ran at: 2024-09-24 08:57:10.218616
+INFO 2024-09-24 08:57:10,218 tasks Nairobi: 2024-09-24 08:57:10.218946+03:00
+INFO 2024-09-24 10:00:00,277 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 10:00:00,291 tasks Task ran at: 2024-09-24 10:00:00.290892
+INFO 2024-09-24 10:00:00,291 tasks Date: 2024-09-24
+INFO 2024-09-24 10:00:00,292 tasks Time: 10:00:00.292412
+INFO 2024-09-24 10:00:00,293 tasks Nairobi: 2024-09-24 10:00:00.293105+03:00
+INFO 2024-09-24 12:00:00,030 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-24 12:00:00,074 tasks Task ran at: 2024-09-24 12:00:00.074615
+INFO 2024-09-24 12:00:00,075 tasks Nairobi: 2024-09-24 12:00:00.075080+03:00
+INFO 2024-09-24 12:00:00,680 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 12:00:00,681 tasks Task ran at: 2024-09-24 12:00:00.681601
+INFO 2024-09-24 12:00:00,682 tasks Date: 2024-09-24
+INFO 2024-09-24 12:00:00,682 tasks Time: 12:00:00.682650
+INFO 2024-09-24 12:00:00,683 tasks Nairobi: 2024-09-24 12:00:00.683134+03:00
+INFO 2024-09-24 14:00:00,042 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 14:00:00,116 tasks Task ran at: 2024-09-24 14:00:00.116229
+INFO 2024-09-24 14:00:00,116 tasks Date: 2024-09-24
+INFO 2024-09-24 14:00:00,116 tasks Time: 14:00:00.116898
+INFO 2024-09-24 14:00:00,117 tasks Nairobi: 2024-09-24 14:00:00.117156+03:00
+INFO 2024-09-24 16:45:34,736 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 16:45:34,781 tasks Task ran at: 2024-09-24 16:45:34.781324
+INFO 2024-09-24 16:45:34,781 tasks Date: 2024-09-24
+INFO 2024-09-24 16:45:34,781 tasks Time: 16:45:34.781833
+INFO 2024-09-24 16:45:34,782 tasks Nairobi: 2024-09-24 16:45:34.782048+03:00
+INFO 2024-09-24 18:00:00,037 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-24 18:00:00,038 tasks Task ran at: 2024-09-24 18:00:00.037955
+INFO 2024-09-24 18:00:00,038 tasks Date: 2024-09-24
+INFO 2024-09-24 18:00:00,038 tasks Time: 18:00:00.038792
+INFO 2024-09-24 18:00:00,039 tasks Nairobi: 2024-09-24 18:00:00.039203+03:00
+INFO 2024-09-24 19:17:42,278 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-24 19:17:42,315 tasks Task ran at: 2024-09-24 19:17:42.315395
+INFO 2024-09-24 19:17:42,315 tasks Nairobi: 2024-09-24 19:17:42.315763+03:00
+INFO 2024-09-24 19:17:42,331 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-24 19:17:42,332 tasks Task ran at: 2024-09-24 19:17:42.332067
+INFO 2024-09-24 19:17:42,332 tasks Nairobi: 2024-09-24 19:17:42.332443+03:00
+ERROR 2024-09-24 19:17:42,346 tasks Failed to set fines for missed contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/set_fines_for_missed_contributions
+INFO 2024-09-24 19:18:24,722 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-24 19:18:24,723 tasks Task ran at: 2024-09-24 19:18:24.723086
+INFO 2024-09-24 19:18:24,723 tasks Nairobi: 2024-09-24 19:18:24.723448+03:00
+INFO 2024-09-24 19:18:24,745 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-24 19:18:24,746 tasks Task ran at: 2024-09-24 19:18:24.746540
+INFO 2024-09-24 19:18:24,747 tasks Nairobi: 2024-09-24 19:18:24.747059+03:00
+INFO 2024-09-24 19:18:24,850 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-24 19:18:24,850 tasks Task ran at: 2024-09-24 19:18:24.850773
+INFO 2024-09-24 19:18:24,851 tasks Nairobi: 2024-09-24 19:18:24.851138+03:00
+INFO 2024-09-25 08:59:21,084 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-25 08:59:21,084 tasks Task ran at: 2024-09-25 08:59:21.084962
+INFO 2024-09-25 08:59:21,085 tasks Nairobi: 2024-09-25 08:59:21.085234+03:00
+ERROR 2024-09-25 08:59:21,088 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7fd0501a03d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-25 08:59:21,102 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-25 08:59:21,102 tasks Task ran at: 2024-09-25 08:59:21.102843
+INFO 2024-09-25 08:59:21,103 tasks Date: 2024-09-25
+INFO 2024-09-25 08:59:21,103 tasks Time: 08:59:21.103361
+INFO 2024-09-25 08:59:21,103 tasks Nairobi: 2024-09-25 08:59:21.103598+03:00
+INFO 2024-09-25 10:16:47,295 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-25 10:16:47,297 tasks Task ran at: 2024-09-25 10:16:47.296959
+INFO 2024-09-25 10:16:47,297 tasks Date: 2024-09-25
+INFO 2024-09-25 10:16:47,298 tasks Time: 10:16:47.298086
+INFO 2024-09-25 10:16:47,298 tasks Nairobi: 2024-09-25 10:16:47.298391+03:00
+INFO 2024-09-25 11:05:43,279 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-25 11:05:43,316 tasks Task ran at: 2024-09-25 11:05:43.316916
+INFO 2024-09-25 11:05:43,317 tasks Nairobi: 2024-09-25 11:05:43.317320+03:00
+INFO 2024-09-25 11:05:43,343 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-25 11:05:43,344 tasks Task ran at: 2024-09-25 11:05:43.344479
+INFO 2024-09-25 11:05:43,345 tasks Nairobi: 2024-09-25 11:05:43.345504+03:00
+INFO 2024-09-25 11:05:43,596 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-25 11:05:43,596 tasks Task ran at: 2024-09-25 11:05:43.596420
+INFO 2024-09-25 11:05:43,596 tasks Nairobi: 2024-09-25 11:05:43.596677+03:00

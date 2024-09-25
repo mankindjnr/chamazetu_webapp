@@ -13,10 +13,8 @@ class UserBase(BaseModel):
     password: str
     is_active: bool  # account is active or not
     email_verified: bool  # email verification
-    role: str  # member or manager
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -25,7 +23,6 @@ class UserLogin(BaseModel):
     password: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -33,7 +30,6 @@ class UserEmailActvationBase(BaseModel):
     user_email: EmailStr
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -48,7 +44,7 @@ class UserResp(BaseModel):
     User: List[Response]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ====================  Token  ====================
@@ -65,7 +61,6 @@ class refreshedToken(BaseModel):
 
 class TokenData(BaseModel):
     username: str
-    role: str
 
 
 class receivedToken(BaseModel):
@@ -76,23 +71,14 @@ class receivedToken(BaseModel):
 class ChamaBase(BaseModel):
     chama_name: str
     chama_type: str
-    num_of_members_allowed: str
-    accepting_members: bool
     description: str
+    num_of_members_allowed: str
     registration_fee: int
-    contribution_amount: int
-    contribution_interval: str
-    contribution_day: str
     restart: bool
-    is_active: bool
-    manager_id: int
     category: str
-    fine_per_share: int
     last_joining_date: datetime
-    first_contribution_date: datetime
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -100,7 +86,27 @@ class ChamaResp(BaseModel):
     Chama: List[ChamaBase]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class ChamaActivity(BaseModel):
+    contribution_date: date
+    title: str
+    type: str
+    activity_id: int
+
+
+class ChamaDetails(BaseModel):
+    manager_id: int
+    manager_profile_picture: str
+    investment_balance: float
+    general_account: float
+    total_fines: float
+    activities: List[ChamaActivity]
+
+
+class ChamaDashboardResp(BaseModel):
+    chama: ChamaDetails
 
 
 class ChamaActivateDeactivate(BaseModel):
@@ -108,7 +114,7 @@ class ChamaActivateDeactivate(BaseModel):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ActivelyAcceptingMembersChamas(BaseModel):
@@ -118,7 +124,6 @@ class ActivelyAcceptingMembersChamas(BaseModel):
     id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -127,7 +132,6 @@ class ChamaDescription(BaseModel):
     description: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -136,7 +140,6 @@ class ChamaVision(BaseModel):
     vision: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -145,7 +148,6 @@ class ChamaMission(BaseModel):
     mission: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -154,7 +156,6 @@ class ChamaRuleBase(BaseModel):
     rule: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -163,7 +164,6 @@ class ChamaRuleDeleteBase(BaseModel):
     rule_id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -173,7 +173,6 @@ class ChamaFaqBase(BaseModel):
     answer: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -182,7 +181,6 @@ class ChamaFaqDeleteBase(BaseModel):
     faq_id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -190,11 +188,83 @@ class ChamaDeleteBase(BaseModel):
     chama_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+# =============== activities =================
+class ActivityBase(BaseModel):
+    chama_id: int
+    activity_title: str
+    activity_type: str
+    activity_description: str
+    activity_amount: int
+    fine: int
+    frequency: str
+    interval: str
+    contribution_day: str
+    mandatory: bool
+    last_joining_date: str
+    first_contribution_date: str
+
+    class Config:
+        from_attributes = True
+
+
+class CreateActivityResp(BaseModel):
+    status: str
+    message: str
+
+    class Config:
+        from_attributes = True
+
+
+class ActivityResp(BaseModel):
+    chama_id: int
+    activity_name: str
+    activity_type: str
+    activity_amount: int
+    activity_balance: int
+
+    class Config:
+        from_attributes = True
+
+
+class JoinActivityBase(BaseModel):
+    shares: int
+
+    class Config:
+        from_attributes = True
+
+
+class ContributeToActivityBase(BaseModel):
+    expected_contribution: int
+    amount: int
+
+    class Config:
         from_attributes = True
 
 
 # ============== transaction =================
+class LoadWalletBase(BaseModel):
+    amount: int
+    unprocessed_code: str
+    wallet_id: str
+    transaction_origin: str
+    transaction_code: str
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class LoadWalletResp(BaseModel):
+    amount: int
+    transaction_code: str
+
+    class Config:
+        from_attributes = True
+
+
 class WalletTransactionUni(BaseModel):
     amount: float
     transaction_type: str
@@ -226,7 +296,7 @@ class UnifiedTransactionBase(BaseModel):
     )
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UnifiedWalletContBase(BaseModel):
@@ -236,14 +306,14 @@ class UnifiedWalletContBase(BaseModel):
     amount: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UnifiedWalletContResp(BaseModel):
     message: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TransactionBase(BaseModel):
@@ -253,7 +323,7 @@ class TransactionBase(BaseModel):
     transaction_origin: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         # from_attributes = True
 
 
@@ -266,8 +336,7 @@ class DirectTransactionBase(BaseModel):
     transaction_code: str
 
     class Config:
-        orm_mode = True
-        # from_attributes = True
+        from_attributes = True
 
 
 class BeforeProcessingBase(BaseModel):
@@ -280,8 +349,7 @@ class BeforeProcessingBase(BaseModel):
     transaction_type: str
 
     class Config:
-        orm_mode = True
-        # from_attributes = True
+        from_attributes = True
 
 
 class WalletTransactionBase(BaseModel):
@@ -289,18 +357,49 @@ class WalletTransactionBase(BaseModel):
     transaction_destination: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UnprocessedWalletDepositBase(BaseModel):
     amount: int
     transaction_type: str
-    transaction_code: str
+    transaction_origin: str
     transaction_destination: str
-    member_id: int
+    user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class UnprocessedWalletDepositResp(BaseModel):
+    transaction_code: str
+
+    class Config:
+        from_attributes = True
+
+
+class UnprocessedWalletWithdrawalBase(BaseModel):
+    amount: int
+    transaction_destination: str
+
+    class Config:
+        from_attributes = True
+
+
+class UnprocessedWalletWithdrawalResp(BaseModel):
+    transaction_code: str
+
+    class Config:
+        from_attributes = True
+
+
+class ProcessUnprocessedWalletWithdrawalBase(BaseModel):
+    amount: int
+    unprocessed_transaction_code: str
+    mpesa_receipt_number: str
+
+    class Config:
+        from_attributes = True
 
 
 class WalletToChamaBase(BaseModel):
@@ -309,14 +408,14 @@ class WalletToChamaBase(BaseModel):
     transaction_code: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberWalletBalanceResp(BaseModel):
     wallet_balance: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class WalletTransactionResp(BaseModel):
@@ -327,7 +426,7 @@ class WalletTransactionResp(BaseModel):
     transaction_destination: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UpdateWalletBase(BaseModel):
@@ -338,7 +437,7 @@ class UpdateWalletBase(BaseModel):
     transaction_code: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class TransactionResp(BaseModel):
@@ -351,7 +450,7 @@ class TransactionResp(BaseModel):
     transaction_completed: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class RecentTransactionResp(BaseModel):
@@ -361,14 +460,14 @@ class RecentTransactionResp(BaseModel):
     date_of_transaction: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberRecentTransactionBase(BaseModel):
     member_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberRecentTransactionResp(BaseModel):
@@ -385,7 +484,7 @@ class WithdrawBase(BaseModel):
     amount: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ============== chama account =================
@@ -395,7 +494,7 @@ class ChamaAccountBase(BaseModel):
     transaction_type: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ChamaAccountResp(BaseModel):
@@ -403,7 +502,7 @@ class ChamaAccountResp(BaseModel):
     account_balance: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # ============== shares =================
@@ -414,7 +513,7 @@ class ChamaMemberSharesBase(BaseModel):
     num_of_shares: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberSharesBase(BaseModel):
@@ -422,14 +521,14 @@ class MemberSharesBase(BaseModel):
     chama_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberSharesResp(BaseModel):
-    member_expected_contribution: int
+    expected_contribution: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ChamaMembershipBase(BaseModel):
@@ -437,30 +536,31 @@ class ChamaMembershipBase(BaseModel):
     member_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ChamaMembershipResp(BaseModel):
     is_member: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class JoinChamaBase(BaseModel):
     chama_id: int
-    member_id: int
-    num_of_shares: int
+    user_id: int
+    registration_fee: int
+    unprocessed_code: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class UpdateCallbackData(BaseModel):
     checkoutid: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # =========== updated password =================
@@ -518,7 +618,6 @@ class MemberChamasResp(BaseModel):
     contribution_interval: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -529,14 +628,14 @@ class MemberContributionBase(BaseModel):
     previous_contribution_date: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class MemberContributionResp(BaseModel):
-    member_contribution: int
+    total_contribution: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ChamaMembersList(BaseModel):
@@ -549,17 +648,54 @@ class ChamaMembersList(BaseModel):
     profile_picture: Union[str, None]
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
 # ============= manager =========================
+class ChamaMemberCount(BaseModel):
+    chama_id: int
+    chama_name: str
+    member_count: int
+    is_active: bool
+
+
+class ManagerFeature(BaseModel):
+    feature_title: str
+    feature_description: str
+    feature_date: datetime
+
+
+class ManagerDashboardResp(BaseModel):
+    manager_id: int
+    manager_profile_picture: Optional[str]
+    chamas: List[ChamaMemberCount]
+    updates_and_features: List[ManagerFeature]
+
+    class Config:
+        orm_mode = True
+
+
 class ManagerChamasResp(BaseModel):
     chama_name: str
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class UserChama(BaseModel):
+    email: EmailStr
+    chama_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class UserActivity(BaseModel):
+    email: EmailStr
+    activity_id: int
+
+    class Config:
         from_attributes = True
 
 
@@ -573,7 +709,6 @@ class DailyInterestResp(BaseModel):
     date_earned: datetime
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -584,7 +719,6 @@ class MonthlyInterestResp(BaseModel):
     total_amount_invested: float
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -593,7 +727,6 @@ class SuccessBase(BaseModel):
     message: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -601,7 +734,6 @@ class PhoneNumberBase(BaseModel):
     phone_number: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -609,7 +741,6 @@ class TwitterBase(BaseModel):
     twitter: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -617,7 +748,6 @@ class FacebookBase(BaseModel):
     facebook: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -625,7 +755,6 @@ class LinkedinBase(BaseModel):
     linkedin: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -633,7 +762,6 @@ class ProfilePicture(BaseModel):
     profile_picture_name: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -644,7 +772,6 @@ class ProfileUpdateBase(BaseModel):
     linkedin: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -652,7 +779,6 @@ class NewsletterSubscription(BaseModel):
     email: EmailStr
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -661,19 +787,18 @@ class NewsletterSubscriptionResp(BaseModel):
     date_subscribed: datetime
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
 # ============ Daraja API=========================
 class StkPushBase(BaseModel):
-    phone_number: str
     amount: int
-    recipient: str
+    phone_number: str
+    transaction_destination: str
+    transaction_code: str
     description: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -681,7 +806,16 @@ class StkPushStatusBase(BaseModel):
     checkout_request_id: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class SendMoneyBase(BaseModel):
+    amount: int
+    phone_number: str
+    description: str
+    originator_conversation_id: str
+
+    class Config:
         from_attributes = True
 
 
@@ -696,7 +830,6 @@ class CallbackDataBase(BaseModel):
     PhoneNumber: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -711,6 +844,51 @@ class MpesaResponse(BaseModel):
     PhoneNumber: int = Field(..., alias="PhoneNumber")
 
 
+class B2CMpesaResponse(BaseModel):
+    ResultType: int
+    ResultCode: int
+    ResultDesc: str
+    OriginatorConversationID: str
+    ConversationID: str
+    TransactionID: str
+    ResultParameters: dict
+    ReferenceData: dict
+
+
+# ============ Mpesa B2C RESULT =========================
+class ResultParameter(BaseModel):
+    Key: str
+    Value: str
+
+
+class ResultParameters(BaseModel):
+    ResultParameter: List[ResultParameter]
+
+
+class ReferenceItem(BaseModel):
+    Key: str
+    Value: str
+
+
+class ReferenceData(BaseModel):
+    ReferenceItem: ReferenceItem
+
+
+class Result(BaseModel):
+    ResultType: int
+    ResultCode: int
+    ResultDesc: str
+    OriginatorConversationID: str
+    ConversationID: str
+    TransactionID: str
+    ResultParameters: ResultParameters
+    ReferenceData: ReferenceData
+
+
+class B2CMpesaResult(BaseModel):
+    Result: Result
+
+
 # =========== fine ==============
 class MemberFineBase(BaseModel):
     member_id: int
@@ -718,7 +896,6 @@ class MemberFineBase(BaseModel):
     amount: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -730,7 +907,6 @@ class MemberMpesaFineBase(BaseModel):
     amount: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -738,7 +914,6 @@ class MemberFineResp(BaseModel):
     balance_after_fines: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -747,7 +922,6 @@ class MemberFines(BaseModel):
     chama_id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -755,7 +929,6 @@ class MemberFinesResp(BaseModel):
     has_fines: bool
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -767,7 +940,6 @@ class MpesaPayFinesBase(BaseModel):
     member_id: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -775,7 +947,6 @@ class TotalFinesResp(BaseModel):
     total_fines: int
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -788,5 +959,4 @@ class AutoContributeBase(BaseModel):
     status: str
 
     class Config:
-        orm_mode = True
         from_attributes = True

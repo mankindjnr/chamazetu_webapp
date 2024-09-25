@@ -19,8 +19,8 @@ from chama.usermanagement import (
 load_dotenv()
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def update_chama_description(request, chama_name):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -54,8 +54,8 @@ def update_chama_description(request, chama_name):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def update_chama_mission(request, chama_name):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -89,8 +89,8 @@ def update_chama_mission(request, chama_name):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def update_chama_vision(request, chama_name):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -124,8 +124,8 @@ def update_chama_vision(request, chama_name):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def add_chama_rules(request, chama_name):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -159,8 +159,8 @@ def add_chama_rules(request, chama_name):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def delete_chama_rule(request, chama_name, rule_id):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -193,8 +193,8 @@ def delete_chama_rule(request, chama_name, rule_id):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def add_chama_faqs(request, chama_name):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -229,8 +229,8 @@ def add_chama_faqs(request, chama_name):
         return redirect(reverse("manager:dashboard"))
 
 
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def delete_chama_faq(request, chama_name, faq_id):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
@@ -264,8 +264,8 @@ def delete_chama_faq(request, chama_name, faq_id):
 
 
 # change the status of the chama to accepting members or not
-@tokens_in_cookies("manager")
-@validate_and_refresh_token("manager")
+@tokens_in_cookies()
+@validate_and_refresh_token()
 def new_members(request, chama_id, status):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")

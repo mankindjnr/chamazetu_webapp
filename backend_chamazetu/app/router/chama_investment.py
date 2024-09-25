@@ -24,7 +24,7 @@ investment_error_logger = logging.getLogger("investments_error")
 @router.get("/in-house_mmf", status_code=status.HTTP_200_OK)
 async def inhouse_mmf_data(
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -53,7 +53,7 @@ async def inhouse_mmf_data(
 )
 async def get_available_investments(
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -78,7 +78,7 @@ async def get_available_investments(
 async def make_an_investment(
     invest_data: schemas.InvestBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -190,9 +190,7 @@ async def update_investment_account(
 async def get_investment_account_balance(
     chama_id: int,
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Manager, models.Member] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -237,9 +235,7 @@ async def get_investment_account_balance(
 async def get_investments_recent_activity(
     chama_id: int,
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Manager, models.Member] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
         recent_invst_activity = (
@@ -438,9 +434,7 @@ async def get_daily_interests(
     chama_id: int,
     limit: schemas.Limit = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Manager, models.Member] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -477,9 +471,7 @@ async def get_monthly_interests(
     chama_id: int,
     limit: schemas.Limit = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: Union[models.Manager, models.Member] = Depends(
-        oauth2.get_current_user
-    ),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
@@ -614,7 +606,7 @@ async def get_last_withdrawal_date(
 async def make_a_withdrawal_request(
     withdraw_data: schemas.WithdrawBase = Body(...),
     db: Session = Depends(database.get_db),
-    current_user: models.Manager = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
