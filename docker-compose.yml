@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   chamazetu_database:
     image: postgres:latest

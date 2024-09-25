@@ -134,39 +134,6 @@ class User(Base):
     activity_fines = relationship("ActivityFine", back_populates="user")
 
 
-class Member(Base):
-    __tablename__ = "members"
-
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String, nullable=False)
-    last_name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    email_verified = Column(Boolean, default=False)
-    # for kyc purposes id number(cmpared against phone num reg details)
-    phone_number = Column(String(12), nullable=True)
-    twitter = Column(String, nullable=True)
-    facebook = Column(String, nullable=True)
-    linkedin = Column(String, nullable=True)
-    profile_picture = Column(String, nullable=True)
-    password = Column(String, nullable=False)
-    date_joined = Column(DateTime, default=nairobi_now)
-    updated_at = Column(
-        DateTime,
-        default=nairobi_now,
-        onupdate=nairobi_now,
-    )
-    is_active = Column(Boolean, default=True)
-    is_member = Column(Boolean, default=True)
-    is_deleted = Column(Boolean, default=False)
-
-    # wallet details
-    wallet_balance = Column(Integer, nullable=False, default=0)
-    wallet_number = Column(String(7), unique=True, nullable=False)
-
-    # Define the one-to-many relationship between member and transactions(1 member can have many transactions)
-    # transactions = relationship("Transaction", back_populates="member")
-
-
 class Chama(Base):
     __tablename__ = "chamas"
 
