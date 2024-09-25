@@ -117,13 +117,13 @@ async def update_profile_picture(
 async def update_profile_picture(
     profile: schemas.ProfilePicture,
     db: Session = Depends(database.get_db),
-    current_user: models.Member = Depends(oauth2.get_current_user),
+    current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
         print("===update profile picture===")
         profile_picture_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/profile_pictures/{profile.profile_picture_name}.jpeg"
 
-        user = db.query(models.Member).filter_by(id=current_user.id).first()
+        user = db.query(models.User).filter_by(id=current_user.id).first()
 
         if not user:
             raise HTTPException(

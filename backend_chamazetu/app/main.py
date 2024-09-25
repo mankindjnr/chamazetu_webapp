@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from .router import (
     users,
     auth,
-    test,
     chama_management,
     transactions,
     chama_investment,
@@ -50,7 +49,6 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(auth.router)
-app.include_router(test.router)
 app.include_router(chama_management.router)
 app.include_router(transactions.router)
 app.include_router(chama_investment.router)

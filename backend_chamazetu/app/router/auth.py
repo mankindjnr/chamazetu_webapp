@@ -93,6 +93,6 @@ async def check_token(
 # this is for logout, currently not working but everything else is working
 # TODO: update the User to correctly logout
 @router.post("/logout")
-async def logout(current_user: models.Member = Depends(oauth2.get_current_user)):
+async def logout(current_user: models.User = Depends(oauth2.get_current_user)):
     token_data = schemas.TokenData(username=current_user.email, expires=0)
     return {"token_data": token_data}

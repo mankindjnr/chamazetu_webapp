@@ -1705,3 +1705,17 @@ INFO 2024-09-25 11:05:43,345 tasks Nairobi: 2024-09-25 11:05:43.345504+03:00
 INFO 2024-09-25 11:05:43,596 tasks ==========chama/tasks.py: update_contribution_days()==========
 INFO 2024-09-25 11:05:43,596 tasks Task ran at: 2024-09-25 11:05:43.596420
 INFO 2024-09-25 11:05:43,596 tasks Nairobi: 2024-09-25 11:05:43.596677+03:00
+INFO 2024-09-25 17:56:31,527 tasks ==========chama/tasks.py: update_callback_transactions()==========
+INFO 2024-09-25 17:56:31,527 tasks Task ran at: 2024-09-25 17:56:31.527747
+INFO 2024-09-25 17:56:31,528 tasks Nairobi: 2024-09-25 17:56:31.527986+03:00
+ERROR 2024-09-25 17:56:31,530 tasks http req fialed: Failed to update callback transactions: HTTPConnectionPool(host='chamazetu_backend', port=9400): Max retries exceeded with url: /callback/update_callback_transactions (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f4f9b0b0370>: Failed to establish a new connection: [Errno 111] Connection refused'))
+INFO 2024-09-25 17:56:31,556 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-25 17:56:31,556 tasks Task ran at: 2024-09-25 17:56:31.556875
+INFO 2024-09-25 17:56:31,557 tasks Date: 2024-09-25
+INFO 2024-09-25 17:56:31,557 tasks Time: 17:56:31.557451
+INFO 2024-09-25 17:56:31,557 tasks Nairobi: 2024-09-25 17:56:31.557676+03:00
+INFO 2024-09-25 18:00:00,089 tasks ==========chama/tasks.py: log_date_time()==========
+INFO 2024-09-25 18:00:00,090 tasks Task ran at: 2024-09-25 18:00:00.090854
+INFO 2024-09-25 18:00:00,091 tasks Date: 2024-09-25
+INFO 2024-09-25 18:00:00,091 tasks Time: 18:00:00.091658
+INFO 2024-09-25 18:00:00,092 tasks Nairobi: 2024-09-25 18:00:00.091980+03:00
