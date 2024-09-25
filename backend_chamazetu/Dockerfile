@@ -16,5 +16,5 @@ RUN pip install -r requirements.txt
 COPY . /app/backend
 
 # Command to run on container start
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9400", "--reload"]
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9400", "--workers", "4"]
+# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9400", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9400", "--workers", "4"]
