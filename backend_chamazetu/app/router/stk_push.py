@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from typing import List
 from zoneinfo import ZoneInfo
 import logging
+import asyncio
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -23,6 +25,8 @@ transaction_info_logger = logging.getLogger("transactions_info")
 transaction_error_logger = logging.getLogger("transactions_error")
 
 load_dotenv()
+
+TIMEOUT = 10
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
 consumer_key = os.getenv("CONSUMER_KEY")
@@ -86,7 +90,33 @@ def generate_password():
     return base64.b64encode(data_to_encode.encode("utf-8")).decode("utf-8"), timestamp
 
 
-# sending stk push request
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(2),
+    retry=retry_if_exception_type(httpx.RequestError),
+)
+async def perform_stk_push(
+    client: httpx.AsyncClient, url: str, headers: dict, payload: dict
+):
+    """performs the stk push request with retries"""
+    try:
+        response = await client.post(
+            url, headers=headers, json=payload, timeout=TIMEOUT
+        )
+        response.raise_for_status()  # raise exception for non-2xx status codes
+        return response.json()
+    except httpx.TimeoutException:
+        transaction_error_logger.error("Request timed out")
+        raise
+    except httpx.RequestError as exc:
+        transaction_error_logger.error(f"HTTP request error: {str(exc)}")
+        raise
+    except httpx.Exception as e:
+        transaction_error_logger.error(f"HTTP status error: {str(e)}")
+        raise
+
+
+# stk push route
 @router.post("/push", status_code=status.HTTP_201_CREATED)
 async def stk_push(
     push_data: schemas.StkPushBase = Body(...),
@@ -96,12 +126,11 @@ async def stk_push(
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
     password, timestamp = generate_password()
-    # callback_url = (
-    #     "https://chamazetu.com/callback"
-    #     if push_data.description != "Registration"
-    #     else "https://chamazetu.com/callback/registration"
-    # )
-    callback_url = "https://chamazetu.com/api/callback/c2b"
+    callback_url = (
+        "https://chamazetu.com/api/callback/c2b"
+        if push_data.description != "Registration"
+        else "https://chamazetu.com/api/callback/registration"
+    )
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -121,15 +150,29 @@ async def stk_push(
         "PartyA": phone_number,
         "PartyB": shortcode,
         "PhoneNumber": phone_number,
-        "CallBackURL": f"{callback_url}/{unprocessed_code}",
+        "CallBackURL": f"https://20jb26ww-9400.uks1.devtunnels.ms/callback/c2b/{unprocessed_code}",
         "AccountReference": recipient,
         "TransactionDesc": description,
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # raise exception for non-2xx status codes
-        return response.json()
+    async with httpx.AsyncClient(
+        limits=httpx.Limits(max_connections=10, max_keepalive_connections=5)
+    ) as client:
+        try:
+            response = await perform_stk_push(client, url, headers, payload)
+            return response
+        except httpx.RequestError as e:
+            transaction_error_logger.error(f"HTTP request error: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to initiate STK push")
+        except httpx.HTTPStatusError as e:
+            transaction_error_logger.error(f"HTTP status error: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to initiate STK push")
+        except ValueError as e:
+            transaction_error_logger.error(f"Value error: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to initiate STK push")
+        except Exception as e:
+            transaction_error_logger.error(f"Error: {str(e)}")
+            raise HTTPException(status_code=400, detail="Failed to initiate STK push")
 
 
 @router.get("/status/{checkout_request_id}")

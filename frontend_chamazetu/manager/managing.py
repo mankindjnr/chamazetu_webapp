@@ -47,7 +47,7 @@ async def dashboard(request):
         f"{os.getenv('api_url')}/managers/dashboard", headers=headers
     )
     print("===========manager dashboard================")
-    print(dashboard_resp.json())
+    print(dashboard_resp.json(), ":", current_role)
 
     if dashboard_resp.status_code == HTTPStatus.OK:
         dashboard_results = dashboard_resp.json()
@@ -55,7 +55,7 @@ async def dashboard(request):
             request,
             "manager/dashboard.html",
             {
-                "current_user": dashboard_results.get("current_user"),
+                "current_user": dashboard_results.get("user_email"),
                 "current_role": current_role,
                 "manager_id": dashboard_results.get("manager_id"),
                 "profile_picture": dashboard_results.get("manager_profile_picture"),

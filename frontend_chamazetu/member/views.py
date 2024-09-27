@@ -26,4 +26,10 @@ from .member_transactions import (
     fix_mpesa_to_wallet_deposit,
 )
 from .members_activity import members_tracker, fines_tracker
-from .profile_update import profile_updater
+from .profile_update import (
+    update_profile_image,
+    update_phone_number,
+    update_twitter_handle,
+    update_linkedin_handle,
+    update_facebook_handle,
+)

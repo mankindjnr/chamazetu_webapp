@@ -142,6 +142,10 @@ async def join_chama(request):
             messages.error(request, "Invalid phone number")
             return HttpResponseRedirect(reverse("chama:chamas"))
 
+        if member_already_in_chama(chama_id, user_id):
+            messages.error(request, "You are already a member of this chama")
+            return HttpResponseRedirect(reverse("chama:chamas"))
+
         # confirm if the needed details are there, that is the chamaname, num_of_shares and the registration amount, also, retrieve the registration fee for that chama
         if chama_name and reg_fee and request.COOKIES.get("access_token"):
             timestamp = datetime.now(nairobi_tz).strftime("%Y%m%d%H%M%S")
@@ -157,15 +161,13 @@ async def join_chama(request):
                 response = requests.post(url, json=data)
                 if response.status_code == HTTPStatus.CREATED:
                     # send_email_to_new_member
-                    send_email_to_new_chama_member.delay(user_id)
-                    messages.success(
-                        request,
-                        "A confirmation email has been sent to you, please check your inbox",
-                    )
+                    messages.success(request, "You have successfully joined the chama")
                     return HttpResponseRedirect(reverse("member:dashboard"))
-
-            # before sending, confirm that the user is not already a member of that chama
-            if not member_already_in_chama(chama_id, user_id):
+                else:
+                    messages.error(
+                        request, "Failed to join chama, please try again later"
+                    )
+            else:
                 # record unprocessed request
                 unprocessed_request = requests.post(
                     f"{os.getenv('api_url')}/transactions/unprocessed_deposit",
@@ -195,15 +197,7 @@ async def join_chama(request):
                     )
                     if reg_resp.status_code == HTTPStatus.CREATED:
                         # one bg task to add use to the member_chama table after we verify the payment status
-                        add_member_to_chama.apply_async(
-                            args=(
-                                chama_id,
-                                user_id,
-                                registration_fee,
-                                reg_resp.json()["CheckoutRequestID"],
-                                unprocessed_request.json()["transaction_code"],
-                            )
-                        )
+                        send_email_to_new_chama_member.delay(user_id)
                         messages.success(
                             request,
                             "Your chama registration request has been sent, please check your email for a confirmation message",
@@ -217,8 +211,6 @@ async def join_chama(request):
                     messages.error(
                         request, "Failed to record transaction, please try again later."
                     )
-            else:
-                messages.error(request, "You are already a member of this chama")
 
         else:
             messages.error(request, "Please fill in all the fields")

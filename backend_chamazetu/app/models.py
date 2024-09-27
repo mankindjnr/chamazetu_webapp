@@ -117,7 +117,7 @@ class User(Base):
         unique=True,
         nullable=False,
         index=True,
-        default=lambda: f"w470{next_wallet_id}",
+        default=lambda: f"W470{next_wallet_id}",
     )
     zetucoins = Column(Integer, nullable=False, default=0)
     auto_contributions = relationship("AutoContribution", back_populates="user")
@@ -215,7 +215,7 @@ def set_user_id(mapper, connection, target):
 @event.listens_for(User, "before_insert")
 def set_wallet_id(mapper, connection, target):
     next_wallet_id = connection.execute(wallet_id_seq)
-    target.wallet_id = f"w470{next_wallet_id}"
+    target.wallet_id = f"W470{next_wallet_id}"
 
 
 # activities created by manager for members in a chama

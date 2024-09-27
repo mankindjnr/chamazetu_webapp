@@ -7,8 +7,11 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
 from http import HTTPStatus
 
-from chama.decorate.tokens_in_cookies import tokens_in_cookies
-from chama.decorate.validate_refresh_token import validate_and_refresh_token
+from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
+from chama.decorate.validate_refresh_token import (
+    validate_and_refresh_token,
+    async_validate_and_refresh_token,
+)
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
 from chama.chamas import get_chama_name
@@ -171,10 +174,11 @@ def change_password(request, user_id):
         current_password = request.POST.get("password")
         new_password = request.POST.get("newpassword")
         confirm_password = request.POST.get("renewpassword")
+        role = request.COOKIES.get("current_role")
 
         if new_password != confirm_password:
             messages.error(request, "Passwords do not match")
-            return redirect(reverse(f"{role}:profile", args=[user_id]))
+            return redirect(reverse("member:profile", args=[user_id]))
 
         url = f"{os.getenv('api_url')}/users/change_password"
         data = {
@@ -188,23 +192,34 @@ def change_password(request, user_id):
         }
         response = requests.put(url, json=data, headers=headers)
 
-        if response.status_code == 201:
+        if response.status_code == HTTPStatus.CREATED:
             messages.success(request, "Password changed successfully")
-            return redirect(reverse(f"{role}:profile", args=[user_id]))
+            return redirect(reverse("member:profile", args=[user_id]))
         else:
             messages.error(
                 request, "An error occurred or the current password is wrong"
             )
-            return redirect(reverse(f"{role}:profile", args=[user_id]))
+            return redirect(reverse("member:profile", args=[user_id]))
 
-    return redirect(reverse(f"{role}:profile", args=[user_id]))
+    return redirect(reverse("member:profile", args=[user_id]))
 
 
-@tokens_in_cookies()
-@validate_and_refresh_token()
-def profile(request, member_id):
-    full_profile = get_user_full_profile(member_id)
-    return render(request, "member/profile.html", {"profile": full_profile})
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def profile(request, user_id):
+    full_profile = get_user_full_profile(user_id)
+    print("===========member profile================")
+    print(full_profile)
+    current_role = request.COOKIES.get("current_role")
+    return render(
+        request,
+        "member/profile.html",
+        {
+            "user_id": user_id,
+            "profile": full_profile,
+            "current_role": current_role,
+        },
+    )
 
 
 def is_empty_dict(data):

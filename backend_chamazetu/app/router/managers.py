@@ -86,7 +86,7 @@ async def get_manager_dashboard(
 
         manager_dashboard = {
             "manager_id": current_user.id,
-            "current_user": manager.email,
+            "user_email": current_user.email,
             "manager_profile_picture": manager.profile_picture,
             "chamas": chamas,
             "updates_and_features": updates_and_features_list,

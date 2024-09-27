@@ -102,50 +102,6 @@ async def callback_data(
     return {"message": "Transaction processed successfully."}
 
 
-@router.post("/registration", status_code=status.HTTP_201_CREATED)
-async def registration_callback(
-    transaction_data: schemas.MpesaResponse = Body(...),
-    db: Session = Depends(database.get_db),
-):
-
-    try:
-        # Start a new transaction
-        # db.begin()
-        transaction_date = datetime.strptime(
-            str(transaction_data.TransactionDate), "%Y%m%d%H%M%S"
-        )
-
-        # Store the data in the callback table
-        new_callback = models.CallbackData(
-            MerchantRequestID=transaction_data.MerchantRequestID,
-            CheckoutRequestID=transaction_data.CheckoutRequestID,
-            ResultCode=transaction_data.ResultCode,
-            ResultDesc=transaction_data.ResultDesc,
-            Amount=transaction_data.Amount,
-            MpesaReceiptNumber=transaction_data.MpesaReceiptNumber,
-            TransactionDate=transaction_date,
-            PhoneNumber=transaction_data.PhoneNumber,
-            Purpose="Registration",
-            Status="Pending",
-        )
-        db.add(new_callback)
-
-        # Commit the transaction
-        db.commit()
-        db.refresh(new_callback)
-
-    except Exception as e:
-        # Rollback the transaction in case of an error
-        db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
-    finally:
-        # Close the session
-        db.close()
-
-    return {"message": "Transaction processed successfully."}
-
-
 @router.put(
     "/update_pending_callback_data/{checkoutid}", status_code=status.HTTP_200_OK
 )
@@ -525,17 +481,8 @@ async def c2b_callback(
                 "Value"
             ]
         )
-
-        print("======c2b ata=====")
-        print(response_code, type(response_code))
-        print(amount, type(amount))
-        print(result_desc, type(result_desc))
-        print(
-            mpesa_receipt_number,
-        )
-        print(transaction_date, type(transaction_date))
-        print(phone_number, type(phone_number))
-
+        if len(phone_number) == 10:
+            phone_number = f"254{phone_number[1:]}"
         # retrieve unprocessed transaction from the database
         unprocessed_deposit = (
             db.query(models.WalletTransaction)
@@ -597,6 +544,164 @@ async def c2b_callback(
 
         db.commit()
     except Exception as e:
-        print(e)
+        db.rollback()
+        transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update transaction")
+
+
+# a better registration callback
+@router.post("/registration/{unprocessed_code}", status_code=status.HTTP_201_CREATED)
+async def chama_registration(
+    unprocessed_code: str,
+    registration_data: dict,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        print("====regi data=====")
+        print(registration_data)
+
+        response_code = registration_data["Body"]["stkCallback"]["ResultCode"]
+        if response_code != 0:
+            raise HTTPException(status_code=400, detail="The service request failed.")
+
+        today = datetime.now(nairobi_tz).date()
+        amount = int(
+            registration_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][0][
+                "Value"
+            ]
+        )
+        result_desc = registration_data["Body"]["stkCallback"]["ResultDesc"]
+        mpesa_receipt_number = registration_data["Body"]["stkCallback"][
+            "CallbackMetadata"
+        ]["Item"][1]["Value"]
+        transaction_date = datetime.strptime(
+            str(
+                registration_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3][
+                    "Value"
+                ]
+            ),
+            "%Y%m%d%H%M%S",
+        )
+        phone_number = str(
+            registration_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][4][
+                "Value"
+            ]
+        )
+        if len(phone_number) == 10:
+            phone_number = f"254{phone_number[1:]}"
+
+        db.begin()
+
+        # retrieve unprocessed transaction from the database
+        unprocessed_registration = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.transaction_type
+                    == "unprocessed registration fee",
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_code == unprocessed_code,
+                    func.date(models.WalletTransaction.transaction_date) == today,
+                    models.WalletTransaction.amount == amount,
+                    models.WalletTransaction.origin == phone_number,
+                )
+            )
+            .first()
+        )
+
+        if not unprocessed_registration:
+            db.rollback()
+            raise HTTPException(
+                status_code=404, detail="Unprocessed registration transaction not found"
+            )
+
+        chama_id = int(unprocessed_registration.destination[:-12])
+        reg_fee = (
+            db.query(models.Chama.registration_fee)
+            .filter(models.Chama.id == chama_id)
+            .scalar()
+        )
+
+        if not reg_fee:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Registration fee not found")
+
+        user = (
+            db.query(models.User)
+            .filter(models.User.id == unprocessed_registration.user_id)
+            .with_for_update()
+            .first()
+        )
+
+        if not user:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="User not found")
+
+        chamazetu_fee = 0.1 * reg_fee
+        registration_to_chama = reg_fee - chamazetu_fee
+
+        # Insert the new member to chamas
+        new_member = models.chama_user_association.insert().values(
+            chama_id=chama_id,
+            user_id=user.id,
+            date_joined=datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0),
+            registration_fee_paid=True,
+        )
+        db.execute(new_member)
+
+        # update the chama account balance
+        chama_account = (
+            db.query(models.Chama_Account)
+            .filter(models.Chama_Account.chama_id == chama_id)
+            .with_for_update()
+            .first()
+        )
+        if not chama_account:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Chama account not found")
+
+        chama_account.account_balance += registration_to_chama
+        chama_account.available_balance += registration_to_chama
+
+        # update the chamazetu account balance
+        chamazetu_reg_account = (
+            db.query(models.ChamaZetu).filter_by(id=1).with_for_update().first()
+        )
+        if not chamazetu_reg_account:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="Chamazetu account not found")
+
+        chamazetu_reg_account.registration_fees += chamazetu_fee
+
+        # update the transaction status to processed as deposit since its completed transaction
+        unprocessed_registration.transaction_completed = True
+        unprocessed_registration.transaction_type = "registration"
+        unprocessed_registration.transaction_code = mpesa_receipt_number
+        unprocessed_registration.transaction_date = transaction_date
+
+        # record the transaction in the callback table
+        new_callback = models.CallbackData(
+            MerchantRequestID=registration_data["Body"]["stkCallback"][
+                "MerchantRequestID"
+            ],
+            CheckoutRequestID=registration_data["Body"]["stkCallback"][
+                "CheckoutRequestID"
+            ],
+            ResultCode=response_code,
+            ResultDesc=result_desc,
+            Amount=amount,
+            MpesaReceiptNumber=mpesa_receipt_number,
+            TransactionDate=transaction_date,
+            PhoneNumber=phone_number,
+            Purpose="Registration",
+            Status="Success",
+        )
+
+        db.add(new_callback)
+
+        db.commit()
+    except Exception as e:
+        db.rollback()
         transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update transaction")

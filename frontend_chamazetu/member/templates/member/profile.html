@@ -86,8 +86,12 @@
       <h1>Profile</h1>
       <nav>
         <ol class="breadcrumb">
+          {% if current_role == 'member' %}
           <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'member:dashboard' %}">Home</a></li>
-          <li class="breadcrumb-item">members</li>
+          {% else %}
+          <li class="breadcrumb-item"><a style="color:chartreuse" href="{% url 'manager:dashboard' %}">Home</a></li>
+          {% endif %}
+          <li class="breadcrumb-item">users</li>
           <li class="breadcrumb-item active">Profile</li>
         </ol>
       </nav>
@@ -115,7 +119,15 @@
                 </li>
 
                 <li class="nav-item">
-                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#socials-edit">Edit Socials</button>
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#socials-linkedin">Edit Linkedin</button>
+                </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#socials-twitter">Edit Twitter</button>
+                </li>
+
+                <li class="nav-item"></li>
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#socials-facebook">Edit FaceBook</button>
                 </li>
 
                 <!-- <li class="nav-item">
@@ -167,7 +179,7 @@
                 <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
 
                   <!-- Profile Edit Form -->
-                  <form action="{% url 'member:profile_updater' %}" method="POST" enctype="multipart/form-data">
+                  <form action="{% url 'member:update_profile_image' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="row mb-3">
                       <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
@@ -201,15 +213,15 @@
                 </div>
 
                 <div class="tab-pane fade phone_number-edit pt-3" id="phone_number-edit">
-                  <form action="{% url 'member:profile_updater' %}" method="POST">
+                  <form action="{% url 'member:update_phone_number' user_id %}" method="POST">
                     {% csrf_token %}
                     
                     <div class="row mb-3">
                       <label for="Phone" class="col-md-4 col-lg-3 col-form-label">Phone</label>
                       <div class="col-md-8 col-lg-9">
-                        <div class="input-group">
-                          <span class="input-group-text" id="basic-addon1">+254</span>
-                          <input name="phone" type="number" class="form-control" id="Phone" minlength="9"  maxlength="9" value="{{profile.phone_number}}">
+                        <div class="row mb-3">
+                          <label for="phone_number" class="col-md-4 col-lg-3 col-form-label">Phone Number</label>
+                          <input name="phone_number" type="number" class="form-control" id="phone_number" minlength="10"  maxlength="10" placeholder="0712345678" value="0{{profile.phone_number}}" required>
                         </div>
                       </div>
                     </div>
@@ -220,33 +232,56 @@
                   </form>
                 </div>
 
-                <div class="tab-pane fade socials-edit pt-3" id="socials-edit">
-                  <form action="{% url 'member:profile_updater' %}" method="POST">
+                <div class="tab-pane fade socials-edit pt-3" id="socials-linkedin">
+                  <form action="{% url 'member:update_linkedin_handle' user_id %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">Linkedin Username</label>
+                      <div class="col-md-8 col-lg-9">
+                        <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">Linkedin Username</label>
+                        <input name="linkedin_handle" type="text" class="form-control" id="linkedin_handle" value="{{profile.linkedin_handle}}">
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-primary">Update linkedin</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="tab-pane fade socials-edit pt-3" id="socials-twitter">
+                  <form action="{% url 'member:update_twitter_handle' user_id %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
                       <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">Twitter Username</label>
                       <div class="col-md-8 col-lg-9">
-                        <input name="twitter" type="text" class="form-control" id="Twitter" value="{{profile.twitter_handle}}">
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <label for="Facebook" class="col-md-4 col-lg-3 col-form-label">Facebook Username</label>
-                      <div class="col-md-8 col-lg-9">
-                        <input name="facebook" type="text" class="form-control" id="Facebook" value="{{profile.facebook_handle}}">
-                      </div>
-                    </div>
-
-                    <div class="row mb-3">
-                      <label for="Linkedin" class="col-md-4 col-lg-3 col-form-label">Linkedin Username</label>
-                      <div class="col-md-8 col-lg-9">
-                        <input name="linkedin" type="text" class="form-control" id="Linkedin" value="{{profile.linkedin_handle}}">
+                        <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">Twitter Username</label>
+                        <input name="twitter_handle" type="text" class="form-control" id="twitter_handle" value="{{profile.twitter_handle}}">
                       </div>
                     </div>
 
                     <div class="text-center">
-                      <button type="submit" class="btn btn-primary">Update Socials</button>
+                      <button type="submit" class="btn btn-primary">Update Twitter</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="tab-pane fade socials-edit pt-3" id="socials-facebook">
+                  <form action="{% url 'member:update_facebook_handle' user_id %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                      <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">FaceBook Username</label>
+                      <div class="col-md-8 col-lg-9">
+                        <label for="Twitter" class="col-md-4 col-lg-3 col-form-label">FaceBook Username</label>
+                        <input name="facebook_handle" type="text" class="form-control" id="facebook_handle" value="{{profile.facebook_handle}}">
+                      </div>
+                    </div>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-primary">Update FaceBook</button>
                     </div>
                   </form>
                 </div>

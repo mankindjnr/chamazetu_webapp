@@ -6,7 +6,7 @@ app_name = "member"
 
 urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
-    path("profile/<int:member_id>", views.profile, name="profile"),
+    path("profile/<int:user_id>", views.profile, name="profile"),
     path(
         "change_password/<int:user_id>", views.change_password, name="change_password"
     ),
@@ -67,9 +67,29 @@ urlpatterns = [
         name="deactivate_auto_contributions",
     ),
     path(
-        "profile_updater",
-        views.profile_updater,
-        name="profile_updater",
+        "update_profile_image",
+        views.update_profile_image,
+        name="update_profile_image",
+    ),
+    path(
+        "update_phone_number/<int:user_id>",
+        views.update_phone_number,
+        name="update_phone_number",
+    ),
+    path(
+        "update_twitter_handle/<int:user_id>",
+        views.update_twitter_handle,
+        name="update_twitter_handle",
+    ),
+    path(
+        "update_linkedin_handle/<int:user_id>",
+        views.update_linkedin_handle,
+        name="update_linkedin_handle",
+    ),
+    path(
+        "update_facebook_handle/<int:user_id>",
+        views.update_facebook_handle,
+        name="update_facebook_handle",
     ),
     path("join", views.join_chama, name="join"),
     path(
