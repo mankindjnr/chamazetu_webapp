@@ -150,7 +150,7 @@ async def stk_push(
         "PartyA": phone_number,
         "PartyB": shortcode,
         "PhoneNumber": phone_number,
-        "CallBackURL": f"https://20jb26ww-9400.uks1.devtunnels.ms/callback/c2b/{unprocessed_code}",
+        "CallBackURL": f"{callback_url}/{unprocessed_code}",
         "AccountReference": recipient,
         "TransactionDesc": description,
     }
@@ -247,7 +247,7 @@ async def send_money(
         "Occasion": "WITHDRAWAL",
     }
 
-    print("==payload==\n", payload)
+    # print("==payload==\n", payload)
 
     try:
         async with httpx.AsyncClient() as client:
