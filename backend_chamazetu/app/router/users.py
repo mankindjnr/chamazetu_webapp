@@ -227,29 +227,28 @@ async def update_users_password(
 
 
 # get users full_profile
-@router.get("/full_profile/{id}", status_code=status.HTTP_200_OK)
+@router.get("/full_profile/{user_id}", status_code=status.HTTP_200_OK)
 async def get_user_full_profile(
-    id: int,
+    user_id: int,
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.id == id).first()
+    user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
     return {
         "user_id": user.id,
         "profile_image": user.profile_picture,
         "first_name": user.first_name,
         "last_name": user.last_name,
         "email": user.email,
-        "phone_number": user.phone_number or "N/A",
-        "twitter_handle": user.twitter or "N/A",
-        "facebook_handle": user.facebook or "N/A",
-        "linkedin_handle": user.linkedin or "N/A",
+        "phone_number": user.phone_number if user.phone_number else "N/A",
+        "twitter_handle": user.twitter if user.twitter else "N/A",
+        "facebook_handle": user.facebook if user.facebook else "N/A",
+        "linkedin_handle": user.linkedin if user.linkedin else "N/A",
         "active_user": user.is_active,
         "date_joined": user.date_joined,
     }
-
-    # "profile_picture": user.profile_picture,
 
 
 # retrive a users profile picture

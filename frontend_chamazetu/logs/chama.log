@@ -1719,3 +1719,12 @@ INFO 2024-09-25 18:00:00,090 tasks Task ran at: 2024-09-25 18:00:00.090854
 INFO 2024-09-25 18:00:00,091 tasks Date: 2024-09-25
 INFO 2024-09-25 18:00:00,091 tasks Time: 18:00:00.091658
 INFO 2024-09-25 18:00:00,092 tasks Nairobi: 2024-09-25 18:00:00.091980+03:00
+INFO 2024-09-27 12:15:04,001 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-09-27 12:15:04,047 tasks Task ran at: 2024-09-27 12:15:04.047787
+INFO 2024-09-27 12:15:04,048 tasks Nairobi: 2024-09-27 12:15:04.048143+03:00
+INFO 2024-09-27 12:15:04,068 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-09-27 12:15:04,068 tasks Task ran at: 2024-09-27 12:15:04.068561
+INFO 2024-09-27 12:15:04,069 tasks Nairobi: 2024-09-27 12:15:04.069024+03:00
+INFO 2024-09-27 12:15:04,291 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-09-27 12:15:04,291 tasks Task ran at: 2024-09-27 12:15:04.291668
+INFO 2024-09-27 12:15:04,292 tasks Nairobi: 2024-09-27 12:15:04.291973+03:00

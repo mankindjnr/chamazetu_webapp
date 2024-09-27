@@ -56,7 +56,7 @@ async def create_activity(
                 "activity_title": activity_data["activity_title"],
                 "activity_type": activity_data["activity_type"],
                 "frequency": activity_data["frequency"],
-                "previous_contribution_date": activity_data["first_contribution_date"],
+                "previous_contribution_date": activity_data["last_joining_date"],
                 "next_contribution_date": activity_data["first_contribution_date"],
             }
 

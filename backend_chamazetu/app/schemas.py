@@ -667,6 +667,7 @@ class ManagerFeature(BaseModel):
 
 class ManagerDashboardResp(BaseModel):
     manager_id: int
+    user_email: EmailStr
     manager_profile_picture: Optional[str]
     chamas: List[ChamaMemberCount]
     updates_and_features: List[ManagerFeature]
