@@ -132,6 +132,19 @@ class User(Base):
     )
     activities_transactions = relationship("ActivityTransaction", back_populates="user")
     activity_fines = relationship("ActivityFine", back_populates="user")
+    chama_invites = relationship("ChamaInvite", back_populates="user")
+    activity_invites = relationship("ActivityInvite", back_populates="user")
+    rotation_order = relationship("RotationOrder", back_populates="recipient")
+    contributed_rotations = relationship(
+        "RotatingContributions",
+        foreign_keys="RotatingContributions.contributor_id",
+        back_populates="contributor",
+    )
+    received_rotations = relationship(
+        "RotatingContributions",
+        foreign_keys="RotatingContributions.recipient_id",
+        back_populates="recipient",
+    )
 
 
 class Chama(Base):
@@ -194,6 +207,11 @@ class Chama(Base):
         back_populates="chamas",
     )
     activity_fines = relationship("ActivityFine", back_populates="chama")
+    chama_invites = relationship("ChamaInvite", back_populates="chama")
+    rotation_order = relationship("RotationOrder", back_populates="chama")
+    rotating_contributions = relationship(
+        "RotatingContributions", back_populates="chama"
+    )
 
 
 # listen to the before_insert event to automatically set chama_code
@@ -260,6 +278,11 @@ class Activity(Base):
         "ActivityTransaction", back_populates="activities"
     )
     activity_fines = relationship("ActivityFine", back_populates="activity")
+    activity_invites = relationship("ActivityInvite", back_populates="activity")
+    rotation_order = relationship("RotationOrder", back_populates="activity")
+    rotating_contributions = relationship(
+        "RotatingContributions", back_populates="activity"
+    )
 
 
 # activty accounts
@@ -523,6 +546,42 @@ class About_Chama(Base):
     vision = Column(String(500), nullable=True)
 
 
+class ChamaInvite(Base):
+    __tablename__ = "chama_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    invitee_email = Column(String, nullable=False)
+    invite_code = Column(String, nullable=False)
+    invite_date = Column(DateTime, default=nairobi_now)
+    invite_accepted = Column(Boolean, default=False)
+    invite_accepted_date = Column(DateTime, nullable=True)
+    invite_accepted_by = Column(Integer, ForeignKey("users.id"))
+    invite_accepted_by_email = Column(String, nullable=True)
+
+    # relationships
+    chama = relationship("Chama", back_populates="chama_invites")
+    user = relationship("User", back_populates="chama_invites")
+
+
+class ActivityInvite(Base):
+    __tablename__ = "activity_invites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    invitee_email = Column(String, nullable=False)
+    invite_code = Column(String, nullable=False)
+    invite_date = Column(DateTime, default=nairobi_now)
+    invite_accepted = Column(Boolean, default=False)
+    invite_accepted_date = Column(DateTime, nullable=True)
+    invite_accepted_by = Column(Integer, ForeignKey("users.id"))
+    invite_accepted_by_email = Column(String, nullable=True)
+
+    # relationships
+    activity = relationship("Activity", back_populates="activity_invites")
+    user = relationship("User", back_populates="activity_invites")
+
+
 class Rule(Base):
     __tablename__ = "rules"
 
@@ -610,3 +669,53 @@ class ChamaZetu(Base):
     registration_fees = Column(Float, nullable=False)
     withdrawal_fees = Column(Float, nullable=False)
     reward_coins = Column(Float, nullable=False)
+
+
+class RotationOrder(Base):
+    __tablename__ = "rotation_order"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_name = Column(String, nullable=False)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    recipient_id = Column(Integer, ForeignKey("users.id"))
+    share_value = Column(Integer, nullable=False)
+    share_name = Column(String, nullable=False)
+    receiving_date = Column(DateTime, nullable=False)
+    order_in_rotation = Column(Integer, nullable=False)
+    cycle_number = Column(Integer, nullable=False)
+    expected_amount = Column(Integer, nullable=False)
+    received_amount = Column(Integer, nullable=False)
+    fulfilled = Column(Boolean, default=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="rotation_order")
+    activity = relationship("Activity", back_populates="rotation_order")
+    recipient = relationship("User", back_populates="rotation_order")
+
+
+class RotatingContributions(Base):
+    __tablename__ = "rotating_contributions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    contributor_id = Column(Integer, ForeignKey("users.id"))
+    contributing_share = Column(String, nullable=False)
+    recipient_id = Column(Integer, ForeignKey("users.id"))
+    recipient_share = Column(String, nullable=False)
+    cycle_number = Column(Integer, nullable=False)
+    expected_amount = Column(Integer, nullable=False)
+    contributed_amount = Column(Integer, nullable=False)
+    fine = Column(Integer, nullable=False)
+    rotation_date = Column(DateTime, nullable=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="rotating_contributions")
+    activity = relationship("Activity", back_populates="rotating_contributions")
+    contributor = relationship(
+        "User", foreign_keys=[contributor_id], back_populates="contributed_rotations"
+    )
+    recipient = relationship(
+        "User", foreign_keys=[recipient_id], back_populates="received_rotations"
+    )

@@ -8,6 +8,11 @@ urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
     path("profile/<int:user_id>", views.profile, name="profile"),
     path(
+        "invite/<str:invite_to>/<str:name>/<int:id>",
+        views.process_invite,
+        name="invite",
+    ),
+    path(
         "change_password/<int:user_id>", views.change_password, name="change_password"
     ),
     path(
@@ -22,12 +27,17 @@ urlpatterns = [
     ),
     path("chama/<int:chamaid>", views.view_chama, name="chama"),
     path(
+        "view_private_chama/<int:chamaid>/",
+        views.view_private_chama,
+        name="view_private_chama",
+    ),
+    path(
         "members_tracker/<str:chama_name>",
         views.members_tracker,
         name="members_tracker",
     ),
     path(
-        "fines_tracker/<str:chama_name>/<str:role>",
+        "fines_tracker/<str:chama_name>/<int:chama_id>/<str:activity_name>/<int:activity_id>",
         views.fines_tracker,
         name="fines_tracker",
     ),
@@ -112,5 +122,10 @@ urlpatterns = [
         "fix_mpesa_to_wallet_deposit",
         views.fix_mpesa_to_wallet_deposit,
         name="fix_mpesa_to_wallet_deposit",
+    ),
+    path(
+        "rotation_contributions/<int:activity_id>",
+        views.rotation_contributions,
+        name="rotation_contributions",
     ),
 ]

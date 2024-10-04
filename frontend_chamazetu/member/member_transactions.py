@@ -44,6 +44,7 @@ async def from_wallet_to_activity(
         return redirect(reverse("member:dashboard"))
 
     current_user = request.COOKIES.get("current_user")
+    print("====current_user====: ", current_user)
     user_id = get_user_id(current_user)
     amount = request.POST.get("amount", "").strip()
 
@@ -271,6 +272,7 @@ async def from_wallet_to_select_activity(request, chama_id, chama_name):
         return redirect(reverse("member:access_chama", args=[chama_name, chama_id]))
 
     current_user = request.COOKIES.get("current_user")
+    print("====current_user: ", current_user)
     user_id = get_user_id(current_user)
     amount = request.POST.get("amount", "").strip()
     activity_id, activity_type = get_activity_info(request.POST.get("activity_title"))

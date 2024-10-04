@@ -117,22 +117,23 @@
 
       <li class="nav-heading">Pages</li>
 
-      <!-- <li class="nav-item">
-        <a class="nav-link collapsed" href="">
-          <i class="ri-hand-coin-fill"></i>
-          <span>Contribution Days Tracker</span>
-        </a>
-      </li> -->
-
       <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:rotation_contributions' activity_id %}">
+          <!-- <i class="ri-hand-coin-fill"></i> -->
+          <i class="ri-rotate-lock-line"></i>
+          <span>Rotating Contributions</span>
+        </a>
+      </li>
+
+      <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="">
           <i class="ri-receipt-line"></i>
           <span>Account Transactions</span> 
         </a>
-      </li>
+      </li> -->
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
+        <a class="nav-link collapsed" href="{% url 'member:fines_tracker' chama_name chama_id activity_name activity_id %}">
           <i class="ri-close-circle-line"></i>
           <span>Fines Tracker</span>
         </a>
@@ -292,7 +293,7 @@
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                  <h5 class="card-title">chama weekly contributions <span>|Ksh</span></h5>
+                  <h5 class="card-title">activity weekly contributions <span>|Ksh</span></h5>
                   <div>
                     <hr>
                     <button class="btn btn-outline-info btn-sm bi bi-calendar-event"> contribution day {{ contribution_date}}</button>
@@ -413,7 +414,7 @@
 
         </div><!-- End Right side columns -->
 
-      </div>
+      </div> <!-- End Row -->
       <!-- wallet Modal -->
        <script>
       document.addEventListener('DOMContentLoaded', function () {

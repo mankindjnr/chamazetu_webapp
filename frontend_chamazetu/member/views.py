@@ -1,9 +1,10 @@
 from django.shortcuts import render
 
 # Create your views here.
-from .membermanagement import dashboard, profile, change_password
+from .membermanagement import dashboard, profile, change_password, process_invite
 from .member_chama import (
     view_chama,
+    view_private_chama,
     join_chama,
     access_chama,
     view_chama_members,
@@ -18,6 +19,7 @@ from .activities import (
     get_about_activity,
     activate_auto_contributions,
     deactivate_auto_contributions,
+    rotation_contributions,
 )
 from .member_transactions import (
     from_wallet_to_activity,

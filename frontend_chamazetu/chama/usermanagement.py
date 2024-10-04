@@ -24,8 +24,6 @@ load_dotenv()
 
 def validate_token(request):
     try:
-        print("---------validating_token---------")
-        print(request.COOKIES.get("access_token"))
         jwt.decode(
             request.COOKIES.get("access_token").split(" ")[1],
             os.getenv("JWT_SECRET"),
@@ -145,20 +143,26 @@ def signin(request):
             refresh_tokens["refresh_token"] = response.json()["refresh_token"]
             current_user = request.POST["email"].strip().lower()
 
-            # default role is member, if the user has not joined any chama, check if he has created any chama
-            # if he has created but not a member, redirect to manager dashboard, else redirect to member dashboard
+            # default role is member, if the user has not joined any chama, check if they have created any chama
+            # if they have created but not a member, redirect to manager dashboard, else redirect to member dashboard
             headers = {
                 "Content-type": "application/json",
                 "Authorization": f"Bearer {access_tokens.get('access_token')}",
             }
-            initial_role = requests.get(
-                f"{os.getenv('api_url')}/users/active_role/{current_user}",
-            )
-            role = "member"
-            if initial_role.status_code == HTTPStatus.OK:
-                role = initial_role.json()["active_role"]
 
-            response = redirect(reverse(f"{role}:dashboard"))
+            role = "member"
+            post_login_redirect = request.session.get("post_login_redirect")
+            response = None
+            if post_login_redirect:
+                response = redirect(post_login_redirect)
+                del request.session["post_login_redirect"]  # remove the session key
+            else:
+                initial_role = requests.get(
+                    f"{os.getenv('api_url')}/users/active_role/{current_user}",
+                )
+                if initial_role.status_code == HTTPStatus.OK:
+                    role = initial_role.json()["active_role"]
+                response = redirect(reverse(f"{role}:dashboard"))
 
             # successful login - store tokens - redirect to dashboard
             response.set_cookie(
@@ -289,6 +293,14 @@ def verify_signup_token(request, token):
         return HttpResponseRedirect(reverse("chama:signin"))
 
 
+def check_token_validity(token):
+    try:
+        jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=["HS256"])
+        return True
+    except InvalidTokenError as e:
+        return HttpResponseRedirect(reverse("chama:signin"))
+
+
 # the activation link sent to the user's email
 def activate(request, uidb64, token):
     uid = force_str(urlsafe_base64_decode(uidb64))  # decode the uidb64 to user id
@@ -298,8 +310,6 @@ def activate(request, uidb64, token):
         # activate user and redirect to home page
 
         print("---------activating_user---------")
-        print(uid)
-        print(user)
         email_verified_resp = requests.put(
             f"{os.getenv('api_url')}/users/email_verification/{uid}",
             json={"user_email": user},

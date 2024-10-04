@@ -1465,3 +1465,444 @@ async def toggle_is_deleted_activity(
         raise HTTPException(
             status_code=400, detail="Failed to toggle activity deletion status"
         )
+
+
+# retrieve the rotation order of an activity
+@router.get(
+    "/rotation_order/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def activity_rotation_order(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not the manager of this activity"
+            )
+
+        next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+
+        if not next_contribution_date:
+            raise HTTPException(
+                status_code=404, detail="Next contribution date not found"
+            )
+
+        pooled_so_far = (
+            db.query(
+                func.coalesce(
+                    func.sum(models.RotatingContributions.contributed_amount), 0
+                )
+            )
+            .filter(
+                and_(
+                    models.RotatingContributions.activity_id == activity_id,
+                    models.RotatingContributions.rotation_date
+                    == next_contribution_date,
+                )
+            )
+            .scalar()
+        )
+
+        # subquery to get the latest cycle_number for the given activity_id
+        latest_cycle_subquery = (
+            db.query(func.max(models.RotationOrder.cycle_number))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar_subquery()
+        )
+
+        # query to retrieve the rotation orders with the latest cycle_number, we will include their names from user tablem and ordeR_in_rotation, share_name, payout_date and rotation_status from RotationOrder
+        activity_rotation_order = (
+            db.query(
+                models.RotationOrder.cycle_number,
+                models.RotationOrder.order_in_rotation,
+                models.RotationOrder.share_name,
+                models.RotationOrder.receiving_date,
+                models.RotationOrder.fulfilled,
+                models.User.first_name,
+                models.User.last_name,
+                models.User.profile_picture,
+            )
+            .join(models.User, models.User.id == models.RotationOrder.recipient_id)
+            .filter(
+                models.RotationOrder.activity_id == activity_id,
+                models.RotationOrder.cycle_number == latest_cycle_subquery,
+            )
+            .order_by(models.RotationOrder.order_in_rotation)
+            .all()
+        )
+
+        if not activity_rotation_order:
+            return {
+                "pooled_so_far": pooled_so_far,
+                "activity_name": activity.activity_title,
+                "activity_id": activity.id,
+                "upcoming_recipient": {},
+                "rotation_order": [],
+                "rotation_date": next_contribution_date.strftime("%d-%B-%Y"),
+            }
+
+        # retrieve the name of the upcoming receiver using the next contribution date and the RotationOrder table and the User table
+        upcoming_recipient = (
+            db.query(
+                models.User.first_name,
+                models.User.last_name,
+                models.User.profile_picture,
+                models.RotationOrder.expected_amount,
+                models.RotationOrder.share_name,
+            )
+            .join(
+                models.RotationOrder,
+                models.RotationOrder.recipient_id == models.User.id,
+            )
+            .filter(
+                models.RotationOrder.activity_id == activity_id,
+                models.RotationOrder.receiving_date == next_contribution_date,
+            )
+            .first()
+        )
+
+        if not upcoming_recipient:
+            raise HTTPException(status_code=404, detail="Upcoming recipient not found")
+
+        # TODO: retrieve pooled so far and some recent transactions if possible
+
+        rotation_order = [
+            {
+                "cycle_number": order.cycle_number,
+                "order_in_rotation": order.order_in_rotation,
+                "share_name": order.share_name,
+                "receiving_date": order.receiving_date.strftime("%d-%B-%Y"),
+                "fulfilled": "Received" if order.fulfilled else "Not Received",
+                "user_name": f"{order.first_name} {order.last_name}",
+            }
+            for order in activity_rotation_order
+        ]
+
+        recipient = {
+            "user_name": f"{upcoming_recipient.first_name} {upcoming_recipient.last_name}",
+            "profile_picture": upcoming_recipient.profile_picture,
+            "share_name": upcoming_recipient.share_name,
+            "expected_amount": upcoming_recipient.expected_amount,
+        }
+
+        return {
+            "pooled_so_far": pooled_so_far,
+            "activity_name": activity.activity_title,
+            "activity_id": activity.id,
+            "upcoming_recipient": recipient,
+            "rotation_order": rotation_order,
+            "rotation_date": next_contribution_date.strftime("%d-%B-%Y"),
+        }
+    except HTTPException as e:
+        management_error_logger.error(f"Failed to get activity rotation order: {e}")
+        raise e
+    except Exception as e:
+        management_error_logger.error(f"Failed to get activity rotation order: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve activity rotation order"
+        )
+
+
+# here we will create fresh rotation contributions for the upcoming rotation date
+# this will run after the activities contributions dates have been updated and will focus on merry-go-rounds only-a little after midnight
+"""
+ id | chama_id | activity_id | contributor_id | recipient_id | recipient_share | contributing_share | expected_amount | contributed_amount | fine | rotation_date | cycle_number 
+----+----------+-------------+----------------+--------------+-----------------+--------------------+-----------------+--------------------+------+---------------+--------------
+"""
+
+
+@router.post(
+    "/create_rotation_contributions",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_rotation_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("==========creating rotation contributions================")
+        # get merry-go-round activities that need a new set of records in the rotation contribution tracker
+        Activity = aliased(models.Activity)
+        ActivityContributionDate = aliased(models.ActivityContributionDate)
+        RotationOrder = aliased(models.RotationOrder)
+        RotatingContributions = aliased(models.RotatingContributions)
+
+        # activities ids with rotation order
+        activities_with_rotation_order = (
+            db.query(RotationOrder.activity_id).distinct().all()
+        )
+        if not activities_with_rotation_order:
+            return {
+                "status": "success",
+                "message": "No activities with rotation order",
+            }
+
+        print("==========activities with rotation order================")
+        for activity in activities_with_rotation_order:
+            print(activity)
+            print()
+
+        activities = (
+            db.query(Activity)
+            .join(
+                ActivityContributionDate,
+                and_(
+                    Activity.id == ActivityContributionDate.activity_id,
+                    Activity.chama_id == ActivityContributionDate.chama_id,
+                ),
+            )
+            .outerjoin(
+                RotatingContributions,
+                and_(
+                    Activity.id == RotatingContributions.activity_id,
+                    Activity.chama_id == RotatingContributions.chama_id,
+                    RotatingContributions.rotation_date
+                    == ActivityContributionDate.next_contribution_date,
+                ),
+            )
+            # filter where there is no record in the RotatingContributions table for the next contribution date
+            .filter(
+                and_(
+                    RotatingContributions.activity_id == None,
+                    ActivityContributionDate.activity_type == "merry-go-round",
+                    # ensure the activity has a rotation order
+                    Activity.id.in_(
+                        [
+                            activity.activity_id
+                            for activity in activities_with_rotation_order
+                        ]
+                    ),
+                )
+            )
+        )
+
+        if not activities:
+            return {
+                "status": "success",
+                "message": "No activities need new rotation contributions",
+            }
+
+        print("==========activities found================")
+        # print the activities for testing
+        for activity in activities:
+            # print(activity.activity_title)
+            print()
+
+        # get actvity ids
+        print("====activities ids====")
+        activity_ids = [activity.id for activity in activities]
+        print(activity_ids)
+
+        # if we have multiple activities the query above will return the cycle number of the activity with the highest cycle number but we want the highest cycle number of
+        # all the activities for that we will use the query below
+        cycle_numbers = (
+            db.query(RotationOrder.activity_id, func.max(RotationOrder.cycle_number))
+            .filter(RotationOrder.activity_id.in_(activity_ids))
+            .group_by(RotationOrder.activity_id)
+            .all()
+        )
+        # {activity_id:1, cycle_number: 1}
+        cycle_numbers_dict = [
+            {"activity_id": cycle[0], "cycle_number": cycle[1]}
+            for cycle in cycle_numbers
+        ]
+
+        print("=====cycle numbers======")
+        # print(cycle_numbers_dict)
+
+        # get the upcoming rotation contribution date from the activity contribution date table as the next contribution date for all the activities
+        activities_next_contribution_dates = (
+            db.query(ActivityContributionDate)
+            .filter(ActivityContributionDate.activity_id.in_(activity_ids))
+            .all()
+        )
+        if not activities_next_contribution_dates:
+            raise HTTPException(
+                status_code=404, detail="Next contribution date not found"
+            )
+        rotation_dates = [
+            {
+                "activity_id": date.activity_id,
+                "rotation_date": date.next_contribution_date,
+            }
+            for date in activities_next_contribution_dates
+        ]
+        print("=====rotation dates======")
+        # print(rotation_dates)
+
+        # get the upcoming recipients for the activities by using the next contribution date and the RotationOrder table
+        upcoming_recipients = (
+            db.query(RotationOrder)
+            .filter(
+                RotationOrder.activity_id.in_(activity_ids),
+                RotationOrder.receiving_date.in_(
+                    [date["rotation_date"] for date in rotation_dates]
+                ),
+            )
+            .all()
+        )
+        upcoming_recipients_dict = [
+            {
+                "activity_id": recipient.activity_id,
+                "recipient_id": recipient.recipient_id,
+                "share_name": recipient.share_name,
+                "expected_amount": recipient.expected_amount,
+                "rotation_date": recipient.receiving_date,
+            }
+            for recipient in upcoming_recipients
+        ]
+        print("=====upcoming recipients======")
+        # print(upcoming_recipients_dict)
+
+        activities_users = (
+            db.query(RotationOrder)
+            .filter(
+                and_(
+                    RotationOrder.activity_id.in_(activity_ids),
+                    RotationOrder.cycle_number.in_(
+                        [cycle["cycle_number"] for cycle in cycle_numbers_dict]
+                    ),
+                )
+            )
+            .all()
+        )
+        print("=====activities users======")
+        activities_users_resp = [
+            {
+                "chama_id": activity.chama_id,
+                "activity_id": activity.activity_id,
+                "contributor_id": activity.recipient_id,
+                "contributing_share": activity.share_name,
+                "expected_amount": activity.share_value,
+                "contributed_amount": 0,
+                "fine": 0,
+                "cycle_number": next(
+                    cycle["cycle_number"]
+                    for cycle in cycle_numbers_dict
+                    if cycle["activity_id"] == activity.activity_id
+                ),
+                "recipient_id": next(
+                    recipient["recipient_id"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+                "recipient_share": next(
+                    recipient["share_name"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+                "rotation_date": next(
+                    recipient["rotation_date"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+            }
+            for activity in activities_users
+        ]
+
+        print("=====activities users with rotation date======")
+        # print(activities_users_resp)
+
+        # perform bulk insert of the new rotation contributions
+        if activities_users_resp:
+            with db.begin_nested():
+                db.bulk_insert_mappings(
+                    models.RotatingContributions, activities_users_resp
+                )
+
+            db.commit()
+
+        return {
+            "status": "success",
+            "message": "Activities found",
+        }
+    except HTTPException as e:
+        management_error_logger.error(f"Failed to create rotation contributions: {e}")
+        raise e
+    except Exception as e:
+        management_error_logger.error(f"Failed to create rotation contributions: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to create rotation contributions"
+        )
+
+
+# retrieve all members with the fines in a certain activity
+@router.get(
+    "/fines/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_activity_fines(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        # fetch all the fines in this activity
+        fines = (
+            db.query(
+                models.ActivityFine.user_id,
+                models.ActivityFine.fine,
+                models.ActivityFine.missed_amount,
+                models.ActivityFine.expected_repayment,
+                models.ActivityFine.fine_date,
+                models.ActivityFine.fine_reason,
+                models.ActivityFine.is_paid,
+                models.User.first_name,
+                models.User.last_name,
+            )
+            .join(models.User, models.User.id == models.ActivityFine.user_id)
+            .filter(
+                and_(
+                    models.ActivityFine.activity_id == activity_id,
+                    models.ActivityFine.is_paid == False,
+                )
+            )
+            .all()
+        )
+
+        fines_list = [
+            {
+                "user_name": f"{fine.first_name} {fine.last_name}",
+                "fine": fine.fine,
+                "missed_amount": fine.missed_amount,
+                "expected_repayment": fine.expected_repayment,
+                "fine_date": fine.fine_date.strftime("%d-%B-%Y"),
+                "fine_reason": fine.fine_reason,
+                "is_paid": "Cleared" if fine.is_paid else "Not Cleared",
+            }
+            for fine in fines
+        ]
+
+        return fines_list
+    except HTTPException as e:
+        management_error_logger.error(f"Failed to get activity fines: {e}")
+        raise e
+    except Exception as e:
+        management_error_logger.error(f"Failed to get activity fines: {e}")
+        raise HTTPException(status_code=400, detail="Failed to retrieve activity fines")

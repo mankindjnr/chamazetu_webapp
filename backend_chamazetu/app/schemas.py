@@ -673,7 +673,7 @@ class ManagerDashboardResp(BaseModel):
     updates_and_features: List[ManagerFeature]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ManagerChamasResp(BaseModel):

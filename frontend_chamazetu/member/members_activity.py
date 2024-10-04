@@ -298,21 +298,35 @@ def get_fines_data(chama_id):
     return fines_data
 
 
-def fines_tracker(request, chama_name, role):
-    chama_id = get_chama_id(chama_name)
-    url = f"{os.getenv('api_url')}/chamas/fines/{chama_id}"
-    response = requests.get(url)
-    fines = None
+async def fines_tracker(request, chama_name, chama_id, activity_name, activity_id):
+    url = f"{os.getenv('api_url')}/activities/fines/{activity_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+    response = requests.get(url, headers=headers)
 
     if response.status_code == HTTPStatus.OK:
         fines_data = response.json()
-        fines_table = fines_data["fines"]
-        fines = organise_fines(fines_table)
+        print("========fines_data========")
+        print(fines_data)
+        return render(
+            request,
+            "member/fines_tracker.html",
+            {
+                "role": "member",
+                "activity_name": activity_name,
+                "activity_id": activity_id,
+                "fines": fines_data,
+            },
+        )
+    else:
+        messages.error(request, "An error occurred while fetching fines data")
 
-    return render(
-        request,
-        "member/fines_tracker.html",
-        {"role": role, "chama_name": chama_name, "fines": fines},
+    return HttpResponseRedirect(
+        reverse(
+            "member:activities", args=[chama_name, chama_id, activity_type, activity_id]
+        )
     )
 
 

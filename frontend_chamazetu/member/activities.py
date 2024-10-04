@@ -464,6 +464,7 @@ async def view_activity_members(request, activity_name, activity_id):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
+    role = request.COOKIES.get("current_role")
 
     activity_members = requests.get(
         f"{os.getenv('api_url')}/activities/members/{activity_id}",
@@ -562,3 +563,35 @@ async def deactivate_auto_contributions(request, activity_name, activity_id):
     return HttpResponseRedirect(
         reverse("member:get_about_activity", args=[activity_name, activity_id])
     )
+
+
+async def rotation_contributions(request, activity_id):
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+    url = f"{os.getenv('api_url')}/members/rotation_contributions/{activity_id}"
+    resp = requests.get(url, headers=headers)
+
+    if resp.status_code == HTTPStatus.OK:
+        data = resp.json()
+        print("=====rotation contributions=====")
+        # print(data)
+        return render(
+            request,
+            "member/rotation_contributions.html",
+            {
+                "activity_id": activity_id,
+                "pooled": data["pooled_so_far"],
+                "rotation_order": data["rotation_order"],
+                "upcoming_rotation_date": data["upcoming_rotation_date"],
+                "upcoming_recipient": data["upcoming_recipient"],
+                "rotation_contributions": data["rotation_contributions"],
+                "received_rotations": data["received_rotations"],
+            },
+        )
+    else:
+        messages.error(
+            request, "Failed to get rotation contributions, please try again later."
+        )
+    return HttpResponseRedirect(reverse("member:dashboard"))

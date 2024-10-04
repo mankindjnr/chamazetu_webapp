@@ -110,4 +110,34 @@ urlpatterns = [
         views.delete_activity,
         name="delete_activity",
     ),
+    path(
+        "send_invite_to_members/<str:invite_to>/<str:name>/<int:id>",
+        views.send_invite_to_members,
+        name="send_invite_to_members",
+    ),
+    path(
+        "invite_all/<str:invite_to>/<str:name>/<int:id>",
+        views.send_activity_invite_to_all,
+        name="invite_all",
+    ),
+    path(
+        "rotating_order/<int:activity_id>",
+        views.rotating_order,
+        name="rotating_order",
+    ),
+    path(
+        "create_random_rotation_order/<int:activity_id>",
+        views.create_random_rotation_order,
+        name="create_random_rotation_order",
+    ),
+    path(
+        "disburse_funds/<int:activity_id>",
+        views.disburse_funds,
+        name="disburse_funds",
+    ),
+    path(
+        "fines_tracker/<str:activity_name>/<int:activity_id>",
+        views.fines_tracker,
+        name="fines_tracker",
+    ),
 ]
