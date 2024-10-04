@@ -51,6 +51,20 @@ def sending_email(subject, message, from_email, to_email):
 
 
 @shared_task
+def send_email_invites(email_list, invite_to, name, html_content, text_content):
+    subject = f"Invitation to join {invite_to} {name} at chamaZetu"
+    from_email = os.getenv("EMAIL_HOST_USER")
+
+    for email in email_list:
+        to_email = [email]
+        msg = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=True)
+
+    return None
+
+
+@shared_task
 def set_contribution_date(first_contribution_date, chama_name):
     """
     Set the first contribution date for the chama

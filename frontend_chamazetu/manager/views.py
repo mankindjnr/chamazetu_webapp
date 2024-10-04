@@ -15,6 +15,8 @@ from .managing import (
     deactivate_activate_activity,
     restart_activity,
     delete_activity,
+    send_invite_to_members,
+    send_activity_invite_to_all,
 )
 
 from .chama_features_edit import (
@@ -34,3 +36,10 @@ from .chama_features_edit import (
 from .track_members import members_tracker
 
 from .chama_investments import invest, withdraw_from_investment
+
+from .manage_activities import (
+    rotating_order,
+    create_random_rotation_order,
+    disburse_funds,
+    fines_tracker,
+)

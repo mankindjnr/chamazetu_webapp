@@ -9,6 +9,11 @@ from datetime import datetime
 import asyncio, aiohttp
 from zoneinfo import ZoneInfo
 from http import HTTPStatus
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import (
@@ -21,12 +26,17 @@ from chama.chamas import get_chama_id, get_chama_number_of_members, get_chama_na
 from member.members import get_user_full_profile, get_user_id
 from member.membermanagement import is_empty_dict
 from member.date_day_time import extract_date_time
-from chama.tasks import update_activities_contribution_days, set_contribution_date
+from chama.tasks import (
+    update_activities_contribution_days,
+    set_contribution_date,
+    send_email_invites,
+)
 
 
 from chama.usermanagement import (
     validate_token,
     refresh_token,
+    check_token_validity,
 )
 
 load_dotenv()
@@ -47,7 +57,7 @@ async def dashboard(request):
         f"{os.getenv('api_url')}/managers/dashboard", headers=headers
     )
     print("===========manager dashboard================")
-    print(dashboard_resp.json(), ":", current_role)
+    # print(dashboard_resp.json(), ":", current_role)
 
     if dashboard_resp.status_code == HTTPStatus.OK:
         dashboard_results = dashboard_resp.json()
@@ -232,17 +242,17 @@ async def create_activity(request, chama_id):
         interval = None
         contribution_day = None
 
-        print("===========activity details=============")
-        print("type: ", activity_type)
-        print("last_joining_date: ", last_joining_date)
-        print("first_contribution_date: ", first_contribution_date)
-        print("frequency: ", frequency)
-        print("weekly_day: ", weekly_day)
-        print("monthly_week: ", monthly_week)
-        print("monthly_day: ", monthly_day)
-        print("monthly_specific_date: ", monthly_specific_date)
-        print("custom_frequency: ", custom_frequency)
-        print("mandatory: ", mandatory)
+        # print("===========activity details=============")
+        # print("type: ", activity_type)
+        # print("last_joining_date: ", last_joining_date)
+        # print("first_contribution_date: ", first_contribution_date)
+        # print("frequency: ", frequency)
+        # print("weekly_day: ", weekly_day)
+        # print("monthly_week: ", monthly_week)
+        # print("monthly_day: ", monthly_day)
+        # print("monthly_specific_date: ", monthly_specific_date)
+        # print("custom_frequency: ", custom_frequency)
+        # print("mandatory: ", mandatory)
 
         if frequency == "daily":
             interval = "daily"
@@ -340,7 +350,7 @@ async def chama_activity(request, activity_id):
     if activity_resp.status_code == HTTPStatus.OK:
         activity_data = activity_resp.json()
         print("========activty access============")
-        print(activity_data)
+        # print(activity_data)
         chama_name = get_chama_name(activity_data["chama_id"])
         return render(
             request,
@@ -410,10 +420,10 @@ def view_chama_members(request, chama_name):
 
     chama_id = get_chama_id(chama_name)
     chama_members = requests.get(
-        f"{os.getenv('api_url')}/members_tracker/chama_members/{chama_id}",
+        f"{os.getenv('api_url')}/chamas/members/{chama_id}",
         headers=headers,
     )
-    print(chama_members.json())
+    # print(chama_members.json())
     return render(
         request,
         "manager/view_members_list.html",
@@ -512,3 +522,127 @@ async def delete_activity(request, activity_id):
         messages.error(request, "An error occurred, try again.")
 
     return redirect(reverse("manager:dashboard"))
+
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def send_invite_to_members(request, invite_to, name, id):
+    if request.method == "POST":
+        # get the members emails to invite, could be one or more, separated by space or comma or newline
+        emails = request.POST.get("emails")
+        email_list = [
+            email.strip()
+            for email in emails.replace("\n", ",").replace(" ", ",").split(",")
+            if email.strip()
+        ]
+
+        if not email_list:
+            messages.error(request, "No emails provided.")
+            return redirect(reverse("member:get_about_chama", args=[name, id]))
+
+        valid_emails = []
+        invalid_emails = []
+
+        # validate the emails
+        for email in email_list:
+            try:
+                validate_email(email)  # django's email validator
+                valid_emails.append(email)
+            except ValidationError:
+                invalid_emails.append(email)
+
+        # handling valid emails
+        current_year = datetime.now().year
+        invite_link = f"https://chamazetu.com/member/invite/{invite_to}/{name}/{id}"
+        if valid_emails:
+            # send the email
+            # we will call the backend here and add all these invited to the db and if successful, we send the emails
+            # we will return a dictionary of emails and their invitation codes and if its an activitym we will also return the chama name it belongs to.
+            context = {
+                "name": name,
+                "invite_link": invite_link,
+                "invite_to": invite_to,
+                "year": current_year,
+            }
+            html_content = render_to_string("chama/invitation_email.html", context)
+            text_content = strip_tags(
+                html_content
+            )  # fallback for email clients that don't support html
+
+            # send the email asynchronously
+            send_email_invites.delay(
+                valid_emails, invite_to, name, html_content, text_content
+            )
+
+        if invalid_emails:
+            messages.error(request, "Invalid emails: " + ", ".join(invalid_emails))
+        else:
+            messages.success(request, "Invitations are being sent.")
+
+    if invite_to == "chama":
+        chama_id = id
+        return redirect(reverse("member:get_about_chama", args=[name, chama_id]))
+    else:
+        activity_id = id
+        return redirect(reverse("member:get_about_activity", args=[name, activity_id]))
+
+
+async def send_activity_invite_to_all(request, invite_to, name, id):
+    activity_id = id
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/emails/{id}",
+        headers=headers,
+    )
+
+    if resp.status_code == HTTPStatus.OK:
+        email_list = resp.json().get("emails")
+        # print("=====retrieved emails=====")
+        # print(email_list)
+
+        if not email_list:
+            messages.error(request, "Error in retrieving emails.")
+            return redirect(reverse("member:get_about_chama", args=[name, activity_id]))
+
+        valid_emails = []
+        invalid_emails = []
+
+        # validate the emails
+        for email in email_list:
+            try:
+                validate_email(email)  # django's email validator
+                valid_emails.append(email)
+            except ValidationError:
+                invalid_emails.append(email)
+
+        # handling valid emails
+        current_year = datetime.now().year
+        invite_link = (
+            f"https://chamazetu.com/member/invite/{invite_to}/{name}/{activity_id}"
+        )
+        if valid_emails:
+            context = {
+                "name": name,
+                "invite_link": invite_link,
+                "invite_to": invite_to,
+                "year": current_year,
+            }
+            html_content = render_to_string("chama/invitation_email.html", context)
+            text_content = strip_tags(
+                html_content
+            )  # fallback for email clients that don't support html
+
+            # send the email asynchronously
+            send_email_invites.delay(
+                valid_emails, invite_to, name, html_content, text_content
+            )
+
+            messages.success(request, "Invitations are being sent.")
+    else:
+        messages.error(request, "An error occurred, please try again later.")
+
+    return redirect(reverse("member:get_about_activity", args=[name, activity_id]))

@@ -61,10 +61,10 @@ nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 # viewing chamas in the public dashboard where users can join
-@tokens_in_cookies()
-@validate_and_refresh_token()
-def view_chama(request, chamaid):
-    urls = f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}"
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def view_chama(request, chamaid):
+    urls = f"{os.getenv('api_url')}/chamas/info_page/public/{chamaid}"
     resp = requests.get(urls)
     if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
@@ -75,7 +75,7 @@ def view_chama(request, chamaid):
             "chama/blog_chama.html",
             {
                 "role": request.COOKIES.get("current_role"),
-                "chama": chama["public_chama"],
+                "chama": chama["chama"],
                 "rules": chama["rules"],
                 "faqs": chama["faqs"],
                 "about": chama["about"],
@@ -83,8 +83,40 @@ def view_chama(request, chamaid):
                 "activities": chama["activities"],
             },
         )
+    else:
+        messages.error(request, "Failed to access chama, try again later")
 
     return redirect(reverse("chama:chamas"))
+
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def view_private_chama(request, chamaid):
+    urls = f"{os.getenv('api_url')}/chamas/info_page/private/{chamaid}"
+    resp = requests.get(urls)
+    if resp.status_code == HTTPStatus.OK:
+        chama = resp.json()
+        print("=======chama private access========")
+        print(chama)
+        return render(
+            request,
+            "chama/blog_chama.html",
+            {
+                "role": request.COOKIES.get("current_role"),
+                "chama": chama["chama"],
+                "rules": chama["rules"],
+                "faqs": chama["faqs"],
+                "about": chama["about"],
+                "manager": chama["manager"],
+                "activities": chama["activities"],
+            },
+        )
+    else:
+        messages.error(
+            request, "Failed to access private chama, please try again later"
+        )
+
+    return redirect(reverse("member:dashboard"))
 
 
 # viewing a chamas in the member dashboard where they can interact with specifc chama
@@ -225,6 +257,7 @@ def view_chama_members(request, chama_name, chama_id):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
+    role = request.COOKIES.get("current_role")
 
     chama_members = requests.get(
         f"{os.getenv('api_url')}/chamas/members/{chama_id}",
@@ -236,6 +269,7 @@ def view_chama_members(request, chama_name, chama_id):
         request,
         "member/list_members.html",
         {
+            "role": role,
             "item_id": chama_id,
             "members": chama_members.json(),
             "title": chama_name,
@@ -257,7 +291,7 @@ async def get_about_chama(request, chama_name, chama_id):
         headers=headers,
     )
 
-    print("===================about================")
+    print(f"============={role}===about================")
     if chama_data.status_code == HTTPStatus.OK:
         print(chama_data.json())
         chama = chama_data.json().get("chama")

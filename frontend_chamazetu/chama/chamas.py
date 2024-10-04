@@ -307,3 +307,14 @@ def get_chama_registration_fee(chama_id):
     if resp.status_code == HTTPStatus.OK:
         return resp.json()["registration_fee"]
     return None
+
+
+def get_chama_from_activity_id(activity_id):
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/chama_from_activity_id/{activity_id}"
+    )
+    if resp.status_code == HTTPStatus.OK:
+        chama_name = resp.json()["chama_name"]
+        chama_id = resp.json()["chama_id"]
+        return (chama_name, chama_id)
+    return None

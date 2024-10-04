@@ -14,7 +14,7 @@ from chama.decorate.validate_refresh_token import (
 )
 from chama.rawsql import execute_sql
 from chama.thread_urls import fetch_data
-from chama.chamas import get_chama_name
+from chama.chamas import get_chama_name, get_chama_from_activity_id
 from .members import (
     get_member_recent_transactions,
     get_user_id,
@@ -28,6 +28,7 @@ from .date_day_time import extract_date_time
 from chama.usermanagement import (
     validate_token,
     refresh_token,
+    check_token_validity,
 )
 
 load_dotenv()
@@ -40,7 +41,7 @@ def dashboard(request):
     current_role = request.COOKIES.get("current_role")
     user_id = int(get_user_id(current_user))
     print("===========member dashboard================")
-    print(current_user, ":", current_role, ":", user_id)
+    # print(current_user, ":", current_role, ":", user_id)
 
     headers = {
         "Content-type": "application/json",
@@ -224,3 +225,45 @@ async def profile(request, user_id):
 
 def is_empty_dict(data):
     return isinstance(data, dict) and len(data) == 0
+
+
+# the invite link function
+# this is the function that users will be directed to after receiving an invite link, it should make users signin and to the chama or activity they were invited to
+# the function will check if the user is already signed in, if they are, it will redirect them to the chama or activity they were invited to
+def process_invite(request, invite_to, name, id):
+    access_token = request.COOKIES.get("access_token")
+    refresh_token = request.COOKIES.get("refresh_token")
+
+    if access_token and refresh_token:
+        # check if the user is already signed in
+        try:
+            check_token_validity(access_token)
+            if invite_to == "chama":
+                return redirect(reverse("member:view_private_chama", args=[id]))
+            else:
+                chama_name, chama_id = get_chama_from_activity_id(id)
+                return redirect(
+                    reverse("member:chama_activities", args=[chama_name, chama_id])
+                )
+        except (ExpiredSignatureError, InvalidTokenError, Exception) as e:
+            if invite_to == "chama":
+                request.session["post_login_redirect"] = reverse(
+                    "member:view_private_chama", args=[id]
+                )
+            else:
+                chama_name, chama_id = get_chama_from_activity_id(id)
+                request.session["post_login_redirect"] = reverse(
+                    "member:chama_activities", args=[chama_name, chama_id]
+                )
+    else:
+        if invite_to == "chama":
+            request.session["post_login_redirect"] = reverse(
+                "member:view_private_chama", args=[id]
+            )
+        else:
+            chama_name, chama_id = get_chama_from_activity_id(id)
+            request.session["post_login_redirect"] = reverse(
+                "member:chama_activities", args=[chama_name, chama_id]
+            )
+
+    return redirect(reverse("chama:signin"))

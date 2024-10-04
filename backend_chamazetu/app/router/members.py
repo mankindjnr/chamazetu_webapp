@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Body
-from sqlalchemy import func, update, and_, table, column, desc
+from sqlalchemy import func, update, and_, table, column, desc, or_
 from sqlalchemy.orm import Session, joinedload, aliased
 from typing import Union
 from datetime import datetime
@@ -407,7 +407,6 @@ async def get_member_contribution_so_far(
         )
 
 
-# make a contribution to the merry_go_round activity should unified contribution, pays fines and contributes to remaining expected amount
 @router.post(
     "/contribute/merry-go-round/{activity_id}",
     status_code=status.HTTP_201_CREATED,
@@ -419,56 +418,175 @@ async def contribute_to_merry_go_round(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
         expected_amount = contrib_data.expected_contribution
         amount = contrib_data.amount
+        user_id = current_user.id
         transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
-        wallet_id = (
-            db.query(models.User.wallet_id)
-            .filter(models.User.id == current_user.id)
+        next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+        print("expected_amount:", expected_amount)
+        print("amount:", amount)
+        print("user_id:", user_id, "email:", current_user.email)
+        print("transaction_date:", transaction_date)
+        print("next_contribution_date:", next_contribution_date)
+
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        wallet_id = user.wallet_id
+        wallet_balance = user.wallet_balance
+
+        print("wallet_id:", wallet_id)
+        num_shares = (
+            db.query(models.activity_user_association.c.shares)
+            .filter(
+                and_(
+                    models.activity_user_association.c.user_id == user_id,
+                    models.activity_user_association.c.activity_id == activity_id,
+                )
+            )
             .scalar()
         )
 
+        if not num_shares:
+            raise HTTPException(status_code=404, detail="User shares not found")
+
+        amount_per_share = expected_amount / num_shares
+        activity_fine = activity.fine
+        print("amount_per_share:", amount_per_share)
+        print("activity_fine:", activity_fine)
+
+        missed_rotations = None
         fines = (
             db.query(models.ActivityFine)
             .filter(
                 and_(
                     models.ActivityFine.activity_id == activity_id,
-                    models.ActivityFine.user_id == current_user.id,
+                    models.ActivityFine.user_id == user_id,
                     models.ActivityFine.is_paid == False,
                 )
             )
             .order_by(models.ActivityFine.fine_date)
-            .with_for_update()  # lock the rows for update
             .all()
         )
 
-        total_fines_repaid = 0
-        amount_contributed = 0
+        if fines:
+            # retrieve the missed rotations correspnding to the fines
+            # first_get_the dates of the fines
+            fine_dates = [fine.fine_date for fine in fines]
+            print("fine_dates:\n", fine_dates)
+            missed_rotations = (
+                db.query(models.RotatingContributions)
+                .filter(
+                    and_(
+                        models.RotatingContributions.rotation_date.in_(fine_dates),
+                        models.RotatingContributions.contributor_id == user_id,
+                        models.RotatingContributions.activity_id == activity_id,
+                        # add an OR condition to check if the fine is not paid but contribution is made
+                        or_(
+                            # case 1: the user hasn't contributed the full amt
+                            models.RotatingContributions.contributed_amount
+                            != models.RotatingContributions.expected_amount,
+                            # case 2: the user has contributed the full amount but the fine is not paid
+                            and_(
+                                models.RotatingContributions.contributed_amount
+                                == models.RotatingContributions.expected_amount,
+                                models.RotatingContributions.fine > 0,
+                            ),
+                        ),
+                    )
+                )
+                .all()
+            )
 
+        total_fines_repaid = 0
+        total_contribution = 0
+        break_outer_loop = False
+        print("=========start nested============")
         with db.begin_nested():
             if fines:
                 for fine in fines:
+                    print("expected_repayment:", fine.expected_repayment)
+                    amount_repaid_towards_fine = 0  # amount repaid towards the fine
                     fine_transaction_code = generate_transaction_code(
                         "manual_fine_repayment", wallet_id
                     )
+                    # find the missed rotations for this fine
+                    missed_rotations_for_fine = [
+                        rotation
+                        for rotation in missed_rotations
+                        if rotation.rotation_date == fine.fine_date
+                    ]
 
-                    if amount >= fine.expected_repayment:
-                        amount -= fine.expected_repayment
-                        fine_amount_repaid = fine.expected_repayment
-                        fine.is_paid = True
-                        fine.paid_date = transaction_date
-                        fine.expected_repayment = 0
-                    else:
-                        fine.expected_repayment -= amount
-                        fine_amount_repaid = amount
-                        amount = 0
+                    for missed_rotation in missed_rotations_for_fine:
+                        print("missed_rotation:", missed_rotation.contributing_share)
+                        missed_balance = (
+                            missed_rotation.expected_amount
+                            - missed_rotation.contributed_amount
+                        ) + activity_fine
+                        print("missed_balance:", missed_balance)
 
-                    total_fines_repaid += fine_amount_repaid
+                        if amount >= missed_balance:
+                            print("start_amt:", amount)
+                            amount -= missed_balance
+                            print("end_amt:", amount)
+                            fine_amount_repaid = missed_balance
+                            fine.expected_repayment = max(
+                                fine.expected_repayment - missed_balance, 0
+                            )
+                            amount_repaid_towards_fine += missed_balance
 
-                    # record the fine transaction
+                            # update the rotating contribution
+                            missed_rotation.contributed_amount += (
+                                missed_balance - activity_fine
+                            )
+                            missed_rotation.fine = activity_fine
+                        else:
+                            fine.expected_repayment = max(
+                                fine.expected_repayment - amount, 0
+                            )
+                            fine_amount_repaid = amount
+                            amount_repaid_towards_fine += amount
+                            amount = 0
+
+                            # update the rotating contribution
+                            # if the fine_amount_repaid + missed_rotation.contributed amount, then the excess is moved to fine
+                            if (
+                                fine_amount_repaid + missed_rotation.contributed_amount
+                                > missed_rotation.expected_amount
+                            ):
+                                contribution_amount = (
+                                    missed_rotation.expected_amount
+                                    - missed_rotation.contributed_amount
+                                )
+                                fine_amount = fine_amount_repaid - contribution_amount
+
+                                missed_rotation.contributed_amount += (
+                                    contribution_amount
+                                )
+                                missed_rotation.fine += fine_amount
+                            else:
+                                missed_rotation.contributed_amount += fine_amount_repaid
+
+                        print("fine_amount_repaid:", fine_amount_repaid)
+                        total_fines_repaid += fine_amount_repaid
+                        # TODO: we will then recordd this amount and transfer it to the user who  didn't receive theirs on time
+
+                        if amount == 0:
+                            break_outer_loop = True
+                            break
+
+                    # after processing all the missed rotations for this fine, we record the transaction
                     fine_transaction_data = {
-                        "user_id": current_user.id,
-                        "amount": fine_amount_repaid,
+                        "user_id": user_id,
+                        "amount": amount_repaid_towards_fine,
                         "origin": wallet_id,
                         "activity_id": activity_id,
                         "transaction_date": transaction_date,
@@ -482,25 +600,64 @@ async def contribute_to_merry_go_round(
                     )
                     db.add(new_fine_transaction)
 
-                    if amount == 0:
+                    # mark the fine as paid if the amount repaid is equal to the expected repayment
+                    if fine.expected_repayment == 0:
+                        fine.is_paid = True
+                        fine.paid_date = transaction_date
+
+                    # if the amount is 0, we break
+                    if break_outer_loop:
                         break
 
-            # if after fine repayment, the member has some amount left, we contribute towards the expected amount
-            user_record = (
-                db.query(models.User).filter(models.User.id == current_user.id).first()
-            )
+            # if after fine repayment, the member has some amount left, we contribute towards the upcoming rotation_contribution
+            print("===amount:", amount)
             if amount > 0 and expected_amount > 0:
                 transaction_code = generate_transaction_code(
                     "manual_contribution", wallet_id
                 )
 
-                if amount > expected_amount:
-                    amount = expected_amount
+                # just like with fines/share repayment we will retrieve this users upcoming rotations and contribute to them
+                upcoming_rotations = (
+                    db.query(models.RotatingContributions)
+                    .filter(
+                        and_(
+                            models.RotatingContributions.contributor_id == user_id,
+                            models.RotatingContributions.activity_id == activity_id,
+                            models.RotatingContributions.rotation_date
+                            == next_contribution_date,
+                            models.RotatingContributions.expected_amount
+                            != models.RotatingContributions.contributed_amount,
+                        )
+                    )
+                    .all()
+                )
+                print("num:", len(upcoming_rotations))
+
+                for rotation in upcoming_rotations:
+                    print("rotation:", rotation.contributing_share)
+                    contributing_bal = (
+                        rotation.expected_amount - rotation.contributed_amount
+                    )
+                    amount_contributed = 0
+                    if amount >= contributing_bal:
+                        amount -= contributing_bal
+                        rotation.contributed_amount += contributing_bal
+                        amount_contributed += contributing_bal
+                    else:
+                        rotation.contributed_amount += amount
+                        amount_contributed += amount
+                        amount = 0
+
+                    # sum the total contribution
+                    total_contribution += amount_contributed
+
+                    if amount == 0:
+                        break
 
                 # record the transaction
                 transaction_data = {
-                    "user_id": current_user.id,
-                    "amount": amount,
+                    "user_id": user_id,
+                    "amount": total_contribution,
                     "origin": wallet_id,
                     "activity_id": activity_id,
                     "transaction_date": transaction_date,
@@ -512,34 +669,29 @@ async def contribute_to_merry_go_round(
                 new_transaction = models.ActivityTransaction(**transaction_data)
                 db.add(new_transaction)
 
-                amount_contributed = amount
-
             # update the wallet balance
             user_record = (
-                db.query(models.User).filter(models.User.id == current_user.id).first()
+                db.query(models.User).filter(models.User.id == user_id).first()
             )
-            activity = (
-                db.query(models.Activity)
-                .filter(models.Activity.id == activity_id)
-                .first()
-            )
-            user_record.wallet_balance -= amount_contributed + total_fines_repaid
+            user_record.wallet_balance -= total_contribution + total_fines_repaid
 
             # update the activity account balance
             activity_account = (
                 db.query(models.Activity_Account)
                 .filter(models.Activity_Account.activity_id == activity_id)
+                .with_for_update()
                 .first()
             )
-            activity_account.account_balance += total_fines_repaid + amount_contributed
+            activity_account.account_balance += total_fines_repaid + total_contribution
 
             # update the chama account balance
             chama_account = (
                 db.query(models.Chama_Account)
                 .filter(models.Chama_Account.chama_id == activity.chama_id)
+                .with_for_update()
                 .first()
             )
-            chama_account.account_balance += total_fines_repaid + amount_contributed
+            chama_account.account_balance += total_fines_repaid + total_contribution
 
             db.commit()
 
@@ -559,7 +711,7 @@ async def contribute_to_merry_go_round(
     "/contribute/generic/{activity_id}",
     status_code=status.HTTP_201_CREATED,
 )
-async def contribute_to_merry_go_round(
+async def contribute_to_generic_activity(
     activity_id: int,
     contrib_data: schemas.ContributeToActivityBase = Body(...),
     db: Session = Depends(database.get_db),
@@ -726,53 +878,6 @@ def generate_transaction_code(transaction_type, wallet_id):
     return transaction_code
 
 
-# more recent transactions all round
-@router.get(
-    "/recent_transactions",
-    status_code=status.HTTP_200_OK,
-    response_model=List[schemas.MemberRecentTransactionResp],
-)
-async def get_recent_transactions(
-    member_data: schemas.MemberRecentTransactionBase = Body(...),
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-
-    try:
-        transactions = (
-            db.query(models.Transaction)
-            .filter(
-                and_(
-                    models.Transaction.member_id == current_user.id,
-                    models.Transaction.transaction_completed == True,
-                    models.Transaction.is_reversed == False,
-                    models.Transaction.transaction_type != "processed",
-                )
-            )
-            .order_by(desc(models.Transaction.transaction_date))
-            .limit(4)
-            .all()
-        )
-
-        return [
-            schemas.MemberRecentTransactionResp(
-                amount=transaction.amount,
-                chama_id=transaction.chama_id,
-                transaction_type=transaction.transaction_type,
-                transaction_date=transaction.transaction_date,
-                transaction_origin=transaction.transaction_origin,
-                transaction_completed=transaction.transaction_completed,
-            )
-            for transaction in transactions
-        ]
-
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=400, detail="Failed to get members recent transactions"
-        )
-
-
 # update wallet balance
 @router.put(
     "/deposit_to_wallet",
@@ -923,216 +1028,6 @@ async def get_recent_wallet_activity(
         )
 
 
-# repaying fines for a member in a certain chama - we will pull all the unpaid fines for a member in a chama and loop through the earliest using fine_date, we we use the amout we receive from the member
-# and the total_expected_amount in the fine table for deduction, after every deduction, we update the fine table, with a ew total_expected_amount and proceed to the next fine,
-
-
-# might check on adding headers to the request to make sure the member is the one making the request
-@router.post(
-    "/unified_wallet_contribution",
-    status_code=status.HTTP_201_CREATED,
-    response_model=schemas.UnifiedWalletContResp,
-)
-async def unified_wallet_contribution(
-    contrib_data: schemas.UnifiedWalletContBase = Body(...),
-    db: Session = Depends(database.get_db),
-):
-    try:
-        transaction_info_logger.info(
-            "===========unified wallet contribution==========="
-        )
-        chama_id = contrib_data.chama_id
-        member_id = contrib_data.member_id
-        amount = contrib_data.amount
-        expected_amount = contrib_data.expected_contribution
-        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None)
-        wallet_number = generateWalletNumber(db, member_id)
-
-        fines = (
-            db.query(models.Fine)
-            .filter(
-                and_(
-                    models.Fine.chama_id == chama_id,
-                    models.Fine.member_id == member_id,
-                    models.Fine.is_paid == False,
-                )
-            )
-            .order_by(models.Fine.fine_date)
-            .with_for_update()
-            .all()
-        )
-
-        total_fines_repaid = 0
-        amount_contributed = 0
-        with db.begin_nested():
-            if fines:
-                for fine in fines:
-                    transaction_info_logger.info(
-                        f"fine amout {fine.total_expected_amount}"
-                    )
-                    transaction_info_logger.info(f"paying with {amount}")
-
-                    fine_transaction_code = generate_transaction_code(
-                        "fine_repay", wallet_number, chama_id
-                    )
-
-                    if amount >= fine.total_expected_amount:
-                        amount -= fine.total_expected_amount
-                        fine_amount_repaid = fine.total_expected_amount
-                        fine.is_paid = True
-                        fine.paid_date = transaction_date
-                        fine.total_expected_amount = 0
-                    else:
-                        fine.total_expected_amount -= amount
-                        fine_amount_repaid = amount
-                        amount = 0
-
-                    total_fines_repaid += fine_amount_repaid
-
-                    # record the fine transaction
-                    fine_transaction_data = {
-                        "amount": fine_amount_repaid,
-                        "phone_number": wallet_number,
-                        "transaction_date": transaction_date,
-                        "updated_at": transaction_date,
-                        "transaction_completed": True,
-                        "transaction_code": fine_transaction_code,
-                        "transaction_type": "fine deduction",
-                        "transaction_origin": "wallet",
-                        "chama_id": chama_id,
-                        "member_id": member_id,
-                    }
-                    new_fine_transaction = models.Transaction(**fine_transaction_data)
-                    db.add(new_fine_transaction)
-
-                    # create a wallet transaction for fine deduction
-                    wallet_fine_transaction_data = {
-                        "amount": fine_amount_repaid,
-                        "transaction_type": "fine deduction",
-                        "transaction_date": transaction_date,
-                        "transaction_completed": True,
-                        "transaction_code": fine_transaction_code,
-                        "transaction_destination": chama_id,
-                        "member_id": member_id,
-                    }
-                    new_wallet_fine_transaction = models.Wallet_Transaction(
-                        **wallet_fine_transaction_data
-                    )
-                    db.add(new_wallet_fine_transaction)
-
-                    if amount == 0:
-                        break
-
-            # if after fine repayment, the member has some amount left, we contribute towards the expected amount
-            # this is both a wallet and trasaction record
-            member_record = (
-                db.query(models.User).filter(models.User.id == member_id).first()
-            )
-            if amount > 0 and expected_amount > 0:
-                transaction_code = generate_transaction_code(
-                    "deposit", wallet_number, chama_id
-                )
-
-                if amount > expected_amount:
-                    amount = expected_amount
-
-                # record the transaction
-                transaction_data = {
-                    "amount": amount,
-                    "phone_number": member_record.wallet_number,
-                    "transaction_date": transaction_date,
-                    "updated_at": transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_type": "deposit",
-                    "transaction_origin": "wallet",
-                    "chama_id": chama_id,
-                    "member_id": member_id,
-                }
-
-                new_transaction = models.Transaction(**transaction_data)
-                db.add(new_transaction)
-
-                # record the wallet transaction
-                wallet_transaction_data = {
-                    "amount": amount,
-                    "transaction_type": "moved to chama",
-                    "transaction_date": transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_destination": chama_id,
-                    "member_id": member_id,
-                }
-
-                new_wallet_transaction = models.Wallet_Transaction(
-                    **wallet_transaction_data
-                )
-                db.add(new_wallet_transaction)
-
-                amount_contributed = amount
-
-            # update the wallet balance
-            member_record = (
-                db.query(models.User).filter(models.User.id == member_id).first()
-            )
-            member_record.wallet_balance -= amount_contributed + total_fines_repaid
-
-            # update the chama account balance
-            chama_account = (
-                db.query(models.Chama_Account)
-                .filter(models.Chama_Account.chama_id == chama_id)
-                .first()
-            )
-            chama_account.account_balance += total_fines_repaid + amount_contributed
-
-            db.commit()
-
-        transaction_info_logger.info(
-            "===========unified wallet contribution==========="
-        )
-        return {"message": "unified wallet contribution successful"}
-    except Exception as e:
-        transaction_error_logger.error(f"failed to make a unified wallet cont {e}")
-        db.rollback()
-        raise HTTPException(
-            status_code=400, detail="unified wallet contribution failed"
-        )
-
-
-# retrieve the amount of fines a member has in a chama
-@router.get(
-    "/total_fines",
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.TotalFinesResp,
-)
-async def get_total_fines(
-    fine_data: schemas.MemberFines = Body(...),
-    db: Session = Depends(database.get_db),
-):
-    try:
-        fine_dict = fine_data.dict()
-        chama_id = fine_dict["chama_id"]
-        member_id = fine_dict["member_id"]
-
-        total_fine_amount = (
-            db.query(func.coalesce(func.sum(models.Fine.total_expected_amount), 0))
-            .filter(
-                and_(
-                    models.Fine.chama_id == chama_id,
-                    models.Fine.member_id == member_id,
-                    models.Fine.is_paid == False,
-                )
-            )
-            .scalar()
-        )
-
-        return {"total_fines": total_fine_amount}
-
-    except Exception as e:
-        transaction_error_logger.error(f"Failed to get total fines {e}")
-        raise HTTPException(status_code=400, detail="Failed to get total fines")
-
-
 # check if a member is already joined a chama  using the chama id and member id and the members_chamas_association table
 @router.get(
     "/member_in_chama",
@@ -1237,155 +1132,6 @@ def calculate_two_previous_dates(interval, next_contribution_date):
         prev_contribution_date = next_contribution_date - timedelta(weeks=4)
         prev_two_contribution_date = next_contribution_date - timedelta(weeks=8)
     return prev_contribution_date, prev_two_contribution_date
-
-
-# using the chama details dreturned above, the share price, the fine, and two prev dates, check between those dates and check a members total contribution between those dates, compare
-# to the expected contribution (share price * num of shares (from members_chamas table)) and calculate the difference.
-# if its > 0, the member is behind in that chamas contribution for that period and is assinged a fine per share to be added as a record in the fines table
-# chama_id, member_id, fine, fine_reason, fine_date(prev_contrib_date), is_paid, paid_date, total_expected_amount(total fine + missed contribution amount)
-@router.post(
-    "/setting_chama_members_contribution_fines",
-    status_code=status.HTTP_201_CREATED,
-)
-async def setting_members_contribution_fines(
-    chama_details: dict,
-    db: Session = Depends(database.get_db),
-):
-    try:
-        transaction_info_logger.info("=====setting members contribution fines========")
-        fines = {}
-        for chama_id, details in chama_details.items():
-            chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-            if not chama:
-                continue
-            transaction_info_logger.info(f"chama {chama_id}")
-
-            last_contribution_datetime = datetime.fromisoformat(
-                details["prev_contribution_date"]
-            )
-            second_last_contribution_datetime = datetime.fromisoformat(
-                details["prev_two_contribution_date"]
-            )
-
-            members = (
-                db.query(models.User)
-                .join(models.chama_user_association)
-                .options(joinedload(models.User.chamas))
-                .filter(models.chama_user_association.c.chama_id == chama_id)
-                .filter(models.chama_user_association.c.registration_fee_paid == True)
-                .all()
-            )
-
-            for member in members:
-                member_chama = (
-                    db.query(models.chama_user_association)
-                    .filter(
-                        and_(
-                            models.chama_user_association.c.member_id == member.id,
-                            models.chama_user_association.c.chama_id == chama_id,
-                        )
-                    )
-                    .first()
-                )
-
-                if not member_chama:
-                    continue
-
-                total_contribution = (
-                    db.query(func.coalesce(func.sum(models.Transaction.amount), 0))
-                    .filter(
-                        and_(
-                            models.Transaction.member_id == member.id,
-                            models.Transaction.chama_id == chama_id,
-                            models.Transaction.transaction_type == "deposit",
-                            models.Transaction.transaction_completed == True,
-                            models.Transaction.is_reversed == False,
-                            func.date(models.Transaction.transaction_date)
-                            > second_last_contribution_datetime.date(),
-                            func.date(models.Transaction.transaction_date)
-                            <= last_contribution_datetime.date(),
-                        )
-                    )
-                    .scalar()
-                )
-
-                expected_contribution = (
-                    chama.contribution_amount * member_chama.num_of_shares
-                )
-                difference = expected_contribution - total_contribution
-
-                if difference > 0:
-                    fine = member_chama.num_of_shares * chama.fine_per_share
-                    fine_data = {
-                        "chama_id": chama_id,
-                        "member_id": member.id,
-                        "fine": fine,
-                        "fine_reason": "missed contribution",
-                        "fine_date": details["prev_contribution_date"],
-                        "is_paid": False,
-                        "paid_date": None,
-                        "total_expected_amount": fine + difference,
-                    }
-
-                    existing_fine = (
-                        db.query(models.Fine)
-                        .filter(
-                            and_(
-                                models.Fine.member_id == member.id,
-                                models.Fine.chama_id == chama_id,
-                                func.date(models.Fine.fine_date)
-                                == last_contribution_datetime.date(),
-                            )
-                        )
-                        .first()
-                    )
-
-                    if not existing_fine:
-                        transaction_info_logger.info(f"fine {fine_data}")
-                        new_fine = models.Fine(**fine_data)
-                        db.add(new_fine)
-                        db.commit()
-                        db.refresh(new_fine)
-
-        transaction_info_logger.info("=====members contribution fines set========")
-        return {"message": "fines set successfully"}
-    except Exception as e:
-        db.rollback()
-        transaction_error_logger.error(f"Failed to set members contribution fines {e}")
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to set members contribution fines",
-        )
-
-
-# return the fine amount of one individual member in a chama
-@router.get(
-    "/member_fine/{chama_id}/{member_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=schemas.TotalFinesResp,
-)
-async def get_member_fine(
-    chama_id: int,
-    member_id: int,
-    db: Session = Depends(database.get_db),
-):
-    try:
-        total_fines = (
-            db.query(func.coalesce(func.sum(models.Fine.total_expected_amount), 0))
-            .filter(
-                and_(
-                    models.Fine.chama_id == chama_id,
-                    models.Fine.member_id == member_id,
-                    models.Fine.is_paid == False,
-                )
-            )
-            .scalar()
-        )
-
-        return {"total_fines": total_fines}
-    except Exception as e:
-        transaction_error_logger.error(f"Failed to get member fine {e}")
-        raise HTTPException(status_code=400, detail="Failed to get member fine")
 
 
 # create an auto contribution for a member in a chama
@@ -1811,50 +1557,6 @@ def get_member_activity_contribution_so_far(user_id, activity_id, db):
         )
 
 
-def difference_between_contributed_and_expected(
-    db, member_id, chama_id, expected_amount
-):
-    # retrieve the interval and calcculate the previous contribution date - this will be period we will be cchecking the contributions
-    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
-    if not chama:
-        return expected_amount
-
-    chama_contribution_day = (
-        db.query(models.ChamaContributionDay)
-        .filter(models.ChamaContributionDay.chama_id == chama_id)
-        .first()
-    )
-    if not chama_contribution_day:
-        return expected_amount
-
-    upcoming_contribution_date = chama_contribution_day.next_contribution_date
-    prev_contribution_date, second_prev_contribution_date = (
-        calculate_two_previous_dates(
-            chama.contribution_interval, upcoming_contribution_date
-        )
-    )
-
-    total_contribution = (
-        db.query(func.coalesce(func.sum(models.Transaction.amount), 0))
-        .filter(
-            and_(
-                models.Transaction.member_id == member_id,
-                models.Transaction.chama_id == chama_id,
-                models.Transaction.transaction_type == "deposit",
-                models.Transaction.transaction_completed == True,
-                models.Transaction.is_reversed == False,
-                func.date(models.Transaction.transaction_date)
-                > prev_contribution_date.date(),
-                func.date(models.Transaction.transaction_date)
-                <= upcoming_contribution_date.date(),
-            )
-        )
-        .scalar()
-    )
-
-    return expected_amount - total_contribution
-
-
 # retrieve the wallet number
 @router.get(
     "/wallet_number/{member_id}",
@@ -1910,3 +1612,223 @@ async def get_chamazetu_to_mpesa_fee(
     except Exception as e:
         transaction_error_logger.error(f"Failed to get transaction fee {e}")
         raise HTTPException(status_code=400, detail="Failed to get transaction fee")
+
+
+# retrieving members rotation_contribution pahe data
+@router.get(
+    "/rotation_contributions/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_activity_rotation_contribution(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        user_in_activity = (
+            db.query(models.activity_user_association)
+            .filter(
+                and_(
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_id == current_user.id,
+                )
+            )
+            .first()
+        )
+        if not user_in_activity:
+            raise HTTPException(
+                status_code=404, detail="You are not a member of this activity"
+            )
+
+        upcoming_rotation_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+        rotation_date = upcoming_rotation_date.strftime("%Y-%B-%d")
+
+        if not upcoming_rotation_date:
+            raise HTTPException(
+                status_code=404, detail="Upcoming rotation date not found"
+            )
+
+        pooled_so_far = (
+            db.query(
+                func.coalesce(
+                    func.sum(models.RotatingContributions.contributed_amount), 0
+                )
+            )
+            .filter(
+                and_(
+                    models.RotatingContributions.activity_id == activity_id,
+                    models.RotatingContributions.rotation_date
+                    == upcoming_rotation_date,
+                )
+            )
+            .scalar()
+        )
+
+        # print("upcoming rotation date", upcoming_rotation_date)
+
+        # check if this activity has a rotation_order record
+        rotation_order = db.query(models.RotationOrder).filter(
+            and_(
+                models.RotationOrder.activity_id == activity_id,
+            )
+        )
+        if rotation_order:
+            rotation_order = True
+        else:
+            rotation_order = False
+
+        cycle_number = (
+            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+
+        if not cycle_number:
+            cycle_number = 0
+
+        upcoming_recipient = (
+            db.query(
+                models.RotationOrder,
+                models.User.first_name,
+                models.User.last_name,
+                models.User.profile_picture,
+            )
+            .join(models.User, models.User.id == models.RotationOrder.recipient_id)
+            .filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.receiving_date == upcoming_rotation_date,
+                    # models.RotationOrder.fulfilled == False,
+                )
+            )
+            .first()
+        )
+
+        # print("===upcoming recipient===\n")
+
+        if not upcoming_recipient:
+            return {
+                "pooled_so_far": pooled_so_far,
+                "rotation_order": rotation_order,
+                "upcoming_rotation_date": rotation_date,
+                "upcoming_recipient": None,
+                "rotation_contributions": None,
+                "received_rotations": None,
+            }
+
+        upcoming_recipient_resp = {
+            "recipient_name": f"{upcoming_recipient.first_name} {upcoming_recipient.last_name}",
+            "profile_picture": upcoming_recipient.profile_picture,
+            "cycle_number": upcoming_recipient.RotationOrder.cycle_number,
+            "share_name": upcoming_recipient.RotationOrder.share_name,
+            "expected_amount": upcoming_recipient.RotationOrder.expected_amount,
+            "received_amount": upcoming_recipient.RotationOrder.received_amount,
+            "order_in_rotation": upcoming_recipient.RotationOrder.order_in_rotation,
+        }
+        # print("p====past recipient=====\n", upcoming_recipient_resp)
+        # TODO: remember to swap back to having received amount instead of pool calculation - this will also need to reconfigure merry-go-round contributions
+
+        rotation_contributions = (
+            db.query(
+                models.RotatingContributions,
+                models.User.first_name,
+                models.User.last_name,
+            )
+            .join(
+                models.User,
+                models.User.id == models.RotatingContributions.contributor_id,
+            )
+            .filter(
+                and_(
+                    models.RotatingContributions.activity_id == activity_id,
+                    models.RotatingContributions.rotation_date
+                    == upcoming_rotation_date,
+                )
+            )
+            .all()
+        )
+        # print("====rotation contributions==\n", rotation_contributions)
+
+        if not rotation_contributions:
+            return {
+                "pooled_so_far": pooled_so_far,
+                "rotation_order": rotation_order,
+                "upcoming_rotation_date": rotation_date,
+                "upcoming_recipient": upcoming_recipient_resp,
+                "rotation_contributions": None,
+                "received_rotations": None,
+            }
+
+        rotation_contributions_resp = [
+            {
+                "contributor_name": f"{contribution.first_name} {contribution.last_name}",
+                "expected_amount": contribution.RotatingContributions.expected_amount,
+                "contributed_amount": contribution.RotatingContributions.contributed_amount,
+                "fine": contribution.RotatingContributions.fine,
+                "rotation_date": contribution.RotatingContributions.rotation_date,
+                "cycle_number": contribution.RotatingContributions.cycle_number,
+                "contributing_share": contribution.RotatingContributions.contributing_share,
+                "recipient_share": contribution.RotatingContributions.recipient_share,
+            }
+            for contribution in rotation_contributions
+        ]
+
+        # print("===past roations\n", rotation_contributions_resp)
+        # now retrieve past rotation receivers from RotationOrder table
+        received_rotations = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.cycle_number == cycle_number,
+                )
+            )
+            .all()
+        )
+
+        if not received_rotations:
+            return {
+                "pooled_so_far": pooled_so_far,
+                "rotation_order": rotation_order,
+                "upcoming_rotation_date": rotation_date,
+                "upcoming_recipient": upcoming_recipient_resp,
+                "rotation_contributions": rotation_contributions_resp,
+                "received_rotations": None,
+            }
+
+        received_rotations_resp = [
+            {
+                "receiver_name": rotation.user_name,
+                "receiving_share_name": rotation.share_name,
+                "receiver_amount": rotation.received_amount,
+                "receiver_order_in_rotation": rotation.order_in_rotation,
+                "cycle_number": rotation.cycle_number,
+                "status": "received" if rotation.fulfilled else "not received",
+            }
+            for rotation in received_rotations
+        ]
+
+        return {
+            "pooled_so_far": pooled_so_far,
+            "rotation_order": rotation_order,
+            "upcoming_rotation_date": rotation_date,
+            "upcoming_recipient": upcoming_recipient_resp,
+            "rotation_contributions": rotation_contributions_resp,
+            "received_rotations": received_rotations_resp,
+        }
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get rotation contribution {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get rotation contribution"
+        )

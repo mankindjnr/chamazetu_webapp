@@ -72,6 +72,7 @@ async def get_active_chamas(
                     models.Chama.is_active == True,
                     models.Chama.accepting_members == True,
                     models.Chama.is_deleted == False,
+                    models.Chama.category == "public",
                 )
             )
         ).all()
@@ -1090,6 +1091,7 @@ async def get_chama_about(
             ),
             "is_active": "active" if chama.is_active else "inactive",
             "restart": chama.restart,
+            "chama_category": chama.category,
         }
     except SQLAlchemyError as e:
         management_error_logger.error(
@@ -1571,15 +1573,22 @@ async def get_chama_all_fines(
 
 # get a chama and all its detail for public access( faqs, rules, about, mission, vision) and manager details with chama id
 @router.get(
-    "/public_chama/{chama_id}",
+    "/info_page/{category}/{chama_id}",
     status_code=status.HTTP_200_OK,
 )
-async def get_public_chama(
+async def get_chama_info_page(
+    category: str,
     chama_id: int,
     db: Session = Depends(database.get_db),
 ):
     try:
-        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        chama = (
+            db.query(models.Chama)
+            .filter(models.Chama.id == chama_id)
+            .filter(models.Chama.category == category)
+            .first()
+        )
+
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
 
@@ -1638,7 +1647,7 @@ async def get_public_chama(
         }
 
         return {
-            "public_chama": chama,
+            "chama": chama,
             "rules": chama_rules_dict,
             "about": about_chama,
             "faqs": chama_faqs_list,
@@ -1702,3 +1711,65 @@ async def get_chama_members(
             f"failed to get chama members for id {chama_id}, error: {e}"
         )
         raise HTTPException(status_code=400, detail="Failed to get chama members")
+
+
+# get chama_name and chama_id from an activty id
+@router.get(
+    "/chama_from_activity_id/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_from_activity_id(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        chama = (
+            db.query(models.Chama).filter(models.Chama.id == activity.chama_id).first()
+        )
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        return {"chama_name": chama.chama_name, "chama_id": chama.id}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama from activity id {activity_id}, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to get chama from activity id"
+        )
+
+
+# retrieve all email of users in a chama and return a list of emails
+@router.get(
+    "/emails/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_chama_emails(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_emails = (
+            db.query(models.User)
+            .join(models.chama_user_association)
+            .filter(models.chama_user_association.c.chama_id == chama_id)
+            .all()
+        )
+
+        if not chama_emails:
+            raise HTTPException(status_code=404, detail="No emails found")
+
+        emails_list = [email.email for email in chama_emails]
+
+        return {"emails": emails_list}
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama emails for id {chama_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Failed to get chama emails")

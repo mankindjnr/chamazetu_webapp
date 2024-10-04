@@ -126,6 +126,12 @@
                 <li class="nav-item"></li>
                   <button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity-settings">Activity Settings</button>
                 </li>
+                
+                {% if role == 'manager' %}
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#invite-members">Invite Members</button>
+                </li>
+                {% endif %}
 
               </ul>
 
@@ -191,8 +197,9 @@
                   </form>
 
                 </div>
+                {% endif %}
                 
-              </div><!-- End Bordered Tabs -->
+              <!-- </div>End Bordered Tabs -->
 
               <!-- chama controls, delete/suspend/restart/pause/start -->
               {% if role == 'manager' %}
@@ -224,7 +231,7 @@
                   <div class="col-lg-4 col-md-5 mt-3">
                     <form method="POST" action="{% url 'manager:deactivate_activate_activity' activity.activity_name activity.activity_id %}">
                         {% csrf_token %}
-                        <input type="submit" class="btn btn-danger btn-sm" value="Deactivate Chama">
+                        <input type="submit" class="btn btn-danger btn-sm" value="Deactivate {{activity.activity_name}} ">
                     </form>
                   </div>
                   {% else %}
@@ -233,7 +240,7 @@
                   <div class="col-lg-4 col-md-5 mt-3">
                     <form method="POST" action="{% url 'manager:deactivate_activate_activity' activity.activity_name activity.activity_id %}">
                         {% csrf_token %}
-                        <input type="submit" class="btn btn-success btn-sm" value="Activate Chama">
+                        <input type="submit" class="btn btn-success btn-sm" value="Activate {{activity.activity_name}}">
                     </form>
                   </div>
                   {% endif %}
@@ -243,7 +250,7 @@
                    <div class="col-lg-4 col-md-5 mt-3">
                      <form method="POST" action="{% url 'manager:restart_activity' activity.activity_name activity.activity_id %}">
                          {% csrf_token %}
-                         <input type="submit" class="btn btn-danger btn-sm" value="Restart Chama">
+                         <input type="submit" class="btn btn-danger btn-sm" value="Restart {{activity.activity_name}}">
                      </form>
                    </div>
 
@@ -259,7 +266,7 @@
 
                 </div>
                 </div>
-              {% endif %}
+
               {% endif %}
 
               <!-- if member: activity settings add share/decrease shares auto_contribute toggle -->
@@ -280,10 +287,49 @@
                         <input type="submit" class="btn btn-success btn-sm" value="Activate Auto Contribute">
                     </form>
                   </div>
-                {% endif %}
-
-              
+                {% endif %}              
               </div>
+
+              {% if role == 'manager' %}
+              <div class="tab-pane fade invite-members pt-3" id="invite-members">
+                <div class="form-group mb-3">
+                    <!-- Toggle Radio Buttons to Choose Between Inviting All or Entering Emails -->
+                    <label>Choose Invite Option:</label><br>
+                    <input type="radio" id="inviteAll" name="inviteOption" value="all" onclick="toggleInviteOption()" checked>
+                    <label for="inviteAll">Invite All Chama Members</label><br>
+                    <input type="radio" id="inviteSpecific" name="inviteOption" value="specific" onclick="toggleInviteOption()">
+                    <label for="inviteSpecific">Invite Specific Members</label>
+                </div>
+            
+                <!-- Notify All Members Section -->
+                <div class="row mb-3" id="notifyAllSection">
+                    <div class="col-lg-3 col-md-4 label">Invite All Chama Members</div>
+                    <div class="col-lg-9 col-md-8">
+                        <button type="button" class="btn btn-success">
+                            <a href="{% url 'manager:invite_all' 'activity' activity.activity_name activity.activity_id %}" class="text-white">Notify All Members</a>
+                        </button>
+                    </div>
+                </div>
+            
+                <!-- Form for Entering Emails -->
+                <form action="{% url 'manager:send_invite_to_members' 'activity' activity.activity_name activity.activity_id %}" method="POST" id="inviteForm" style="display:none;">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label for="emails">Invite Members (Enter one or multiple email addresses):</label>
+                        <textarea name="emails" id="emails" class="form-control" rows="4" placeholder="Enter email addresses separated by commas or new lines"></textarea>
+                    </div>
+            
+                    <input type="hidden" name="role" value="manager" required>
+            
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-outline-primary">Send Invite</button>
+                    </div>
+                </form>
+            </div>
+            
+              {% endif %}
+
+            </div> <!-- End Tab Content -->
 
             </div>
           </div>
@@ -293,5 +339,31 @@
     </section>
 
   </main><!-- End #main -->
+
+  <script type="text/javascript">
+    function toggleInviteOption() {
+        var inviteAllRadio = document.getElementById("inviteAll");
+        var notifyAllSection = document.getElementById("notifyAllSection");
+        var inviteForm = document.getElementById("inviteForm");
+
+        if (inviteAllRadio.checked) {
+            // Show Notify All Section
+            notifyAllSection.style.display = "block";
+            // Hide the form for entering emails
+            inviteForm.style.display = "none";
+        } else {
+            // Hide Notify All Section
+            notifyAllSection.style.display = "none";
+            // Show the form for entering emails
+            inviteForm.style.display = "block";
+        }
+    }
+
+    // Ensure correct visibility on page load
+    window.onload = function() {
+        toggleInviteOption();
+    };
+</script>
+
 
 {% endblock %}

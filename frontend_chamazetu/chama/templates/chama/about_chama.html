@@ -164,6 +164,10 @@
                 <li class="nav-item">
                   <button class="nav-link" data-bs-toggle="tab" data-bs-target="#chama-controls">Chama Controls</button>
                 </li>
+
+                <li class="nav-item">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#invite-members">Invite Members</button>
+                </li>
                 {% endif %}
 
               </ul>
@@ -429,6 +433,32 @@
 
                 </div>
                 </div>
+
+                <!-- invite members -->
+
+                <div class="tab-pane fade invite-members pt-3" id="invite-members">
+                  <!-- url -->
+                   {% if chama_data.chama_category == 'public' %}
+                  <p>Share this link with members to join the chama:</p>
+                    <p>https://chamazetu.com/member/chama/{{ chama_id}}</p>
+                  {% elif chama_data.chama_category == 'private' %}
+                  <form action="{% url 'manager:send_invite_to_members' 'chama' chama.Chama_Name chama_id %}" method="POST">
+                    {% csrf_token %}
+
+                    <div class="form-group mb-3">
+                      <label for="emails">Invite Members (Enter one or multiple email addresses):</label>
+                      <textarea name="emails" id="emails" class="form-control" rows="4" placeholder="Enter email addresses separated by commas or new lines" required></textarea>
+                    </div>
+
+                    <input type="hidden" name="role" value="manager" required>
+
+                    <div class="text-center">
+                      <button type="submit" class="btn btn-outline-primary">Send Invite</button>
+                    </div>
+                  </form>
+                  {% endif %}
+
+              </div><!-- End Bordered Tabs -->
               {% endif %}
               {% endif %}
 
