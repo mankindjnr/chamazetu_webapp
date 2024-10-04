@@ -117,6 +117,7 @@
 
       <li class="nav-heading">Pages</li>
 
+      {% if activity_type == 'merry-go-round' %}
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:rotation_contributions' activity_id %}">
           <!-- <i class="ri-hand-coin-fill"></i> -->
@@ -124,6 +125,7 @@
           <span>Rotating Contributions</span>
         </a>
       </li>
+      {% endif %}
 
       <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="">
