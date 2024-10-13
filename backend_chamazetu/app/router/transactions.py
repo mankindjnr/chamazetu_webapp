@@ -36,6 +36,20 @@ async def create_unprocessed_deposit_transaction(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # retrieve the last 12 characters of transaction destnation
+        if transaction.transaction_destination[-12:] == "Registration":
+            chama_id = int(transaction.transaction_destination[:-12])
+            today = datetime.now(nairobi_tz).date()
+            # check if the today is passed the last joinig date
+            chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+            if not chama:
+                raise HTTPException(status_code=404, detail="Chama not found")
+
+            if chama.last_joining_date < today:
+                raise HTTPException(
+                    status_code=400, detail="Chama registration period has ended"
+                )
+
         transaction_code = generate_transaction_code(
             transaction.transaction_type, transaction.transaction_destination
         )
@@ -58,6 +72,8 @@ async def create_unprocessed_deposit_transaction(
         db.refresh(new_transaction)
 
         return {"transaction_code": transaction_code}
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         transaction_error_logger.error(f"Failed to create unprocessed transaction: {e}")
         raise HTTPException(
@@ -286,6 +302,72 @@ async def load_wallet(
         db.rollback()
         transaction_error_logger.error(f"Failed to load wallet: {e}")
         raise HTTPException(status_code=400, detail="Failed to create transaction")
+
+
+# transfer from one user wallet to anoher
+@router.post("/transfer", status_code=status.HTTP_201_CREATED)
+async def transfer_wallet(
+    transfer: schemas.TransferWalletBase = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # check if the user has enough balance to transfer
+        if user.wallet_balance < transfer.amount:
+            raise HTTPException(
+                status_code=400, detail="Insufficient balance to transfer"
+            )
+
+        # check if the destination wallet exists
+        destination_user = (
+            db.query(models.User)
+            .filter(models.User.wallet_id == transfer.destination_wallet)
+            .first()
+        )
+        if not destination_user:
+            raise HTTPException(status_code=404, detail="Recipient wallet not found")
+
+        if user.id == destination_user.id:
+            raise HTTPException(
+                status_code=400, detail="Cannot transfer to the same wallet"
+            )
+
+        transaction_code = generate_transaction_code(
+            "transfer", transfer.destination_wallet
+        )
+        transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+
+        new_transaction = models.WalletTransaction(
+            amount=transfer.amount,
+            transaction_type="transfer",
+            origin=user.wallet_id,
+            destination=transfer.destination_wallet,
+            user_id=user.id,
+            transaction_completed=True,
+            transaction_date=transaction_date,
+            transaction_code=transaction_code,
+        )
+
+        db.add(new_transaction)
+
+        # update the wallet balance
+        user.wallet_balance -= transfer.amount
+        destination_user.wallet_balance += transfer.amount
+
+        db.commit()
+
+        return {"transfer": "successful"}
+    except HTTPException as http_exc:
+        # no need for rollback since its a logical error, not a database error
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to transfer wallet: {e}")
+        raise HTTPException(status_code=400, detail="Failed to transfer wallet")
 
 
 # =========================mpesa fine repayment recording=========

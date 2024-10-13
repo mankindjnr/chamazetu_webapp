@@ -114,8 +114,7 @@ async def from_wallet_to_activity(
         if resp.status_code == HTTPStatus.CREATED:
             messages.success(request, "Activity contribution successful")
         else:
-            messages.error(request, "Failed to contribute to activity")
-
+            messages.error(request, f"{resp.json()['detail']}")
     return HttpResponseRedirect(
         reverse(
             "member:activities", args=[chama_name, chama_id, activity_type, activity_id]
@@ -174,7 +173,11 @@ async def wallet_transactions(request):
     if request.method == "POST":
         transaction_type = request.POST.get("transaction_type", "").strip()
         amount = request.POST.get("amount", "").strip()
-        phone_number = request.POST.get("phonenumber", "").strip()
+        phone_number, wallet_id = "", ""
+        if transaction_type != "transfer":
+            phone_number = request.POST.get("phonenumber", "").strip()
+        else:
+            wallet_id = request.POST.get("walletnumber", "").strip()
 
         # validate amount
         if not is_valid_amount(amount) or int(float(amount)) < 10:
@@ -184,15 +187,30 @@ async def wallet_transactions(request):
         amount = int(float(amount))
 
         # validate phone number
-        if not phone_number or not phone_number.isdigit() or len(phone_number) != 10:
-            messages.error(request, "Invalid phone number.")
-            return redirect(reverse("member:dashboard"))
+        if transaction_type != "transfer":
+            if (
+                not phone_number
+                or not phone_number.isdigit()
+                or len(phone_number) != 10
+            ):
+                messages.error(request, "Invalid phone number.")
+                return redirect(reverse("member:dashboard"))
+        else:
+            if (
+                not wallet_id
+                or wallet_id.strip().upper() == "NULL"
+                or len(wallet_id) < 6
+            ):
+                messages.error(request, "Invalid wallet number.")
+                return redirect(reverse("member:dashboard"))
 
         # route reqest based on transaction type
         if transaction_type == "deposit":
             return await deposit_to_wallet(request, amount, phone_number)
         elif transaction_type == "withdrawal":
             return await from_wallet_to_mpesa(request, amount, phone_number)
+        elif transaction_type == "transfer":
+            return await transfer_to_another_member(request, amount, wallet_id)
 
     return redirect(reverse("member:dashboard"))
 
@@ -272,7 +290,6 @@ async def from_wallet_to_select_activity(request, chama_id, chama_name):
         return redirect(reverse("member:access_chama", args=[chama_name, chama_id]))
 
     current_user = request.COOKIES.get("current_user")
-    print("====current_user: ", current_user)
     user_id = get_user_id(current_user)
     amount = request.POST.get("amount", "").strip()
     activity_id, activity_type = get_activity_info(request.POST.get("activity_title"))
@@ -341,7 +358,7 @@ async def from_wallet_to_select_activity(request, chama_id, chama_name):
         if resp.status_code == HTTPStatus.CREATED:
             messages.success(request, "Activity contribution successful")
         else:
-            messages.error(request, "Failed to contribute to activity")
+            messages.error(request, f"{resp.json()['detail']}")
 
     return HttpResponseRedirect(
         reverse("member:access_chama", args=[chama_name, chama_id])
@@ -352,7 +369,7 @@ async def from_wallet_to_select_activity(request, chama_id, chama_name):
 @async_tokens_in_cookies()
 async def fix_mpesa_to_wallet_deposit(request):
     if request.method == "POST":
-        amount = request.POST.get("amount", "").strip()
+        amount = request.POST.get("fix_amount", "").strip()
         if not is_valid_amount(amount):
             messages.error(request, "Invalid amount.")
             return redirect(reverse("member:dashboard"))
@@ -425,7 +442,7 @@ async def from_wallet_to_mpesa(request, amount, phone_number):
 
     if wallet_balance < amount_to_withdraw or amount <= 0:
         messages.error(
-            request, f"insufficient funds, transaction fee is Ksh {transaction_fee}"
+            request, f"Could not complete the transaction. Insufficient funds."
         )
         return redirect(reverse("member:dashboard"))
 
@@ -479,5 +496,37 @@ async def from_wallet_to_mpesa(request, amount, phone_number):
         messages.error(request, "Failed to send withdrawal request")
     except httpx.TimeoutException:
         messages.error(request, "Failed to send withdrawal request")
+
+    return redirect(reverse("member:dashboard"))
+
+
+# ==========================================================
+async def transfer_to_another_member(request, amount, wallet_id):
+    current_user = request.COOKIES.get("current_user")
+    # generate a transaction header
+    transaction_header = await get_transaction_header(request, current_user)
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            transfer_url = f"{os.getenv('api_url')}/transactions/transfer"
+            transfer_data = {
+                "amount": amount,
+                "destination_wallet": wallet_id.strip().upper(),
+            }
+            # send the request to mpesa and handle errors
+            try:
+                resp = await client.post(
+                    transfer_url, json=transfer_data, headers=transaction_header
+                )
+                if resp.status_code == HTTPStatus.CREATED:
+                    messages.success(request, "Transfer request sent successfully")
+                else:
+                    messages.error(request, f"{resp.json()['detail']}")
+            except httpx.RequestError:
+                messages.error(request, "Failed to send transfer request")
+    except httpx.RequestError as exc:
+        messages.error(request, "Failed to send transfer request")
+    except httpx.TimeoutException:
+        messages.error(request, "Failed to send transfer request")
 
     return redirect(reverse("member:dashboard"))

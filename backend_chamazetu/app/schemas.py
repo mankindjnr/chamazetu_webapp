@@ -555,6 +555,13 @@ class JoinChamaBase(BaseModel):
     class Config:
         from_attributes = True
 
+class AddMemberToChamaBase(BaseModel):
+    chama_id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
 
 class UpdateCallbackData(BaseModel):
     checkoutid: str
@@ -958,6 +965,14 @@ class AutoContributeBase(BaseModel):
     expected_amount: int
     next_contribution_date: datetime
     status: str
+
+    class Config:
+        from_attributes = True
+
+
+class TransferWalletBase(BaseModel):
+    amount: int
+    destination_wallet: str
 
     class Config:
         from_attributes = True

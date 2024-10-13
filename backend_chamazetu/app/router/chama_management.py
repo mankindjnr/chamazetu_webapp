@@ -371,8 +371,21 @@ async def join_chama(
     member_chama: schemas.JoinChamaBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
+
+    # check if today is past the last joining date
+    today = datetime.now(nairobi_tz).date()
+    chama_id = member_chama.chama_id
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+
+    if chama.last_joining_date < today:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot join the chama after the last joining date",
+        )
+
     member_chama_data = member_chama.dict()
-    chama_id = member_chama_data["chama_id"]
     user_id = member_chama_data["user_id"]
     registration_fee = member_chama_data["registration_fee"]
     unprocessed_code = member_chama_data["unprocessed_code"]
@@ -454,7 +467,6 @@ async def join_chama(
         db.commit()
         return {"message": "Member added to chama successfully"}
     except HTTPException as http_exc:
-        db.rollback()
         raise http_exc
     except Exception as e:
         db.rollback()
@@ -465,12 +477,24 @@ async def join_chama(
 # this route will add a member to a chama with zero registration fee
 @router.post("/add_member", status_code=status.HTTP_201_CREATED)
 async def add_member_to_chama(
-    member_chama: schemas.JoinChamaBase = Body(...),
+    member_chama: schemas.AddMemberToChamaBase = Body(...),
     db: Session = Depends(database.get_db),
 ):
     member_chama_data = member_chama.dict()
     chama_id = member_chama_data["chama_id"]
     user_id = member_chama_data["user_id"]
+
+    # ensur that last joining date is not past today
+    today = datetime.now(nairobi_tz).date()
+    chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+    if not chama:
+        raise HTTPException(status_code=404, detail="Chama not found")
+
+    if chama.last_joining_date < today:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot join the chama after the last joining date",
+        )
 
     try:
         existing_membership = (
@@ -502,7 +526,6 @@ async def add_member_to_chama(
         db.commit()
         return {"message": "Member added to chama successfully"}
     except HTTPException as http_exc:
-        db.rollback()
         raise http_exc
     except Exception as e:
         db.rollback()
@@ -1773,3 +1796,40 @@ async def get_chama_emails(
             f"failed to get chama emails for id {chama_id}, error: {e}"
         )
         raise HTTPException(status_code=400, detail="Failed to get chama emails")
+
+
+# check the last joining date of a chama if its passsed, update accepting members to false
+@router.put(
+    "/check_and_update_accepting_members_status", status_code=status.HTTP_200_OK
+)
+async def check_and_update_accepting_members_status(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+
+        chamas = (
+            db.query(models.Chama)
+            .filter(
+                and_(
+                    models.Chama.last_joining_date < today,
+                    models.Chama.accepting_members == True,
+                )
+            )
+            .all()
+        )
+
+        # update the accepting members status to false in an atomic transaction
+        with db.begin():
+            for chama in chamas:
+                chama.accepting_members = False
+            db.commit()
+        return {"message": "Accepting members status updated successfully"}
+    except Exception as e:
+        db.rollback()
+        management_error_logger.error(
+            f"failed to update accepting members status, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to update accepting members status"
+        )

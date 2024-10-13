@@ -579,3 +579,47 @@ def auto_contribute():
         raise self.retry(exc=e)
 
     return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def merry_go_round_activity_auto_contributions(*args, **kwargs):
+    """
+    auto contributions for merry_go_round_activities
+    """
+    logger.info(
+        "==========chama/tasks.py: merry_go_round_activity_auto_contributions()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/activities/automated_merry_go_round_contributions"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to create rotating contributions: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task
+def make_auto_contributions():
+    logger.info("==========member/tasks.py: make_auto_contributions()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    generic_auto = auto_contribute.s()
+    merry_go_round_auto = merry_go_round_activity_auto_contributions.s()
+
+    return chain(generic_auto | merry_go_round_auto)()
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def send_contribution_reminders():
+    pass

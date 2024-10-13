@@ -47,7 +47,7 @@ from .tasks import (
 )
 from chama.tasks import (
     update_activities_contribution_days,
-    set_fines_and_update_activity_contribution_days,
+    setfines_updatedays_autodisburse_rotations_chain,
 )
 
 from chama.usermanagement import (
@@ -136,7 +136,7 @@ async def access_chama(request, chamaname, chama_id):
     )
 
     if chama.status_code == HTTPStatus.OK:
-        # set_fines_and_update_activity_contribution_days.delay()
+        # setfines_updatedays_autodisburse_rotations_chain.delay()
         # auto_contribute.delay()
         chama_data = chama.json()
         return render(
@@ -187,7 +187,6 @@ async def join_chama(request):
                 data = {
                     "chama_id": chama_id,
                     "user_id": user_id,
-                    "registration_fee": 0,
                 }
 
                 response = requests.post(url, json=data)
@@ -197,7 +196,8 @@ async def join_chama(request):
                     return HttpResponseRedirect(reverse("member:dashboard"))
                 else:
                     messages.error(
-                        request, "Failed to join chama, please try again later"
+                        request,
+                        f"{response.json().get('detail')}, please try again later",
                     )
             else:
                 # record unprocessed request
@@ -241,7 +241,7 @@ async def join_chama(request):
                         )
                 else:
                     messages.error(
-                        request, "Failed to record transaction, please try again later."
+                        request, f"{unprocessed_request.json().get('detail')}"
                     )
 
         else:

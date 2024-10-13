@@ -1755,3 +1755,388 @@ INFO 2024-10-04 11:12:48,111 tasks Nairobi: 2024-10-04 11:12:48.111849+03:00
 INFO 2024-10-04 11:12:48,413 tasks ==========chama/tasks.py: update_contribution_days()==========
 INFO 2024-10-04 11:12:48,414 tasks Task ran at: 2024-10-04 11:12:48.414278
 INFO 2024-10-04 11:12:48,414 tasks Nairobi: 2024-10-04 11:12:48.414646+03:00
+INFO 2024-10-07 12:47:44,708 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-07 12:47:44,768 tasks Task ran at: 2024-10-07 12:47:44.768275
+INFO 2024-10-07 12:47:44,769 tasks Nairobi: 2024-10-07 12:47:44.769067+03:00
+INFO 2024-10-07 12:47:44,786 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-07 12:47:44,786 tasks Task ran at: 2024-10-07 12:47:44.786479
+INFO 2024-10-07 12:47:44,786 tasks Nairobi: 2024-10-07 12:47:44.786723+03:00
+INFO 2024-10-07 12:47:45,266 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-07 12:47:45,266 tasks Task ran at: 2024-10-07 12:47:45.266793
+INFO 2024-10-07 12:47:45,267 tasks Nairobi: 2024-10-07 12:47:45.267413+03:00
+INFO 2024-10-07 13:13:57,190 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-07 13:13:57,190 tasks Task ran at: 2024-10-07 13:13:57.190891
+INFO 2024-10-07 13:13:57,191 tasks Nairobi: 2024-10-07 13:13:57.191234+03:00
+INFO 2024-10-07 13:13:57,215 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-07 13:13:57,215 tasks Task ran at: 2024-10-07 13:13:57.215578
+INFO 2024-10-07 13:13:57,216 tasks Nairobi: 2024-10-07 13:13:57.216726+03:00
+INFO 2024-10-07 13:13:57,254 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-07 13:13:57,254 tasks Task ran at: 2024-10-07 13:13:57.254351
+INFO 2024-10-07 13:13:57,260 tasks Nairobi: 2024-10-07 13:13:57.258932+03:00
+INFO 2024-10-07 13:15:36,476 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-07 13:15:36,478 tasks Task ran at: 2024-10-07 13:15:36.478444
+INFO 2024-10-07 13:15:36,480 tasks Nairobi: 2024-10-07 13:15:36.480148+03:00
+INFO 2024-10-07 13:15:36,498 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-07 13:15:36,499 tasks Task ran at: 2024-10-07 13:15:36.499432
+INFO 2024-10-07 13:15:36,500 tasks Nairobi: 2024-10-07 13:15:36.499949+03:00
+INFO 2024-10-07 13:15:36,545 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-07 13:15:36,545 tasks Task ran at: 2024-10-07 13:15:36.545824
+INFO 2024-10-07 13:15:36,546 tasks Nairobi: 2024-10-07 13:15:36.546530+03:00
+INFO 2024-10-07 13:20:16,602 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-07 13:20:16,604 tasks Task ran at: 2024-10-07 13:20:16.603458
+INFO 2024-10-07 13:20:16,605 tasks Nairobi: 2024-10-07 13:20:16.605354+03:00
+INFO 2024-10-07 13:20:16,635 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-07 13:20:16,635 tasks Task ran at: 2024-10-07 13:20:16.635854
+INFO 2024-10-07 13:20:16,636 tasks Nairobi: 2024-10-07 13:20:16.636802+03:00
+INFO 2024-10-07 13:20:16,685 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-07 13:20:16,690 tasks Task ran at: 2024-10-07 13:20:16.690054
+INFO 2024-10-07 13:20:16,691 tasks Nairobi: 2024-10-07 13:20:16.691275+03:00
+INFO 2024-10-07 13:20:16,730 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-07 13:20:16,731 tasks Task ran at: 2024-10-07 13:20:16.731297
+INFO 2024-10-07 13:20:16,732 tasks Nairobi: 2024-10-07 13:20:16.732676+03:00
+ERROR 2024-10-07 13:20:17,029 tasks Failed to create rotating contributions: 404 Client Error: Not Found for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-07 13:23:19,851 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-07 13:23:19,852 tasks Task ran at: 2024-10-07 13:23:19.852274
+INFO 2024-10-07 13:23:19,852 tasks Nairobi: 2024-10-07 13:23:19.852718+03:00
+INFO 2024-10-07 13:23:19,866 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-07 13:23:19,868 tasks Task ran at: 2024-10-07 13:23:19.868886
+INFO 2024-10-07 13:23:19,870 tasks Nairobi: 2024-10-07 13:23:19.870596+03:00
+INFO 2024-10-07 13:23:19,919 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-07 13:23:19,920 tasks Task ran at: 2024-10-07 13:23:19.920574
+INFO 2024-10-07 13:23:19,921 tasks Nairobi: 2024-10-07 13:23:19.921798+03:00
+INFO 2024-10-07 13:23:19,972 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-07 13:23:19,974 tasks Task ran at: 2024-10-07 13:23:19.974212
+INFO 2024-10-07 13:23:19,976 tasks Nairobi: 2024-10-07 13:23:19.975952+03:00
+INFO 2024-10-08 08:09:18,949 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-08 08:09:19,019 tasks Task ran at: 2024-10-08 08:09:19.019427
+INFO 2024-10-08 08:09:19,020 tasks Nairobi: 2024-10-08 08:09:19.020008+03:00
+INFO 2024-10-08 08:09:19,128 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-08 08:09:19,128 tasks Task ran at: 2024-10-08 08:09:19.128520
+INFO 2024-10-08 08:09:19,128 tasks Nairobi: 2024-10-08 08:09:19.128872+03:00
+INFO 2024-10-08 08:09:19,379 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-08 08:09:19,380 tasks Task ran at: 2024-10-08 08:09:19.380281
+INFO 2024-10-08 08:09:19,382 tasks Nairobi: 2024-10-08 08:09:19.381930+03:00
+INFO 2024-10-08 08:09:19,441 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-08 08:09:19,441 tasks Task ran at: 2024-10-08 08:09:19.441736
+INFO 2024-10-08 08:09:19,442 tasks Nairobi: 2024-10-08 08:09:19.442211+03:00
+INFO 2024-10-08 08:09:19,667 tasks ==========chama/tasks.py: activity_auto_dibursement()==========
+INFO 2024-10-08 08:09:19,668 tasks Task ran at: 2024-10-08 08:09:19.668314
+INFO 2024-10-08 08:09:19,668 tasks Nairobi: 2024-10-08 08:09:19.668763+03:00
+ERROR 2024-10-08 08:09:19,682 tasks Failed to create rotating contributions: 404 Client Error: Not Found for url: http://chamazetu_backend:9400/activities/auto_dibursement
+INFO 2024-10-08 12:57:37,839 tasks ==========chama/tasks.py: create_activity_rotation_contributions()==========
+INFO 2024-10-08 12:57:37,877 tasks Task ran at: 2024-10-08 12:57:37.877760
+INFO 2024-10-08 12:57:37,879 tasks Nairobi: 2024-10-08 12:57:37.879335+03:00
+ERROR 2024-10-08 12:57:37,901 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_activity_rotation_contributions/8
+INFO 2024-10-08 13:01:24,212 tasks ==========chama/tasks.py: create_activity_rotation_contributions()==========
+INFO 2024-10-08 13:01:24,214 tasks Task ran at: 2024-10-08 13:01:24.214215
+INFO 2024-10-08 13:01:24,215 tasks Nairobi: 2024-10-08 13:01:24.215438+03:00
+ERROR 2024-10-08 13:01:24,243 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_activity_rotation_contributions/8
+INFO 2024-10-08 13:02:33,084 tasks ==========chama/tasks.py: create_activity_rotation_contributions()==========
+INFO 2024-10-08 13:02:33,084 tasks Task ran at: 2024-10-08 13:02:33.084689
+INFO 2024-10-08 13:02:33,085 tasks Nairobi: 2024-10-08 13:02:33.085760+03:00
+INFO 2024-10-08 13:14:29,471 tasks ==========chama/tasks.py: create_activity_rotation_contributions()==========
+INFO 2024-10-08 13:14:29,471 tasks Task ran at: 2024-10-08 13:14:29.471532
+INFO 2024-10-08 13:14:29,472 tasks Nairobi: 2024-10-08 13:14:29.472245+03:00
+INFO 2024-10-09 09:33:43,329 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-09 09:33:43,446 tasks Task ran at: 2024-10-09 09:33:43.446307
+INFO 2024-10-09 09:33:43,446 tasks Nairobi: 2024-10-09 09:33:43.446778+03:00
+INFO 2024-10-09 09:33:43,475 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-09 09:33:43,476 tasks Task ran at: 2024-10-09 09:33:43.476434
+INFO 2024-10-09 09:33:43,476 tasks Nairobi: 2024-10-09 09:33:43.476783+03:00
+INFO 2024-10-09 09:33:43,742 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-09 09:33:43,743 tasks Task ran at: 2024-10-09 09:33:43.743230
+INFO 2024-10-09 09:33:43,743 tasks Nairobi: 2024-10-09 09:33:43.743513+03:00
+INFO 2024-10-09 09:33:43,804 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-09 09:33:43,806 tasks Task ran at: 2024-10-09 09:33:43.806211
+INFO 2024-10-09 09:33:43,807 tasks Nairobi: 2024-10-09 09:33:43.807140+03:00
+INFO 2024-10-09 09:33:44,028 tasks ==========chama/tasks.py: activity_auto_dibursement()==========
+INFO 2024-10-09 09:33:44,029 tasks Task ran at: 2024-10-09 09:33:44.029606
+INFO 2024-10-09 09:33:44,030 tasks Nairobi: 2024-10-09 09:33:44.030149+03:00
+ERROR 2024-10-09 09:33:44,044 tasks Failed to create rotating contributions: 404 Client Error: Not Found for url: http://chamazetu_backend:9400/activities/auto_dibursement
+INFO 2024-10-09 09:34:12,441 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-09 09:34:12,442 tasks Task ran at: 2024-10-09 09:34:12.442644
+INFO 2024-10-09 09:34:12,443 tasks Nairobi: 2024-10-09 09:34:12.443329+03:00
+INFO 2024-10-09 09:34:12,463 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-09 09:34:12,463 tasks Task ran at: 2024-10-09 09:34:12.463690
+INFO 2024-10-09 09:34:12,464 tasks Nairobi: 2024-10-09 09:34:12.463975+03:00
+INFO 2024-10-09 09:34:12,497 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-09 09:34:12,498 tasks Task ran at: 2024-10-09 09:34:12.498343
+INFO 2024-10-09 09:34:12,498 tasks Nairobi: 2024-10-09 09:34:12.498766+03:00
+INFO 2024-10-09 09:34:12,538 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-09 09:34:12,540 tasks Task ran at: 2024-10-09 09:34:12.540093
+INFO 2024-10-09 09:34:12,540 tasks Nairobi: 2024-10-09 09:34:12.540691+03:00
+INFO 2024-10-09 09:34:12,630 tasks ==========chama/tasks.py: activity_auto_dibursement()==========
+INFO 2024-10-09 09:34:12,630 tasks Task ran at: 2024-10-09 09:34:12.630511
+INFO 2024-10-09 09:34:12,630 tasks Nairobi: 2024-10-09 09:34:12.630881+03:00
+ERROR 2024-10-09 09:34:12,642 tasks Failed to create rotating contributions: 404 Client Error: Not Found for url: http://chamazetu_backend:9400/activities/auto_dibursement
+INFO 2024-10-10 13:02:07,329 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:02:07,380 tasks Task ran at: 2024-10-10 13:02:07.380360
+INFO 2024-10-10 13:02:07,381 tasks Nairobi: 2024-10-10 13:02:07.381230+03:00
+INFO 2024-10-10 13:02:07,405 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:02:07,406 tasks Task ran at: 2024-10-10 13:02:07.406834
+INFO 2024-10-10 13:02:07,407 tasks Nairobi: 2024-10-10 13:02:07.407658+03:00
+INFO 2024-10-10 13:02:07,799 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:02:07,800 tasks Task ran at: 2024-10-10 13:02:07.800146
+INFO 2024-10-10 13:02:07,801 tasks Nairobi: 2024-10-10 13:02:07.801023+03:00
+INFO 2024-10-10 13:02:08,007 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:02:08,008 tasks Task ran at: 2024-10-10 13:02:08.008141
+INFO 2024-10-10 13:02:08,009 tasks Nairobi: 2024-10-10 13:02:08.009281+03:00
+ERROR 2024-10-10 13:02:08,051 tasks Failed to auto disburse to wallets: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/managers/auto_disburse_to_wallets
+INFO 2024-10-10 13:07:20,860 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:07:20,860 tasks Task ran at: 2024-10-10 13:07:20.860857
+INFO 2024-10-10 13:07:20,861 tasks Nairobi: 2024-10-10 13:07:20.861323+03:00
+INFO 2024-10-10 13:07:20,891 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:07:20,891 tasks Task ran at: 2024-10-10 13:07:20.891674
+INFO 2024-10-10 13:07:20,892 tasks Nairobi: 2024-10-10 13:07:20.892154+03:00
+INFO 2024-10-10 13:07:20,954 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:07:20,958 tasks Task ran at: 2024-10-10 13:07:20.958648
+INFO 2024-10-10 13:07:20,959 tasks Nairobi: 2024-10-10 13:07:20.959402+03:00
+INFO 2024-10-10 13:07:21,003 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:07:21,004 tasks Task ran at: 2024-10-10 13:07:21.003981
+INFO 2024-10-10 13:07:21,004 tasks Nairobi: 2024-10-10 13:07:21.004485+03:00
+INFO 2024-10-10 13:07:21,288 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 13:07:21,289 tasks Task ran at: 2024-10-10 13:07:21.289606
+INFO 2024-10-10 13:07:21,291 tasks Nairobi: 2024-10-10 13:07:21.290257+03:00
+INFO 2024-10-10 13:25:02,099 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:25:02,099 tasks Task ran at: 2024-10-10 13:25:02.099569
+INFO 2024-10-10 13:25:02,100 tasks Nairobi: 2024-10-10 13:25:02.100239+03:00
+INFO 2024-10-10 13:25:02,121 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:25:02,123 tasks Task ran at: 2024-10-10 13:25:02.123092
+INFO 2024-10-10 13:25:02,131 tasks Nairobi: 2024-10-10 13:25:02.130935+03:00
+INFO 2024-10-10 13:25:02,177 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:25:02,178 tasks Task ran at: 2024-10-10 13:25:02.178457
+INFO 2024-10-10 13:25:02,179 tasks Nairobi: 2024-10-10 13:25:02.179656+03:00
+INFO 2024-10-10 13:25:02,216 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:25:02,217 tasks Task ran at: 2024-10-10 13:25:02.217147
+INFO 2024-10-10 13:25:02,217 tasks Nairobi: 2024-10-10 13:25:02.217652+03:00
+INFO 2024-10-10 13:25:02,254 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 13:25:02,255 tasks Task ran at: 2024-10-10 13:25:02.255481
+INFO 2024-10-10 13:25:02,257 tasks Nairobi: 2024-10-10 13:25:02.257499+03:00
+INFO 2024-10-10 13:25:18,919 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:25:18,923 tasks Task ran at: 2024-10-10 13:25:18.923337
+INFO 2024-10-10 13:25:18,924 tasks Nairobi: 2024-10-10 13:25:18.924238+03:00
+INFO 2024-10-10 13:25:18,940 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:25:18,940 tasks Task ran at: 2024-10-10 13:25:18.940525
+INFO 2024-10-10 13:25:18,940 tasks Nairobi: 2024-10-10 13:25:18.940783+03:00
+INFO 2024-10-10 13:25:18,977 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:25:18,977 tasks Task ran at: 2024-10-10 13:25:18.977430
+INFO 2024-10-10 13:25:18,977 tasks Nairobi: 2024-10-10 13:25:18.977755+03:00
+INFO 2024-10-10 13:25:19,011 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:25:19,012 tasks Task ran at: 2024-10-10 13:25:19.012351
+INFO 2024-10-10 13:25:19,012 tasks Nairobi: 2024-10-10 13:25:19.012688+03:00
+INFO 2024-10-10 13:25:19,052 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 13:25:19,052 tasks Task ran at: 2024-10-10 13:25:19.052739
+INFO 2024-10-10 13:25:19,053 tasks Nairobi: 2024-10-10 13:25:19.053391+03:00
+INFO 2024-10-10 13:26:50,983 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:26:50,983 tasks Task ran at: 2024-10-10 13:26:50.983618
+INFO 2024-10-10 13:26:50,984 tasks Nairobi: 2024-10-10 13:26:50.984051+03:00
+INFO 2024-10-10 13:26:51,008 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:26:51,009 tasks Task ran at: 2024-10-10 13:26:51.009092
+INFO 2024-10-10 13:26:51,009 tasks Nairobi: 2024-10-10 13:26:51.009451+03:00
+INFO 2024-10-10 13:26:51,059 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:26:51,060 tasks Task ran at: 2024-10-10 13:26:51.059971
+INFO 2024-10-10 13:26:51,060 tasks Nairobi: 2024-10-10 13:26:51.060623+03:00
+INFO 2024-10-10 13:26:51,104 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:26:51,105 tasks Task ran at: 2024-10-10 13:26:51.105350
+INFO 2024-10-10 13:26:51,107 tasks Nairobi: 2024-10-10 13:26:51.106968+03:00
+INFO 2024-10-10 13:26:51,162 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 13:26:51,163 tasks Task ran at: 2024-10-10 13:26:51.163527
+INFO 2024-10-10 13:26:51,164 tasks Nairobi: 2024-10-10 13:26:51.164851+03:00
+INFO 2024-10-10 13:31:47,039 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 13:31:47,040 tasks Task ran at: 2024-10-10 13:31:47.040156
+INFO 2024-10-10 13:31:47,040 tasks Nairobi: 2024-10-10 13:31:47.040614+03:00
+INFO 2024-10-10 13:31:47,057 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 13:31:47,057 tasks Task ran at: 2024-10-10 13:31:47.057351
+INFO 2024-10-10 13:31:47,057 tasks Nairobi: 2024-10-10 13:31:47.057688+03:00
+INFO 2024-10-10 13:31:47,091 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 13:31:47,091 tasks Task ran at: 2024-10-10 13:31:47.091909
+INFO 2024-10-10 13:31:47,092 tasks Nairobi: 2024-10-10 13:31:47.092823+03:00
+INFO 2024-10-10 13:31:47,126 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 13:31:47,127 tasks Task ran at: 2024-10-10 13:31:47.127890
+INFO 2024-10-10 13:31:47,128 tasks Nairobi: 2024-10-10 13:31:47.128405+03:00
+INFO 2024-10-10 13:31:47,160 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 13:31:47,161 tasks Task ran at: 2024-10-10 13:31:47.161196
+INFO 2024-10-10 13:31:47,162 tasks Nairobi: 2024-10-10 13:31:47.161926+03:00
+INFO 2024-10-10 18:04:10,557 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:04:10,615 tasks Task ran at: 2024-10-10 18:04:10.615525
+INFO 2024-10-10 18:04:10,616 tasks Nairobi: 2024-10-10 18:04:10.615978+03:00
+INFO 2024-10-10 18:04:10,638 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:04:10,639 tasks Task ran at: 2024-10-10 18:04:10.639142
+INFO 2024-10-10 18:04:10,639 tasks Nairobi: 2024-10-10 18:04:10.639546+03:00
+INFO 2024-10-10 18:04:10,671 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:04:10,672 tasks Task ran at: 2024-10-10 18:04:10.672148
+INFO 2024-10-10 18:04:10,672 tasks Nairobi: 2024-10-10 18:04:10.672545+03:00
+INFO 2024-10-10 18:04:10,723 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:04:10,724 tasks Task ran at: 2024-10-10 18:04:10.724060
+INFO 2024-10-10 18:04:10,725 tasks Nairobi: 2024-10-10 18:04:10.724910+03:00
+INFO 2024-10-10 18:04:10,764 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:04:10,765 tasks Task ran at: 2024-10-10 18:04:10.765171
+INFO 2024-10-10 18:04:10,765 tasks Nairobi: 2024-10-10 18:04:10.765816+03:00
+INFO 2024-10-10 18:04:27,080 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:04:27,081 tasks Task ran at: 2024-10-10 18:04:27.080969
+INFO 2024-10-10 18:04:27,081 tasks Nairobi: 2024-10-10 18:04:27.081339+03:00
+INFO 2024-10-10 18:04:27,094 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:04:27,095 tasks Task ran at: 2024-10-10 18:04:27.095084
+INFO 2024-10-10 18:04:27,095 tasks Nairobi: 2024-10-10 18:04:27.095297+03:00
+INFO 2024-10-10 18:04:27,126 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:04:27,126 tasks Task ran at: 2024-10-10 18:04:27.126654
+INFO 2024-10-10 18:04:27,127 tasks Nairobi: 2024-10-10 18:04:27.126983+03:00
+INFO 2024-10-10 18:04:27,168 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:04:27,169 tasks Task ran at: 2024-10-10 18:04:27.169262
+INFO 2024-10-10 18:04:27,170 tasks Nairobi: 2024-10-10 18:04:27.169913+03:00
+INFO 2024-10-10 18:04:27,199 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:04:27,199 tasks Task ran at: 2024-10-10 18:04:27.199315
+INFO 2024-10-10 18:04:27,199 tasks Nairobi: 2024-10-10 18:04:27.199552+03:00
+INFO 2024-10-10 18:05:37,416 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:05:37,417 tasks Task ran at: 2024-10-10 18:05:37.417639
+INFO 2024-10-10 18:05:37,418 tasks Nairobi: 2024-10-10 18:05:37.418265+03:00
+INFO 2024-10-10 18:05:37,436 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:05:37,437 tasks Task ran at: 2024-10-10 18:05:37.437239
+INFO 2024-10-10 18:05:37,437 tasks Nairobi: 2024-10-10 18:05:37.437541+03:00
+INFO 2024-10-10 18:05:37,469 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:05:37,471 tasks Task ran at: 2024-10-10 18:05:37.471575
+INFO 2024-10-10 18:05:37,472 tasks Nairobi: 2024-10-10 18:05:37.472234+03:00
+INFO 2024-10-10 18:05:37,506 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:05:37,507 tasks Task ran at: 2024-10-10 18:05:37.507360
+INFO 2024-10-10 18:05:37,508 tasks Nairobi: 2024-10-10 18:05:37.508643+03:00
+INFO 2024-10-10 18:05:37,543 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:05:37,544 tasks Task ran at: 2024-10-10 18:05:37.544058
+INFO 2024-10-10 18:05:37,544 tasks Nairobi: 2024-10-10 18:05:37.544843+03:00
+INFO 2024-10-10 18:05:53,652 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:05:53,653 tasks Task ran at: 2024-10-10 18:05:53.653022
+INFO 2024-10-10 18:05:53,653 tasks Nairobi: 2024-10-10 18:05:53.653439+03:00
+INFO 2024-10-10 18:05:53,666 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:05:53,667 tasks Task ran at: 2024-10-10 18:05:53.667465
+INFO 2024-10-10 18:05:53,668 tasks Nairobi: 2024-10-10 18:05:53.668697+03:00
+INFO 2024-10-10 18:05:53,700 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:05:53,701 tasks Task ran at: 2024-10-10 18:05:53.700980
+INFO 2024-10-10 18:05:53,701 tasks Nairobi: 2024-10-10 18:05:53.701399+03:00
+INFO 2024-10-10 18:05:53,736 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:05:53,737 tasks Task ran at: 2024-10-10 18:05:53.736938
+INFO 2024-10-10 18:05:53,737 tasks Nairobi: 2024-10-10 18:05:53.737915+03:00
+INFO 2024-10-10 18:05:53,772 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:05:53,772 tasks Task ran at: 2024-10-10 18:05:53.772301
+INFO 2024-10-10 18:05:53,772 tasks Nairobi: 2024-10-10 18:05:53.772527+03:00
+INFO 2024-10-10 18:08:15,848 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:08:15,849 tasks Task ran at: 2024-10-10 18:08:15.849357
+INFO 2024-10-10 18:08:15,849 tasks Nairobi: 2024-10-10 18:08:15.849679+03:00
+INFO 2024-10-10 18:08:15,868 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:08:15,869 tasks Task ran at: 2024-10-10 18:08:15.869226
+INFO 2024-10-10 18:08:15,869 tasks Nairobi: 2024-10-10 18:08:15.869850+03:00
+INFO 2024-10-10 18:08:15,898 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:08:15,898 tasks Task ran at: 2024-10-10 18:08:15.898596
+INFO 2024-10-10 18:08:15,898 tasks Nairobi: 2024-10-10 18:08:15.898929+03:00
+INFO 2024-10-10 18:08:15,935 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:08:15,936 tasks Task ran at: 2024-10-10 18:08:15.936812
+INFO 2024-10-10 18:08:15,938 tasks Nairobi: 2024-10-10 18:08:15.938358+03:00
+INFO 2024-10-10 18:08:15,963 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:08:15,963 tasks Task ran at: 2024-10-10 18:08:15.963463
+INFO 2024-10-10 18:08:15,963 tasks Nairobi: 2024-10-10 18:08:15.963847+03:00
+INFO 2024-10-10 18:08:28,791 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:08:28,791 tasks Task ran at: 2024-10-10 18:08:28.791621
+INFO 2024-10-10 18:08:28,791 tasks Nairobi: 2024-10-10 18:08:28.791884+03:00
+INFO 2024-10-10 18:08:28,804 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:08:28,805 tasks Task ran at: 2024-10-10 18:08:28.805180
+INFO 2024-10-10 18:08:28,805 tasks Nairobi: 2024-10-10 18:08:28.805507+03:00
+INFO 2024-10-10 18:08:28,839 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:08:28,839 tasks Task ran at: 2024-10-10 18:08:28.839659
+INFO 2024-10-10 18:08:28,840 tasks Nairobi: 2024-10-10 18:08:28.840610+03:00
+INFO 2024-10-10 18:08:28,872 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:08:28,874 tasks Task ran at: 2024-10-10 18:08:28.873948
+INFO 2024-10-10 18:08:28,874 tasks Nairobi: 2024-10-10 18:08:28.874774+03:00
+INFO 2024-10-10 18:08:28,917 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:08:28,918 tasks Task ran at: 2024-10-10 18:08:28.918541
+INFO 2024-10-10 18:08:28,920 tasks Nairobi: 2024-10-10 18:08:28.920777+03:00
+INFO 2024-10-10 18:17:00,715 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:17:00,717 tasks Task ran at: 2024-10-10 18:17:00.717439
+INFO 2024-10-10 18:17:00,718 tasks Nairobi: 2024-10-10 18:17:00.718085+03:00
+INFO 2024-10-10 18:17:00,743 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:17:00,743 tasks Task ran at: 2024-10-10 18:17:00.743424
+INFO 2024-10-10 18:17:00,743 tasks Nairobi: 2024-10-10 18:17:00.743789+03:00
+INFO 2024-10-10 18:17:00,791 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:17:00,792 tasks Task ran at: 2024-10-10 18:17:00.792449
+INFO 2024-10-10 18:17:00,793 tasks Nairobi: 2024-10-10 18:17:00.793330+03:00
+INFO 2024-10-10 18:17:00,826 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:17:00,827 tasks Task ran at: 2024-10-10 18:17:00.827812
+INFO 2024-10-10 18:17:00,828 tasks Nairobi: 2024-10-10 18:17:00.828645+03:00
+INFO 2024-10-10 18:17:00,868 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:17:00,869 tasks Task ran at: 2024-10-10 18:17:00.869706
+INFO 2024-10-10 18:17:00,870 tasks Nairobi: 2024-10-10 18:17:00.870419+03:00
+INFO 2024-10-10 18:19:14,446 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:19:14,446 tasks Task ran at: 2024-10-10 18:19:14.446498
+INFO 2024-10-10 18:19:14,447 tasks Nairobi: 2024-10-10 18:19:14.447469+03:00
+INFO 2024-10-10 18:19:14,475 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:19:14,475 tasks Task ran at: 2024-10-10 18:19:14.475553
+INFO 2024-10-10 18:19:14,476 tasks Nairobi: 2024-10-10 18:19:14.476038+03:00
+INFO 2024-10-10 18:19:14,525 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:19:14,526 tasks Task ran at: 2024-10-10 18:19:14.526855
+INFO 2024-10-10 18:19:14,527 tasks Nairobi: 2024-10-10 18:19:14.527862+03:00
+INFO 2024-10-10 18:19:14,567 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:19:14,567 tasks Task ran at: 2024-10-10 18:19:14.567918
+INFO 2024-10-10 18:19:14,568 tasks Nairobi: 2024-10-10 18:19:14.568380+03:00
+INFO 2024-10-10 18:19:14,615 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:19:14,616 tasks Task ran at: 2024-10-10 18:19:14.616637
+INFO 2024-10-10 18:19:14,617 tasks Nairobi: 2024-10-10 18:19:14.617312+03:00
+INFO 2024-10-10 18:19:57,924 tasks ==========chama/tasks.py: create_activity_rotation_contributions()==========
+INFO 2024-10-10 18:19:57,924 tasks Task ran at: 2024-10-10 18:19:57.924864
+INFO 2024-10-10 18:19:57,925 tasks Nairobi: 2024-10-10 18:19:57.925721+03:00
+INFO 2024-10-10 18:40:55,795 tasks ==========chama/tasks.py: set_fines_and_update_activity_contribution_days()==========
+INFO 2024-10-10 18:40:55,796 tasks Task ran at: 2024-10-10 18:40:55.796176
+INFO 2024-10-10 18:40:55,797 tasks Nairobi: 2024-10-10 18:40:55.797048+03:00
+INFO 2024-10-10 18:40:55,819 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-10 18:40:55,820 tasks Task ran at: 2024-10-10 18:40:55.820621
+INFO 2024-10-10 18:40:55,820 tasks Nairobi: 2024-10-10 18:40:55.820942+03:00
+INFO 2024-10-10 18:40:55,865 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-10 18:40:55,865 tasks Task ran at: 2024-10-10 18:40:55.865606
+INFO 2024-10-10 18:40:55,866 tasks Nairobi: 2024-10-10 18:40:55.865980+03:00
+INFO 2024-10-10 18:40:55,899 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-10 18:40:55,899 tasks Task ran at: 2024-10-10 18:40:55.899739
+INFO 2024-10-10 18:40:55,900 tasks Nairobi: 2024-10-10 18:40:55.900137+03:00
+INFO 2024-10-10 18:40:55,932 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-10 18:40:55,932 tasks Task ran at: 2024-10-10 18:40:55.932543
+INFO 2024-10-10 18:40:55,933 tasks Nairobi: 2024-10-10 18:40:55.932954+03:00
+INFO 2024-10-11 11:25:15,379 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-11 11:25:15,457 tasks Task ran at: 2024-10-11 11:25:15.457792
+INFO 2024-10-11 11:25:15,458 tasks Nairobi: 2024-10-11 11:25:15.458489+03:00
+INFO 2024-10-11 11:25:15,484 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-11 11:25:15,484 tasks Task ran at: 2024-10-11 11:25:15.484514
+INFO 2024-10-11 11:25:15,484 tasks Nairobi: 2024-10-11 11:25:15.484871+03:00
+INFO 2024-10-11 11:25:15,911 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-11 11:25:15,911 tasks Task ran at: 2024-10-11 11:25:15.911876
+INFO 2024-10-11 11:25:15,912 tasks Nairobi: 2024-10-11 11:25:15.912304+03:00
+INFO 2024-10-11 11:25:15,978 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-11 11:25:15,978 tasks Task ran at: 2024-10-11 11:25:15.978594
+INFO 2024-10-11 11:25:15,979 tasks Nairobi: 2024-10-11 11:25:15.979074+03:00
+INFO 2024-10-11 11:25:16,209 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-11 11:25:16,210 tasks Task ran at: 2024-10-11 11:25:16.210221
+INFO 2024-10-11 11:25:16,210 tasks Nairobi: 2024-10-11 11:25:16.210725+03:00
+INFO 2024-10-12 21:05:58,549 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-12 21:05:58,616 tasks Task ran at: 2024-10-12 21:05:58.616489
+INFO 2024-10-12 21:05:58,617 tasks Nairobi: 2024-10-12 21:05:58.617262+03:00
+INFO 2024-10-12 21:05:58,629 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-12 21:05:58,629 tasks Task ran at: 2024-10-12 21:05:58.629548
+INFO 2024-10-12 21:05:58,629 tasks Nairobi: 2024-10-12 21:05:58.629906+03:00
+INFO 2024-10-12 21:05:58,970 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-12 21:05:58,970 tasks Task ran at: 2024-10-12 21:05:58.970898
+INFO 2024-10-12 21:05:58,971 tasks Nairobi: 2024-10-12 21:05:58.971542+03:00
+INFO 2024-10-12 21:05:59,036 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-12 21:05:59,037 tasks Task ran at: 2024-10-12 21:05:59.037137
+INFO 2024-10-12 21:05:59,037 tasks Nairobi: 2024-10-12 21:05:59.037613+03:00
+INFO 2024-10-12 21:05:59,419 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-12 21:05:59,422 tasks Task ran at: 2024-10-12 21:05:59.422339
+INFO 2024-10-12 21:05:59,423 tasks Nairobi: 2024-10-12 21:05:59.423308+03:00
+INFO 2024-10-13 10:49:40,758 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-13 10:49:40,908 tasks Task ran at: 2024-10-13 10:49:40.907972
+INFO 2024-10-13 10:49:40,908 tasks Nairobi: 2024-10-13 10:49:40.908360+03:00
+INFO 2024-10-13 10:49:40,935 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-13 10:49:40,936 tasks Task ran at: 2024-10-13 10:49:40.936072
+INFO 2024-10-13 10:49:40,936 tasks Nairobi: 2024-10-13 10:49:40.936385+03:00
+INFO 2024-10-13 10:49:41,550 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-13 10:49:41,551 tasks Task ran at: 2024-10-13 10:49:41.551343
+INFO 2024-10-13 10:49:41,551 tasks Nairobi: 2024-10-13 10:49:41.551807+03:00
+INFO 2024-10-13 10:49:41,724 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-13 10:49:41,725 tasks Task ran at: 2024-10-13 10:49:41.725069
+INFO 2024-10-13 10:49:41,725 tasks Nairobi: 2024-10-13 10:49:41.725639+03:00
+INFO 2024-10-13 10:49:42,009 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-13 10:49:42,009 tasks Task ran at: 2024-10-13 10:49:42.009763
+INFO 2024-10-13 10:49:42,010 tasks Nairobi: 2024-10-13 10:49:42.010185+03:00

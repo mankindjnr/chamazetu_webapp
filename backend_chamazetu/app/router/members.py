@@ -58,9 +58,11 @@ async def member_dashboard(
             db.query(models.WalletTransaction)
             .filter(
                 and_(
-                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.destination == member.wallet_id,
                     models.WalletTransaction.transaction_completed == True,
-                    models.WalletTransaction.transaction_type == "deposit",
+                    models.WalletTransaction.transaction_type.in_(
+                        ["deposit", "transfer"]
+                    ),
                 )
             )
             .order_by(desc(models.WalletTransaction.transaction_date))
@@ -87,7 +89,22 @@ async def member_dashboard(
                 )
             )
             .order_by(desc(models.B2CResults.transactioncompleteddatetime))
-            .limit(3)
+            .limit(2)
+            .all()
+        )
+
+        wallet_transfers = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.transaction_completed == True,
+                    models.WalletTransaction.transaction_type == "transfer",
+                    models.WalletTransaction.origin == member.wallet_id,
+                )
+            )
+            .order_by(desc(models.WalletTransaction.transaction_date))
+            .limit(2)
             .all()
         )
 
@@ -130,10 +147,15 @@ async def member_dashboard(
 
         wallet_transactions_data = [
             {
-                "transaction_type": transaction.transaction_type,
+                "transaction_type": (
+                    "Received"
+                    if transaction.transaction_type == "transfer"
+                    else "Deposited"
+                ),
                 "transaction_date": transaction.transaction_date.strftime("%d-%B-%Y"),
                 "transaction_time": transaction.transaction_date.strftime("%H:%M:%S"),
                 "transaction_amount": transaction.amount,
+                "transaction_origin": transaction.origin,
             }
             for transaction in wallet_transactions
         ]
@@ -157,12 +179,25 @@ async def member_dashboard(
             for transaction in sent_transactions
         ]
 
+        wallet_transfers_data = [
+            {
+                "transaction_type": "Transferred",
+                "transaction_date": transaction.transaction_date.strftime("%d-%B-%Y"),
+                "transaction_time": transaction.transaction_date.strftime("%H:%M:%S"),
+                "transaction_amount": transaction.amount,
+                "transaction_destination": transaction.destination,
+            }
+            for transaction in wallet_transfers
+        ]
+
         return {
+            "wallet_id": member.wallet_id,
             "wallet_balance": member.wallet_balance,
             "zetucoins": member.zetucoins,
             "recent_transactions": recent_transactions,
             "wallet_transactions": wallet_transactions_data,
             "sent_transactions": sent_transactions_data,
+            "wallet_transfers": wallet_transfers_data,
             "member_chamas": member_chamas_data,
             "profile_picture": user_profile,
         }
@@ -424,6 +459,13 @@ async def contribute_to_merry_go_round(
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
+        # check if today is past the last joining date
+        if datetime.now(nairobi_tz).date() < activity.last_joining_date.date():
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot contribute before the last joining date",
+            )
+
         expected_amount = contrib_data.expected_contribution
         amount = contrib_data.amount
         user_id = current_user.id
@@ -512,6 +554,7 @@ async def contribute_to_merry_go_round(
         print("=========start nested============")
         with db.begin_nested():
             if fines:
+                print("===fines===")
                 for fine in fines:
                     print("expected_repayment:", fine.expected_repayment)
                     amount_repaid_towards_fine = 0  # amount repaid towards the fine
@@ -524,6 +567,7 @@ async def contribute_to_merry_go_round(
                         for rotation in missed_rotations
                         if rotation.rotation_date == fine.fine_date
                     ]
+                    print("num_rotations:", len(missed_rotations_for_fine))
 
                     for missed_rotation in missed_rotations_for_fine:
                         print("missed_rotation:", missed_rotation.contributing_share)
@@ -549,6 +593,7 @@ async def contribute_to_merry_go_round(
                             )
                             missed_rotation.fine = activity_fine
                         else:
+                            print("<start_amt:", amount)
                             fine.expected_repayment = max(
                                 fine.expected_repayment - amount, 0
                             )
@@ -577,7 +622,20 @@ async def contribute_to_merry_go_round(
 
                         print("fine_amount_repaid:", fine_amount_repaid)
                         total_fines_repaid += fine_amount_repaid
-                        # TODO: we will then recordd this amount and transfer it to the user who  didn't receive theirs on time
+                        # here we will record this transaction for late disbursement
+                        late_disbursement_record = {
+                            "chama_id": activity.chama_id,
+                            "activity_id": activity_id,
+                            "late_contributor_id": user_id,
+                            "late_recipient_id": missed_rotation.recipient_id,
+                            "late_contribution": fine_amount_repaid,
+                            "missed_rotation_date": missed_rotation.rotation_date,
+                        }
+                        # record the late disbursement
+                        new_late_disbursement = models.LateRotationDisbursements(
+                            **late_disbursement_record
+                        )
+                        db.add(new_late_disbursement)
 
                         if amount == 0:
                             break_outer_loop = True
@@ -643,13 +701,16 @@ async def contribute_to_merry_go_round(
                         amount -= contributing_bal
                         rotation.contributed_amount += contributing_bal
                         amount_contributed += contributing_bal
+                        print("===amount_contributed:==", amount_contributed)
                     else:
                         rotation.contributed_amount += amount
                         amount_contributed += amount
+                        print("===amount_contributed:", amount_contributed)
                         amount = 0
 
                     # sum the total contribution
                     total_contribution += amount_contributed
+                    print("===total_contribution:", total_contribution)
 
                     if amount == 0:
                         break
@@ -673,6 +734,11 @@ async def contribute_to_merry_go_round(
             user_record = (
                 db.query(models.User).filter(models.User.id == user_id).first()
             )
+            if user_record.wallet_balance < total_contribution + total_fines_repaid:
+                raise HTTPException(
+                    status_code=400, detail="Insufficient wallet balance"
+                )
+
             user_record.wallet_balance -= total_contribution + total_fines_repaid
 
             # update the activity account balance
@@ -694,9 +760,8 @@ async def contribute_to_merry_go_round(
             chama_account.account_balance += total_fines_repaid + total_contribution
 
             db.commit()
-
+        return {"message": "Contribution successful"}
     except HTTPException as http_exc:
-        db.rollback()
         raise http_exc
     except Exception as e:
         db.rollback()
@@ -704,6 +769,764 @@ async def contribute_to_merry_go_round(
         raise HTTPException(
             status_code=400, detail="Failed to contribute to merry go round"
         )
+
+
+@router.post(
+    "/automated_merry_go_round_contributions", status_code=status.HTTP_201_CREATED
+)
+async def automatic_merry_go_round_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("===start auto contributions====")
+        today = datetime.now(nairobi_tz).date()
+        print("===today:", today)
+        transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None)
+        # retrieve all merry go round activities whose next contribution date is today and have their id in the activity_contribution_date table activity_id
+        # for this we will use two tables, the activity_contribution_date and the auto_contribution
+        activities = (
+            db.query(models.ActivityContributionDate)
+            .join(
+                models.AutoContribution,
+                models.ActivityContributionDate.activity_id
+                == models.AutoContribution.activity_id,
+            )
+            .filter(
+                and_(
+                    func.date(models.ActivityContributionDate.next_contribution_date)
+                    == today,
+                    models.ActivityContributionDate.activity_type == "merry-go-round",
+                )
+            )
+            .all()
+        )
+        print("activities:", len(activities))
+
+        if not activities:
+            print("No merry go round activities today")
+            return {"message": "No merry go round activities today"}
+
+        # Process each activity individually
+        for activity in activities:
+            print("==========activity==========")
+            activity_id = activity.activity_id
+            print("activity_id:", activity_id)
+            chama_id = activity.chama_id
+            activity_fine = (
+                db.query(models.Activity.fine)
+                .filter(models.Activity.id == activity_id)
+                .scalar()
+            )
+            print("activity_fine:", activity_fine)
+
+            # retrieeve auto contributors for the current activity
+            activity_users = (
+                db.query(
+                    models.AutoContribution.user_id,
+                    models.AutoContribution.activity_id,
+                    models.User.wallet_id,
+                    models.User.wallet_balance,
+                )
+                .join(models.User, models.User.id == models.AutoContribution.user_id)
+                .filter(
+                    and_(
+                        models.AutoContribution.activity_id == activity_id,
+                        models.User.wallet_balance > 0,
+                    )
+                )
+                .all()
+            )
+            print("activity_users:", len(activity_users))
+
+            if not activity_users:
+                # no auto contributors for this activity, go to the next activity
+                continue
+
+            user_ids = [user.user_id for user in activity_users]
+            print("user_ids:", user_ids)
+
+            # retrieve any unpaid fines for the users in the activity
+            fines = (
+                db.query(models.ActivityFine)
+                .filter(
+                    and_(
+                        models.ActivityFine.user_id.in_(user_ids),
+                        models.ActivityFine.activity_id == activity_id,
+                        models.ActivityFine.is_paid == False,
+                    )
+                )
+                .order_by(models.ActivityFine.fine_date)
+                .all()
+            )
+            print("fines:", len(fines))
+
+            # retrieve missed rotations that match the fines
+            fine_dates = [fine.fine_date for fine in fines]
+            print("fine_dates:", fine_dates)
+            missed_rotations = (
+                db.query(models.RotatingContributions)
+                .filter(
+                    and_(
+                        models.RotatingContributions.contributor_id.in_(user_ids),
+                        models.RotatingContributions.rotation_date.in_(fine_dates),
+                        models.RotatingContributions.activity_id == activity_id,
+                        # might have to add more checks but wait
+                    )
+                )
+                .all()
+            )
+            print("missed_rotations:", len(missed_rotations))
+
+            # loop through each user within the activty and process contributions and fines
+            for user in activity_users:
+                print("==========user==========")
+                user_id = user.user_id
+                wallet_id = user.wallet_id
+                wallet_balance = user.wallet_balance
+                print("user_id:", user_id)
+                print("wallet_bal:", wallet_balance)
+                total_fines_repaid = 0
+                total_contribution = 0
+                break_outer_loop = False
+
+                # start nested transaction to handle fines and contributions for each user
+                with db.begin_nested():
+                    # process fines
+                    user_fines = [fine for fine in fines if fine.user_id == user_id]
+                    if user_fines:
+                        for fine in user_fines:
+                            missed_rotations_for_fine = [
+                                rotation
+                                for rotation in missed_rotations
+                                if rotation.rotation_date == fine.fine_date
+                                and rotation.contributor_id == user_id
+                                and rotation.activity_id == activity_id
+                            ]
+                            print(
+                                "missed_rotations_for_fine:",
+                                len(missed_rotations_for_fine),
+                            )
+
+                            for missed_rotation in missed_rotations_for_fine:
+                                deducted = 0
+                                unpaid_fine = activity_fine - missed_rotation.fine
+                                missed_balance = unpaid_fine + (
+                                    missed_rotation.expected_amount
+                                    - missed_rotation.contributed_amount
+                                )
+
+                                if wallet_balance >= missed_balance:
+                                    print("wallet_bal:", wallet_balance)
+                                    wallet_balance -= missed_balance
+                                    fine.expected_repayment = max(
+                                        fine.expected_repayment - missed_balance, 0
+                                    )
+                                    missed_rotation.contributed_amount += (
+                                        missed_balance - unpaid_fine
+                                    )
+                                    missed_rotation.fine += unpaid_fine
+                                    deducted += missed_balance
+                                elif (
+                                    wallet_balance < missed_balance
+                                    and wallet_balance > 0
+                                ):
+                                    fine.expected_repayment = max(
+                                        fine.expected_repayment - wallet_balance, 0
+                                    )
+
+                                    if (
+                                        wallet_balance
+                                        > missed_rotation.expected_amount
+                                        - missed_rotation.contributed_amount
+                                    ):
+                                        contribution_amount = (
+                                            missed_rotation.expected_amount
+                                            - missed_rotation.contributed_amount
+                                        )
+                                        fine_amount = (
+                                            wallet_balance - contribution_amount
+                                        )
+
+                                        missed_rotation.contributed_amount += (
+                                            contribution_amount
+                                        )
+                                        missed_rotation.fine += fine_amount
+                                    else:
+                                        missed_rotation.contributed_amount += (
+                                            wallet_balance
+                                        )
+
+                                    deducted += wallet_balance
+                                    wallet_balance = 0
+
+                                total_fines_repaid += deducted
+                                print("total_fines_repaid:", total_fines_repaid)
+
+                                # record late disbursement record
+                                late_disbursement_record = {
+                                    "chama_id": chama_id,
+                                    "activity_id": activity_id,
+                                    "late_contributor_id": user_id,
+                                    "late_recipient_id": missed_rotation.recipient_id,
+                                    "late_contribution": deducted,
+                                    "missed_rotation_date": missed_rotation.rotation_date,
+                                }
+                                db.add(
+                                    models.LateRotationDisbursements(
+                                        **late_disbursement_record
+                                    )
+                                )
+
+                                if wallet_balance == 0:
+                                    print("===wallet 0 =====")
+                                    break_outer_loop = True
+                                    break
+
+                            # mark the fine as paid if the expected repayment is 0
+                            if fine.expected_repayment == 0:
+                                fine.is_paid = True
+                                fine.paid_date = transaction_datetime
+
+                            if break_outer_loop:
+                                print("===break_outer_loop====")
+                                break
+
+                        # record the fine repayment transaction
+                        if total_fines_repaid > 0:
+                            print("======recording fines======")
+                            fine_transaction_code = generate_transaction_code(
+                                "auto_late_contribution", wallet_id
+                            )
+                            fine_transaction_data = {
+                                "user_id": user_id,
+                                "amount": total_fines_repaid,
+                                "origin": wallet_id,
+                                "activity_id": activity_id,
+                                "transaction_date": transaction_datetime,
+                                "updated_at": transaction_datetime,
+                                "transaction_completed": True,
+                                "transaction_code": fine_transaction_code,
+                                "transaction_type": "late contribution",
+                            }
+                            db.add(models.ActivityTransaction(**fine_transaction_data))
+
+                    # process contributions
+                    if wallet_balance > 0:
+                        print("===wallet_balance > 0====")
+                        next_contributions = (
+                            db.query(models.RotatingContributions)
+                            .filter(
+                                and_(
+                                    models.RotatingContributions.contributor_id
+                                    == user_id,
+                                    models.RotatingContributions.activity_id
+                                    == activity_id,
+                                    func.date(
+                                        models.RotatingContributions.rotation_date
+                                    )
+                                    == today,
+                                    models.RotatingContributions.expected_amount
+                                    != models.RotatingContributions.contributed_amount,
+                                )
+                            )
+                            .all()
+                        )
+
+                        for rotation in next_contributions:
+                            print("====we have conts=====")
+                            contributing_balance = (
+                                rotation.expected_amount - rotation.contributed_amount
+                            )
+                            amount_contributed = 0
+
+                            if wallet_balance >= contributing_balance:
+                                wallet_balance -= contributing_balance
+                                rotation.contributed_amount += contributing_balance
+                                amount_contributed += contributing_balance
+                            elif (
+                                wallet_balance < contributing_balance
+                                and wallet_balance > 0
+                            ):
+                                rotation.contributed_amount += wallet_balance
+                                amount_contributed += wallet_balance
+                                wallet_balance = 0
+
+                            total_contribution += amount_contributed
+                            print("total_contribution:", total_contribution)
+
+                            if wallet_balance == 0:
+                                break
+
+                        if total_contribution > 0:
+                            print("r===record trans=====")
+                            # record the transaction
+                            transaction_code = generate_transaction_code(
+                                "auto_contribution", wallet_id
+                            )
+                            transaction_data = {
+                                "user_id": user_id,
+                                "amount": total_contribution,
+                                "origin": wallet_id,
+                                "activity_id": activity_id,
+                                "transaction_date": transaction_datetime,
+                                "updated_at": transaction_datetime,
+                                "transaction_completed": True,
+                                "transaction_code": transaction_code,
+                                "transaction_type": "contribution",
+                            }
+                            db.add(models.ActivityTransaction(**transaction_data))
+
+                    # update the wallet balance
+                    if total_contribution + total_fines_repaid > 0:
+                        print("=====update wallet bal====")
+                        user_record = (
+                            db.query(models.User)
+                            .filter(models.User.id == user_id)
+                            .with_for_update()
+                            .first()
+                        )
+                        if not user_record:
+                            db.rollback()
+                            continue
+
+                        print("wallet_balance==:", user_record.wallet_balance)
+                        if (
+                            user_record.wallet_balance
+                            < total_contribution + total_fines_repaid
+                        ):
+                            db.rollback()
+                            continue
+                        user_record.wallet_balance -= (
+                            total_contribution + total_fines_repaid
+                        )
+
+                        print("====updating activity account====")
+                        # update the activity account balance
+                        activity_account = (
+                            db.query(models.Activity_Account)
+                            .filter(models.Activity_Account.activity_id == activity_id)
+                            .with_for_update()
+                            .first()
+                        )
+                        activity_account.account_balance += (
+                            total_contribution + total_fines_repaid
+                        )
+
+                        # update the chama account balance
+                        chama_account = (
+                            db.query(models.Chama_Account)
+                            .filter(models.Chama_Account.chama_id == chama_id)
+                            .with_for_update()
+                            .first()
+                        )
+                        chama_account.account_balance += (
+                            total_contribution + total_fines_repaid
+                        )
+
+                db.commit()  # commit the nested transaction for each user
+        return {"message": "Automated merry go round contributions successful"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to contribute to merry go round {e}")
+
+
+"""
+@router.post(
+    "/automated_merry_go_round_contributions", status_code=status.HTTP_201_CREATED
+)
+async def automatic_merry_go_round_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None)
+
+        # retrieve all merry-go-round activities whose next contribution date is today
+        activities = (
+            db.query(models.ActivityContributionDate)
+            .filter(
+                and_(
+                    func.date(models.ActivityContributionDate.next_contribution_date)
+                    == today,
+                    models.ActivityContributionDate.activity_type == "merry-go-round",
+                )
+            )
+            .all()
+        )
+        merry_activity_ids = [activity.activity_id for activity in activities]
+        print("merry_activity_ids:", merry_activity_ids)
+        if not merry_activity_ids:
+            return {"message": "No merry-go-round activities today"}
+
+        # retrieve all auto contributors for the activities above
+        activities_users = (
+            db.query(
+                models.AutoContribution.user_id,
+                models.AutoContribution.activity_id,
+                models.User.wallet_id,
+                models.User.wallet_balance,
+            )
+            .join(
+                models.User,
+                models.User.id == models.AutoContribution.user_id,
+            )
+            .filter(models.AutoContribution.activity_id.in_(merry_activity_ids))
+            .all()
+        )
+
+        if not activities_users:
+            return {"message": "No auto contributors for today"}
+
+        print("activities_users:", activities_users)
+
+        user_ids = [user.user_id for user in activities_users]
+        print("user_ids:", user_ids)
+        activity_ids = list(set([user.activity_id for user in activities_users]))
+        print("activity_ids:", activity_ids)
+
+        # retrieve user shares and relevant
+        user_shares = (
+            db.query(models.RotatingContributions)
+            .filter(
+                and_(
+                    models.RotatingContributions.contributor_id.in_(user_ids),
+                    func.date(models.RotatingContributions.rotation_date) == today,
+                    models.RotatingContributions.activity_id.in_(activity_ids),
+                )
+            )
+            .all()
+        )
+
+        # retrieve any unpaid fines for the users in the activities
+        fines = (
+            db.query(models.ActivityFine)
+            .filter(
+                and_(
+                    models.ActivityFine.user_id.in_(user_ids),
+                    models.ActivityFine.activity_id.in_(activity_ids),
+                    models.ActivityFine.is_paid == False,
+                )
+            )
+            .order_by(models.ActivityFine.fine_date)
+            .all()
+        )
+
+        # retrieve missed rotations that match the fines
+        fine_dates = [fine.fine_date for fine in fines]
+        print("fine_dates:\n", fine_dates)
+        missed_rotations = (
+            db.query(models.RotatingContributions)
+            .filter(
+                and_(
+                    models.RotatingContributions.contributor_id.in_(user_ids),
+                    models.RotatingContributions.activity_id.in_(activity_ids),
+                    func.date(models.RotatingContributions.rotation_date).in_(
+                        fine_dates
+                    ),
+                    # might have to add more filters here
+                )
+            )
+            .all()
+        )
+
+        # loop through each user and process contributions and fines
+        for user in activities_users:
+            print("===user count====")
+            user_id = user.user_id
+            print("user_id:", user_id)
+            print("activity_id:", user.activity_id)
+            wallet_id = user.wallet_id
+            wallet_balance = user.wallet_balance
+            total_fines_repaid = 0
+            total_contribution = 0
+            break_outer_loop = False
+
+            my_fines = (
+                db.query(models.ActivityFine)
+                .filter(
+                    and_(
+                        models.ActivityFine.user_id == user_id,
+                        models.ActivityFine.activity_id == user.activity_id,
+                        models.ActivityFine.is_paid == False,
+                    )
+                )
+                .all()
+            )
+            print("my_fines:", my_fines)
+
+            # start a nested transaction to handle the fines and contributions
+            with db.begin_nested():
+                # process fines
+                user_fines = [fine for fine in fines if fine.user_id == user_id]
+                print("fines", user_fines)
+                print("fines", len(user_fines))
+                if user_fines:
+                    for fine in user_fines:
+                        fine_amount_repaid = 0  # amount repaid towards this fine
+
+                        # find the missed rotations for this fine
+                        missed_rotations_for_fine = [
+                            rotation
+                            for rotation in missed_rotations
+                            if rotation.rotation_date == fine.fine_date
+                            and rotation.contributor_id == user_id
+                            and rotation.activity_id == user.activity_id
+                        ]
+                        print(
+                            "missed_rotations_for_fine:", len(missed_rotations_for_fine)
+                        )
+                        for missed_rotation in missed_rotations_for_fine:
+                            print(
+                                "missed_rotation:", missed_rotation.contributing_share
+                            )
+
+                        # loop through the missed rotations and repay the fine and missed contribution
+                        for missed_rotation in missed_rotations_for_fine:
+                            missed_balance = fine.fine + (
+                                missed_rotation.expected_amount
+                                - missed_rotation.contributed_amount
+                            )
+                            print("missed_balance:", missed_balance)
+                            print("wallet_balance:", wallet_balance)
+
+                            # if the user has enough balance to repay the missed rotation
+                            if wallet_balance >= missed_balance:
+                                print("greater balance")
+                                wallet_balance -= missed_balance
+                                fine_amount_repaid += missed_balance
+                                print("fine_exp_1:", fine.expected_repayment)
+                                fine.expected_repayment = max(
+                                    fine.expected_repayment - missed_balance, 0
+                                )
+                                print("fine_exp_2:", fine.expected_repayment)
+                                missed_rotation.contributed_amount += (
+                                    missed_balance - fine.fine
+                                )
+                                missed_rotation.fine = fine.fine
+                            else:
+                                print("lesser balance")
+                                # if the user has a partial balance to repay the missed rotation
+                                fine.expected_repayment = max(
+                                    fine.expected_repayment - wallet_balance, 0
+                                )
+                                fine_amount_repaid += wallet_balance
+                                wallet_balance = 0
+                                if (
+                                    fine_amount_repaid
+                                    + missed_rotation.contributed_amount
+                                    > missed_rotation.expected_amount
+                                ):
+                                    contribution_amount = (
+                                        missed_rotation.expected_amount
+                                        - missed_rotation.contributed_amount
+                                    )
+                                    fine_amount = (
+                                        fine_amount_repaid - contribution_amount
+                                    )
+                                    missed_rotation.contributed_amount += (
+                                        contribution_amount
+                                    )
+                                    missed_rotation.fine += fine_amount
+                                else:
+                                    missed_rotation.contributed_amount += (
+                                        fine_amount_repaid
+                                    )
+
+                            # record the total fines repaid
+                            print("fine_amount_repaid:", fine_amount_repaid)
+                            total_fines_repaid += fine_amount_repaid
+                            print("total_fines_repaid:", total_fines_repaid)
+
+                            chama_id = (
+                                db.query(models.Activity.chama_id)
+                                .filter(models.Activity.id == user.activity_id)
+                                .scalar()
+                            )
+
+                            # record the late disbursement
+                            late_disbursement_record = {
+                                "chama_id": chama_id,
+                                "activity_id": user.activity_id,
+                                "late_contributor_id": user_id,
+                                "late_recipient_id": missed_rotation.recipient_id,
+                                "late_contribution": fine_amount_repaid,
+                                "missed_rotation_date": missed_rotation.rotation_date,
+                            }
+                            new_late_disbursement = models.LateRotationDisbursements(
+                                **late_disbursement_record
+                            )
+                            db.add(new_late_disbursement)
+
+                            # if the available amount is zero, stop processing the fines
+                            if wallet_balance == 0:
+                                break_outer_loop = True
+                                break
+
+                        print("===record fine====")
+                        # record the transaction
+                        fine_transaction_code = generate_transaction_code(
+                            "auto_late_contribution", wallet_id
+                        )
+                        fine_transaction_data = {
+                            "user_id": user_id,
+                            "amount": fine_amount_repaid,
+                            "origin": wallet_id,
+                            "activity_id": user.activity_id,
+                            "transaction_date": transaction_datetime,
+                            "updated_at": transaction_datetime,
+                            "transaction_completed": True,
+                            "transaction_code": fine_transaction_code,
+                            "transaction_type": "late contribution",
+                        }
+                        new_fine_transaction = models.ActivityTransaction(
+                            **fine_transaction_data
+                        )
+                        db.add(new_fine_transaction)
+
+                        # mark the fine as paid if its fully repaid
+                        if fine.expected_repayment == 0:
+                            fine.is_paid = True
+                            fine.paid_date = transaction_datetime
+
+                        if break_outer_loop:
+                            print("====breaking===")
+                            break
+
+                # if the user has some balance left, contribute towards the upcoming rotation
+                if wallet_balance > 0:
+                    print("=== contribution====")
+                    # find thee upcoming rotation contribution
+                    next_contributions = (
+                        db.query(models.RotatingContributions)
+                        .filter(
+                            and_(
+                                models.RotatingContributions.contributor_id == user_id,
+                                models.RotatingContributions.activity_id
+                                == user.activity_id,
+                                func.date(models.RotatingContributions.rotation_date)
+                                == today,
+                                models.RotatingContributions.expected_amount
+                                != models.RotatingContributions.contributed_amount,
+                            )
+                        )
+                        .all()
+                    )
+                    print("next_contributions:", next_contributions)
+
+                    # contribute the remaining amount towards the next rotation
+                    if next_contributions:
+                        print("====we have next cont====")
+                        for rotation in next_contributions:
+                            print("rotation share:", rotation.contributing_share)
+                            contribution_balance = (
+                                rotation.expected_amount - rotation.contributed_amount
+                            )
+                            if wallet_balance >= contribution_balance:
+                                rotation.contributed_amount += contribution_balance
+                                wallet_balance -= contribution_balance
+                                total_contribution += contribution_balance
+                            else:
+                                rotation.contributed_amount += wallet_balance
+                                total_contribution += wallet_balance
+                                wallet_balance = 0
+                                break
+
+                            print("total_contribution:", total_contribution)
+
+                        if total_contribution > 0:
+                            # record the contribution transaction
+                            print("===record contribution====")
+                            contribution_transaction_data = {
+                                "user_id": user_id,
+                                "amount": total_contribution,
+                                "origin": wallet_id,
+                                "activity_id": user.activity_id,
+                                "transaction_date": transaction_datetime,
+                                "updated_at": transaction_datetime,
+                                "transaction_completed": True,
+                                "transaction_code": generate_transaction_code(
+                                    "auto_contribution", wallet_id
+                                ),
+                                "transaction_type": "contribution",
+                            }
+                            new_contribution_transaction = models.ActivityTransaction(
+                                **contribution_transaction_data
+                            )
+                            db.add(new_contribution_transaction)
+
+                # update the wallet balance after processing fines and contributions
+                if total_contribution + total_fines_repaid > 0:
+                    print("===update wallet balance====")
+                    user_record = (
+                        db.query(models.User)
+                        .filter(models.User.id == user_id)
+                        .with_for_update()
+                        .first()
+                    )
+                    if (
+                        user_record.wallet_balance
+                        < total_contribution + total_fines_repaid
+                    ):
+                        print("===insufficient balance===")
+                        # we will skip this user and log the error but continue processing the rest
+                        transaction_error_logger.error("Insufficient wallet balance")
+                        db.rollback()
+                        continue
+
+                    user_record.wallet_balance -= (
+                        total_contribution + total_fines_repaid
+                    )
+
+                    # update the activity account balance and chama account balance
+                    print("===update acct balances====")
+                    activity_account = (
+                        db.query(models.Activity_Account)
+                        .filter(models.Activity_Account.activity_id == user.activity_id)
+                        .with_for_update()
+                        .first()
+                    )
+                    activity_account.account_balance += (
+                        total_fines_repaid + total_contribution
+                    )
+                    print("activity_account:", activity_account.account_balance)
+                    print("user.activity_id:", user.activity_id)
+
+                    # retrieve chama_id for this activity
+                    chama_id = (
+                        db.query(models.Activity.chama_id)
+                        .filter(models.Activity.id == user.activity_id)
+                        .scalar()
+                    )
+                    print("chama_id:", chama_id)
+
+                    chama_account = (
+                        db.query(models.Chama_Account)
+                        .filter(models.Chama_Account.chama_id == chama_id)
+                        .with_for_update()
+                        .first()
+                    )
+                    chama_account.account_balance += (
+                        total_fines_repaid + total_contribution
+                    )
+
+                db.commit()  # commit the nested transaction for each user
+        return {"message": "Automated merry-go-round contributions successful"}
+    except HTTPException as http_exc:
+        transaction_error_logger.error(
+            f"Failed to automate merry go round contributions {http_exc}"
+        )
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        transaction_error_logger.error(
+            f"Failed to automate merry go round contributions {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to automate merry go round contributions"
+        )
+"""
 
 
 # contribute t the generic activities
@@ -718,6 +1541,19 @@ async def contribute_to_generic_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        # ensure its past the last day of joining before contributing
+        if datetime.now(nairobi_tz).date() < activity.last_joining_date.date():
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot contribute before the last joining date",
+            )
+
         expected_amount = contrib_data.expected_contribution
         amount = contrib_data.amount
         transaction_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
@@ -785,9 +1621,6 @@ async def contribute_to_generic_activity(
                         break
 
             # if after fine repayment, the member has some amount left, we contribute towards the expected amount
-            user_record = (
-                db.query(models.User).filter(models.User.id == current_user.id).first()
-            )
             if amount > 0 and expected_amount > 0:
                 transaction_code = generate_transaction_code(
                     "manual_contribution", wallet_id
@@ -817,12 +1650,22 @@ async def contribute_to_generic_activity(
             user_record = (
                 db.query(models.User).filter(models.User.id == current_user.id).first()
             )
+
+            if user_record.wallet_balance < total_fines_repaid + amount_contributed:
+                raise HTTPException(
+                    status_code=400, detail="Insufficient wallet balance"
+                )
+
+            user_record.wallet_balance -= amount_contributed + total_fines_repaid
+
             activity = (
                 db.query(models.Activity)
                 .filter(models.Activity.id == activity_id)
                 .first()
             )
-            user_record.wallet_balance -= amount_contributed + total_fines_repaid
+
+            if not activity:
+                raise HTTPException(status_code=404, detail="Activity not found")
 
             # update the activity account balance
             activity_account = (
@@ -841,9 +1684,8 @@ async def contribute_to_generic_activity(
             chama_account.account_balance += total_fines_repaid + amount_contributed
 
             db.commit()
-
+        return {"message": "Contribution successful"}
     except HTTPException as http_exc:
-        db.rollback()
         raise http_exc
     except Exception as e:
         db.rollback()
@@ -855,6 +1697,7 @@ async def contribute_to_generic_activity(
 def generate_transaction_code(transaction_type, wallet_id):
     # define a prefix for each transaction
     prefixes = {
+        "transfer": "TR",
         "auto_contribution": "AC",
         "auto_late_contribution": "ALC",
         "manual_contribution": "MC",
@@ -936,7 +1779,7 @@ async def deposit_to_wallet(
             transaction_info_logger.info(f"callback record {callback_record}")
             callback_record.Status = "Success"
 
-        db.commit()
+            db.commit()
         return {"wallet_balance": member.wallet_balance}
     except HTTPException:
         db.rollback()
@@ -1273,6 +2116,7 @@ async def check_auto_contribute_status(
 # 2. retrieve any fines the users has and deduct from the wallet balance
 # 3. if any bal after fine repayment, move on to make a contribution to the activity either partially or fully depending on the wallet balance
 # 4. update the wallet balance and the activity account balance and the chama account balance
+# The activities in this route will exclude merry-go-round activities
 @router.post(
     "/make_activity_auto_contributions",
     status_code=status.HTTP_201_CREATED,
@@ -1294,6 +2138,7 @@ async def make_auto_contributions(
                 models.AutoContribution.activity_id,
                 models.AutoContribution.expected_amount,
                 models.Activity.chama_id,
+                models.Activity.activity_type,
             )
             .join(models.User, models.User.id == models.AutoContribution.user_id)
             .join(
@@ -1302,8 +2147,9 @@ async def make_auto_contributions(
             )
             .filter(
                 and_(
-                    func.date(models.AutoContribution.next_contribution_date) > today,
+                    func.date(models.AutoContribution.next_contribution_date) == today,
                     models.User.wallet_balance > 0,
+                    models.Activity.activity_type != "merry-go-round",
                 )
             )
             .all()
@@ -1512,7 +2358,6 @@ async def make_auto_contributions(
                 )
 
             db.commit()
-
         return {"message": "Auto contributions made successfully"}
     except Exception as e:
         db.rollback()

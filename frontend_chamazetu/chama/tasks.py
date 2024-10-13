@@ -223,6 +223,33 @@ def run_update_and_fix_callbacks():
     return chain(update_task | fix_task)()
 
 
+# runs five minutes after midnight every day to check for chamas whose last joining has passed
+# and update the chama to not accepting members
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def check_and_update_accepting_members_status():
+    """
+    Check and update accepting members status
+    """
+    logger.info(
+        "==========chama/tasks.py: check_and_update_accepting_members_status()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/chamas/check_and_update_accepting_members_status"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to check and update accepting members status: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.OK
+
+
 # update the contribution days for chama activities
 @shared_task(
     autoretry_for=(requests.exceptions.RequestException,),
@@ -273,16 +300,107 @@ def set_fines_for_missed_contributions():
     return response.status_code == HTTPStatus.CREATED
 
 
-@shared_task
-def set_fines_and_update_activity_contribution_days():
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def create_rotation_contributions(*args, **kwargs):
     """
-    Set fines for late contributions and update the next contribution day for chamas
+    Create rotating contributions for chamas
+    """
+    logger.info("==========chama/tasks.py: create_rotating_contributions()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/activities/create_rotation_contributions"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to create rotating contributions: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def create_activity_rotation_contributions(activity_id):
+    """
+    Create rotating contributions for chamas
     """
     logger.info(
-        "==========chama/tasks.py: set_fines_and_update_activity_contribution_days()=========="
+        "==========chama/tasks.py: create_activity_rotation_contributions()=========="
     )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/activities/create_activity_rotation_contributions/{activity_id}"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to create rotating contributions: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def activity_auto_dibursement(*args, **kwargs):
+    """
+    Create rotating contributions for chamas
+    """
+    logger.info("==========chama/tasks.py: activity_auto_dibursement()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(f"{os.getenv('api_url')}/activities/auto_dibursement")
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to create rotating contributions: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def auto_disburse_to_walletts(*args, **kwargs):
+    logger.info("==========member/tasks.py: auto_disburse_to_walletts()==========")
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/managers/auto_disburse_to_wallets"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to auto disburse to wallets: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
+@shared_task
+def setfines_updatedays_autodisburse_rotations_chain():
+    """
+    Chain the set_fines_and_update_activity_contribution_days, auto_disburse_to_walletts and create_rotations
+    """
+    logger.info("=chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=")
     logger.info(f"Task ran at: {datetime.now()}")
     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
     set_fines_task = set_fines_for_missed_contributions.s()
     update_task = update_activities_contribution_days.s()
-    return chain(set_fines_task | update_task)()
+    auto_disburse_to_wallets = auto_disburse_to_walletts.s()
+    create_rotations = create_rotation_contributions.s()
+    return chain(
+        set_fines_task | update_task | auto_disburse_to_wallets | create_rotations
+    )()

@@ -24,14 +24,19 @@ app.conf.accept_content = ["json", "pickle"]
 # celery Beat settings
 app.conf.beat_schedule = {
     # executed a little past midnight everyday
-    "update-contribution-days": {
-        "task": "chama.tasks.set_fines_and_update_activity_contribution_days",
+    "setfines_updatedays_autodisburse_rotations": {
+        "task": "chama.tasks.setfines_updatedays_autodisburse_rotations_chain",
         "schedule": crontab(minute=30, hour=0),
     },
     # run everyday at 12 noon
     "make_auto_contributions": {
-        "task": "member.tasks.auto_contribute",
+        "task": "member.tasks.make_auto_contributions",
         "schedule": crontab(minute=0, hour=12),
+    },
+    # runs 5 minutes after midnight everyday
+    "update_accepting_members": {
+        "task": "chama.tasks.check_and_update_accepting_members_status",
+        "schedule": crontab(minute=5, hour=0),
     },
 }
 

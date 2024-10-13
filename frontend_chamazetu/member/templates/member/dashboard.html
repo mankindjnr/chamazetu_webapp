@@ -95,6 +95,45 @@
       </ul>
     </nav><!-- End Icons Navigation -->
 
+    <style>
+      #walletForm {
+        background-color: #e9f7ff; /* Light blue background */
+        border: 1px solid #007bff; /* Blue border */
+        color: #333;
+      border-radius: 10px; /* Rounded corners for the card */
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+      transition: transform 0.3s; /* Smooth hover effect */
+    }
+
+    #walletForm:hover {
+      transform: scale(1.02); /* Slightly enlarge on hover */
+    }
+
+    .input-group-text {
+      background-color: #f8f9fa; /* Light background for input group */
+    }
+
+    .btn-outline-success {
+      background-color: #28a745; /* Green background for success button */
+      color: white; /* White text */
+    }
+
+    .btn-outline-danger {
+      background-color: #dc3545; /* Red background for danger button */
+      color: white; /* White text */
+    }
+
+    .alert {
+      border-radius: 5px; /* Slightly rounded corners for alert */
+    }
+
+    .error-message {
+      color: red; /* Red color for error messages */
+      font-size: 0.875rem; /* Smaller font for error messages */
+    }
+
+    </style>
+
   </header><!-- End Header -->
 
   <!-- ======= Sidebar ======= -->
@@ -140,8 +179,8 @@
           <form class="p-3" action="{% url 'member:fix_mpesa_to_wallet_deposit' %}" method="post">
             {% csrf_token %}
             <div class="mb-3">
-              <label for="amount" class="form-label">Deposited Amount</label>
-              <input type="number" class="form-control form-control-sm me-2" id="amount" name="amount" required>
+              <label for="fix_amount" class="form-label">Deposited Amount</label>
+              <input type="number" class="form-control form-control-sm me-2" id="fix_amount" name="fix_amount" required>
             </div>
             <div class="mb-3">
               <label for="receipt_number" class="form-label">Mpesa Receipt Number</label>
@@ -190,16 +229,20 @@
             <div class="col-12">
               <div class="card" id="walletForm" style="display: none;">
                 <div class="card-body">
-                  <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button>
-                    <h5 class="card-title">Wallet</h5>
-                  <form action="{% url 'member:wallet_transactions' %}" method="POST">
+                  <!-- <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button> -->
+                    <div class="pagetitle d-flex justify-content-between align-items-center">
+                      <h5 class="card-title" style="font-weight: bold; font-size: 1.5rem;" >Wallet</h5>
+                      <h5 class="card-title" style="font-weight: bold; font-size: 1.5rem;" >{{ wallet_id }}</h5>
+                    </div>
+                  <form class="p-3" action="{% url 'member:wallet_transactions' %}" method="POST">
                     {% csrf_token %}
                     <div class="mb-3">
                       <label for="amount" class="form-label">Amount</label>
                       <div class="input-group">
                         <span class="input-group-text" id="basic-addon1">Ksh:</span>
                         <input type="number" class="form-control" id="amount" name="amount" min="10" required>
-                        <small class="error-message"></small>
+                        <small class="amount-error-message"></small>
+              
                       </div>
                     </div>
 
@@ -208,17 +251,71 @@
                       <label for="transaction_type" class="form-label">Transaction Type</label>
                       <select class="form-select" id="transaction_type" name="transaction_type" required>
                         <option value=""></option>
-                        <option value="deposit">Deposit</option>
-                        <option value="withdrawal">Send</option>
+                        <option value="deposit">Top Up Wallet</option>
+                        <option value="withdrawal">Send To Mpesa</option>
+                        <option value="transfer">Wallet Transfer</option>
                       </select>
+                      <small id="feeNotification" class="success-message"></small>
+                      <!-- small script to notify users that normal mpesa charges apply when withdrawing-->
+                      <script>
+                        document.getElementById("transaction_type").addEventListener("change", function() {
+                          let transaction_type = document.getElementById("transaction_type").value;
+                          let feeSection = document.getElementById("feeSection");
+                          let feeAmount = document.getElementById("feeAmount");
+                          let feeNotification = document.getElementById("feeNotification");
+                          let phoneNumber = document.getElementById("phoneNumber");
+                          let walletNumber = document.getElementById("walletNumber");
+
+                          if (transaction_type === "withdrawal") {
+                            feeSection.style.display = "block";
+                            feeNotification.innerHTML = "Please note that normal mpesa charges apply.";
+                          } else {
+                            feeSection.style.display = "none";
+                            feeNotification.innerHTML = "";
+                          }
+
+                          // changing the label text based on transaction type
+                          if (transaction_type === "transfer"){
+                            phoneNumber.style.display = "none";
+                            walletNumber.style.display = "block";
+                            //make it required
+                            document.getElementById("walletnumber").required = true;
+                            // make phone number not required
+                            document.getElementById("phonenumber").required = false;
+                          } else {
+                            phoneNumber.style.display = "block";
+                            walletNumber.style.display = "none";
+                            //make it required
+                            document.getElementById("phonenumber").required = true;
+                            // make wallet number not required
+                            document.getElementById("walletnumber").required = false;
+                          }
+                        });
+                      </script>
                     </div>
 
-                    <div class="mb-3">
-                      <label for="phonenumber" class="form-label">Phone Number</label>
+                    <div class="mb-3" id="phoneNumber" style="display: none;">
+                      <label for="phonenumber" id="phoneNumberLabel" class="form-label">Phone Number</label>
                       <div class="input-group">
-                        <!-- <span class="input-group-text" id="basic-addon1">+254</span> -->
-                        <input type="number" class="form-control" id="phonenumber" name="phonenumber" minlength="10" maxlength="10" placeholder="0723456789" required>
-                        <small class="error-message"></small>
+                        <input type="number" class="form-control" id="phonenumber" name="phonenumber" minlength="10" placeholder="0723456789">
+                        <br/><small class="phone-error-message"></small>
+                      </div>
+                    </div>
+
+                    <!-- wallet transfer -->
+                    <div class="mb-3" id="walletNumber" style="display: none;">
+                      <label for="phonenumber" id="walletNumberLabel" class="form-label">Recipient Wallet Number</label>
+                      <div class="input-group">
+                        <input type="text" class="form-control" id="walletnumber" name="walletnumber" minlength="6" placeholder="WRM1232">
+                        <br/><small class="wallet-error-message"></small>
+                      </div>
+                    </div>
+
+                    <!-- fee display for withdrawal -->
+                    <div class="mb-3" id="feeSection" style="display: none;">
+                      <label for="fee" class="form-label">Transaction Fee</label>
+                      <div class="alert alert-info">
+                        The fee for this transaction will be: <strong><span id="feeAmount">0</span> KES</strong>.
                       </div>
                     </div>
 
@@ -226,8 +323,50 @@
                       <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('walletForm').style.display = 'none';">Close</button>
                       <button type="submit" class="btn btn-outline-success btn-sm">Confirm Transaction</button>
                     </div>
-
                   </form>
+
+                  <script>
+                    document.getElementById("amount").addEventListener("input", function() {
+                      let amount = parseFloat(document.getElementById("amount").value);
+                      let feeAmount = document.getElementById("feeAmount");
+                  
+                      // Define your fee table ranges and fees
+                      const feeTable = [
+                        { from: 1, to: 100, fee: 0 },
+                        { from: 101, to: 500, fee: 7 },
+                        { from: 501, to: 1000, fee: 10 },
+                        { from: 1001, to: 1500, fee: 20 },
+                        { from: 1501, to: 2500, fee: 30 },
+                        { from: 2501, to: 3500, fee: 40 },
+                        { from: 3501, to: 5000, fee: 50 },
+                        { from: 5001, to: 7500, fee: 60 },
+                        { from: 7501, to: 10000, fee: 70 },
+                        { from: 10001, to: 15000, fee: 80 },
+                        { from: 15001, to: 20000, fee: 90 },
+                        { from: 20001, to: 35000, fee: 90 },
+                        { from: 35001, to: 50000, fee: 90 },
+                        { from: 50001, to: 250000, fee: 90 }
+                      ];
+                  
+                      // Default fee if amount is out of range
+                      let fee = "N/A";
+                  
+                      // Find the fee for the input amount
+                      for (let i = 0; i < feeTable.length; i++) {
+                        if (amount >= feeTable[i].from && amount <= feeTable[i].to) {
+                          fee = feeTable[i].fee;
+                          break;
+                        }
+                      }
+                  
+                      // Update the fee in the HTML
+                      feeAmount.innerHTML = fee;
+
+                      // display error message if amount is less than 10
+                      // display error message if phone number is less than 10 digits
+                    });
+                  </script>
+                  
 
                 </div>
               </div>
@@ -340,7 +479,7 @@
           <div class="card">
 
             <div class="card-body">
-              <h5 class="card-title">Wallet Deposit <span>| inbound </span></h5>
+              <h5 class="card-title">Wallet Top Up <span>| inbound </span></h5>
               {% if recent_wallet_activity %}
               <div class="activity">
                 {% for activity in recent_wallet_activity %}
@@ -348,7 +487,7 @@
                 <div class="activity-item d-flex">
                   <i class='ri-arrow-left-right-line align-self-start'></i>
                   <div class="activity-content">
-                    <p class="text-dark">{{ activity.transaction_type }} Ksh {{ activity.transaction_amount }} on {{ activity.transaction_date }} at {{ activity.transaction_time }} </p>
+                    <p class="text-dark">{{ activity.transaction_type }} Ksh {{ activity.transaction_amount }} on {{ activity.transaction_date }} at {{ activity.transaction_time }} from {{ activity.transaction_origin }} </p>
                   </div>
                 </div>
                 {% endfor %}
@@ -371,6 +510,20 @@
                   <i class='ri-arrow-left-right-line align-self-start'></i>
                   <div class="activity-content">
                     <p class="text-dark">sent Ksh {{ transaction.transaction_amount }} on {{ transaction.transaction_date }} at {{ transaction.transaction_time }} to {{ transaction.receiver_name }} {{ transaction.receiver_phone }} </p>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% if wallet_transfers %}
+              <div class="activity">
+                {% for transfer in wallet_transfers %}
+
+                <div class="activity-item d-flex">
+                  <i class='ri-arrow-left-right-line align-self-start'></i>
+                  <div class="activity-content">
+                    <p class="text-dark">{{ transfer.transaction_type }} Ksh {{ transfer.transaction_amount }} on {{ transfer.transaction_date }} at {{ transfer.transaction_time }} to {{ transfer.transaction_destination }} </p>
                   </div>
                 </div>
                 {% endfor %}
@@ -410,6 +563,7 @@
     <!-- wallet Modal -->
   </main><!-- End #main -->
 
+  
   <script>
     document.addEventListener("DOMContentLoaded", function() {
       let buttons = ["transactionFormBtn"];
@@ -434,6 +588,8 @@
       });
   });
   </script>
+
+
 
 
  {% endblock %}

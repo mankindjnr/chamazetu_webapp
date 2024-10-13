@@ -5,6 +5,7 @@ from typing import List
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 import pytz, logging
+from collections import defaultdict
 from sqlalchemy import func, update, and_, table, column, desc
 
 from .date_functions import (
@@ -535,7 +536,7 @@ async def disburse_funds(
                 and_(
                     models.RotatingContributions.activity_id == activity_id,
                     models.RotatingContributions.rotation_date
-                    == next_contribution_date,
+                    == previous_contribution_date,
                 )
             )
             .scalar()
@@ -546,12 +547,11 @@ async def disburse_funds(
                 status_code=404, detail="No pooled amount found for disbursement"
             )
 
-        # TODO: for testing purposes, we will not check the date we will just go on, later enforce to ensure the contribution/rotation date is passed.
-        # if today < previous_contribution_date:
-        #     raise HTTPException(
-        #         status_code=400,
-        #         detail="Cannot disburse funds before the previous contribution date",
-        #     )
+        if today <= previous_contribution_date or today == next_contribution_date:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot disburse funds before the previous contribution date",
+            )
 
         # get the cycle number for the activity
         cycle_number = (
@@ -565,14 +565,14 @@ async def disburse_funds(
                 status_code=400, detail="No rotation order has been created yet"
             )
 
-        # TODO: for testing we will use next_contribution_date, later we will use previous_contribution_date
         recipient = (
             db.query(models.RotationOrder)
             .filter(
                 and_(
                     models.RotationOrder.activity_id == activity_id,
-                    models.RotationOrder.receiving_date == next_contribution_date,
+                    models.RotationOrder.receiving_date == previous_contribution_date,
                     models.RotationOrder.cycle_number == cycle_number,
+                    models.RotationOrder.received_amount == 0,
                     models.RotationOrder.fulfilled == False,
                 )
             )
@@ -640,4 +640,837 @@ async def disburse_funds(
     except Exception as e:
         db.rollback()
         management_error_logger.error(f"failed to disburse funds, error: {e}")
+        raise HTTPException(status_code=400, detail="Failed to disburse funds")
+
+
+# automating the above route
+# this route will be called by a cron job to disburse funds to the recipient
+# this routes runs after there has been an update in he contribuion dates hence we can use the
+# previous date to get the recipient whose contribution time has has just completed and disburse funds to them
+# this will handle those members who have set to receive their disbursements onto their wallets and not mpesa
+##TODO: another route to disburse to mpesa directly - might have to use callbacks
+
+
+# difference will be, this route will disburse for all activities that meet the criteria of the previous date
+# this route will be called after the contribution date has passed
+# this route will be called by a cron job
+@router.post(
+    "/auto_disbursement",
+    status_code=status.HTTP_201_CREATED,
+)
+async def auto_disbursement(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        # get all activities that have passed their contribution date
+        # might add a filter for if in the rotatioOrder table, the fulfilled is false for the previous date
+        activities = (
+            db.query(models.Activity)
+            .join(
+                models.ActivityContributionDate,
+                models.ActivityContributionDate.activity_id == models.Activity.id,
+            )
+            .filter(
+                and_(
+                    func.date(
+                        models.ActivityContributionDate.previous_contribution_date
+                    )
+                    < today,
+                    func.date(models.ActivityContributionDate.next_contribution_date)
+                    > today,
+                )
+            )
+            .all()
+        )
+
+        if not activities:
+            return {"message": "No activities found for disbursement"}
+
+        for activity in activities:
+            contribution_dates = (
+                db.query(models.ActivityContributionDate)
+                .filter(
+                    models.ActivityContributionDate.activity_id == activity.id,
+                )
+                .first()
+            )
+
+            previous_contribution_date = (
+                contribution_dates.previous_contribution_date.date()
+            )
+            next_contribution_date = contribution_dates.next_contribution_date.date()
+
+            if today <= previous_contribution_date or today == next_contribution_date:
+                continue
+
+            # get the poooled amount for the activity for the previous contribution date
+            pooled_amount = (
+                db.query(
+                    func.coalesce(
+                        func.sum(models.RotatingContributions.contributed_amount), 0
+                    )
+                )
+                .filter(
+                    and_(
+                        models.RotatingContributions.activity_id == activity.id,
+                        models.RotatingContributions.rotation_date
+                        == previous_contribution_date,
+                    )
+                )
+                .scalar()
+            )
+
+            if not pooled_amount:
+                continue
+
+            if today <= previous_contribution_date:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot disburse funds before the rotation date passes",
+                )
+
+            # get the current cycle number for the activity
+            cycle_number = (
+                db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+                .filter(models.RotationOrder.activity_id == activity.id)
+                .scalar()
+            )
+
+            if cycle_number == 0:
+                continue
+
+            # find the recipient in the rotation order who is to receive the funds
+            recipient = (
+                db.query(models.RotationOrder)
+                .filter(
+                    and_(
+                        models.RotationOrder.activity_id == activity.id,
+                        models.RotationOrder.receiving_date
+                        == previous_contribution_date,
+                        models.RotationOrder.cycle_number == cycle_number,
+                        models.RotationOrder.received_amount == 0,
+                        models.RotationOrder.fulfilled == False,
+                    )
+                )
+                .first()
+            )
+
+            if not recipient:
+                continue
+
+            # begin transaction block for atomicity
+            with db.begin_nested():
+                # update the recipient's received amount and their wallet balance
+                recipient_record = (
+                    db.query(models.User)
+                    .filter(models.User.id == recipient.recipient_id)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not recipient_record:
+                    raise HTTPException(status_code=404, detail="Recipient not found")
+
+                recipient_record.wallet_balance += pooled_amount
+
+                # update the rotation order record
+                recipient.received_amount = pooled_amount
+                recipient.fulfilled = (
+                    recipient.expected_amount == recipient.received_amount
+                )
+
+                # update chama account balance
+                chama_account = (
+                    db.query(models.Chama_Account)
+                    .filter(models.Chama_Account.chama_id == recipient.chama_id)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not chama_account:
+                    raise HTTPException(
+                        status_code=404, detail="Chama account not found"
+                    )
+                chama_account.account_balance -= pooled_amount
+
+                # update activity account balance
+                activity_account = (
+                    db.query(models.Activity_Account)
+                    .filter(
+                        models.Activity_Account.activity_id == recipient.activity_id
+                    )
+                    .with_for_update()
+                    .first()
+                )
+
+                if not activity_account:
+                    raise HTTPException(
+                        status_code=404, detail="Activity account not found"
+                    )
+
+                activity_account.account_balance -= pooled_amount
+
+            db.commit()
+        return {"message": "Funds disbursed successfully"}
+    except HTTPException as e:
+        db.rollback()
+        management_error_logger.error(f"failed to disburse funds, error: {e}")
+        raise e
+    except Exception as e:
+        db.rollback()
+        management_error_logger.error(f"failed to disburse funds, error: {e}")
+        raise HTTPException(status_code=400, detail="Failed to disburse funds")
+
+
+# auto disbursement for merry-go-round activities
+@router.post(
+    "/auto_disburse_to_wallets",
+    status_code=status.HTTP_201_CREATED,
+)
+async def auto_disburse_to_wallets(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        # recipients for previous date
+        recipients = (
+            db.query(models.RotationOrder)
+            .join(
+                models.ActivityContributionDate,
+                models.ActivityContributionDate.activity_id
+                == models.RotationOrder.activity_id,
+            )
+            .filter(
+                and_(
+                    models.RotationOrder.receiving_date
+                    == models.ActivityContributionDate.previous_contribution_date,
+                    models.RotationOrder.fulfilled == False,
+                    models.RotationOrder.received_amount == 0,
+                )
+            )
+            .all()
+        )
+        print("recipients", len(recipients))
+
+        if not recipients:
+            return {"message": "No recipients found for disbursement"}
+
+        for recipient in recipients:
+            activity_id = recipient.activity_id
+            chama_id = recipient.chama_id
+            user_id = recipient.recipient_id
+            print(
+                "activity_id:", activity_id, "chama_id:", chama_id, "user_id:", user_id
+            )
+
+            # get the pooled amount for the recipient
+            pooled_so_far = (
+                db.query(
+                    func.coalesce(
+                        func.sum(models.RotatingContributions.contributed_amount), 0
+                    )
+                )
+                .filter(
+                    and_(
+                        models.RotatingContributions.activity_id == activity_id,
+                        models.RotatingContributions.rotation_date
+                        == recipient.receiving_date,
+                        models.RotatingContributions.recipient_id == user_id,
+                    )
+                )
+                .scalar()
+            )
+
+            if not pooled_so_far:
+                continue
+
+            # begin transaction block for atomicity
+            with db.begin_nested():
+                # update the recipient's received amount and their wallet balance
+                recipient_record = (
+                    db.query(models.User)
+                    .filter(models.User.id == user_id)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not recipient_record:
+                    raise HTTPException(status_code=404, detail="Recipient not found")
+
+                print("recipient", recipient_record.first_name)
+
+                recipient_record.wallet_balance += pooled_so_far
+
+                # update the rotation order record
+                recipient.received_amount = pooled_so_far
+                recipient.fulfilled = (
+                    recipient.expected_amount == recipient.received_amount
+                )
+
+                # update chama account balance
+                chama_account = (
+                    db.query(models.Chama_Account)
+                    .filter(models.Chama_Account.chama_id == chama_id)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not chama_account:
+                    raise HTTPException(
+                        status_code=404, detail="Chama account not found"
+                    )
+                chama_account.account_balance -= pooled_so_far
+
+                # update activity account balance
+                activity_account = (
+                    db.query(models.Activity_Account)
+                    .filter(models.Activity_Account.activity_id == activity_id)
+                    .with_for_update()
+                    .first()
+                )
+
+                if not activity_account:
+                    raise HTTPException(
+                        status_code=404, detail="Activity account not found"
+                    )
+
+                activity_account.account_balance -= pooled_so_far
+
+            db.commit()
+        return {"message": "Funds disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(f"failed to disburse funds, error: {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"failed to disburse funds, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to disburse funds")
+
+
+"""
+# this to disburse late contributions from the the late_rotation_disbursement table
+@router.post(
+    "/disburse_late_contributions",
+    status_code=status.HTTP_201_CREATED,
+)
+async def disburse_late_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        # recipients for previous date
+        late_disbursements = (
+            db.query(models.LateRotationDisbursements)
+            .filter(models.LateRotationDisbursements.disbursement_completed == False)
+            .all()
+        )
+        print("late", len(late_disbursements))
+
+        if not late_disbursements:
+            return {"message": "No recipients found for disbursement"}
+
+        # collecting late recipient ids, missed rotation dates and activity ids
+        late_recipient_ids = [
+            disbursement.late_recipient_id for disbursement in late_disbursements
+        ]
+        missed_rotation_dates = [
+            disbursement.missed_rotation_date for disbursement in late_disbursements
+        ]
+        activity_ids = [disbursement.activity_id for disbursement in late_disbursements]
+
+        # from rotation order, retrieve matching records for the late disbursements
+        unfulfilled_rotation_orders = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.recipient_id.in_(late_recipient_ids),
+                    models.RotationOrder.receiving_date.in_(missed_rotation_dates),
+                    models.RotationOrder.activity_id.in_(activity_ids),
+                    models.RotationOrder.fulfilled == False,
+                )
+            )
+            .all()
+        )
+
+        if not unfulfilled_rotation_orders:
+            return {"message": "No unfulfilled rotation orders found for disbursement"}
+
+        # group disbursements by user, activity and chama
+        disbursements_by_user = {}
+        for disbursement in late_disbursements:
+            user_id = disbursement.late_recipient_id
+            chama_id = disbursement.chama_id
+            activity_id = disbursement.activity_id
+
+            # retrieve the rotation order record for this disbursement
+            rotation_order = next(
+                (
+                    order
+                    for order in unfulfilled_rotation_orders
+                    if order.recipient_id == user_id
+                    and order.receiving_date == disbursement.missed_rotation_date
+                    and order.activity_id == activity_id
+                ),
+                None,
+            )
+
+            if not rotation_order:
+                # there should be a rotation order for each disbursement
+                print("====rotation order not found====")
+                management_error_logger.error(
+                    f"rotation order not found for disbursement, user_id: {user_id}, activity_id: {activity_id}, rotation_date: {disbursement.missed_rotation_date}"
+                )
+                continue
+
+            # group disbursements by user
+            if user_id not in disbursements_by_user:
+                disbursements_by_user[user_id] = {
+                    "total_disbursement": 0,
+                    "activity_chama_updates": {},
+                }
+
+            # increment the total disbursement for the user
+            disbursements_by_user[user_id][
+                "total_disbursement"
+            ] += disbursement.late_contribution
+
+            # store disbursement details for activity and chama updates
+            key = (activity_id, chama_id)
+            if key not in disbursements_by_user[user_id]["activity_chama_updates"]:
+                disbursements_by_user[user_id]["activity_chama_updates"][key] = 0
+            disbursements_by_user[user_id]["activity_chama_updates"][
+                key
+            ] += disbursement.late_contribution
+
+        # process each user's disbursements
+        for user_id, disbursement_data in disbursements_by_user.items():
+            total_disbursement = disbursement_data["total_disbursement"]
+
+            # begin transaction block for atomicity
+            try:
+                with db.begin_nested():
+                    # deduct from the respective activity and chama accounts
+                    for (activity_id, chama_id), amount in disbursement_data[
+                        "activity_chama_updates"
+                    ].items():
+                        # update activity account balance
+                        activity_account = (
+                            db.query(models.Activity_Account)
+                            .filter(models.Activity_Account.activity_id == activity_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        # update chama account balance
+                        chama_account = (
+                            db.query(models.Chama_Account)
+                            .filter(models.Chama_Account.chama_id == chama_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        if not activity_account or not chama_account:
+                            raise HTTPException(
+                                status_code=404, detail="Account not found"
+                            )
+
+                        if (
+                            chama_account.account_balance < total_disbursement
+                            or activity_account.account_balance < total_disbursement
+                        ):
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Insufficient funds in chama account",
+                            )
+
+                        activity_account.account_balance -= amount
+                        chama_account.account_balance -= amount
+
+                    # update the recipients wallet balance
+                    user_wallet = (
+                        db.query(models.User)
+                        .filter(models.User.id == user_id)
+                        .with_for_update()
+                        .first()
+                    )
+                    if not user_wallet:
+                        raise HTTPException(
+                            status_code=404, detail="Recipient not found"
+                        )
+
+                    user_wallet.wallet_balance += total_disbursement
+
+                    # mark the disbursements as completed
+                    db.query(models.LateRotationDisbursements).filter(
+                        models.LateRotationDisbursements.late_recipient_id == user_id,
+                        models.LateRotationDisbursements.disbursement_completed
+                        == False,
+                    ).update(
+                        {"disbursement_completed": True},
+                        synchronize_session=False,
+                    )
+
+                    # update the rotation order as fulfilled if necessary
+                    for disbursement in late_disbursements:
+                        rotation_order = next(
+                            (
+                                order
+                                for order in unfulfilled_rotation_orders
+                                if order.recipient_id == disbursement.late_recipient_id
+                                and order_receiving_date
+                                == disbursement.missed_rotation_date
+                                and order.activity_id == disbursement.activity_id
+                            ),
+                            None,
+                        )
+                        if rotation_order:
+                            rotation_order.received_amount += (
+                                disbursement.late_contribution
+                            )
+                            if (
+                                rotation_order.received_amount
+                                >= rotation_order.expected_amount
+                            ):
+                                rotation_order.fulfilled = True
+
+                db.commit()  # commit the transaction for this user
+            except Exception as e:
+                db.rollback()
+                management_error_logger.error(f"failed to disburse funds, error: {e}")
+                # skip to the next user
+                continue
+
+        return {"message": "Funds disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(f"failed to disburse funds, error: {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"failed to disburse funds, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to disburse funds")
+"""
+
+
+# rewriting the above route in a more simplified way
+@router.post(
+    "/auto_disburse_late_contributions",
+    status_code=status.HTTP_201_CREATED,
+)
+async def auto_disburse_late_contributions(
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        today = datetime.now(nairobi_tz).date()
+        # recipients for previous date
+        late_disbursements = (
+            db.query(models.LateRotationDisbursements)
+            .filter(models.LateRotationDisbursements.disbursement_completed == False)
+            .all()
+        )
+
+        if not late_disbursements:
+            print("====no recipients found for disbursement====")
+            return {"message": "No recipients found for disbursement"}
+
+        # collecting late recipient ids, missed rotation dates and activity ids
+        late_recipient_ids = [
+            disbursement.late_recipient_id for disbursement in late_disbursements
+        ]
+        missed_rotation_dates = [
+            disbursement.missed_rotation_date for disbursement in late_disbursements
+        ]
+        activity_ids = [disbursement.activity_id for disbursement in late_disbursements]
+
+        # from rotation order, retrieve matching records for the late disbursements
+        unfulfilled_rotation_orders = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.recipient_id.in_(late_recipient_ids),
+                    models.RotationOrder.receiving_date.in_(missed_rotation_dates),
+                    models.RotationOrder.activity_id.in_(activity_ids),
+                    models.RotationOrder.fulfilled == False,
+                )
+            )
+            .all()
+        )
+
+        if not unfulfilled_rotation_orders:
+            print("====no unfulfilled rotation orders found for disbursement====")
+            return {"message": "No unfulfilled rotation orders found for disbursement"}
+
+        # group disbursements and rotation ordes by user_id
+        user_disbursements_map = defaultdict(list)
+        user_rotation_orders_map = defaultdict(list)
+
+        for disbursement in late_disbursements:
+            user_disbursements_map[disbursement.late_recipient_id].append(disbursement)
+
+        for order in unfulfilled_rotation_orders:
+            user_rotation_orders_map[order.recipient_id].append(order)
+
+        unique_user_ids = list(user_disbursements_map.keys())
+
+        for user_id in unique_user_ids:
+            print("====user======", user_id)
+            user_disbursements = user_disbursements_map.get(user_id, [])
+            user_rotation_orders = user_rotation_orders_map.get(user_id, [])
+
+            if not user_disbursements or not user_rotation_orders:
+                print("====no disbursements or rotation orders found====")
+                continue
+
+            total_to_disburse = 0
+            # begin transaction block for atomicity
+            try:
+                with db.begin_nested():
+                    # process each disbursement for the user
+                    for disbursement in user_disbursements:
+                        activity_id = disbursement.activity_id
+                        chama_id = disbursement.chama_id
+                        amount = disbursement.late_contribution
+
+                        # retrieve the rotation order record for this disbursement
+                        rotation_order = next(
+                            (
+                                order
+                                for order in user_rotation_orders
+                                if order.receiving_date
+                                == disbursement.missed_rotation_date
+                                and order.activity_id == activity_id
+                            ),
+                            None,
+                        )
+
+                        if not rotation_order:
+                            # there should be a rotation order for each disbursement
+                            print("====rotation order not found====")
+                            management_error_logger.error(
+                                f"rotation order not found for disbursement, user_id: {user_id}, activity_id: {disbursement.activity_id}, rotation_date: {disbursement.missed_rotation_date}"
+                            )
+                            continue
+
+                        # update activity account balance
+                        activity_account = (
+                            db.query(models.Activity_Account)
+                            .filter(models.Activity_Account.activity_id == activity_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        # update chama account balance
+                        chama_account = (
+                            db.query(models.Chama_Account)
+                            .filter(models.Chama_Account.chama_id == chama_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        if not activity_account or not chama_account:
+                            raise HTTPException(
+                                status_code=404, detail="Account not found"
+                            )
+
+                        if (
+                            chama_account.account_balance < amount
+                            or activity_account.account_balance < amount
+                        ):
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Insufficient funds in chama account",
+                            )
+
+                        activity_account.account_balance -= amount
+                        chama_account.account_balance -= amount
+
+                        total_to_disburse += amount
+
+                        # update the rotation order as fulfilled if necessary
+                        rotation_order.received_amount += amount
+                        rotation_order.fulfilled = (
+                            rotation_order.received_amount
+                            >= rotation_order.expected_amount
+                        )
+
+                    # mark the disbursements as completed
+                    db.query(models.LateRotationDisbursements).filter(
+                        models.LateRotationDisbursements.late_recipient_id == user_id,
+                        models.LateRotationDisbursements.disbursement_completed
+                        == False,
+                    ).update(
+                        {"disbursement_completed": True},
+                        synchronize_session=False,
+                    )
+
+                    # update the user's wallet balance
+                    user_wallet = (
+                        db.query(models.User)
+                        .filter(models.User.id == user_id)
+                        .with_for_update()
+                        .first()
+                    )
+
+                    if not user_wallet:
+                        raise HTTPException(
+                            status_code=404, detail="Recipient not found"
+                        )
+
+                    user_wallet.wallet_balance += total_to_disburse
+
+                # commit the transaction for this user
+                print("====committing transaction====")
+                db.commit()
+            except Exception as e:
+                print("====rolling back transaction====")
+                db.rollback()
+                management_error_logger.error(f"failed to disburse funds, error: {e}")
+                # skip to the next user
+                continue
+
+        return {"message": "Funds disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(f"failed to disburse funds, error: {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"failed to disburse funds, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to disburse funds")
+
+
+@router.post(
+    "/test_auto_disburse_late_contributions",
+    status_code=status.HTTP_201_CREATED,
+)
+async def auto_disburse_late_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+
+        # Join LateRotationDisbursements with RotationOrder to retrieve matching records
+        late_disbursements = (
+            db.query(models.LateRotationDisbursements, models.RotationOrder)
+            .join(
+                models.RotationOrder,
+                and_(
+                    models.LateRotationDisbursements.late_recipient_id
+                    == models.RotationOrder.recipient_id,
+                    models.LateRotationDisbursements.missed_rotation_date
+                    == models.RotationOrder.receiving_date,
+                    models.LateRotationDisbursements.activity_id
+                    == models.RotationOrder.activity_id,
+                    models.RotationOrder.fulfilled == False,
+                ),
+            )
+            .filter(models.LateRotationDisbursements.disbursement_completed == False)
+            .all()
+        )
+
+        if not late_disbursements:
+            return {"message": "No recipients found for disbursement"}
+
+        # Process disbursements by user
+        user_disbursement_map = defaultdict(list)
+        for disbursement, rotation_order in late_disbursements:
+            user_disbursement_map[disbursement.late_recipient_id].append(
+                (disbursement, rotation_order)
+            )
+
+        for user_id, disbursement_pairs in user_disbursement_map.items():
+            total_to_disburse = 0
+            try:
+                with db.begin_nested():  # Begin atomic transaction for each user
+                    for disbursement, rotation_order in disbursement_pairs:
+                        activity_id = disbursement.activity_id
+                        chama_id = disbursement.chama_id
+                        amount = disbursement.late_contribution
+
+                        # Lock and update activity and chama account balances
+                        activity_account = (
+                            db.query(models.Activity_Account)
+                            .filter(models.Activity_Account.activity_id == activity_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        chama_account = (
+                            db.query(models.Chama_Account)
+                            .filter(models.Chama_Account.chama_id == chama_id)
+                            .with_for_update()
+                            .first()
+                        )
+
+                        if not activity_account or not chama_account:
+                            raise HTTPException(
+                                status_code=404, detail="Account not found"
+                            )
+
+                        if (
+                            chama_account.account_balance < amount
+                            or activity_account.account_balance < amount
+                        ):
+                            raise HTTPException(
+                                status_code=400,
+                                detail="Insufficient funds in chama or activity account",
+                            )
+
+                        # Deduct from accounts
+                        activity_account.account_balance -= amount
+                        chama_account.account_balance -= amount
+                        total_to_disburse += amount
+
+                        # Update rotation order
+                        rotation_order.received_amount += amount
+                        rotation_order.fulfilled = (
+                            rotation_order.received_amount
+                            >= rotation_order.expected_amount
+                        )
+
+                    # Mark disbursements as completed for this user
+                    db.query(models.LateRotationDisbursements).filter(
+                        models.LateRotationDisbursements.late_recipient_id == user_id,
+                        models.LateRotationDisbursements.disbursement_completed
+                        == False,
+                    ).update(
+                        {"disbursement_completed": True}, synchronize_session=False
+                    )
+
+                    # Update user's wallet balance
+                    user_wallet = (
+                        db.query(models.User)
+                        .filter(models.User.id == user_id)
+                        .with_for_update()
+                        .first()
+                    )
+
+                    if not user_wallet:
+                        raise HTTPException(
+                            status_code=404, detail="Recipient not found"
+                        )
+
+                    user_wallet.wallet_balance += total_to_disburse
+
+                # Commit transaction for the user
+                print(f"====committing transaction for user {user_id}====")
+                db.commit()
+
+            except Exception as e:
+                # Rollback for this user and log error
+                print(f"====rolling back transaction for user {user_id}====")
+                db.rollback()
+                management_error_logger.error(
+                    f"Failed to disburse funds for user {user_id}, error: {e}"
+                )
+                continue  # Skip to the next user
+
+        return {"message": "Funds disbursed successfully"}
+
+    except HTTPException as http_exc:
+        management_error_logger.error(f"Failed to disburse funds, error: {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to disburse funds, error: {exc}")
         raise HTTPException(status_code=400, detail="Failed to disburse funds")

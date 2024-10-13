@@ -30,6 +30,7 @@ from chama.tasks import (
     update_activities_contribution_days,
     set_contribution_date,
     send_email_invites,
+    create_activity_rotation_contributions,
 )
 
 from chama.usermanagement import (
@@ -92,6 +93,9 @@ async def create_random_rotation_order(request, activity_id):
         }
         rotation_resp = requests.post(url, headers=headers)
         if rotation_resp.status_code == HTTPStatus.CREATED:
+            # create the rotation contributions upon successful creation of the rotation order
+            create_activity_rotation_contributions.delay(activity_id)
+            messages.success(request, "Rotation order created successfully")
             return JsonResponse(
                 {"success": True, "message": "Rotation order created successfully"}
             )

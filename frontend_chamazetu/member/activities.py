@@ -296,7 +296,7 @@ async def organise_weekly_contributions(
         contribution["contributed"] = contributed
 
     print("=====refined output=====")
-    print(weekly_contributions_refined)
+    # print(weekly_contributions_refined)
 
     return weekly_contributions_refined
 
@@ -407,7 +407,7 @@ async def merry_go_round_activity(request, activity_id, headers):
     if resp.status_code == HTTPStatus.OK:
         data = resp.json()
         print("=====merry-go-round data=====")
-        print(data)
+        # print(data)
         return data
     else:
         return None
@@ -422,7 +422,7 @@ async def get_activity_data(request, activity_id, headers):
     if resp.status_code == HTTPStatus.OK:
         data = resp.json()
         print("====generic data=====")
-        print(data)
+        # print(data)
         return data
     else:
         return None

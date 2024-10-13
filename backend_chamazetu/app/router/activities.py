@@ -1027,7 +1027,7 @@ async def set_fines_for_missed_contributions(
                 missed_amount = expected_contribution - total_contribution
 
                 if missed_amount > 0:
-                    fine = activity.fine
+                    fine = activity.fine * user.shares
 
                     # check if the user has already been fined for this activity
                     existing_fine = (
@@ -1636,7 +1636,7 @@ async def create_rotation_contributions(
     db: Session = Depends(database.get_db),
 ):
     try:
-        print("==========creating rotation contributions================")
+        print("==========NEW creating rotation contributions================")
         # get merry-go-round activities that need a new set of records in the rotation contribution tracker
         Activity = aliased(models.Activity)
         ActivityContributionDate = aliased(models.ActivityContributionDate)
@@ -1733,9 +1733,10 @@ async def create_rotation_contributions(
             .all()
         )
         if not activities_next_contribution_dates:
-            raise HTTPException(
-                status_code=404, detail="Next contribution date not found"
-            )
+            return {
+                "status": "success",
+                "message": "No activities next contribution dates found",
+            }
         rotation_dates = [
             {
                 "activity_id": date.activity_id,
@@ -1839,6 +1840,123 @@ async def create_rotation_contributions(
         management_error_logger.error(f"Failed to create rotation contributions: {e}")
         raise HTTPException(
             status_code=400, detail="Failed to create rotation contributions"
+        )
+
+
+# redo the above route for one activity only
+@router.post(
+    "/create_activity_rotation_contributions/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_rotation_contribution_for_activity(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        activity = (
+            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        )
+
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        # get the upcoming rotation contribution date from the activity contribution date table as the next contribution date for all the activities
+        activity_next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(
+                models.ActivityContributionDate.activity_id == activity_id,
+                models.ActivityContributionDate.activity_type == "merry-go-round",
+            )
+            .first()
+        )
+
+        if not activity_next_contribution_date:
+            raise HTTPException(
+                status_code=404, detail="Next contribution date not found"
+            )
+
+        rotation_date = activity_next_contribution_date.next_contribution_date
+
+        # get the upcoming recipient for the activity by using the next contribution date and the RotationOrder table
+        upcoming_recipient = (
+            db.query(models.RotationOrder)
+            .filter(
+                models.RotationOrder.activity_id == activity_id,
+                models.RotationOrder.receiving_date == rotation_date,
+            )
+            .first()
+        )
+
+        if not upcoming_recipient:
+            raise HTTPException(status_code=404, detail="Upcoming recipient not found")
+
+        # get the cycle number for the activity
+        cycle_number = (
+            db.query(func.max(models.RotationOrder.cycle_number))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+
+        # get the users for the activity with the cycle number
+        activity_users = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.cycle_number == cycle_number,
+                )
+            )
+            .all()
+        )
+
+        if not activity_users:
+            raise HTTPException(status_code=404, detail="Activity users not found")
+
+        activities_users_resp = [
+            {
+                "chama_id": activity.chama_id,
+                "activity_id": activity_id,
+                "contributor_id": user.recipient_id,
+                "contributing_share": user.share_name,
+                "expected_amount": user.share_value,
+                "contributed_amount": 0,
+                "fine": 0,
+                "cycle_number": cycle_number,
+                "recipient_id": upcoming_recipient.recipient_id,
+                "recipient_share": upcoming_recipient.share_name,
+                "rotation_date": rotation_date,
+            }
+            for user in activity_users
+        ]
+
+        # perform bulk insert of the new rotation contributions
+        if activities_users_resp:
+            with db.begin_nested():
+                db.bulk_insert_mappings(
+                    models.RotatingContributions, activities_users_resp
+                )
+
+            db.commit()
+
+        return {
+            "status": "success",
+            "message": "Rotation contributions created successfully",
+        }
+    except HTTPException as e:
+        management_error_logger.error(
+            f"Failed to create rotation contributions for activity: {e}"
+        )
+        raise e
+    except Exception as e:
+        management_error_logger.error(
+            f"Failed to create rotation contributions for activity: {e}"
+        )
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to create rotation contributions for activity",
         )
 
 

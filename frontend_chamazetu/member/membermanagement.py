@@ -53,7 +53,7 @@ def dashboard(request):
     if resp.status_code == HTTPStatus.OK:
         dashboard_data = resp.json()
         print("=======dashboard success=========")
-        # print(dashboard_data)
+        print(dashboard_data["wallet_transfers"])
         return render(
             request,
             "member/dashboard.html",
@@ -63,6 +63,8 @@ def dashboard(request):
                 "chamas": dashboard_data["member_chamas"],
                 "my_recent_transactions": dashboard_data["recent_transactions"],
                 "sent_transactions": dashboard_data["sent_transactions"],
+                "wallet_transfers": dashboard_data["wallet_transfers"],
+                "wallet_id": dashboard_data["wallet_id"],
                 "wallet_balance": dashboard_data["wallet_balance"],
                 "zetucoins": dashboard_data["zetucoins"],
                 "recent_wallet_activity": dashboard_data["wallet_transactions"],

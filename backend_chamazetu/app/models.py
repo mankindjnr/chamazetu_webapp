@@ -145,6 +145,14 @@ class User(Base):
         foreign_keys="RotatingContributions.recipient_id",
         back_populates="recipient",
     )
+    late_contributions = relationship(
+        "LateRotationDisbursements",
+        foreign_keys="LateRotationDisbursements.late_contributor_id",
+    )
+    late_disbursements = relationship(
+        "LateRotationDisbursements",
+        foreign_keys="LateRotationDisbursements.late_recipient_id",
+    )
 
 
 class Chama(Base):
@@ -212,6 +220,9 @@ class Chama(Base):
     rotating_contributions = relationship(
         "RotatingContributions", back_populates="chama"
     )
+    late_rotation_disbursements = relationship(
+        "LateRotationDisbursements", back_populates="chama"
+    )
 
 
 # listen to the before_insert event to automatically set chama_code
@@ -220,7 +231,7 @@ def set_chama_code(mapper, connection, target):
     next_chama_code = connection.execute(
         sa.text("SELECT nextval('chama_code_seq')")
     ).scalar()
-    target.chama_code = f"490{next_chama_code}"
+    target.chama_code = f"CH490{next_chama_code}"
 
 
 # listen to the before_insert event to automatically set user_id
@@ -233,7 +244,10 @@ def set_user_id(mapper, connection, target):
 @event.listens_for(User, "before_insert")
 def set_wallet_id(mapper, connection, target):
     next_wallet_id = connection.execute(wallet_id_seq)
-    target.wallet_id = f"W470{next_wallet_id}"
+    # random 2letters
+    letters = string.ascii_uppercase
+    random_letters = "".join(random.choice(letters) for i in range(2))
+    target.wallet_id = f"W{random_letters}4{next_wallet_id}"
 
 
 # activities created by manager for members in a chama
@@ -282,6 +296,9 @@ class Activity(Base):
     rotation_order = relationship("RotationOrder", back_populates="activity")
     rotating_contributions = relationship(
         "RotatingContributions", back_populates="activity"
+    )
+    late_rotation_disbursements = relationship(
+        "LateRotationDisbursements", back_populates="activity"
     )
 
 
@@ -718,4 +735,27 @@ class RotatingContributions(Base):
     )
     recipient = relationship(
         "User", foreign_keys=[recipient_id], back_populates="received_rotations"
+    )
+
+
+class LateRotationDisbursements(Base):
+    __tablename__ = "late_rotation_disbursements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"))
+    activity_id = Column(Integer, ForeignKey("activities.id"))
+    late_contributor_id = Column(Integer, ForeignKey("users.id"))
+    late_recipient_id = Column(Integer, ForeignKey("users.id"))
+    late_contribution = Column(Integer, nullable=False)
+    missed_rotation_date = Column(DateTime, nullable=False)
+    disbursement_completed = Column(Boolean, default=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="late_rotation_disbursements")
+    activity = relationship("Activity", back_populates="late_rotation_disbursements")
+    late_contributor = relationship(
+        "User", foreign_keys=[late_contributor_id], back_populates="late_contributions"
+    )
+    late_recipient = relationship(
+        "User", foreign_keys=[late_recipient_id], back_populates="late_disbursements"
     )

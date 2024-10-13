@@ -309,7 +309,7 @@ async def fines_tracker(request, chama_name, chama_id, activity_name, activity_i
     if response.status_code == HTTPStatus.OK:
         fines_data = response.json()
         print("========fines_data========")
-        print(fines_data)
+        # print(fines_data)
         return render(
             request,
             "member/fines_tracker.html",
