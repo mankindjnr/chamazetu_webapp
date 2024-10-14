@@ -24,15 +24,16 @@ SECRET_KEY = os.getenv("DJANGO_SECRET")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "chamazetu.com",
-    "www.chamazetu.com",
-    "192.168.242.254",
-    "0.0.0.0",
-    "192.168.100.7",
-    "34.45.2.223",
-]
+# ALLOWED_HOSTS = [
+#     "localhost",
+#     "chamazetu.com",
+#     "www.chamazetu.com",
+#     "192.168.242.254",
+#     "0.0.0.0",
+#     "192.168.100.7",
+#     "34.45.2.223",
+# ]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -65,6 +66,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# SECURE_SSL_REDIRECT = True
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:8000",
     "https://chamazetu.com",
@@ -72,6 +77,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://0.0.0.0:8000",
     "https://192.168.242.254:8000",
     "https://192.1680.100.7:8000",
+    "https://29bf-102-213-49-15.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -80,6 +86,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://192.168.100.7",
+    "https://29bf-102-213-49-15.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
