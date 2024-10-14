@@ -595,7 +595,7 @@ def merry_go_round_activity_auto_contributions(*args, **kwargs):
     logger.info(f"Task ran at: {datetime.now()}")
     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
     response = requests.post(
-        f"{os.getenv('api_url')}/activities/automated_merry_go_round_contributions"
+        f"{os.getenv('api_url')}/members/automated_merry_go_round_contributions"
     )
     try:
         response.raise_for_status()

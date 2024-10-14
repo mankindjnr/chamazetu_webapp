@@ -215,7 +215,7 @@
                     <div class="col-lg-9 col-md-8">{{ value }}</div>
                     {% if role == 'manager' %}
                     <div class="col-lg-3 col-md-4">
-                      <form method="post" action="{% url 'manager:delete_chama_rule' chama.Chama_Name key %}">
+                      <form method="post" action="{% url 'manager:delete_chama_rule' chama_id chama.Chama_Name key %}">
                           {% csrf_token %}
                           <input type="submit" class="btn btn-danger btn-sm" value="Delete">
                       </form>
@@ -233,7 +233,7 @@
                     <div class="col-lg-6 col-md-6">{{ faq.answer }}</div>
                     {% if role == 'manager' %}
                     <div class="col-lg-3 col-md-2">
-                      <form method="post" action="{% url 'manager:delete_chama_faq' chama.Chama_Name faq.id %}">
+                      <form method="post" action="{% url 'manager:delete_chama_faq' chama_id chama.Chama_Name faq.id %}">
                           {% csrf_token %}
                           <input type="submit" class="btn btn-danger btn-sm" value="Delete">
                       </form>
@@ -248,13 +248,13 @@
                 {% if role == 'manager' %}
                 <div class="tab-pane fade edit-description pt-3" id="edit-description">
                   <!-- update description Form -->
-                  <form action="" method="POST">
+                  <form action="{% url 'manager:update_chama_description' chama_id chama.Chama_Name %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
                       <label for="description" class="col-md-4 col-lg-3 col-form-label">Current description</label>
                       <div class="col-md-8 col-lg-9">
-                        <div class="mb-3">{{ chama.description }}</div>
+                        <div class="mb-3">{{ chama.Description }}</div>
                         <input name="description" type="text" class="form-control" id="description" required>
                       </div>
                     </div>
@@ -270,7 +270,7 @@
                 
                 <!-- updating chamas mission -->
                 <div class="tab-pane fade edit-mission pt-3" id="edit-mission">
-                  <form action="{% url 'manager:update_chama_mission' chama.Chama_Name %}" method="POST">
+                  <form action="{% url 'manager:update_chama_mission' chama_id chama.Chama_Name %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
@@ -292,7 +292,7 @@
                 
                 <!-- updating chamas vision -->
                 <div class="tab-pane fade edit-vision pt-3" id="edit-vision">
-                  <form action="{% url 'manager:update_chama_vision' chama.Chama_Name %}" method="POST">
+                  <form action="{% url 'manager:update_chama_vision' chama_id chama.Chama_Name %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
@@ -314,7 +314,7 @@
 
                 <!-- adding rules -->
                 <div class="tab-pane fade add-rules pt-3" id="add-rules">
-                  <form action="{% url 'manager:add_chama_rules' chama.Chama_Name %}" method="POST">
+                  <form action="{% url 'manager:add_chama_rules' chama_id chama.Chama_Name %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
@@ -335,7 +335,7 @@
 
                 <!-- adding faqs -->
                 <div class="tab-pane fade add-faqs pt-3" id="add-faqs">
-                  <form action="{% url 'manager:add_chama_faqs' chama.Chama_Name %}" method="POST">
+                  <form action="{% url 'manager:add_chama_faqs' chama_id chama.Chama_Name %}" method="POST">
                     {% csrf_token %}
 
                     <div class="row mb-3">
@@ -370,9 +370,9 @@
                    {% if chama_data.accepting_new_members == 'Accepting Members' %}
                   <div class="col-lg-8 col-md-7 label mt-3">This action will stop accepting new members into the chama.</div>
                   <div class="col-lg-4 col-md-5 mt-3">
-                    <form method="POST" action="{% url 'manager:new_members' chama_id=chama_id status='block' %}">
+                    <form method="POST" action="{% url 'manager:accept_new_chama_members' chama_id %}">
                         {% csrf_token %}
-                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.Chama_Name }}" readonly required>
                         <input type="submit" class="btn btn-danger btn-sm" value="Stop Accepting New Members">
                     </form>
                   </div>
@@ -380,9 +380,9 @@
                   <!-- accept new members -->
                   <div class="col-lg-8 col-md-7 label mt-3">This action will allow new members to join the chama.</div>
                   <div class="col-lg-4 col-md-5 mt-3">
-                    <form method="POST" action="{% url 'manager:new_members' chama_id=chama_id status='allow' %}">
+                    <form method="POST" action="{% url 'manager:accept_new_chama_members' chama_id %}">
                         {% csrf_token %}
-                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.Chama_Name}}" readonly required>
                         <input type="submit" class="btn btn-success btn-sm" value="Accept New Members">
                     </form>
                   </div>
@@ -392,10 +392,9 @@
                    {% if chama_data.is_active != 'inactive' %}
                   <div class="col-lg-8 col-md-7 label mt-3">Suspending this group will halt all activities and interactions within the chama. You can reactivate the group later.</div>
                   <div class="col-lg-4 col-md-5 mt-3">
-                    <form method="POST" action="{% url 'manager:deactivate_chama' %}">
+                    <form method="POST" action="{% url 'manager:activate_deactivate_chama' chama_id %}">
                         {% csrf_token %}
-                        <input type="hidden" name="chama_id" value="{{ chama.id }}" readonly required>
-                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.Chama_Name }}" readonly required>
                         <input type="submit" class="btn btn-danger btn-sm" value="Deactivate Chama">
                     </form>
                   </div>
@@ -403,10 +402,9 @@
                   <!-- reactivate disabled chama -->
                   <div class="col-lg-8 col-md-7 label mt-3">This action will unsuspend the chama and all activities will continue as scheduled.</div>
                   <div class="col-lg-4 col-md-5 mt-3">
-                    <form method="POST" action="{% url 'manager:activate_chama' %}">
+                    <form method="POST" action="{% url 'manager:activate_deactivate_chama' chama_id %}">
                         {% csrf_token %}
-                        <input type="hidden" name="chama_id" value="{{ chama.id }}" readonly required>
-                        <input type="hidden" name="chama_name" value="{{ chama.chama_name }}" readonly required>
+                        <input type="hidden" name="chama_name" value="{{ chama.Chama_Name }}" readonly required>
                         <input type="submit" class="btn btn-success btn-sm" value="Activate Chama">
                     </form>
                   </div>

@@ -1154,7 +1154,7 @@ async def disburse_late_contributions(
 
 # rewriting the above route in a more simplified way
 @router.post(
-    "/auto_disburse_late_contributions",
+    "/backup_auto_disburse_late_contributions",
     status_code=status.HTTP_201_CREATED,
 )
 async def auto_disburse_late_contributions(
@@ -1340,7 +1340,7 @@ async def auto_disburse_late_contributions(
 
 
 @router.post(
-    "/test_auto_disburse_late_contributions",
+    "/auto_disburse_late_contributions",
     status_code=status.HTTP_201_CREATED,
 )
 async def auto_disburse_late_contributions(

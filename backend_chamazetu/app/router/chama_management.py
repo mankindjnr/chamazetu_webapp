@@ -336,33 +336,26 @@ async def get_chama_by_name(
             f"failed to get chama by name for: {chama_name}, error: {e}"
         )
         raise HTTPException(status_code=400, detail="Failed to retrieve chama by name")
-    finally:
-        db.close()
 
 
 # changing the status of a chama accepting new members or not
-@router.put("/join_status", status_code=status.HTTP_200_OK)
+@router.put("/accepting_members/{chama_id}", status_code=status.HTTP_200_OK)
 async def change_chama_status(
-    status: dict = Body(...),
+    chama_id: int,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        accepting_members = status["accepting_members"]
-        chama_id = status["chama_id"]
-
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
-        chama.accepting_members = accepting_members
+        chama.accepting_members = not chama.accepting_members
         db.commit()
         return {"message": "Status updated successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to update status, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to update status")
-    finally:
-        db.close()
 
 
 # member_to be added to chama on the member_chama_association table
@@ -922,19 +915,17 @@ async def get_chama_members_count(
 
 
 # activate and deactivate chama
-@router.put("/activate_deactivate", status_code=status.HTTP_200_OK)
+@router.put("/activate_deactivate/{chama_id}", status_code=status.HTTP_200_OK)
 async def activate_chama(
-    chama: schemas.ChamaActivateDeactivate = Body(...),
+    chama_id: int,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        chama_dict = chama.dict()
-        chama_id = chama_dict["chama_id"]
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
-        chama.is_active = chama_dict["is_active"]
+        chama.is_active = not chama.is_active
         db.commit()
         return {"message": "Chama activated/deactivated successfully"}
     except Exception as e:
@@ -945,20 +936,16 @@ async def activate_chama(
         raise HTTPException(
             status_code=400, detail="Failed to activate/deactivate chama"
         )
-    finally:
-        db.close()
 
 
 # delete chama id
-@router.delete("/delete_chama", status_code=status.HTTP_200_OK)
+@router.delete("/delete_chama/{chama_id}", status_code=status.HTTP_200_OK)
 async def delete_chama(
-    chama: schemas.ChamaDeleteBase = Body(...),
+    chama_id: int,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        chama_dict = chama.dict()
-        chama_id = chama_dict["chama_id"]
         chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
         if not chama:
             raise HTTPException(status_code=404, detail="Chama not found")
@@ -969,8 +956,6 @@ async def delete_chama(
         db.rollback()
         management_error_logger.error(f"failed to delete chama, error: {e}")
         raise HTTPException(status_code=400, detail="Failed to delete chama")
-    finally:
-        db.close()
 
 
 # get chamas creation date
@@ -1147,7 +1132,7 @@ async def update_chama_description(
         return {"message": "Chama description updated successfully"}
     except Exception as e:
         db.rollback()
-        print(e)
+        management_error_logger.error(f"failed to update chama description, error: {e}")
         raise HTTPException(
             status_code=400, detail="Failed to update chama description"
         )

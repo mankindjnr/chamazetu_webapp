@@ -6,6 +6,7 @@ from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
 from datetime import datetime
+from http import HTTPStatus
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies
 from chama.decorate.validate_refresh_token import validate_and_refresh_token
@@ -21,14 +22,13 @@ load_dotenv()
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def update_chama_description(request, chama_name):
+def update_chama_description(request, chama_id, chama_name):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
         description = request.POST.get("description")
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "description": description}
@@ -39,31 +39,30 @@ def update_chama_description(request, chama_name):
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama description updated successfully.")
         else:
             messages.error(request, "Error updating chama description.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def update_chama_mission(request, chama_name):
+def update_chama_mission(request, chama_id, chama_name):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
         mission = request.POST.get("mission")
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "mission": mission}
@@ -74,15 +73,15 @@ def update_chama_mission(request, chama_name):
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama mission updated successfully.")
         else:
             messages.error(request, "Error updating chama mission.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
     else:
@@ -91,14 +90,13 @@ def update_chama_mission(request, chama_name):
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def update_chama_vision(request, chama_name):
+def update_chama_vision(request, chama_id, chama_name):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
         vision = request.POST.get("vision")
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "vision": vision}
@@ -109,31 +107,30 @@ def update_chama_vision(request, chama_name):
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama vision updated successfully.")
         else:
             messages.error(request, "Error updating chama vision.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def add_chama_rules(request, chama_name):
+def add_chama_rules(request, chama_id, chama_name):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
         rule = request.POST.get("rule")
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "rule": rule}
@@ -144,30 +141,28 @@ def add_chama_rules(request, chama_name):
             headers=headers,
         )
 
-        if response.status_code == 201:
+        if response.status_code == HTTPStatus.CREATED:
             messages.success(request, "Chama rule added successfully.")
         else:
             messages.error(request, "Error updating chama rules.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def delete_chama_rule(request, chama_name, rule_id):
+def delete_chama_rule(request, chama_id, chama_name, rule_id):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
-
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "rule_id": rule_id}
@@ -178,32 +173,31 @@ def delete_chama_rule(request, chama_name, rule_id):
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama rule deleted successfully.")
         else:
             messages.error(request, "Error deleting chama rule.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def add_chama_faqs(request, chama_name):
+def add_chama_faqs(request, chama_id, chama_name):
     if request.method == "POST":
-        chama_id = get_chama_id(chama_name)
         question = request.POST.get("question")
         answer = request.POST.get("answer")
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "question": question, "answer": answer}
@@ -214,30 +208,30 @@ def add_chama_faqs(request, chama_name):
             headers=headers,
         )
 
-        if response.status_code == 201:
+        if response.status_code == HTTPStatus.CREATED:
             messages.success(request, "Chama FAQs added successfully.")
         else:
             messages.error(request, "Error updating chama FAQs.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def delete_chama_faq(request, chama_name, faq_id):
+def delete_chama_faq(request, chama_id, chama_name, faq_id):
     if request.method == "POST":
         chama_id = get_chama_id(chama_name)
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
 
         data = {"chama_id": chama_id, "faq_id": faq_id}
@@ -248,129 +242,71 @@ def delete_chama_faq(request, chama_name, faq_id):
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama FAQ deleted successfully.")
         else:
             messages.error(request, "Error deleting chama FAQ.")
 
         return redirect(
             reverse(
-                f"manager:get_about_chama",
-                args=[chama_name],
+                f"member:get_about_chama",
+                args=[chama_name, chama_id],
             )
         )
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 # change the status of the chama to accepting members or not
 @tokens_in_cookies()
 @validate_and_refresh_token()
-def new_members(request, chama_id, status):
+def accept_new_chama_members(request, chama_id):
     if request.method == "POST":
         chama_name = request.POST.get("chama_name")
 
-        if status == "allow":
-            status = True
-        elif status == "block":
-            status = False
-
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
-        data = {"chama_id": chama_id, "accepting_members": status}
 
         response = requests.put(
-            f"{os.getenv('api_url')}/chamas/join_status",
-            json=data,
+            f"{os.getenv('api_url')}/chamas/accepting_members/{chama_id}",
             headers=headers,
         )
-        if response.status_code == 200:
-            if status:
-                messages.success(request, f"{chama_name} is accepting members.")
-            else:
-                messages.success(
-                    request, f"{chama_name} is no longer accepting members."
-                )
-            return redirect(reverse("manager:get_about_chama", args=[chama_name]))
+        if response.status_code == HTTPStatus.OK:
+            messages.success(request, "Chama status updated successfully.")
         else:
             messages.error(request, "Error updating chama status.")
-            return redirect(reverse("manager:get_about_chama", args=[chama_name]))
-    else:
-        return redirect(reverse("manager:dashboard"))
+
+        return redirect(reverse("member:get_about_chama", args=[chama_name, chama_id]))
+
+    return redirect(reverse("manager:dashboard"))
 
 
-def activate_chama(request):
+def activate_deactivate_chama(request, chama_id):
     if request.method == "POST":
-        chama_id = request.POST.get("chama_id")
-
-        is_active = True
-
-        headers = {
-            "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
-        }
-        data = {"chama_id": chama_id, "is_active": is_active}
-        response = requests.put(
-            f"{os.getenv('api_url')}/chamas/activate_deactivate",
-            json=data,
-            headers=headers,
-        )
-
-        if response.status_code == 200:
-            messages.success(request, "Chama activated successfully.")
-            return redirect(
-                reverse(
-                    "manager:get_about_chama",
-                    args=[request.POST.get("chama_name")],
-                )
-            )
-        else:
-            messages.error(request, "Error activating chama.")
-            return redirect(
-                reverse(
-                    "manager:get_about_chama",
-                    args=[request.POST.get("chama_name")],
-                )
-            )
-    else:
-        return redirect(reverse("manager:dashboard"))
-
-
-def deactivate_chama(request):
-    if request.method == "POST":
-        chama_id = request.POST.get("chama_id")
+        chama_name = request.POST.get("chama_name")
 
         is_active = False
 
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
-        data = {"chama_id": chama_id, "is_active": is_active}
+
         response = requests.put(
-            f"{os.getenv('api_url')}/chamas/activate_deactivate",
-            json=data,
+            f"{os.getenv('api_url')}/chamas/activate_deactivate/{chama_id}",
             headers=headers,
         )
 
-        if response.status_code == 200:
-            messages.success(request, "Chama deactivated successfully.")
-            return redirect(
-                reverse(
-                    "manager:get_about_chama", args=[request.POST.get("chama_name")]
-                )
-            )
+        if response.status_code == HTTPStatus.OK:
+            messages.success(request, "Chama status updated successfully.")
         else:
-            messages.error(request, "Error deactivating chama.")
-            return redirect(
-                reverse(
-                    "manager:get_about_chama", args=[request.POST.get("chama_name")]
-                )
-            )
-    else:
-        return redirect(reverse("manager:dashboard"))
+            messages.error(request, "Error updating chama status.")
+
+        return redirect(reverse("member:get_about_chama", args=[chama_name, chama_id]))
+
+    return redirect(reverse("manager:dashboard"))
 
 
 def restart_chama(
@@ -383,20 +319,16 @@ def delete_chama_by_id(request, chama_id):
     if request.method == "POST":
         headers = {
             "Content-type": "application/json",
-            "Authorization": f"Bearer {request.COOKIES.get('manager_access_token')}",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
-
-        data = {"chama_id": chama_id}
-
         response = requests.delete(
-            f"{os.getenv('api_url')}/chamas/delete_chama",
-            json=data,
+            f"{os.getenv('api_url')}/chamas/delete_chama/{chama_id}",
             headers=headers,
         )
 
-        if response.status_code == 200:
+        if response.status_code == HTTPStatus.OK:
             messages.success(request, "Chama deleted successfully.")
-            return redirect(reverse("manager:dashboard"))
         else:
             messages.error(request, "Error deleting chama.")
-            return redirect(reverse("manager:dashboard"))
+
+    return redirect(reverse("manager:dashboard"))

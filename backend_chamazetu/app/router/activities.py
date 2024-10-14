@@ -200,6 +200,10 @@ async def join_activity(
                 status_code=404, detail="Activity not found or does not exist"
             )
 
+        # prevent joining if tday is past activity's last joining date
+        if datetime.now(nairobi_tz).date() > activity.last_joining_date.date():
+            raise HTTPException(status_code=400, detail="You cannot join this activity")
+
         # check if the user is already a member of this chama frm the chama_user_association table
         a_chama_member = (
             db.query(models.chama_user_association)

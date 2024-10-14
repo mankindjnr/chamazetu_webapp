@@ -299,7 +299,7 @@ async def chama_dashboard(
             for activity in chama_activities
         ]
         print("====chama activities====")
-        print(activities_data)
+        # TODO: recent transaction will be those done by manager outside of chama and not investment/loan transactions
 
         return {
             "chama_name": chama.chama_name,

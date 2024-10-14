@@ -20,9 +20,8 @@ from .managing import (
 )
 
 from .chama_features_edit import (
-    new_members,
-    activate_chama,
-    deactivate_chama,
+    accept_new_chama_members,
+    activate_deactivate_chama,
     delete_chama_by_id,
     update_chama_description,
     update_chama_mission,

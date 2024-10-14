@@ -1686,3 +1686,19 @@ INFO 2024-10-12 21:00:33,898 tasks Nairobi: 2024-10-12 21:00:33.898484+03:00
 INFO 2024-10-13 12:00:00,058 tasks ==========member/tasks.py: make_auto_contributions()==========
 INFO 2024-10-13 12:00:00,081 tasks Task ran at: 2024-10-13 12:00:00.081499
 INFO 2024-10-13 12:00:00,083 tasks Nairobi: 2024-10-13 12:00:00.082949+03:00
+INFO 2024-10-14 12:00:00,076 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-14 12:00:00,106 tasks Task ran at: 2024-10-14 12:00:00.106166
+INFO 2024-10-14 12:00:00,106 tasks Nairobi: 2024-10-14 12:00:00.106528+03:00
+INFO 2024-10-14 13:05:31,149 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-14 13:05:31,195 tasks Task ran at: 2024-10-14 13:05:31.195412
+INFO 2024-10-14 13:05:31,196 tasks Nairobi: 2024-10-14 13:05:31.196176+03:00
+ERROR 2024-10-14 13:05:31,208 tasks Failed to create rotating contributions: 404 Client Error: Not Found for url: http://chamazetu_backend:9400/activities/automated_merry_go_round_contributions
+INFO 2024-10-14 13:06:46,284 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-14 13:06:46,285 tasks Task ran at: 2024-10-14 13:06:46.285723
+INFO 2024-10-14 13:06:46,286 tasks Nairobi: 2024-10-14 13:06:46.286554+03:00
+INFO 2024-10-14 14:02:11,999 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-14 14:02:12,037 tasks Task ran at: 2024-10-14 14:02:12.036999
+INFO 2024-10-14 14:02:12,037 tasks Nairobi: 2024-10-14 14:02:12.037747+03:00
+INFO 2024-10-14 14:02:53,231 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-14 14:02:53,231 tasks Task ran at: 2024-10-14 14:02:53.231798
+INFO 2024-10-14 14:02:53,232 tasks Nairobi: 2024-10-14 14:02:53.232108+03:00

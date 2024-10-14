@@ -43,12 +43,13 @@ from .tasks import (
     calculate_missed_contributions_fines,
     add_member_to_chama,
     send_email_to_new_chama_member,
-    auto_contribute,
+    merry_go_round_activity_auto_contributions,
 )
 from chama.tasks import (
     update_activities_contribution_days,
     setfines_updatedays_autodisburse_rotations_chain,
 )
+from manager.tasks import late_auto_disbursements
 
 from chama.usermanagement import (
     validate_token,
@@ -129,7 +130,6 @@ async def access_chama(request, chamaname, chama_id):
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
     print("======headers======")
-    print(headers)
 
     chama = requests.get(
         f"{os.getenv('api_url')}/members/chama_dashboard/{chama_id}", headers=headers
@@ -137,7 +137,8 @@ async def access_chama(request, chamaname, chama_id):
 
     if chama.status_code == HTTPStatus.OK:
         # setfines_updatedays_autodisburse_rotations_chain.delay()
-        # auto_contribute.delay()
+        # merry_go_round_activity_auto_contributions.delay()
+        # late_auto_disbursements.delay()
         chama_data = chama.json()
         return render(
             request,

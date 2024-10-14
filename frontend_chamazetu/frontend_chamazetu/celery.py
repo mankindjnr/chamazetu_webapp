@@ -38,6 +38,11 @@ app.conf.beat_schedule = {
         "task": "chama.tasks.check_and_update_accepting_members_status",
         "schedule": crontab(minute=5, hour=0),
     },
+    # runs at 5 in the morning everyday
+    "disburse_late_fines": {
+        "task": "manager.tasks.late_auto_disbursements",
+        "schedule": crontab(minute=0, hour=5),
+    },
 }
 
 app.autodiscover_tasks()

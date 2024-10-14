@@ -33,35 +33,37 @@ urlpatterns = [
         name="get_about_chama",
     ),
     path(
-        "update_chama_description/<str:chama_name>",
+        "update_chama_description/<int:chama_id>/<str:chama_name>",
         views.update_chama_description,
         name="update_chama_description",
     ),
     path(
-        "update_chama_mission/<str:chama_name>",
+        "update_chama_mission/<int:chama_id>/<str:chama_name>",
         views.update_chama_mission,
         name="update_chama_mission",
     ),
     path(
-        "update_chama_vision/<str:chama_name>",
+        "update_chama_vision/<int:chama_id>/<str:chama_name>",
         views.update_chama_vision,
         name="update_chama_vision",
     ),
     path(
-        "add_chama_faqs/<str:chama_name>", views.add_chama_faqs, name="add_chama_faqs"
+        "add_chama_faqs/<int:chama_id>/<str:chama_name>",
+        views.add_chama_faqs,
+        name="add_chama_faqs",
     ),
     path(
-        "add_chama_rules/<str:chama_name>",
+        "add_chama_rules/<int:chama_id>/<str:chama_name>",
         views.add_chama_rules,
         name="add_chama_rules",
     ),
     path(
-        "delete_chama_rule/<str:chama_name>/<int:rule_id>",
+        "delete_chama_rule/<int:chama_id>/<str:chama_name>/<int:rule_id>",
         views.delete_chama_rule,
         name="delete_chama_rule",
     ),
     path(
-        "delete_chama_faq/<str:chama_name>/<int:faq_id>",
+        "delete_chama_faq/<int:chama_id>/<str:chama_name>/<int:faq_id>",
         views.delete_chama_faq,
         name="delete_chama_faq",
     ),
@@ -71,17 +73,14 @@ urlpatterns = [
         name="members_tracker",
     ),
     path(
-        "new_members/<int:chama_id>/<str:status>", views.new_members, name="new_members"
+        "accept_new_chama_members/<int:chama_id>",
+        views.accept_new_chama_members,
+        name="accept_new_chama_members",
     ),
     path(
-        "activate_chama",
-        views.activate_chama,
-        name="activate_chama",
-    ),
-    path(
-        "deactivate_chama",
-        views.deactivate_chama,
-        name="deactivate_chama",
+        "activate_deactivate_chama/<int:chama_id>",
+        views.activate_deactivate_chama,
+        name="activate_deactivate_chama",
     ),
     path("delete_chama/<int:chama_id>", views.delete_chama_by_id, name="delete_chama"),
     path("invest", views.invest, name="invest"),

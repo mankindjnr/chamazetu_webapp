@@ -1103,3 +1103,6 @@ INFO 2024-09-25 18:00:00,019 tasks Task ran at: 2024-09-25 18:00:00.019424
 INFO 2024-09-25 18:00:00,020 tasks Date: 2024-09-25
 INFO 2024-09-25 18:00:00,020 tasks Time: 18:00:00.020592
 INFO 2024-09-25 18:00:00,020 tasks Nairobi Time: 2024-09-25 18:00:00.020897+03:00
+INFO 2024-10-14 13:22:23,012 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-10-14 13:22:23,074 tasks Task ran at: 2024-10-14 13:22:23.074337
+INFO 2024-10-14 13:22:23,074 tasks Nairobi: 2024-10-14 13:22:23.074768+03:00
