@@ -145,7 +145,7 @@
               </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Our Mission</a></h5>
-                <p class="card-text"> {{ mission }} </p>
+                <p class="card-text"> {{ about.mission }} </p>
               </div>
             </div>
           </div>
@@ -159,7 +159,7 @@
               </div>
               <div class="card-body">
                 <h5 class="card-title"><a href="">Our Vision</a></h5>
-                <p class="card-text">{{ vision }}</p>
+                <p class="card-text">{{ about.vision }}</p>
               </div>
             </div>
           </div>
@@ -170,8 +170,8 @@
               <div class="card mt-5">
                 <h5 class="card-title"><a href="">Our Rules</a></h5>
                 <ul class="list-group list-group-flush">
-                  {% for rule in rules %}
-                  <li class="list-group-item">{{ rule }}</li>
+                  {% for value in rules.values %}
+                  <li class="list-group-item"> {{ value }} </li>
                   {% endfor %}
                 </ul>
               </div>

@@ -1,0 +1,7 @@
+2024-10-15 08:39:28,418 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+2024-10-15 08:51:19,467 - httpx - INFO - HTTP Request: GET https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials "HTTP/1.1 200 OK"
+2024-10-15 08:51:20,770 - httpx - INFO - HTTP Request: POST https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest "HTTP/1.1 200 OK"

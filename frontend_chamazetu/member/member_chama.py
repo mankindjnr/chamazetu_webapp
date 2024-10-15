@@ -294,7 +294,7 @@ async def get_about_chama(request, chama_name, chama_id):
 
     print(f"============={role}===about================")
     if chama_data.status_code == HTTPStatus.OK:
-        print(chama_data.json())
+        # print(chama_data.json())
         chama = chama_data.json().get("chama")
         rules = chama_data.json().get("rules")
         about = chama_data.json().get("about")

@@ -372,7 +372,7 @@ async def join_chama(
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
 
-    if chama.last_joining_date < today:
+    if chama.last_joining_date.date() < today:
         raise HTTPException(
             status_code=400,
             detail="You cannot join the chama after the last joining date",
@@ -483,7 +483,7 @@ async def add_member_to_chama(
     if not chama:
         raise HTTPException(status_code=404, detail="Chama not found")
 
-    if chama.last_joining_date < today:
+    if chama.last_joining_date.date() < today:
         raise HTTPException(
             status_code=400,
             detail="You cannot join the chama after the last joining date",
