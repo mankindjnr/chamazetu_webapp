@@ -13,7 +13,7 @@ urlpatterns = [
     path("activate/<uidb64>/<token>", views.activate, name="activate"),
     path("forgot_password", views.forgot_password, name="forgot_password"),
     path(
-        "update_forgotten_password/<str:role>",
+        "update_forgotten_password",
         views.update_forgotten_password,
         name="update_forgotten_password",
     ),
@@ -37,4 +37,5 @@ urlpatterns = [
         name="registration_callback",
     ),
     path("join_newsletter", views.join_newsletter, name="join_newsletter"),
+    path("send_sms", views.send_sms_view, name="send_sms"),
 ]
