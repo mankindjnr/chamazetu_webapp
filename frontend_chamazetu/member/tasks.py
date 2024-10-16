@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task, current_task
+from celery import shared_task, current_task, chain
 import requests, os, time, logging
 from datetime import datetime, timedelta
 from celery.exceptions import MaxRetriesExceededError
