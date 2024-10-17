@@ -1,0 +1,71 @@
+{% extends "member/members_list_base.html" %}
+{% load static %}
+
+{% block title %}Helpful Videos{% endblock %}
+
+{% block content %} 
+<!-- ======= Header ======= -->
+<header id="header" class="fixed-top">
+    <div class="container d-flex align-items-center">
+        <h1 class="logo me-auto"><a href="https://chamazetu.com"><span>chama</span>Zetu</a></h1>
+        <!-- Uncomment below if you prefer to use an image logo -->
+        <!-- <a href="index.html" class="logo me-auto me-lg-0"><img src="{% static 'member/img/logo.png' %}" alt="" class="img-fluid"></a>-->
+
+</div>
+</header><!-- End Header -->
+
+<main id="main">
+
+<!-- ======= Breadcrumbs ======= -->
+<section id="breadcrumbs" class="breadcrumbs">
+  <div class="container">
+  </div>
+</section><!-- End Breadcrumbs -->
+
+
+<!-- ======= Features Section ======= -->
+<section id="features" class="features">
+  <div class="container" data-aos="fade-up">
+
+    <div class="section-title">
+      <h4>How-to Tutorials</title></h4>
+      <p>Learn how to use chamaZetu's features.</p>
+    </div>
+
+    <div class="row justify-content-center mt-5">
+      <!-- First Video -->
+      <div class="card border-success shadow-lg mb-3 col-md-5 col-lg-5 mx-2 p-0">
+        <div class="ratio ratio-16x9">
+          <iframe width="560" height="315" src="https://www.youtube.com/embed/w-9fkGqBDMc?si=XeVKPQWFFCZ1evCq"
+           title="YouTube video player" 
+           frameborder="0"
+           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+           referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    
+      <!-- Second Video -->
+      <div class="card border-success shadow-lg mb-3 col-md-5 col-lg-5 mx-2 p-0">
+        <div class="ratio ratio-16x9">
+          <iframe
+            src="https://www.youtube.com/embed/pd9Vyz6QY4w?si=L5mifXcYaj1bNiHa"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </div>
+    
+    
+
+  </div>
+</section><!-- End Features Section -->
+
+</main><!-- End #main -->
+
+  {% endblock %}

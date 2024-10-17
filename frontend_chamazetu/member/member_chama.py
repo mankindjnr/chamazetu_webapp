@@ -47,6 +47,9 @@ from .tasks import (
 )
 from chama.tasks import (
     update_activities_contribution_days,
+    set_fines_for_missed_contributions,
+    auto_disburse_to_walletts,
+    create_rotation_contributions,
     setfines_updatedays_autodisburse_rotations_chain,
 )
 from manager.tasks import late_auto_disbursements
@@ -136,6 +139,10 @@ async def access_chama(request, chamaname, chama_id):
     )
 
     if chama.status_code == HTTPStatus.OK:
+        # set_fines_for_missed_contributions.delay()
+        # update_activities_contribution_days.delay()
+        # auto_disburse_to_walletts.delay()
+        # create_rotation_contributions.delay()
         # setfines_updatedays_autodisburse_rotations_chain.delay()
         # merry_go_round_activity_auto_contributions.delay()
         # late_auto_disbursements.delay()

@@ -2155,3 +2155,256 @@ INFO 2024-10-14 12:27:30,838 tasks Nairobi: 2024-10-14 12:27:30.838098+03:00
 INFO 2024-10-14 12:27:31,222 tasks ==========chama/tasks.py: create_rotating_contributions()==========
 INFO 2024-10-14 12:27:31,223 tasks Task ran at: 2024-10-14 12:27:31.223277
 INFO 2024-10-14 12:27:31,224 tasks Nairobi: 2024-10-14 12:27:31.224141+03:00
+INFO 2024-10-16 19:49:44,686 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 19:49:44,760 tasks Task ran at: 2024-10-16 19:49:44.760884
+INFO 2024-10-16 19:49:44,761 tasks Nairobi: 2024-10-16 19:49:44.761721+03:00
+INFO 2024-10-16 19:49:44,776 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 19:49:44,776 tasks Task ran at: 2024-10-16 19:49:44.776637
+INFO 2024-10-16 19:49:44,776 tasks Nairobi: 2024-10-16 19:49:44.776884+03:00
+INFO 2024-10-16 19:49:45,322 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 19:49:45,324 tasks Task ran at: 2024-10-16 19:49:45.323974
+INFO 2024-10-16 19:49:45,325 tasks Nairobi: 2024-10-16 19:49:45.325440+03:00
+INFO 2024-10-16 19:49:45,415 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 19:49:45,415 tasks Task ran at: 2024-10-16 19:49:45.415562
+INFO 2024-10-16 19:49:45,416 tasks Nairobi: 2024-10-16 19:49:45.416122+03:00
+INFO 2024-10-16 19:49:45,811 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 19:49:45,811 tasks Task ran at: 2024-10-16 19:49:45.811734
+INFO 2024-10-16 19:49:45,812 tasks Nairobi: 2024-10-16 19:49:45.812030+03:00
+ERROR 2024-10-16 19:49:45,975 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 19:55:10,006 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 19:55:10,007 tasks Task ran at: 2024-10-16 19:55:10.007111
+INFO 2024-10-16 19:55:10,008 tasks Nairobi: 2024-10-16 19:55:10.007727+03:00
+INFO 2024-10-16 19:55:10,027 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 19:55:10,028 tasks Task ran at: 2024-10-16 19:55:10.028301
+INFO 2024-10-16 19:55:10,030 tasks Nairobi: 2024-10-16 19:55:10.029726+03:00
+INFO 2024-10-16 19:55:10,078 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 19:55:10,078 tasks Task ran at: 2024-10-16 19:55:10.078805
+INFO 2024-10-16 19:55:10,080 tasks Nairobi: 2024-10-16 19:55:10.080017+03:00
+INFO 2024-10-16 19:55:10,130 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 19:55:10,131 tasks Task ran at: 2024-10-16 19:55:10.131521
+INFO 2024-10-16 19:55:10,132 tasks Nairobi: 2024-10-16 19:55:10.132043+03:00
+INFO 2024-10-16 19:55:10,188 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 19:55:10,188 tasks Task ran at: 2024-10-16 19:55:10.188616
+INFO 2024-10-16 19:55:10,189 tasks Nairobi: 2024-10-16 19:55:10.188969+03:00
+ERROR 2024-10-16 19:55:10,281 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 19:58:30,630 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 19:58:30,631 tasks Task ran at: 2024-10-16 19:58:30.631042
+INFO 2024-10-16 19:58:30,631 tasks Nairobi: 2024-10-16 19:58:30.631230+03:00
+INFO 2024-10-16 19:58:30,644 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 19:58:30,644 tasks Task ran at: 2024-10-16 19:58:30.644940
+INFO 2024-10-16 19:58:30,645 tasks Nairobi: 2024-10-16 19:58:30.645551+03:00
+INFO 2024-10-16 19:58:30,697 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 19:58:30,698 tasks Task ran at: 2024-10-16 19:58:30.698241
+INFO 2024-10-16 19:58:30,699 tasks Nairobi: 2024-10-16 19:58:30.699247+03:00
+INFO 2024-10-16 19:58:30,746 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 19:58:30,749 tasks Task ran at: 2024-10-16 19:58:30.748072
+INFO 2024-10-16 19:58:30,750 tasks Nairobi: 2024-10-16 19:58:30.750015+03:00
+INFO 2024-10-16 19:58:30,822 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 19:58:30,824 tasks Task ran at: 2024-10-16 19:58:30.823967
+INFO 2024-10-16 19:58:30,825 tasks Nairobi: 2024-10-16 19:58:30.825524+03:00
+ERROR 2024-10-16 19:58:30,956 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:00:35,133 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:00:35,134 tasks Task ran at: 2024-10-16 20:00:35.134274
+INFO 2024-10-16 20:00:35,135 tasks Nairobi: 2024-10-16 20:00:35.134924+03:00
+INFO 2024-10-16 20:00:35,152 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:00:35,152 tasks Task ran at: 2024-10-16 20:00:35.152765
+INFO 2024-10-16 20:00:35,153 tasks Nairobi: 2024-10-16 20:00:35.153093+03:00
+INFO 2024-10-16 20:00:35,208 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:00:35,209 tasks Task ran at: 2024-10-16 20:00:35.209056
+INFO 2024-10-16 20:00:35,209 tasks Nairobi: 2024-10-16 20:00:35.209921+03:00
+INFO 2024-10-16 20:00:35,254 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:00:35,255 tasks Task ran at: 2024-10-16 20:00:35.255600
+INFO 2024-10-16 20:00:35,256 tasks Nairobi: 2024-10-16 20:00:35.256210+03:00
+INFO 2024-10-16 20:00:35,321 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:00:35,321 tasks Task ran at: 2024-10-16 20:00:35.321675
+INFO 2024-10-16 20:00:35,322 tasks Nairobi: 2024-10-16 20:00:35.322010+03:00
+ERROR 2024-10-16 20:00:35,511 tasks Failed to create rotating contributions: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:03:22,655 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:03:22,655 tasks Task ran at: 2024-10-16 20:03:22.655676
+INFO 2024-10-16 20:03:22,655 tasks Nairobi: 2024-10-16 20:03:22.655940+03:00
+INFO 2024-10-16 20:03:22,677 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:03:22,678 tasks Task ran at: 2024-10-16 20:03:22.678341
+INFO 2024-10-16 20:03:22,679 tasks Nairobi: 2024-10-16 20:03:22.679057+03:00
+INFO 2024-10-16 20:03:22,731 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:03:22,731 tasks Task ran at: 2024-10-16 20:03:22.731784
+INFO 2024-10-16 20:03:22,732 tasks Nairobi: 2024-10-16 20:03:22.732164+03:00
+INFO 2024-10-16 20:03:22,785 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:03:22,786 tasks Task ran at: 2024-10-16 20:03:22.786312
+INFO 2024-10-16 20:03:22,786 tasks Nairobi: 2024-10-16 20:03:22.786857+03:00
+INFO 2024-10-16 20:03:22,849 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:03:22,849 tasks Task ran at: 2024-10-16 20:03:22.849848
+INFO 2024-10-16 20:03:22,850 tasks Nairobi: 2024-10-16 20:03:22.850163+03:00
+ERROR 2024-10-16 20:03:22,970 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:10:49,712 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:10:49,713 tasks Task ran at: 2024-10-16 20:10:49.713166
+INFO 2024-10-16 20:10:49,713 tasks Nairobi: 2024-10-16 20:10:49.713526+03:00
+INFO 2024-10-16 20:10:49,735 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:10:49,737 tasks Task ran at: 2024-10-16 20:10:49.737294
+INFO 2024-10-16 20:10:49,739 tasks Nairobi: 2024-10-16 20:10:49.738863+03:00
+INFO 2024-10-16 20:10:49,788 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:10:49,790 tasks Task ran at: 2024-10-16 20:10:49.790064
+INFO 2024-10-16 20:10:49,791 tasks Nairobi: 2024-10-16 20:10:49.791415+03:00
+INFO 2024-10-16 20:10:49,835 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:10:49,836 tasks Task ran at: 2024-10-16 20:10:49.836628
+INFO 2024-10-16 20:10:49,837 tasks Nairobi: 2024-10-16 20:10:49.837775+03:00
+INFO 2024-10-16 20:10:49,891 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:10:49,892 tasks Task ran at: 2024-10-16 20:10:49.892656
+INFO 2024-10-16 20:10:49,893 tasks Nairobi: 2024-10-16 20:10:49.893156+03:00
+ERROR 2024-10-16 20:10:49,993 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:19:12,781 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:19:12,783 tasks Task ran at: 2024-10-16 20:19:12.783242
+INFO 2024-10-16 20:19:12,783 tasks Nairobi: 2024-10-16 20:19:12.783878+03:00
+INFO 2024-10-16 20:19:12,810 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:19:12,811 tasks Task ran at: 2024-10-16 20:19:12.811261
+INFO 2024-10-16 20:19:12,811 tasks Nairobi: 2024-10-16 20:19:12.811632+03:00
+INFO 2024-10-16 20:19:12,865 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:19:12,866 tasks Task ran at: 2024-10-16 20:19:12.866124
+INFO 2024-10-16 20:19:12,866 tasks Nairobi: 2024-10-16 20:19:12.866703+03:00
+INFO 2024-10-16 20:19:12,912 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:19:12,913 tasks Task ran at: 2024-10-16 20:19:12.913193
+INFO 2024-10-16 20:19:12,914 tasks Nairobi: 2024-10-16 20:19:12.914560+03:00
+INFO 2024-10-16 20:19:12,995 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:19:12,996 tasks Task ran at: 2024-10-16 20:19:12.996282
+INFO 2024-10-16 20:19:12,997 tasks Nairobi: 2024-10-16 20:19:12.997048+03:00
+ERROR 2024-10-16 20:19:13,119 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:28:28,520 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:28:28,522 tasks Task ran at: 2024-10-16 20:28:28.522907
+INFO 2024-10-16 20:28:28,524 tasks Nairobi: 2024-10-16 20:28:28.524699+03:00
+INFO 2024-10-16 20:28:28,552 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:28:28,553 tasks Task ran at: 2024-10-16 20:28:28.553919
+INFO 2024-10-16 20:28:28,555 tasks Nairobi: 2024-10-16 20:28:28.554987+03:00
+INFO 2024-10-16 20:28:28,600 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:28:28,601 tasks Task ran at: 2024-10-16 20:28:28.601310
+INFO 2024-10-16 20:28:28,602 tasks Nairobi: 2024-10-16 20:28:28.602619+03:00
+INFO 2024-10-16 20:28:28,648 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:28:28,649 tasks Task ran at: 2024-10-16 20:28:28.649834
+INFO 2024-10-16 20:28:28,650 tasks Nairobi: 2024-10-16 20:28:28.650628+03:00
+INFO 2024-10-16 20:28:28,720 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:28:28,721 tasks Task ran at: 2024-10-16 20:28:28.721460
+INFO 2024-10-16 20:28:28,722 tasks Nairobi: 2024-10-16 20:28:28.722499+03:00
+ERROR 2024-10-16 20:28:28,841 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-16 20:32:52,703 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-16 20:32:52,703 tasks Task ran at: 2024-10-16 20:32:52.703846
+INFO 2024-10-16 20:32:52,704 tasks Nairobi: 2024-10-16 20:32:52.704459+03:00
+INFO 2024-10-16 20:32:52,727 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-16 20:32:52,729 tasks Task ran at: 2024-10-16 20:32:52.729715
+INFO 2024-10-16 20:32:52,730 tasks Nairobi: 2024-10-16 20:32:52.730506+03:00
+INFO 2024-10-16 20:32:52,786 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-16 20:32:52,786 tasks Task ran at: 2024-10-16 20:32:52.786426
+INFO 2024-10-16 20:32:52,786 tasks Nairobi: 2024-10-16 20:32:52.786768+03:00
+INFO 2024-10-16 20:32:52,830 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-16 20:32:52,832 tasks Task ran at: 2024-10-16 20:32:52.832165
+INFO 2024-10-16 20:32:52,834 tasks Nairobi: 2024-10-16 20:32:52.834185+03:00
+INFO 2024-10-16 20:32:52,913 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-16 20:32:52,915 tasks Task ran at: 2024-10-16 20:32:52.914982
+INFO 2024-10-16 20:32:52,916 tasks Nairobi: 2024-10-16 20:32:52.916459+03:00
+ERROR 2024-10-16 20:32:53,056 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 08:48:48,398 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-17 08:48:48,468 tasks Task ran at: 2024-10-17 08:48:48.468814
+INFO 2024-10-17 08:48:48,469 tasks Nairobi: 2024-10-17 08:48:48.469297+03:00
+INFO 2024-10-17 08:50:18,397 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-17 08:50:18,399 tasks Task ran at: 2024-10-17 08:50:18.399537
+INFO 2024-10-17 08:50:18,401 tasks Nairobi: 2024-10-17 08:50:18.401105+03:00
+INFO 2024-10-17 08:51:49,762 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-17 08:51:49,763 tasks Task ran at: 2024-10-17 08:51:49.763079
+INFO 2024-10-17 08:51:49,764 tasks Nairobi: 2024-10-17 08:51:49.764790+03:00
+INFO 2024-10-17 08:52:59,606 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 08:52:59,606 tasks Task ran at: 2024-10-17 08:52:59.606846
+INFO 2024-10-17 08:52:59,607 tasks Nairobi: 2024-10-17 08:52:59.607182+03:00
+INFO 2024-10-17 11:20:03,417 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:20:03,435 tasks Task ran at: 2024-10-17 11:20:03.435257
+INFO 2024-10-17 11:20:03,436 tasks Nairobi: 2024-10-17 11:20:03.436254+03:00
+ERROR 2024-10-17 11:20:03,468 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:28:37,081 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:28:37,082 tasks Task ran at: 2024-10-17 11:28:37.082120
+INFO 2024-10-17 11:28:37,083 tasks Nairobi: 2024-10-17 11:28:37.083002+03:00
+ERROR 2024-10-17 11:28:37,104 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:29:49,566 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:29:49,568 tasks Task ran at: 2024-10-17 11:29:49.568022
+INFO 2024-10-17 11:29:49,569 tasks Nairobi: 2024-10-17 11:29:49.569499+03:00
+ERROR 2024-10-17 11:29:49,596 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:32:08,086 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:32:08,087 tasks Task ran at: 2024-10-17 11:32:08.086967
+INFO 2024-10-17 11:32:08,087 tasks Nairobi: 2024-10-17 11:32:08.087315+03:00
+ERROR 2024-10-17 11:32:08,109 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:34:20,387 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:34:20,389 tasks Task ran at: 2024-10-17 11:34:20.389084
+INFO 2024-10-17 11:34:20,390 tasks Nairobi: 2024-10-17 11:34:20.389988+03:00
+INFO 2024-10-17 11:37:29,399 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:37:29,399 tasks Task ran at: 2024-10-17 11:37:29.399631
+INFO 2024-10-17 11:37:29,399 tasks Nairobi: 2024-10-17 11:37:29.399869+03:00
+ERROR 2024-10-17 11:37:29,434 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:38:36,399 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:38:36,400 tasks Task ran at: 2024-10-17 11:38:36.400370
+INFO 2024-10-17 11:38:36,401 tasks Nairobi: 2024-10-17 11:38:36.401087+03:00
+ERROR 2024-10-17 11:38:36,455 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:42:18,850 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:42:18,850 tasks Task ran at: 2024-10-17 11:42:18.850426
+INFO 2024-10-17 11:42:18,850 tasks Nairobi: 2024-10-17 11:42:18.850686+03:00
+ERROR 2024-10-17 11:42:18,906 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 11:43:12,114 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:43:12,115 tasks Task ran at: 2024-10-17 11:43:12.115604
+INFO 2024-10-17 11:43:12,116 tasks Nairobi: 2024-10-17 11:43:12.116347+03:00
+INFO 2024-10-17 11:45:26,209 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 11:45:26,210 tasks Task ran at: 2024-10-17 11:45:26.210273
+INFO 2024-10-17 11:45:26,210 tasks Nairobi: 2024-10-17 11:45:26.210811+03:00
+INFO 2024-10-17 12:27:34,090 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 12:27:34,091 tasks Task ran at: 2024-10-17 12:27:34.091183
+INFO 2024-10-17 12:27:34,091 tasks Nairobi: 2024-10-17 12:27:34.091509+03:00
+ERROR 2024-10-17 12:27:34,136 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 12:27:48,518 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 12:27:48,518 tasks Task ran at: 2024-10-17 12:27:48.518673
+INFO 2024-10-17 12:27:48,520 tasks Nairobi: 2024-10-17 12:27:48.520386+03:00
+ERROR 2024-10-17 12:27:48,557 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 13:03:52,937 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:03:52,938 tasks Task ran at: 2024-10-17 13:03:52.938550
+INFO 2024-10-17 13:03:52,939 tasks Nairobi: 2024-10-17 13:03:52.939196+03:00
+INFO 2024-10-17 13:06:16,417 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:06:16,419 tasks Task ran at: 2024-10-17 13:06:16.419029
+INFO 2024-10-17 13:06:16,420 tasks Nairobi: 2024-10-17 13:06:16.420628+03:00
+ERROR 2024-10-17 13:06:16,478 tasks Failed to create rotating contributions: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/activities/create_rotation_contributions
+INFO 2024-10-17 13:09:13,621 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:09:13,622 tasks Task ran at: 2024-10-17 13:09:13.622118
+INFO 2024-10-17 13:09:13,622 tasks Nairobi: 2024-10-17 13:09:13.622472+03:00
+INFO 2024-10-17 13:11:13,003 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:11:13,004 tasks Task ran at: 2024-10-17 13:11:13.004383
+INFO 2024-10-17 13:11:13,005 tasks Nairobi: 2024-10-17 13:11:13.005165+03:00
+INFO 2024-10-17 13:14:19,620 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:14:19,620 tasks Task ran at: 2024-10-17 13:14:19.620709
+INFO 2024-10-17 13:14:19,621 tasks Nairobi: 2024-10-17 13:14:19.620980+03:00
+INFO 2024-10-17 13:20:03,123 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:20:03,123 tasks Task ran at: 2024-10-17 13:20:03.123578
+INFO 2024-10-17 13:20:03,123 tasks Nairobi: 2024-10-17 13:20:03.123892+03:00
+INFO 2024-10-17 13:21:23,496 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:21:23,497 tasks Task ran at: 2024-10-17 13:21:23.497512
+INFO 2024-10-17 13:21:23,503 tasks Nairobi: 2024-10-17 13:21:23.503099+03:00
+INFO 2024-10-17 13:22:22,017 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:22:22,017 tasks Task ran at: 2024-10-17 13:22:22.017621
+INFO 2024-10-17 13:22:22,018 tasks Nairobi: 2024-10-17 13:22:22.017961+03:00
+INFO 2024-10-17 13:23:48,350 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:23:48,352 tasks Task ran at: 2024-10-17 13:23:48.352862
+INFO 2024-10-17 13:23:48,353 tasks Nairobi: 2024-10-17 13:23:48.353334+03:00
+INFO 2024-10-17 13:26:00,007 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:26:00,008 tasks Task ran at: 2024-10-17 13:26:00.008021
+INFO 2024-10-17 13:26:00,008 tasks Nairobi: 2024-10-17 13:26:00.008329+03:00
+INFO 2024-10-17 13:33:34,622 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:33:34,623 tasks Task ran at: 2024-10-17 13:33:34.622992
+INFO 2024-10-17 13:33:34,623 tasks Nairobi: 2024-10-17 13:33:34.623442+03:00
+INFO 2024-10-17 13:46:31,339 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 13:46:31,341 tasks Task ran at: 2024-10-17 13:46:31.341282
+INFO 2024-10-17 13:46:31,342 tasks Nairobi: 2024-10-17 13:46:31.342626+03:00
+INFO 2024-10-17 14:15:19,874 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-17 14:15:19,905 tasks Task ran at: 2024-10-17 14:15:19.904819
+INFO 2024-10-17 14:15:19,905 tasks Nairobi: 2024-10-17 14:15:19.905801+03:00
+INFO 2024-10-17 14:15:20,439 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-17 14:15:20,441 tasks Task ran at: 2024-10-17 14:15:20.440995
+INFO 2024-10-17 14:15:20,442 tasks Nairobi: 2024-10-17 14:15:20.442470+03:00
+INFO 2024-10-17 14:15:20,493 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-17 14:15:20,494 tasks Task ran at: 2024-10-17 14:15:20.494598
+INFO 2024-10-17 14:15:20,495 tasks Nairobi: 2024-10-17 14:15:20.495868+03:00
+INFO 2024-10-17 14:15:20,559 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-17 14:15:20,560 tasks Task ran at: 2024-10-17 14:15:20.560576
+INFO 2024-10-17 14:15:20,561 tasks Nairobi: 2024-10-17 14:15:20.561264+03:00
+INFO 2024-10-17 14:15:20,638 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-17 14:15:20,639 tasks Task ran at: 2024-10-17 14:15:20.639386
+INFO 2024-10-17 14:15:20,642 tasks Nairobi: 2024-10-17 14:15:20.642116+03:00

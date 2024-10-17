@@ -29,3 +29,7 @@ from .transaction_status import status_result_receiver, status_timeout_receiver
 # Create your views here.
 def index(request):
     return render(request, "chama/index.html")
+
+
+def helpful_videos(request):
+    return render(request, "chama/helpful_videos.html")

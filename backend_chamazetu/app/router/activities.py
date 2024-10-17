@@ -10,6 +10,8 @@ from calendar import monthrange
 import calendar
 from sqlalchemy import func, update, and_, table, column, desc, select, insert
 
+#
+
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -1483,6 +1485,7 @@ async def activity_rotation_order(
 ):
 
     try:
+        today = datetime.now(nairobi_tz).date()
         activity = (
             db.query(models.Activity).filter(models.Activity.id == activity_id).first()
         )
@@ -1497,6 +1500,7 @@ async def activity_rotation_order(
                 status_code=403, detail="You are not the manager of this activity"
             )
 
+        print("=====activity===")
         next_contribution_date = (
             db.query(models.ActivityContributionDate.next_contribution_date)
             .filter(models.ActivityContributionDate.activity_id == activity_id)
@@ -1507,6 +1511,42 @@ async def activity_rotation_order(
             raise HTTPException(
                 status_code=404, detail="Next contribution date not found"
             )
+
+        print("=====last cycle number===")
+        # subquery to get the latest cycle_number for the given activity_id
+        latest_cycle_subquery = (
+            db.query(func.max(models.RotationOrder.cycle_number))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar_subquery()
+        )
+
+        if latest_cycle_subquery is None:
+            raise HTTPException(status_code=404, detail="Latest cycle number not found")
+
+        print("===past cycle  number====")
+        # if this activity latest cycle number largest/latest date is behind the current date, then we need to create a new set of rotatiion_order records
+        final_rotation_date = (
+            db.query(func.max(models.RotationOrder.receiving_date))
+            .filter(
+                models.RotationOrder.activity_id == activity_id,
+                models.RotationOrder.cycle_number == latest_cycle_subquery,
+            )
+            .scalar()
+        )
+
+        print(f"final_rotation_date: {final_rotation_date}")
+        if final_rotation_date.date() < today:
+            return {
+                "pooled_so_far": 0,
+                "activity_name": activity.activity_title,
+                "activity_id": activity.id,
+                "upcoming_recipient": {},
+                "rotation_order": [],
+                "rotation_date": None,
+                "new_rotation_needed": True,
+            }
+
+        print("====past fina date===")
 
         pooled_so_far = (
             db.query(
@@ -1522,13 +1562,6 @@ async def activity_rotation_order(
                 )
             )
             .scalar()
-        )
-
-        # subquery to get the latest cycle_number for the given activity_id
-        latest_cycle_subquery = (
-            db.query(func.max(models.RotationOrder.cycle_number))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar_subquery()
         )
 
         # query to retrieve the rotation orders with the latest cycle_number, we will include their names from user tablem and ordeR_in_rotation, share_name, payout_date and rotation_status from RotationOrder
@@ -1560,6 +1593,7 @@ async def activity_rotation_order(
                 "upcoming_recipient": {},
                 "rotation_order": [],
                 "rotation_date": next_contribution_date.strftime("%d-%B-%Y"),
+                "new_rotation_needed": False,
             }
 
         # retrieve the name of the upcoming receiver using the next contribution date and the RotationOrder table and the User table
@@ -1613,6 +1647,7 @@ async def activity_rotation_order(
             "upcoming_recipient": recipient,
             "rotation_order": rotation_order,
             "rotation_date": next_contribution_date.strftime("%d-%B-%Y"),
+            "new_rotation_needed": False,
         }
     except HTTPException as e:
         management_error_logger.error(f"Failed to get activity rotation order: {e}")
@@ -1642,25 +1677,44 @@ async def create_rotation_contributions(
     try:
         print("==========NEW creating rotation contributions================")
         # get merry-go-round activities that need a new set of records in the rotation contribution tracker
+        today = datetime.now(nairobi_tz).date()
         Activity = aliased(models.Activity)
         ActivityContributionDate = aliased(models.ActivityContributionDate)
         RotationOrder = aliased(models.RotationOrder)
         RotatingContributions = aliased(models.RotatingContributions)
 
-        # activities ids with rotation order
-        activities_with_rotation_order = (
-            db.query(RotationOrder.activity_id).distinct().all()
+        # subquery to get the max cycle_number for each activity
+        subquery_one = (
+            db.query(
+                RotationOrder.activity_id,
+                func.max(RotationOrder.cycle_number).label("max_cycle_number"),
+            )
+            .group_by(RotationOrder.activity_id)
+            .subquery()
         )
+
+        # main queryy to get the activities whose highest cycle has a receiving_date not past today
+        results_one = (
+            db.query(RotationOrder.activity_id)
+            .join(
+                subquery_one,
+                (RotationOrder.activity_id == subquery_one.c.activity_id)
+                & (RotationOrder.cycle_number == subquery_one.c.max_cycle_number),
+            )
+            .filter(func.date(RotationOrder.receiving_date) >= today)
+            .distinct()
+            .all()
+        )
+
+        # list of distinct activity_ids whose highest cycle_number's receiving_date is not past today
+        activities_with_rotation_order = [result.activity_id for result in results_one]
+        print("==activity_ids==\n", activities_with_rotation_order)
+
         if not activities_with_rotation_order:
             return {
                 "status": "success",
                 "message": "No activities with rotation order",
             }
-
-        print("==========activities with rotation order================")
-        for activity in activities_with_rotation_order:
-            print(activity)
-            print()
 
         activities = (
             db.query(Activity)
@@ -1680,32 +1734,26 @@ async def create_rotation_contributions(
                     == ActivityContributionDate.next_contribution_date,
                 ),
             )
-            # filter where there is no record in the RotatingContributions table for the next contribution date
             .filter(
                 and_(
                     RotatingContributions.activity_id == None,
                     ActivityContributionDate.activity_type == "merry-go-round",
                     # ensure the activity has a rotation order
-                    Activity.id.in_(
-                        [
-                            activity.activity_id
-                            for activity in activities_with_rotation_order
-                        ]
-                    ),
-                )
+                    Activity.id.in_(activities_with_rotation_order),
+                ),
             )
+            .all()
         )
 
         if not activities:
             return {
                 "status": "success",
-                "message": "No activities need new rotation contributions",
+                "message": "No activities in need of new rotation contributions",
             }
 
         print("==========activities found================")
-        # print the activities for testing
         for activity in activities:
-            # print(activity.activity_title)
+            print(activity.activity_title)
             print()
 
         # get actvity ids
@@ -1713,8 +1761,7 @@ async def create_rotation_contributions(
         activity_ids = [activity.id for activity in activities]
         print(activity_ids)
 
-        # if we have multiple activities the query above will return the cycle number of the activity with the highest cycle number but we want the highest cycle number of
-        # all the activities for that we will use the query below
+        # this will get the highest cycle number for each activity
         cycle_numbers = (
             db.query(RotationOrder.activity_id, func.max(RotationOrder.cycle_number))
             .filter(RotationOrder.activity_id.in_(activity_ids))
@@ -1722,13 +1769,14 @@ async def create_rotation_contributions(
             .all()
         )
         # {activity_id:1, cycle_number: 1}
+
         cycle_numbers_dict = [
             {"activity_id": cycle[0], "cycle_number": cycle[1]}
             for cycle in cycle_numbers
         ]
 
         print("=====cycle numbers======")
-        # print(cycle_numbers_dict)
+        print(cycle_numbers_dict)
 
         # get the upcoming rotation contribution date from the activity contribution date table as the next contribution date for all the activities
         activities_next_contribution_dates = (
@@ -1749,7 +1797,7 @@ async def create_rotation_contributions(
             for date in activities_next_contribution_dates
         ]
         print("=====rotation dates======")
-        # print(rotation_dates)
+        print(rotation_dates)
 
         # get the upcoming recipients for the activities by using the next contribution date and the RotationOrder table
         upcoming_recipients = (
@@ -1762,6 +1810,13 @@ async def create_rotation_contributions(
             )
             .all()
         )
+
+        if not upcoming_recipients:
+            return {
+                "status": "success",
+                "message": "No upcoming recipients found",
+            }
+
         upcoming_recipients_dict = [
             {
                 "activity_id": recipient.activity_id,
@@ -1772,8 +1827,9 @@ async def create_rotation_contributions(
             }
             for recipient in upcoming_recipients
         ]
+
         print("=====upcoming recipients======")
-        # print(upcoming_recipients_dict)
+        print(upcoming_recipients_dict)
 
         activities_users = (
             db.query(RotationOrder)
@@ -1787,7 +1843,15 @@ async def create_rotation_contributions(
             )
             .all()
         )
-        print("=====activities users======")
+
+        if not activities_users:
+            print("=====no activities users found======")
+            return {
+                "status": "success",
+                "message": "No activities users found",
+            }
+
+        print("=====activities users resp======")
         activities_users_resp = [
             {
                 "chama_id": activity.chama_id,
@@ -1820,12 +1884,13 @@ async def create_rotation_contributions(
             }
             for activity in activities_users
         ]
-
-        print("=====activities users with rotation date======")
         # print(activities_users_resp)
+
+        print(" =====you have crossed the return point=====")
 
         # perform bulk insert of the new rotation contributions
         if activities_users_resp:
+            print("=====inserting activities users with rotation date======")
             with db.begin_nested():
                 db.bulk_insert_mappings(
                     models.RotatingContributions, activities_users_resp
@@ -1833,17 +1898,22 @@ async def create_rotation_contributions(
 
             db.commit()
 
+        print("==========past the bulk insetion===============")
         return {
             "status": "success",
             "message": "Activities found",
         }
-    except HTTPException as e:
-        management_error_logger.error(f"Failed to create rotation contributions: {e}")
-        raise e
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Failed to create rotation contributions(http error): {http_exc}"
+        )
+        raise http_exc
     except Exception as e:
-        management_error_logger.error(f"Failed to create rotation contributions: {e}")
+        management_error_logger.error(
+            f"Failed to create rotation contributions(exception error): {str(e)}"
+        )
         raise HTTPException(
-            status_code=400, detail="Failed to create rotation contributions"
+            status_code=400, detail=f"Failed to create rotation contributions {str(e)}"
         )
 
 
@@ -2028,3 +2098,259 @@ async def get_activity_fines(
     except Exception as e:
         management_error_logger.error(f"Failed to get activity fines: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve activity fines")
+
+
+# creating rotation in production test
+@router.post(
+    "/prod_check_in_creating_rotation_contributions",
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_rotation_contributions(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        print("==========NEW creating rotation contributions================")
+        # get merry-go-round activities that need a new set of records in the rotation contribution tracker
+        today = datetime.now(nairobi_tz).date()
+        Activity = aliased(models.Activity)
+        ActivityContributionDate = aliased(models.ActivityContributionDate)
+        RotationOrder = aliased(models.RotationOrder)
+        RotatingContributions = aliased(models.RotatingContributions)
+
+        # subquery to get the max cycle_number for each activity
+        subquery_one = (
+            db.query(
+                RotationOrder.activity_id,
+                func.max(RotationOrder.cycle_number).label("max_cycle_number"),
+            )
+            .group_by(RotationOrder.activity_id)
+            .subquery()
+        )
+
+        # main queryy to get the activities whose highest cycle has a receiving_date not past today
+        results_one = (
+            db.query(RotationOrder.activity_id)
+            .join(
+                subquery_one,
+                (RotationOrder.activity_id == subquery_one.c.activity_id)
+                & (RotationOrder.cycle_number == subquery_one.c.max_cycle_number),
+            )
+            .filter(func.date(RotationOrder.receiving_date) >= today)
+            .distinct()
+            .all()
+        )
+
+        # list of distinct activity_ids whose highest cycle_number's receiving_date is not past today
+        activities_with_rotation_order = [result.activity_id for result in results_one]
+        print("==activity_ids==\n", activities_with_rotation_order)
+
+        if not activities_with_rotation_order:
+            return {
+                "status": "success",
+                "message": "No activities with rotation order",
+            }
+
+        # # return True
+        # print(" =====you have crossed the return point=====")
+
+        activities = (
+            db.query(Activity)
+            .join(
+                ActivityContributionDate,
+                and_(
+                    Activity.id == ActivityContributionDate.activity_id,
+                    Activity.chama_id == ActivityContributionDate.chama_id,
+                ),
+            )
+            .outerjoin(
+                RotatingContributions,
+                and_(
+                    Activity.id == RotatingContributions.activity_id,
+                    Activity.chama_id == RotatingContributions.chama_id,
+                    RotatingContributions.rotation_date
+                    == ActivityContributionDate.next_contribution_date,
+                ),
+            )
+            # filter where there is no record in the RotatingContributions table for the next contribution date
+            .filter(
+                and_(
+                    RotatingContributions.activity_id == None,
+                    ActivityContributionDate.activity_type == "merry-go-round",
+                    # ensure the activity has a rotation order
+                    Activity.id.in_(activities_with_rotation_order),
+                ),
+            )
+        )
+
+        if not activities:
+            return {
+                "status": "success",
+                "message": "No activities in need of new rotation contributions",
+            }
+
+        print("==========activities found================")
+        for activity in activities:
+            print(activity.activity_title)
+            print()
+
+        # get actvity ids
+        print("====activities ids====")
+        activity_ids = [activity.id for activity in activities]
+        print(activity_ids)
+
+        # this will get the highest cycle number for each activity
+        cycle_numbers = (
+            db.query(RotationOrder.activity_id, func.max(RotationOrder.cycle_number))
+            .filter(RotationOrder.activity_id.in_(activity_ids))
+            .group_by(RotationOrder.activity_id)
+            .all()
+        )
+        # {activity_id:1, cycle_number: 1}
+
+        cycle_numbers_dict = [
+            {"activity_id": cycle[0], "cycle_number": cycle[1]}
+            for cycle in cycle_numbers
+        ]
+
+        print("=====cycle numbers======")
+        print(cycle_numbers_dict)
+
+        # get the upcoming rotation contribution date from the activity contribution date table as the next contribution date for all the activities
+        activities_next_contribution_dates = (
+            db.query(ActivityContributionDate)
+            .filter(ActivityContributionDate.activity_id.in_(activity_ids))
+            .all()
+        )
+        if not activities_next_contribution_dates:
+            return {
+                "status": "success",
+                "message": "No activities next contribution dates found",
+            }
+        rotation_dates = [
+            {
+                "activity_id": date.activity_id,
+                "rotation_date": date.next_contribution_date,
+            }
+            for date in activities_next_contribution_dates
+        ]
+        print("=====rotation dates======")
+        print(rotation_dates)
+
+        # get the upcoming recipients for the activities by using the next contribution date and the RotationOrder table
+        upcoming_recipients = (
+            db.query(RotationOrder)
+            .filter(
+                RotationOrder.activity_id.in_(activity_ids),
+                RotationOrder.receiving_date.in_(
+                    [date["rotation_date"] for date in rotation_dates]
+                ),
+            )
+            .all()
+        )
+
+        if not upcoming_recipients:
+            return {
+                "status": "success",
+                "message": "No upcoming recipients found",
+            }
+
+        upcoming_recipients_dict = [
+            {
+                "activity_id": recipient.activity_id,
+                "recipient_id": recipient.recipient_id,
+                "share_name": recipient.share_name,
+                "expected_amount": recipient.expected_amount,
+                "rotation_date": recipient.receiving_date,
+            }
+            for recipient in upcoming_recipients
+        ]
+
+        print("=====upcoming recipients======")
+        print(upcoming_recipients_dict)
+
+        activities_users = (
+            db.query(RotationOrder)
+            .filter(
+                and_(
+                    RotationOrder.activity_id.in_(activity_ids),
+                    RotationOrder.cycle_number.in_(
+                        [cycle["cycle_number"] for cycle in cycle_numbers_dict]
+                    ),
+                )
+            )
+            .all()
+        )
+
+        if not activities_users:
+            print("=====no activities users found======")
+            return {
+                "status": "success",
+                "message": "No activities users found",
+            }
+
+        print("=====activities users resp======")
+        activities_users_resp = [
+            {
+                "chama_id": activity.chama_id,
+                "activity_id": activity.activity_id,
+                "contributor_id": activity.recipient_id,
+                "contributing_share": activity.share_name,
+                "expected_amount": activity.share_value,
+                "contributed_amount": 0,
+                "fine": 0,
+                "cycle_number": next(
+                    cycle["cycle_number"]
+                    for cycle in cycle_numbers_dict
+                    if cycle["activity_id"] == activity.activity_id
+                ),
+                "recipient_id": next(
+                    recipient["recipient_id"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+                "recipient_share": next(
+                    recipient["share_name"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+                "rotation_date": next(
+                    recipient["rotation_date"]
+                    for recipient in upcoming_recipients_dict
+                    if recipient["activity_id"] == activity.activity_id
+                ),
+            }
+            for activity in activities_users
+        ]
+        print(activities_users_resp)
+
+        print("=====you have yet to cross the return point=====")
+        return True
+        print(" =====you have crossed the return point=====")
+
+        # perform bulk insert of the new rotation contributions
+        # if activities_users_resp:
+        #     print("=====inserting activities users with rotation date======")
+        #     with db.begin_nested():
+        #         db.bulk_insert_mappings(
+        #             models.RotatingContributions, activities_users_resp
+        #         )
+
+        #     db.commit()
+
+        print("==========past the bulk insetion===============")
+        return {
+            "status": "success",
+            "message": "Activities found",
+        }
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Failed to create rotation contributions(http error): {http_exc}"
+        )
+        raise http_exc
+    except Exception as e:
+        management_error_logger.error(
+            f"Failed to create rotation contributions(exception error): {str(e)}"
+        )
+        raise HTTPException(
+            status_code=400, detail=f"Failed to create rotation contributions {str(e)}"
+        )

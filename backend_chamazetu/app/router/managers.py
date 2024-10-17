@@ -371,6 +371,12 @@ async def create_random_rotation_order(
         contribution_day = activity.contribution_day
         first_contribution_date = activity.first_contribution_date
 
+        next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+
         # get all users in the chama from the activity_user_association table, we will need the user_id, user_name, share_value, number of shares
         # user name is from the user table as firstname and lastname
 
@@ -425,9 +431,13 @@ async def create_random_rotation_order(
 
         # we will now include the receiving date for each user in the rotation order as well as their order_in_rotation number(1, 2 ...),
         # the dates will follow the frequency and interval of the activity
-        # TODO: update the cycle to check if there is a record already, if not the cycle is 1, if there is a record, the cycle is the last cycle + 1
+        # TODO Improve this by allowing the manager to set the first contribution date for the next cycle - create a new route to handle cycleNum > 1
+        set_contribution_date = None
+        if cycle_number == 1:
+            set_contribution_date = first_contribution_date
+        else:
+            set_contribution_date = next_contribution_date
 
-        set_contribution_date = first_contribution_date
         for i, order in enumerate(shuffled_order):
             shuffled_order[i]["receiving_date"] = set_contribution_date
             shuffled_order[i]["order_in_rotation"] = i + 1

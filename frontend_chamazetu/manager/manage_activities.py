@@ -66,6 +66,7 @@ async def rotating_order(request, activity_id):
                 "upcoming_recipient": rotation_data["upcoming_recipient"],
                 "rotation_order": rotation_data["rotation_order"],
                 "rotation_date": rotation_data["rotation_date"],
+                "new_rotation_needed": rotation_data["new_rotation_needed"],
             },
         )
 
@@ -94,7 +95,7 @@ async def create_random_rotation_order(request, activity_id):
         rotation_resp = requests.post(url, headers=headers)
         if rotation_resp.status_code == HTTPStatus.CREATED:
             # create the rotation contributions upon successful creation of the rotation order
-            create_activity_rotation_contributions.delay(activity_id)
+            # create_activity_rotation_contributions.delay(activity_id)
             messages.success(request, "Rotation order created successfully")
             return JsonResponse(
                 {"success": True, "message": "Rotation order created successfully"}

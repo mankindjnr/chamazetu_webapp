@@ -257,6 +257,7 @@
                 <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                   <i class="bi bi-people"></i>
                 </div>
+                {% if not new_rotation_needed %}
                 <div class="ps-3">
                   <span class="text-muted small pt-1 fw-bold">
                     A rotation order is a list of members in the activity who will receive the pooled funds in a specific order.
@@ -264,11 +265,19 @@
                   </span>
 
                 </div>
+                {% else %}
+                <div class="ps-3">
+                  <span class="text-muted small pt-1 fw-bold">
+                    This activity's previous rotation order has been fulfilled. Click the button below to create a new rotation order.
+                  </span>
+
+                </div>
+                {% endif %}
               </div>
               <form id="rotationForm" method="post" onsubmit="return submitRotationForm()">
                 {% csrf_token %}
-                <button type="submit" id="createRotationBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">Create Rotation Order</button>
-                <div id="loadingSpinner" style="display: none; color: blue; margin-top: 10px;">Creating rotation order...</div>
+                <button type="submit" id="createRotationBtn" class="btn btn-primary btn-sm" style="position: absolute; bottom: 10px; right: 10px">{% if not new_rotation_needed %} Create A Random Rotation Order {% else %} Create A New Random Rotation Order {% endif %}</button>
+                <div id="loadingSpinner" style="display: none; color: blue; margin-top: 10px;">Creating a random rotation order...</div>
                 <div id="successMessage" style="display: none; color: green; margin-top: 10px;">Rotation order created successfully</div>
                 <div id="errorMessage" style="display: none; color: red; margin-top: 10px;">An error occurred while creating the rotation order</div>
               </form>

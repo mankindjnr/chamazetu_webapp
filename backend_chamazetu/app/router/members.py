@@ -540,7 +540,7 @@ async def contribute_to_merry_go_round(
                             and_(
                                 models.RotatingContributions.contributed_amount
                                 == models.RotatingContributions.expected_amount,
-                                models.RotatingContributions.fine > 0,
+                                models.RotatingContributions.fine != activity_fine,
                             ),
                         ),
                     )
@@ -642,21 +642,22 @@ async def contribute_to_merry_go_round(
                             break
 
                     # after processing all the missed rotations for this fine, we record the transaction
-                    fine_transaction_data = {
-                        "user_id": user_id,
-                        "amount": amount_repaid_towards_fine,
-                        "origin": wallet_id,
-                        "activity_id": activity_id,
-                        "transaction_date": transaction_date,
-                        "updated_at": transaction_date,
-                        "transaction_completed": True,
-                        "transaction_code": fine_transaction_code,
-                        "transaction_type": "late contribution",
-                    }
-                    new_fine_transaction = models.ActivityTransaction(
-                        **fine_transaction_data
-                    )
-                    db.add(new_fine_transaction)
+                    if amount_repaid_towards_fine > 0:
+                        fine_transaction_data = {
+                            "user_id": user_id,
+                            "amount": amount_repaid_towards_fine,
+                            "origin": wallet_id,
+                            "activity_id": activity_id,
+                            "transaction_date": transaction_date,
+                            "updated_at": transaction_date,
+                            "transaction_completed": True,
+                            "transaction_code": fine_transaction_code,
+                            "transaction_type": "late contribution",
+                        }
+                        new_fine_transaction = models.ActivityTransaction(
+                            **fine_transaction_data
+                        )
+                        db.add(new_fine_transaction)
 
                     # mark the fine as paid if the amount repaid is equal to the expected repayment
                     if fine.expected_repayment == 0:
@@ -716,19 +717,20 @@ async def contribute_to_merry_go_round(
                         break
 
                 # record the transaction
-                transaction_data = {
-                    "user_id": user_id,
-                    "amount": total_contribution,
-                    "origin": wallet_id,
-                    "activity_id": activity_id,
-                    "transaction_date": transaction_date,
-                    "updated_at": transaction_date,
-                    "transaction_completed": True,
-                    "transaction_code": transaction_code,
-                    "transaction_type": "contribution",
-                }
-                new_transaction = models.ActivityTransaction(**transaction_data)
-                db.add(new_transaction)
+                if total_contribution > 0:
+                    transaction_data = {
+                        "user_id": user_id,
+                        "amount": total_contribution,
+                        "origin": wallet_id,
+                        "activity_id": activity_id,
+                        "transaction_date": transaction_date,
+                        "updated_at": transaction_date,
+                        "transaction_completed": True,
+                        "transaction_code": transaction_code,
+                        "transaction_type": "contribution",
+                    }
+                    new_transaction = models.ActivityTransaction(**transaction_data)
+                    db.add(new_transaction)
 
             # update the wallet balance
             user_record = (

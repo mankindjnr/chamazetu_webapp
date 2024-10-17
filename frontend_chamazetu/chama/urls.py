@@ -37,4 +37,5 @@ urlpatterns = [
         name="registration_callback",
     ),
     path("join_newsletter", views.join_newsletter, name="join_newsletter"),
+    path("helpful_videos", views.helpful_videos, name="helpful_videos"),
 ]
