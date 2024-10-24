@@ -46,6 +46,17 @@ services:
     networks:
       - chamazetu_network
 
+  backend_message_broker:
+    image: redis:latest
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    environment:
+      - TZ=Africa/Nairobi
+    networks:
+      - chamazetu_network
+
   chamazetu_frontend_database:
     image: postgres:16
     restart: always
@@ -57,6 +68,20 @@ services:
       - frontend_data:/var/lib/postgresql/data
     ports:
       - "5434:5432"
+    networks:
+      - chamazetu_network
+
+  chamazetu_backend_celery_database:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${BACKEND_CELERY_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${BACKEND_CELERY_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${BACKEND_CELERY_POSTGRES_DB}
+    volumes:
+      - backend_celery_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
     networks:
       - chamazetu_network
 
@@ -112,6 +137,22 @@ services:
     networks:
       - chamazetu_network
 
+  celery_backend_worker:
+    build:
+      context: ./backend_chamazetu
+    command: celery -A app.celery worker --pool=solo -l INFO
+    volumes:
+      - ./backend_chamazetu:/app/backend/
+    depends_on:
+      - chamazetu_backend_celery_database
+      - backend_message_broker
+    environment:
+      - TZ=Africa/Nairobi
+      - DATABASE_URL=postgres://${BACKEND_CELERY_POSTGRES_USER}:${BACKEND_CELERY_POSTGRES_PASSWORD}@chamazetu_backend_celery_database:5432/${BACKEND_CELERY_POSTGRES_DB}
+      - C_FORCE_ROOT=true
+    networks:
+      - chamazetu_network
+
   celery_beat_scheduler:
     build:
       context: ./frontend_chamazetu
@@ -131,6 +172,7 @@ volumes:
   redis_data:
   chamazetu_data:
   frontend_data:
+  backend_celery_data:
 
 
 networks:

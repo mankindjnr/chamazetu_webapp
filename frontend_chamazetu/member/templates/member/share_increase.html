@@ -1,0 +1,382 @@
+{% extends "chama/loginBase.html" %}
+{% load static %}
+
+{% block content %}
+  <header id="header" class="header fixed-top d-flex align-items-center">
+
+    <div class="d-flex align-items-center justify-content-between">
+      <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
+        <img src="{% static 'chama/img/favicon.png' %}" alt="">
+        <span class="d-none d-lg-block">Dashboard</span>
+      </a>
+      <i class="bi bi-list toggle-sidebar-btn"></i>
+    </div><!-- End Logo -->
+
+    <div class="search-bar">
+      <!-- <form class="search-form d-flex align-items-center" method="POST" action="#">
+        <input type="text" name="query" placeholder="Search" title="Enter search keyword">
+        <button type="submit" title="Search"><i class="bi bi-search"></i></button>
+      </form> -->
+    </div>
+    <!-- End Search Bar -->
+
+    <nav class="header-nav ms-auto">
+      <ul class="d-flex align-items-center">
+
+        <li class="nav-item d-block d-lg-none">
+          <a class="nav-link nav-icon search-bar-toggle " href="#">
+            <i class="bi bi-search"></i>
+          </a>
+        </li><!-- End Search Icon-->
+
+        <li class="nav-item dropdown pe-3">
+
+          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+            <!-- <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid"> -->
+            <i class="bi bi-person-circle">member</i>
+            <span class="d-none d-md-block dropdown-toggle ps-2"></span>
+          </a><!-- End Profile Iamge Icon -->
+
+          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+            <li class="dropdown-header">
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <!-- <li>
+              <a class="dropdown-item d-flex align-items-center" href="#">
+                <i class="bi bi-question-circle"></i>
+                <span>Need Help?</span>
+              </a>
+            </li> -->
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{% url 'chama:signout' %}">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Sign Out</span>
+              </a>
+            </li>
+
+          </ul><!-- End Profile Dropdown Items -->
+        </li><!-- End Profile Nav -->
+
+      </ul>
+    </nav><!-- End Icons Navigation -->
+
+  </header><!-- End Header -->
+
+  <!-- ======= Sidebar ======= -->
+  <aside id="sidebar" class="sidebar">
+
+    <ul class="sidebar-nav" id="sidebar-nav">
+
+      <li class="nav-heading">Pages</li>
+
+      <!-- <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-close-circle-line"></i>
+          <span>Missed Rotation Contributions</span>
+        </a>
+      </li> -->
+
+    </ul>
+
+  </aside><!-- End Sidebar-->
+
+  <main id="main" class="main">
+    <div class="pagetitle d-flex justify-content-between align-items-center">
+      <h1>{{ activity_name }}</h1>
+
+        <div class="search-bar">
+          {% if messages %}
+          <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+            {% for messages in messages %}
+              <strong>{{ messages }}</strong>
+            {% endfor %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endif %}
+        </div>
+      
+      <div class="ml-auto">
+        <!-- <form method="POST" action="{% url 'manager:disburse_funds' activity_id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm" id="disburseBtn">
+            Disburse Funds
+          </button>
+        </form> -->
+
+      </div>
+
+
+
+    </div><!-- End Page Title -->
+
+    <section class="section dashboard">
+      <div class="row">
+
+        <!-- Left side columns -->
+        <div class="col-lg-12">
+          <div class="row">
+
+            <!-- increase number shares card -->
+            <div class="col-xxl-4 col-md-6">
+              <div class="card info-card sales-card clickable-card" id="increaseSharesCard" >
+                
+                <div class="card-body">
+                  <h5 class="card-title">Increase Number of Shares <span>| {% if data.share_increase_activated %} Open {% else %} Closed {% endif %}</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-arrow-up-double-fill"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="arima-text text-muted small pt-2 ps-1">You can now increase the number of shares you have in this activity.</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div><!-- End of increase number shares card -->
+
+             <!-- increase shares form -->
+             <div class="card shadow-lg border-0" id="increaseSharesForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Increase Your Shares</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-3">
+                  <p class="arima-text text-secondary">
+                    You can only increase your shares once. Make sure you have enough funds in chamaZetu wallet to cover past contributions, upcoming contribution day and the adjustment Fee.
+                    Remember, you cannot have more than the maximum number of shares set by the manager.
+                  </p>
+                </div>
+                <hr>
+            
+                <form class="p-3" action="{% url 'member:increase_shares' activity_id %}" method="POST">
+                  {% csrf_token %}
+                  <!-- shares input -->
+                  <div class="mb-3 fw-bold arima-text text-secondary">
+                    <label for="max_shares" class="form-label">Shares</label>
+                    <div class="d-flex align-items-center">
+                      <div class="input-group custom-input-group">
+                        <span class="input-group-text fw-bold arima-text text-secondary">Maximum Shares</span>
+                        <input type="number" class="form-control border-0 shadow-sm custom-input" id="max_shares" name="max_shares" value="{{ data.max_shares }}" required readonly>
+                      </div>
+                      <div class="input-group custom-input-group">
+                        <span class="input-group-text fw-bold arima-text text-secondary">Current Shares</span>
+                        <input type="number" class="form-control border-0 shadow-sm custom-input" id="current_shares" name="current_shares" value="{{ data.current_shares }}" readonly required>
+                      </div>
+                    </div>
+                  </div>
+                  
+            
+                  <!-- activity amount input -->
+                  <div class="mb-3" id="share_price">
+                    <label for="share_price" class="form-label fw-bold arima-text text-secondary">Amount Per Share</label>
+                    <div class="input-group">
+                      <span class="input-group-text fw-bold arima-text text-secondary">KES</span>
+                      <input type="number" class="form-control border-0 shadow-sm" id="share_price_input" name="share_price" value="{{ data.share_value }}" readonly required>
+                    </div>
+                  </div>
+            
+                  <!-- Late fee input -->
+                  <div class="mb-3" id="late_fee">
+                    <label for="adjustment_fee" class="form-label fw-bold arima-text text-secondary">Adjustment Fee</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control border-0 shadow-sm" id="adjustment_fee" name="adjustment_fee" value="{{ data.adjustment_fee }}" readonly required>
+                    </div>
+                    <small class="fee-error-message text-danger"></small>
+                  </div>
+
+                  <!-- number of new shares -->
+                  <div class="mb-3">
+                    <label for="new_shares" class="form-label fw-bold arima-text text-secondary">Number of New Shares</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control border-0 shadow-sm" id="new_shares" name="new_shares" min="1" required>
+                    </div>
+                    <small class="error-message text-danger" id="newSharesError" style="display: none;">Please enter the number of new shares you want to add.</small>
+                  </div>
+
+                  <div class="mb-3" style="display: none;">
+                    <label for="past_rotations" class="form-label fw-bold arima-text text-secondary">Number of Past Rotations</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control border-0 shadow-sm" id="past_rotations" name="past_rotations" readonly required>
+                    </div>
+                    <small class="error-message text-danger" id="newSharesError" style="display: none;">This is the number of rotations this has gone through this far </small>
+                  </div>
+            
+                  <!-- charged -->
+                  <div class="mb-3" id="adjustmentCost" style="display: block;">
+                    <label for="adjustmentCost" class="form-label fw-bold arima-text text-secondary">Adjustment Cost: <span class="arima-text text-info">Deducted from wallet</span></label>
+                    <input type="number" class="form-control border-0 shadow-sm" id="totalAdjustmentCost" name="totalAdjustmentCost" value="0"  required readonly style="display: none;">
+                    <div class="alert alert-info">
+                      Adjustment Fee: <strong><span class="arima-text" id="adjustment_fee_display">{{ data.adjustment_fee }}</span> KES</strong>.
+                      Number of Past Rotations: <strong><span class="arima-text" id="pastRotations">{{ data.past_rotations }}</span></strong>.
+                      Upcoming Rotation: <strong><span class="arima-text" id="upcomingRotation">1</span></strong>.
+                      Total Adjustment Cost: <strong><span class="arima-text" id="adjustmentAmount">0</span> KES</strong>.
+                    </div>
+                    <script>
+                      document.addEventListener('DOMContentLoaded', (event) => {
+
+                          // get the requireed DOM elements
+                          const newSharesInput = document.getElementById('new_shares');
+                          const sharePriceInput = document.getElementById('share_price_input');
+                          const adjustmentFeeInput = document.getElementById('adjustment_fee')
+                          const adjustmentAmountDisplay = document.getElementById('adjustmentAmount');
+                          const totalAdjustmentCostInput = document.getElementById('totalAdjustmentCost');
+                          const pastRotations = document.getElementById('pastRotations');
+
+                          //function to calculate and update adjustment cost
+                          function updateAdjustmentCost(){
+                            // get the values from inputs
+                            const newShares = parseInt(newSharesInput.value) || 0;
+                            const sharePrice = parseInt(sharePriceInput.value) || 0;
+                            const adjustmentFee = parseInt(adjustmentFeeInput.value) || 0;
+                            const pastRotationsValue = parseInt(pastRotations.textContent) || 0;
+                            const rotations = pastRotationsValue + 1;
+                            
+                            // calculate the total cost for ew shares
+                            const newSharesCost = newShares * sharePrice * rotations;
+                            //summ it with the adjustment fee
+                            const totalCost = newSharesCost + adjustmentFee;
+
+                            // update the total cost in the display and hidden input
+                            adjustmentAmountDisplay.textContent = totalCost.toFixed(2);
+                            totalAdjustmentCostInput.value = totalCost.toFixed(2);
+                          }
+
+                          // add an event listene to the new shares input to trigger the calc in real time
+                          newSharesInput.addEventListener('input', updateAdjustmentCost);
+
+                          // initial call to the function
+                          updateAdjustmentCost();
+                      });
+                  </script>
+                  </div>
+            
+                  <!-- Buttons -->
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-success btn-sm">Increase Shares</button>
+                  </div>
+
+                  <script>
+
+                  </script>
+                </form>
+                
+              </div>
+            </div> <!-- End increase shares form -->
+
+          </div>
+        </div><!-- End Left side columns -->
+        
+      </div>
+
+    </section>
+
+  </main><!-- End #main -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const cards = document.querySelectorAll('.clickable-card');
+    const forms = document.querySelectorAll('.card-body + .card');
+
+
+    // retrieve all card ids
+    const increaseSharesCard = document.getElementById('increaseSharesCard');
+    const increaseSharesForm = document.getElementById('increaseSharesForm');
+
+    // show the form when the card is clicked and hide all other cards
+    increaseSharesCard.addEventListener('click', function() {
+      increaseSharesForm.style.display = 'block';
+      cards.forEach(c => {
+        if (c !== increaseSharesForm) {
+          c.style.display = 'none';
+        }
+      });
+    });
+
+    // Close button functionality
+    const closeButtons = document.querySelectorAll('.close-btn');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Hide the form
+        this.closest('.card').style.display = 'none';
+        
+        // Show all cards again
+        cards.forEach(c => c.style.display = 'block');
+      });
+    });
+
+    
+  });
+</script>
+
+  <style>
+    /* Beautiful styling for the paragraph */
+    .beautiful-paragraph {
+      font-family: 'Arial', sans-serif;
+      font-size: 1.1em;
+      line-height: 1.5;
+      color: #5a5a5a;
+      border-left: 4px solid #28a745;
+      padding-left: 12px;
+      margin-bottom: 15px;
+    }
+
+    /* Beautiful styling for the paragraph */
+  .arima-text {
+    font-family: "Arima", system-ui;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-style: normal;
+  }
+
+  .teko-text {
+  font-family: "Teko", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 600;
+  font-style: normal;
+  }
+
+  .clickable-card {
+  cursor: pointer;
+  transition: transform 0.2s;
+  }
+
+  .clickable-card:hover {
+  transform: scale(1.05);
+  }
+
+  .custom-input-group {
+    background-color: #f8f9fa; /* Light background color */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px; /* Padding around the group */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  }
+
+  .custom-input-group .input-group-text {
+      background-color: #e9ecef; /* Slightly darker background for the label */
+      border: none; /* Remove border */
+      border-radius: 5px 0 0 5px; /* Rounded corners for the left side */
+  }
+
+  .custom-input {
+      border-radius: 0 5px 5px 0; /* Rounded corners for the right side */
+      background-color: #ffffff; /* White background for the input */
+  }
+  </style>
+  
+
+ {% endblock %}

@@ -1,7 +1,7 @@
 import requests, jwt, json, threading, os
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, HttpResponseServerError
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date, timedelta
@@ -595,3 +595,80 @@ async def rotation_contributions(request, activity_id):
             request, "Failed to get rotation contributions, please try again later."
         )
     return HttpResponseRedirect(reverse("member:dashboard"))
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def get_increase_shares_page(request, activity_id):
+    url = f"{os.getenv('api_url')}/members/share_increase_data/{activity_id}"
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    resp = requests.get(url, headers=headers)
+    if resp.status_code == HTTPStatus.OK:
+        data = resp.json()
+        print("=====share increase data=====")
+        print(data)
+        return render(
+            request,
+            "member/share_increase.html",
+            {
+                "activity_id": activity_id,
+                "data": data,
+            },
+        )
+    else:
+        # if this fails we want to stay in our current page
+        messages.error(
+            request, "Failed to get share increase data, please try again later."
+        )
+
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
+
+async def increase_shares(request, activity_id):
+    if request.method == "POST":
+        max_shares = int(request.POST.get("max_shares"))
+        current_shares = int(request.POST.get("current_shares"))
+        new_shares = int(request.POST.get("new_shares"))
+
+        if process_share_increase_request(request, activity_id, max_shares, current_shares, new_shares):
+            url = f"{os.getenv('api_url')}/members/increase_shares/{activity_id}"
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            }
+            data = {
+                "new_shares": new_shares,
+            }
+
+            resp = requests.post(url, headers=headers, json=data)
+            if resp.status_code == HTTPStatus.CREATED:
+                messages.success(request, "Shares increased successfully")
+            else:
+                messages.error(request, f"{resp.json()['detail']}")
+
+    # default with an argument
+    fallback = reverse("member:get_increase_shares_page", args=[activity_id])
+    referer = request.META.get("HTTP_REFERER", fallback)
+    return HttpResponseRedirect(referer)
+
+def process_share_increase_request(request, activity_id, max_shares, current_shares, new_shares):
+    fallback = reverse("member:get_increase_shares_page", args=[activity_id])
+    referer = request.META.get("HTTP_REFERER", fallback)
+
+    max_shares = int(request.POST.get("max_shares"))
+    current_shares = int(request.POST.get("current_shares"))
+    new_shares = int(request.POST.get("new_shares"))
+    phone_number = request.POST.get("phone_number")
+
+    if (new_shares + current_shares) > max_shares:
+        messages.error(request, "max shares exceeded, choose a lower number")
+        return False
+
+    if new_shares <= 0:
+        messages.error(request, "Invalid number of shares")
+        return False
+
+    return True

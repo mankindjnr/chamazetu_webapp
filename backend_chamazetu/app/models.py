@@ -300,6 +300,9 @@ class Activity(Base):
     late_rotation_disbursements = relationship(
         "LateRotationDisbursements", back_populates="activity"
     )
+    merry_go_round_share_increase = relationship(
+        "MerryGoRoundShareIncrease", back_populates="activity"
+    )
 
 
 # activty accounts
@@ -759,3 +762,20 @@ class LateRotationDisbursements(Base):
     late_recipient = relationship(
         "User", foreign_keys=[late_recipient_id], back_populates="late_disbursements"
     )
+
+
+class MerryGoRoundShareIncrease(Base):
+    __tablename__ = "merry_go_round_share_increase"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    cycle_number = Column(Integer, nullable=False)
+    max_shares = Column(Integer, nullable=False)
+    allow_share_increase = Column(Boolean, default=False)
+    allow_new_members = Column(Boolean, default=False)
+    activity_amount = Column(Integer, nullable=False)
+    adjustment_fee = Column(Integer, nullable=False)
+    deadline = Column(DateTime, nullable=False)
+
+    # relationships
+    activity = relationship("Activity", back_populates="merry_go_round_share_increase")

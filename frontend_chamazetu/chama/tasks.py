@@ -23,6 +23,32 @@ logger = logging.getLogger("chama")
 nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
+# call a route that will send sms to the user
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def contribution_day_sms_notifications():
+    """
+    Send sms notifications to users on their contribution days
+    """
+    logger.info(
+        "==========chama/tasks.py: contribution_day_sms_notifications()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.post(
+        f"{os.getenv('api_url')}/activities/contribution_day_sms_notifications"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to send sms notifications: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.CREATED
+
+
 # log date and time of the task - hopefully we can know the timezone of the server
 @shared_task
 def chama_date_time_log():

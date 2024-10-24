@@ -1,6 +1,15 @@
 from passlib.context import CryptContext
 import random
 from collections import defaultdict
+from dotenv import load_dotenv
+
+# utility function to set, get update token in redis
+# redis will be used as a simple key value store
+import redis
+import os
+from datetime import datetime, timedelta
+
+load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -11,6 +20,29 @@ def hash_password(password: str):
 
 def verify_password(password: str, hashed_password: str):
     return pwd_context.verify(password, hashed_password)
+
+
+# REDIS SETUP
+redis_client = redis.Redis(host=os.getenv("REDIS_HOST"), port=os.getenv("REDIS_PORT"), decode_responses=True)
+
+# redsi key for storing the token
+ACCESS_TOKEN_KEY = "mpesa_access_token"
+
+def set_access_token(token: str, expiry_minutes: int = 50):
+    """ store access token in redis with expiry time """
+    print("=======setting access token in redis=======")
+    redis_client.setex(ACCESS_TOKEN_KEY, timedelta(minutes=expiry_minutes), token)
+
+
+def get_access_token():
+    """ retrieve access token from redis if it exists and not expired """
+    print("=======getting access token from redis=======")
+    return redis_client.get(ACCESS_TOKEN_KEY)
+
+def delete_access_token():
+    """ delete access token from redis """
+    redis_client.delete(ACCESS_TOKEN_KEY)
+
 
 
 def shuffle_list(rotation_order):

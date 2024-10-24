@@ -348,9 +348,11 @@ async def chama_activity(request, activity_id):
         f"{os.getenv('api_url')}/activities/manager/{activity_id}", headers=headers
     )
     if activity_resp.status_code == HTTPStatus.OK:
-        activity_data = activity_resp.json()
+        activity_dashboard = activity_resp.json()
         print("========activty access============")
-        # print(activity_data)
+        # print(activity_dashboard)
+        activity_data = activity_dashboard["activity"]
+        rotation_contributions = activity_dashboard["rotation_contributions"]
         chama_name = get_chama_name(activity_data["chama_id"])
         return render(
             request,
@@ -359,6 +361,8 @@ async def chama_activity(request, activity_id):
                 "chama_name": chama_name,
                 "activity": activity_data,
                 "activity_id": activity_id,
+                "upcoming_rotation_date": activity_dashboard["upcoming_rotation_date"],
+                "rotation_contributions": rotation_contributions,
             },
         )
 

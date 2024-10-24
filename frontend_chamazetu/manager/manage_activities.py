@@ -95,7 +95,7 @@ async def create_random_rotation_order(request, activity_id):
         rotation_resp = requests.post(url, headers=headers)
         if rotation_resp.status_code == HTTPStatus.CREATED:
             # create the rotation contributions upon successful creation of the rotation order
-            # create_activity_rotation_contributions.delay(activity_id)
+            create_activity_rotation_contributions.delay(activity_id)
             messages.success(request, "Rotation order created successfully")
             return JsonResponse(
                 {"success": True, "message": "Rotation order created successfully"}
@@ -162,3 +162,49 @@ async def fines_tracker(request, activity_name, activity_id):
                 args=[activity_id],
             )
         )
+
+
+async def order_management(request, activity_id):
+    return render(request, "manager/order_management.html", {"activity_id": activity_id})
+
+
+async def merry_go_round_share_increase(request, activity_id):
+    if request.method == "POST":
+        url = f"{os.getenv('API_URL')}/managers/allow_members_to_increase_shares/{activity_id}"
+        headers = {
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            "Content-Type": "application/json",
+        }
+
+        # get the data from the form
+        max_no_shares = request.POST.get("max_addon")
+        deadline_date = request.POST.get("deadline")
+        late_fee = request.POST.get("late_fee")
+        notify = request.POST.get("notify")
+        dont_notify = request.POST.get("dont_notify")
+
+        if max_no_shares == "" or deadline_date == "" or late_fee == "" or (notify == "" and dont_notify == ""):
+            messages.error(request, "Please fill in all fields")
+            return HttpResponseRedirect(reverse("manager:order_management", args=[activity_id]))
+
+        # TODO: if notify members - bg task to send emails to all members
+        notify_members = None
+        if notify == "on":
+            notify_members = True
+        elif dont_notify == "on":
+            notify_members = False
+
+        data = {
+            "max_no_shares": max_no_shares,
+            "deadline_date": deadline_date,
+            "adjustment_fee": late_fee,
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == HTTPStatus.CREATED:
+            messages.success(request, "Members can now increase their shares")
+        else:
+            messages.error(request, f"{response.json()['detail']}")
+
+    return HttpResponseRedirect(reverse("manager:order_management", args=[activity_id]))
+

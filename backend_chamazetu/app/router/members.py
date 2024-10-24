@@ -9,7 +9,17 @@ import logging, random, time
 from typing import List
 from uuid import uuid4
 
+from .date_functions import (
+    calculate_custom_interval,
+    calculate_monthly_interval,
+    calculate_daily_interval,
+    calculate_weekly_interval,
+    calculate_monthly_same_day_interval,
+)
+
 from .. import schemas, database, utils, oauth2, models
+
+from .managers import share_names
 
 router = APIRouter(prefix="/members", tags=["members"])
 
@@ -1696,7 +1706,7 @@ async def contribute_to_generic_activity(
 
 
 # generate transaction code
-def generate_transaction_code(transaction_type, wallet_id):
+def generate_transaction_code(transaction_type, destination):
     # define a prefix for each transaction
     prefixes = {
         "transfer": "TR",
@@ -1707,6 +1717,7 @@ def generate_transaction_code(transaction_type, wallet_id):
         "unprocessed wallet deposit": "UWD",
         "unprocessed registration fee": "URF",
         "unprocessed wallet withdrawal": "UWW",
+        "share increase adjustment cost": "SIAC",
     }
 
     # get the current timestamp - date - month - year - hour - minute - second
@@ -1719,7 +1730,7 @@ def generate_transaction_code(transaction_type, wallet_id):
     prefix = prefixes.get(transaction_type, "UNX")
 
     # create the transaction code
-    transaction_code = f"{prefix}_{wallet_id}-{timestamp}-{unique_number}"
+    transaction_code = f"{prefix}_{destination}-{timestamp}-{unique_number}"
     return transaction_code
 
 
@@ -2678,4 +2689,409 @@ async def get_activity_rotation_contribution(
         transaction_error_logger.error(f"Failed to get rotation contribution {e}")
         raise HTTPException(
             status_code=400, detail="Failed to get rotation contribution"
+        )
+
+
+# share increase page data 
+# current user share no, the share price, number of past rotations till now, 
+@router.get(
+    "/share_increase_data/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def share_increase_data(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        today = datetime.now(nairobi_tz).date()
+        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        user_in_activity = (
+            db.query(models.activity_user_association)
+            .filter(
+                and_(
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_id == current_user.id,
+                )
+            )
+            .first()
+        )
+
+        if not user_in_activity:
+            raise HTTPException(
+                status_code=404, detail="You are not a member of this activity"
+            )
+
+        # get the user share in this activity
+        user_share = user_in_activity.shares
+        share_value = activity.activity_amount
+
+        # get the share increase activation record from MerryGoRoundShareIncrease
+        activation_record = (db.query(models.MerryGoRoundShareIncrease)
+        .filter(
+            and_(
+                models.MerryGoRoundShareIncrease.activity_id == activity_id,
+                models.MerryGoRoundShareIncrease.allow_share_increase == True,
+                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+            )
+        )
+        .first()
+        )
+
+        if not activation_record:
+            return {
+                "share_increase_activated": False,
+            }
+
+
+        # get cycle number
+        cycle_number = (
+            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+
+        # upcoming rotation date/next contribution date
+        upcoming_rotation_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+
+        # count the number of past rotations till now in our current cycle number
+        past_rotations = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.cycle_number == cycle_number,
+                    func.date(models.RotationOrder.receiving_date) < today,
+                )
+            )
+            .count()
+        )
+
+        print("===past rotations===", past_rotations)
+
+        return {
+            "current_shares": user_share,
+            "max_shares": activation_record.max_shares,
+            "adjustment_fee": activation_record.adjustment_fee,
+            "share_value": share_value,
+            "past_rotations": past_rotations,
+            "share_increase_activated": True,
+            "upcoming_rotation_date": upcoming_rotation_date.strftime("%Y-%B-%d"),
+        }
+    except HTTPException as http_exc:
+        transaction_error_logger.error(f"Failed to get share increase page data {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        transaction_error_logger.error(f"Failed to get share increase page data {exc}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get share increase page data"
+        )
+
+
+# adjust rotation order by adding a share to a user, adding a rotating contribution and updating the expected amount
+# updating activity_user_share_association table for the user
+
+@router.post(
+    "/increase_shares/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def increase_merry_go_round_shares(
+    activity_id: int,
+    no_of_shares: schemas.merryGoRoundShareIncreaseReq = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        print("=====current user wallet balance====")
+        print(current_user.wallet_balance)
+        today = datetime.now(nairobi_tz).date()
+        transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        user_in_activity = (
+            db.query(models.activity_user_association)
+            .filter(
+                and_(
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_id == current_user.id,
+                )
+            )
+            # check if acquiring a lock is needed here
+            .first()
+        )
+
+        if not user_in_activity:
+            raise HTTPException(
+                status_code=404, detail="User not found in this activity"
+            )
+
+        # share increase activation data
+        activation_record = (db.query(models.MerryGoRoundShareIncrease)
+        .filter(
+            and_(
+                models.MerryGoRoundShareIncrease.activity_id == activity_id,
+                models.MerryGoRoundShareIncrease.allow_share_increase == True,
+                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+            )
+        )
+        .first()
+        )
+
+        if not activation_record:
+            raise HTTPException(
+                status_code=404, detail="Share increase not activated or deadline passed"
+            )
+
+        if user_in_activity.shares + no_of_shares.new_shares > activation_record.max_shares:
+            raise HTTPException(
+                status_code=404, detail="New shares exceed the maximum allowed shares"
+            )
+
+        # calculate adjustment cost and validate wallet balance
+        cycle_number = (
+            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+
+        if cycle_number != activation_record.cycle_number:
+            raise HTTPException(
+                status_code=400, detail="Invalid cycle number, try again later"
+            )
+
+        next_contribution_date = (
+            db.query(models.ActivityContributionDate.next_contribution_date)
+            .filter(models.ActivityContributionDate.activity_id == activity_id)
+            .scalar()
+        )
+
+        # retrieve all rotations in the current cycle upto the next contribution date
+        rotations_to_clear = (
+            db.query(models.RotationOrder)
+            .filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.cycle_number == cycle_number,
+                    models.RotationOrder.receiving_date <= next_contribution_date,
+                )
+            )
+            .all()
+        )
+        print("===rotations to clear===\n", len(rotations_to_clear))
+
+        if not rotations_to_clear:
+            # this is okay since we are getting upto the next contribution date
+            raise HTTPException(
+                status_code=404, detail="No rotations to clear for this cycle"
+            )
+
+        # adjustment amount needed
+        activity_amount = activity.activity_amount
+        adjustment_fee = activation_record.adjustment_fee
+        all_rotations_coverage = (len(rotations_to_clear) * activity_amount) * no_of_shares.new_shares
+        adjustment_cost = all_rotations_coverage + adjustment_fee
+
+        print("===adjustment cost===\n", adjustment_cost)
+        user_record = db.query(models.User).filter(models.User.id == current_user.id).with_for_update().first()
+        if user_record.wallet_balance < adjustment_cost:
+            raise HTTPException(
+                status_code=400, detail="Insufficient wallet balance for adjustment, top up and try again"
+            )
+
+        with db.begin_nested():
+            # update the user shares
+            print("===user shares===\n", user_in_activity.shares)
+            new_shares = no_of_shares.new_shares
+            current_no_of_shares = user_in_activity.shares
+            print("====share increase====\n", new_shares)
+            updated_shares = current_no_of_shares + new_shares
+            print("===new shares===\n", new_shares)
+            print("===current shares===\n", current_no_of_shares)
+            print("===updated shares===\n", updated_shares)
+
+
+            # update the activity_user_association table
+            db.query(models.activity_user_association).filter(
+                and_(
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_id == current_user.id,
+                )
+            ).update({"shares": updated_shares})
+
+            # add a rotation order record by first getting the last record in the current cycle
+            last_rotation = (
+                db.query(models.RotationOrder)
+                .filter(
+                    and_(
+                        models.RotationOrder.activity_id == activity_id,
+                        models.RotationOrder.cycle_number == cycle_number,
+                    )
+                )
+                .order_by(desc(models.RotationOrder.order_in_rotation))
+                .first()
+            )
+
+            if not last_rotation:
+                raise HTTPException(
+                    status_code=404, detail="No last rotation found"
+                )
+
+            # insert new records to the rotation order, users may have more than one new share, they will be added as consecutive records
+            new_rotations = []
+            newly_expected_amount = last_rotation.expected_amount + (activity_amount * new_shares)
+            next_receiving_date = None
+            frequency = activity.frequency
+            interval = activity.interval
+            contribution_day = activity.contribution_day
+            last_receiving_date = last_rotation.receiving_date
+            print("==newly expected amount==", newly_expected_amount)
+            print("==last receiving date==", last_receiving_date)
+
+            for i in range(new_shares):
+                if frequency == "daily":
+                    print("===daily===")
+                    next_receiving_date = calculate_daily_interval(last_receiving_date)
+                elif frequency == "weekly":
+                    print("===weekly===")
+                    next_receiving_date = calculate_weekly_interval(last_receiving_date)
+                elif frequency == "monthly" and interval in ["first", "second", "third", "fourth", "last"]:
+                    next_receiving_date = calculate_monthly_interval(last_receiving_date, interval, contribution_day)
+                elif frequency == "monthly" and interval == "monthly":
+                    next_receiving_date = calculate_monthly_same_day_interval(last_receiving_date, int(contribution_day))
+                elif frequency == "interval" and interval == "custom":
+                    next_receiving_date = calculate_quarterly_interval(last_receiving_date, int(contribution_day))
+                
+                new_rotation = {
+                    "user_name": f"{current_user.first_name} {current_user.last_name}",
+                    "chama_id": activity.chama_id,
+                    "activity_id": activity_id,
+                    "recipient_id": current_user.id,
+                    "share_value": activity_amount,
+                    "receiving_date": next_receiving_date,
+                    "expected_amount": newly_expected_amount,
+                    "received_amount": 0,
+                    "fulfilled": False,
+                    "order_in_rotation": last_rotation.order_in_rotation + i + 1,
+                    "share_name": share_names[current_no_of_shares + i],
+                    "cycle_number": cycle_number,
+                }
+
+                last_receiving_date = next_receiving_date
+                print("===next receiving date==", next_receiving_date)
+
+                new_rotations.append(models.RotationOrder(**new_rotation))
+
+            # add  rotating contribution records for the new shares individually towards the next_contribution_date
+            # we accounted for this in the adjustment_cost it will be like they have just contributed towards the upcoming contribution
+            upcoming_recipient = (
+                db.query(models.RotationOrder)
+                .filter(
+                    and_(
+                        models.RotationOrder.activity_id == activity_id,
+                        models.RotationOrder.cycle_number == cycle_number,
+                        models.RotationOrder.receiving_date == next_contribution_date,
+                    )
+                )
+                .first()
+            )
+
+            new_rotating_contributions = []
+            for rotation in new_rotations:
+                new_contribution = {
+                    "chama_id": activity.chama_id,
+                    "activity_id": activity_id,
+                    "contributor_id": current_user.id,
+                    "recipient_id": upcoming_recipient.recipient_id,
+                    "expected_amount": activity_amount,
+                    "contributed_amount": activity_amount,
+                    "fine": 0,
+                    "rotation_date": next_contribution_date,
+                    "cycle_number": cycle_number,
+                    "contributing_share": rotation.share_name,
+                    "recipient_share": upcoming_recipient.share_name,
+                }
+
+                new_rotating_contributions.append(models.RotatingContributions(**new_contribution))
+
+            # for this upcoming contribution to take effect we have to add a contribution record in the activities transactions table
+            transaction_code = generate_transaction_code("contribution", user_record.wallet_id)
+            contribution_record = models.ActivityTransaction(
+                user_id=current_user.id,
+                amount=activity_amount * new_shares,
+                origin=user_record.wallet_id,
+                activity_id=activity_id,
+                transaction_date=transaction_datetime,
+                updated_at=transaction_datetime,
+                transaction_completed=True,
+                transaction_code=transaction_code,
+                transaction_type="contribution",
+            )
+            db.add(contribution_record)
+
+            # use the past rotations we got earlier excluding the upcoming rotation to now make new late disbursement records
+            # since we have collected the missed amount this far and for the upcoming contribution day, we can now make sure the
+            # recipients of the past rotations receive their share. the upcoming one has already been accounted for in the new rotating contributions
+            late_disbursements = []
+
+            for late_recipient in rotations_to_clear:
+                if late_recipient.receiving_date == next_contribution_date:
+                    continue
+
+                late_disbursement = {
+                    "chama_id": activity.chama_id,
+                    "activity_id": activity_id,
+                    "late_contribution": new_shares * activity_amount,
+                    "missed_rotation_date": late_recipient.receiving_date,
+                    "disbursement_completed": False,
+                    "late_contributor_id": current_user.id,
+                    "late_recipient_id": late_recipient.recipient_id,
+                }
+
+                late_disbursements.append(models.LateRotationDisbursements(**late_disbursement))
+
+            # now update all rotation order in the currect cycle their new expected amount since we just added new shares
+            db.query(models.RotationOrder).filter(
+                and_(
+                    models.RotationOrder.activity_id == activity_id,
+                    models.RotationOrder.cycle_number == cycle_number,
+                )
+            ).update({"expected_amount": newly_expected_amount})
+
+            # perform bulk inserts
+            db.bulk_save_objects(new_rotations)
+            db.bulk_save_objects(new_rotating_contributions)
+            db.bulk_save_objects(late_disbursements)
+
+            # update the wallet balance
+            user_record.wallet_balance -= adjustment_cost
+
+            # update the activity account with the adjustment cost
+            activity_account = db.query(models.Activity_Account).filter(models.Activity_Account.id == activity_id).with_for_update().first()
+            activity_account.account_balance += adjustment_cost
+
+            # update chama account
+            chama_account = db.query(models.Chama_Account).filter(models.Chama_Account.id == activity.chama_id).with_for_update().first()
+            chama_account.account_balance += adjustment_cost
+
+            db.commit()
+
+        return {"message": "Shares increased successfully"}
+    except HTTPException as http_exc:
+        transaction_error_logger.error(f"Failed to increase shares {http_exc}")
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        transaction_error_logger.error(f"Failed to increase shares {exc}")
+        raise HTTPException(
+            status_code=400, detail="Failed to increase shares"
         )

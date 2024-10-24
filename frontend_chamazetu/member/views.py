@@ -20,6 +20,8 @@ from .activities import (
     activate_auto_contributions,
     deactivate_auto_contributions,
     rotation_contributions,
+    get_increase_shares_page,
+    increase_shares,
 )
 from .member_transactions import (
     from_wallet_to_activity,

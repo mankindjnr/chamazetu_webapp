@@ -128,4 +128,14 @@ urlpatterns = [
         views.rotation_contributions,
         name="rotation_contributions",
     ),
+    path(
+        "get_increase_shares_page/<int:activity_id>",
+        views.get_increase_shares_page,
+        name="get_increase_shares_page",
+    ),
+    path(
+        "increase_shares/<int:activity_id>",
+        views.increase_shares,
+        name="increase_shares",
+    ),
 ]

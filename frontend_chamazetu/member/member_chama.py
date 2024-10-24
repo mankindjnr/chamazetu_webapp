@@ -143,7 +143,7 @@ async def access_chama(request, chamaname, chama_id):
         # update_activities_contribution_days.delay()
         # auto_disburse_to_walletts.delay()
         # create_rotation_contributions.delay()
-        # setfines_updatedays_autodisburse_rotations_chain.delay()
+        setfines_updatedays_autodisburse_rotations_chain.delay()
         # merry_go_round_activity_auto_contributions.delay()
         # late_auto_disbursements.delay()
         chama_data = chama.json()

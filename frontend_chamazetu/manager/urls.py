@@ -139,4 +139,14 @@ urlpatterns = [
         views.fines_tracker,
         name="fines_tracker",
     ),
+    path(
+        "order_management/<int:activity_id>",
+        views.order_management,
+        name="order_management",
+    ),
+    path(
+        "merry_go_round_share_increase/<int:activity_id>",
+        views.merry_go_round_share_increase,
+        name="merry_go_round_share_increase",
+    ),
 ]

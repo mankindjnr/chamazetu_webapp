@@ -976,3 +976,19 @@ class TransferWalletBase(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# share increase setting
+class merryGoRoundShareIncrease(BaseModel):
+    max_no_shares: int
+    deadline_date: str
+    adjustment_fee: int
+
+    class Config:
+        from_attributes = True
+
+class merryGoRoundShareIncreaseReq(BaseModel):
+    new_shares: int
+
+    class Config:
+        from_attributes = True

@@ -80,12 +80,20 @@
 
       <li class="nav-heading">Pages</li>
 
-      <!-- <li class="nav-item">
+      <li class="nav-item">
         <a class="nav-link collapsed" href="">
-          <i class="ri-close-circle-line"></i>
-          <span>Fines Tracker</span>
+          <i class="ri-article-line"></i>
+          <!-- display the rotation order showing those whose dates is passed -->
+          <span>Disbursement Records</span> 
         </a>
-      </li> -->
+      </li><!-- End about Page Nav -->
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-article-line"></i>
+          <span>Pending Late Disbursements</span> 
+        </a>
+      </li><!-- End about Page Nav -->
 
     </ul>
 
@@ -128,7 +136,6 @@
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <!-- TODO:clickable to view fines tracker page -->
                   <h5 class="card-title">Upcoming Recipient <span>| N0: {{ upcoming_recipient.order_in_rotation }}</span></h5>
 
                   <div class="d-flex align-items-center">

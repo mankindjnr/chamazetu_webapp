@@ -1484,3 +1484,88 @@ async def auto_disburse_late_contributions(
         db.rollback()
         management_error_logger.error(f"Failed to disburse funds, error: {exc}")
         raise HTTPException(status_code=400, detail="Failed to disburse funds")
+
+
+# manager activitating allowing users to add shares to the activity (merry-go-round)
+@router.post(
+    "/allow_members_to_increase_shares/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def allow_members_to_increase_shares(
+    activity_id: int,
+    adjustment_data: schemas.merryGoRoundShareIncrease = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        if activity.activity_type != "merry-go-round":
+            raise HTTPException(
+                status_code=400, detail="Activity is not a merry-go-round"
+            )
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to activate share increase"
+            )
+
+        # check if there is an already active record in the MerryGoRoundShareIncrease table, by checking if the deadline is in the future and
+        # the allow_share_increase is true
+        active_share_increase = (
+            db.query(models.MerryGoRoundShareIncrease)
+            .filter(
+                and_(
+                    models.MerryGoRoundShareIncrease.activity_id == activity_id,
+                    models.MerryGoRoundShareIncrease.deadline > datetime.now(nairobi_tz),
+                    models.MerryGoRoundShareIncrease.allow_share_increase == True,
+                )
+            )
+            .first()
+        )
+
+        if active_share_increase:
+            raise HTTPException(
+                status_code=400, detail="Share increase is already active"
+            )
+
+        # get the current cycle number for the activity
+        cycle_number = (
+            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+        if not cycle_number or cycle_number == 0:
+            raise HTTPException(
+                status_code=400, detail="No rotation order has been created yet"
+            )
+
+        print(" =======setting share increase======")
+        # insert the share increase data into the database
+        share_increase_activation = models.MerryGoRoundShareIncrease(
+            activity_id=activity_id,
+            max_shares = adjustment_data.max_no_shares,
+            allow_share_increase = True,
+            allow_new_members = False,
+            cycle_number=cycle_number,
+            activity_amount=activity.activity_amount,
+            adjustment_fee = adjustment_data.adjustment_fee,
+            deadline=datetime.strptime(adjustment_data.deadline_date, "%Y-%m-%d"),
+        )
+
+        # return {"message": "Share increase activated successfully"}
+        db.add(share_increase_activation)
+        db.commit()
+
+        return {"message": "Share increase activated successfully"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to activate share increase, error: {exc}")
+        raise HTTPException(
+            status_code=400, detail="Failed to activate share increase"
+        )

@@ -1729,3 +1729,78 @@ INFO 2024-10-17 12:00:00,659 tasks Nairobi: 2024-10-17 12:00:00.659199+03:00
 INFO 2024-10-17 14:15:19,921 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
 INFO 2024-10-17 14:15:19,938 tasks Task ran at: 2024-10-17 14:15:19.938385
 INFO 2024-10-17 14:15:19,939 tasks Nairobi: 2024-10-17 14:15:19.939214+03:00
+INFO 2024-10-18 12:00:00,057 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-18 12:00:00,095 tasks Task ran at: 2024-10-18 12:00:00.095511
+INFO 2024-10-18 12:00:00,095 tasks Nairobi: 2024-10-18 12:00:00.095902+03:00
+INFO 2024-10-18 12:00:00,111 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-18 12:00:00,111 tasks Task ran at: 2024-10-18 12:00:00.111758
+INFO 2024-10-18 12:00:00,112 tasks Nairobi: 2024-10-18 12:00:00.112056+03:00
+INFO 2024-10-18 12:00:03,818 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-18 12:00:03,818 tasks Task ran at: 2024-10-18 12:00:03.818773
+INFO 2024-10-18 12:00:03,819 tasks Nairobi: 2024-10-18 12:00:03.819092+03:00
+INFO 2024-10-20 04:50:03,695 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-20 04:50:03,818 tasks Task ran at: 2024-10-20 04:50:03.818943
+INFO 2024-10-20 04:50:03,819 tasks Nairobi: 2024-10-20 04:50:03.819342+03:00
+INFO 2024-10-20 04:50:03,830 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-20 04:50:03,831 tasks Task ran at: 2024-10-20 04:50:03.831180
+INFO 2024-10-20 04:50:03,831 tasks Nairobi: 2024-10-20 04:50:03.831417+03:00
+INFO 2024-10-20 04:53:36,283 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-20 04:53:36,283 tasks Task ran at: 2024-10-20 04:53:36.283426
+INFO 2024-10-20 04:53:36,283 tasks Nairobi: 2024-10-20 04:53:36.283699+03:00
+INFO 2024-10-20 04:56:36,291 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-20 04:56:36,310 tasks Task ran at: 2024-10-20 04:56:36.309910
+INFO 2024-10-20 04:56:36,310 tasks Nairobi: 2024-10-20 04:56:36.310621+03:00
+INFO 2024-10-20 04:56:38,616 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-20 04:56:38,617 tasks Task ran at: 2024-10-20 04:56:38.617376
+INFO 2024-10-20 04:56:38,617 tasks Nairobi: 2024-10-20 04:56:38.617848+03:00
+INFO 2024-10-20 12:00:00,099 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-20 12:00:00,113 tasks Task ran at: 2024-10-20 12:00:00.113816
+INFO 2024-10-20 12:00:00,114 tasks Nairobi: 2024-10-20 12:00:00.114569+03:00
+INFO 2024-10-20 12:00:00,132 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-20 12:00:00,132 tasks Task ran at: 2024-10-20 12:00:00.132613
+INFO 2024-10-20 12:00:00,132 tasks Nairobi: 2024-10-20 12:00:00.132910+03:00
+INFO 2024-10-20 12:00:00,618 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-20 12:00:00,618 tasks Task ran at: 2024-10-20 12:00:00.618935
+INFO 2024-10-20 12:00:00,619 tasks Nairobi: 2024-10-20 12:00:00.619517+03:00
+INFO 2024-10-21 12:56:57,808 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-21 12:56:57,894 tasks Task ran at: 2024-10-21 12:56:57.894860
+INFO 2024-10-21 12:56:57,895 tasks Nairobi: 2024-10-21 12:56:57.895593+03:00
+INFO 2024-10-21 12:56:57,918 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-21 12:56:57,918 tasks Task ran at: 2024-10-21 12:56:57.918570
+INFO 2024-10-21 12:56:57,918 tasks Nairobi: 2024-10-21 12:56:57.918905+03:00
+INFO 2024-10-21 12:59:57,925 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-21 12:59:57,926 tasks Task ran at: 2024-10-21 12:59:57.926185
+INFO 2024-10-21 12:59:57,926 tasks Nairobi: 2024-10-21 12:59:57.926590+03:00
+INFO 2024-10-21 12:59:59,636 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-21 12:59:59,638 tasks Task ran at: 2024-10-21 12:59:59.637971
+INFO 2024-10-21 12:59:59,639 tasks Nairobi: 2024-10-21 12:59:59.639349+03:00
+INFO 2024-10-22 12:00:00,171 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-22 12:00:00,230 tasks Task ran at: 2024-10-22 12:00:00.230240
+INFO 2024-10-22 12:00:00,231 tasks Nairobi: 2024-10-22 12:00:00.230977+03:00
+INFO 2024-10-22 12:00:00,244 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-22 12:00:00,245 tasks Task ran at: 2024-10-22 12:00:00.245724
+INFO 2024-10-22 12:00:00,246 tasks Nairobi: 2024-10-22 12:00:00.246660+03:00
+INFO 2024-10-22 12:00:00,365 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-22 12:00:00,368 tasks Task ran at: 2024-10-22 12:00:00.368145
+INFO 2024-10-22 12:00:00,368 tasks Nairobi: 2024-10-22 12:00:00.368741+03:00
+INFO 2024-10-23 12:00:00,032 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-23 12:00:00,101 tasks Task ran at: 2024-10-23 12:00:00.101429
+INFO 2024-10-23 12:00:00,101 tasks Nairobi: 2024-10-23 12:00:00.101873+03:00
+INFO 2024-10-23 12:00:00,115 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-23 12:00:00,116 tasks Task ran at: 2024-10-23 12:00:00.116738
+INFO 2024-10-23 12:00:00,117 tasks Nairobi: 2024-10-23 12:00:00.117273+03:00
+INFO 2024-10-23 12:00:00,910 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-23 12:00:00,912 tasks Task ran at: 2024-10-23 12:00:00.912748
+INFO 2024-10-23 12:00:00,915 tasks Nairobi: 2024-10-23 12:00:00.915323+03:00
+INFO 2024-10-24 16:48:47,775 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-24 16:48:47,853 tasks Task ran at: 2024-10-24 16:48:47.852985
+INFO 2024-10-24 16:48:47,853 tasks Nairobi: 2024-10-24 16:48:47.853339+03:00
+INFO 2024-10-24 16:48:47,870 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-24 16:48:47,871 tasks Task ran at: 2024-10-24 16:48:47.871046
+INFO 2024-10-24 16:48:47,871 tasks Nairobi: 2024-10-24 16:48:47.871522+03:00
+INFO 2024-10-24 16:51:47,879 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-24 16:51:47,879 tasks Task ran at: 2024-10-24 16:51:47.879554
+INFO 2024-10-24 16:51:47,879 tasks Nairobi: 2024-10-24 16:51:47.879936+03:00
+INFO 2024-10-24 16:51:48,922 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-24 16:51:48,923 tasks Task ran at: 2024-10-24 16:51:48.923145
+INFO 2024-10-24 16:51:48,923 tasks Nairobi: 2024-10-24 16:51:48.923486+03:00

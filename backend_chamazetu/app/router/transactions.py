@@ -83,12 +83,13 @@ async def create_unprocessed_deposit_transaction(
 
 # use phone_number and amount to see if an unprocessed transaction exists
 @router.get(
-    "/unprocessed_deposit/{phone_number}/{amount}",
+    "/unprocessed_deposit/{phone_number}/{amount}/{receipt_number}",
     status_code=status.HTTP_200_OK,
 )
 async def check_unprocessed_deposit_transaction(
     phone_number: str,
     amount: int,
+    receipt_number: str,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
@@ -98,7 +99,34 @@ async def check_unprocessed_deposit_transaction(
             raise HTTPException(status_code=404, detail="User not found")
 
         # we will also check if the transaction has happened atleast 5 minutes ago
-        five_minutes_ago = datetime.now(nairobi_tz) - timedelta(minutes=5)
+        five_minutes_ago = datetime.now(nairobi_tz).replace(
+            tzinfo=None, microsecond=0
+        ) - timedelta(minutes=5)
+        print("------five minutes ago------")
+        print(five_minutes_ago)
+        print("====24 hours ago====")
+        one_day_ago = datetime.now(nairobi_tz).replace(
+            tzinfo=None, microsecond=0
+        ) - timedelta(hours=24)
+        print(one_day_ago)
+        print("------checking unprocessed transaction------")
+        print(receipt_number)
+
+        # check if there exists a transaction with the above receipt number
+        duplicate_transaction = (
+            db.query(models.WalletTransaction.transaction_code)
+            .filter(
+                and_(
+                    models.WalletTransaction.transaction_code == receipt_number
+                )
+            )
+            .scalar()
+        )
+
+        if duplicate_transaction:
+            raise HTTPException(
+                status_code=400, detail="Transaction with the same receipt number exists"
+            )
 
         unprocessed_transaction = (
             db.query(models.WalletTransaction)
@@ -109,6 +137,7 @@ async def check_unprocessed_deposit_transaction(
                     models.WalletTransaction.destination == user.wallet_id,
                     models.WalletTransaction.amount == amount,
                     models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_date >= one_day_ago,
                     models.WalletTransaction.transaction_date <= five_minutes_ago,
                     models.WalletTransaction.transaction_type
                     == "unprocessed wallet deposit",
@@ -124,6 +153,8 @@ async def check_unprocessed_deposit_transaction(
             "unprocessed_transaction_exists": True,
             "transaction_code": unprocessed_transaction.transaction_code,
         }
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         transaction_error_logger.error(f"Failed to check unprocessed transaction: {e}")
         raise HTTPException(

@@ -164,7 +164,7 @@
 
                 <div class="card-body">
                   <!-- TODO:clickable to view fines tracker page -->
-                  <h5 class="card-title">missed contributions <span>| Today</span></h5>
+                  <h5 class="card-title">missed contributions <span>| Total</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -206,6 +206,46 @@
 
               </div>
             </div><!-- End account Card -->
+
+              <!-- rotating contributions -->
+              <div class="col-12">
+                <div class="card recent-sales overflow-auto">
+  
+                  <div class="card-body">
+                    <h5 class="card-title">Rotating Contributions <span></span></h5>
+                    <div>
+                      <hr>
+                      <button class="btn btn-outline-info btn-sm bi bi-calendar-event">Upcoming Rotation Date {{ upcoming_rotation_date }}</button>
+                    </div>
+  
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        <th scope="col">Member</th>
+                        <th scope="col">Share</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Contributed</th>
+                        <!-- may have to add an upcoming contribution status column to track if each share has contributed towards the upcoming date-->
+                      </tr>
+                    </thead>
+                    {% if rotation_contributions %}
+                    <tbody>
+                      {% for contribution in rotation_contributions %}
+                      <tr>
+                        <th scope="row">{{ contribution.contributor_name }}</th>
+                        <td>{{ contribution.contributing_share }} </td>
+                        <td>{{ contribution.expected_amount }} </td>
+                        <td>{{ contribution.contributed_amount }} </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                    {% endif %}
+                  </table>
+  
+                  </div>
+  
+                </div>
+              </div><!-- End rotating contributions -->
 
           </div>
         </div><!-- End Left side columns -->

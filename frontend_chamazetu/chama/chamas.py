@@ -34,7 +34,7 @@ def get_all_chamas(request):
 
 # public chama access
 def get_chama(request, chamaid):
-    urls = f"{os.getenv('api_url')}/chamas/public_chama/{chamaid}"
+    urls = f"{os.getenv('api_url')}/chamas/info_page/public/{chamaid}"
     resp = requests.get(urls)
     if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
@@ -44,8 +44,8 @@ def get_chama(request, chamaid):
             request,
             "chama/blog_chama.html",
             {
-                "role": request.COOKIES.get("current_role"),
-                "chama": chama["public_chama"],
+                "role": None,
+                "chama": chama["chama"],
                 "rules": chama["rules"],
                 "faqs": chama["faqs"],
                 "about": chama["about"],

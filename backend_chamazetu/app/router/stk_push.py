@@ -72,6 +72,12 @@ def encrypt_security_credential(plaintext_password: str) -> str:
 
 
 async def generate_access_token():
+    # check if the token exists in redis and is valid
+    cached_token = utils.get_access_token()
+    if cached_token:
+        return cached_token
+
+    # token is not cached or is invalid, generate a new one
     url = os.getenv("OAUTH_URL")
     credentials = f"{consumer_key}:{consumer_secret}"
     encoded_credentials = base64.b64encode(credentials.encode()).decode()
@@ -81,7 +87,13 @@ async def generate_access_token():
     async with httpx.AsyncClient() as client:
         response = await client.get(url, headers=headers)
         response.raise_for_status()  # raise exception for non-2xx status codes
-        return response.json()["access_token"]
+        access_token = response.json()["access_token"]
+
+        # store the token in redis with an expiry time of 50 minutes
+        utils.set_access_token(access_token, expiry_minutes=50)
+
+
+        return access_token
 
 
 def generate_password():
@@ -122,6 +134,7 @@ async def stk_push(
     push_data: schemas.StkPushBase = Body(...),
 ):
     token = await generate_access_token()
+    # print("====token======:\n", token)
     if not token:
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 

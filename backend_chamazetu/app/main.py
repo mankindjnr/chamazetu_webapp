@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from typing import Optional
 from datetime import datetime
 from .logging_config import setup_logging
+from app.celery import celery_app
 
 from random import randint
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,6 +23,7 @@ from .router import (
     newsletter,
     fines,
     callback,
+    sms_callback,
     stk_push,
     activities,
     chamazetu_admin,
@@ -34,6 +36,7 @@ app = FastAPI()
 origins = ["*"]
 
 """
+this will allow all origins to access the API only from the containers not from the browser
 origins = [
     "http://localhost:8000",  # frontend service
     "http://localhost:9400",  # backend service
@@ -65,6 +68,7 @@ app.include_router(callback.router)
 app.include_router(stk_push.router)
 app.include_router(activities.router)
 app.include_router(chamazetu_admin.router)
+app.include_router(sms_callback.router)
 
 
 @app.get("/")

@@ -12,9 +12,7 @@ from chama.decorate.validate_refresh_token import (
     validate_and_refresh_token,
     async_validate_and_refresh_token,
 )
-from chama.rawsql import execute_sql
 from .members import get_user_id
-from chama.chamas import get_chama_id
 from .tasks import (
     mpesa_request,
 )
@@ -392,12 +390,12 @@ async def fix_mpesa_to_wallet_deposit(request):
 
         # check if the transaction exists
         transaction = requests.get(
-            f"{os.getenv('api_url')}/transactions/unprocessed_deposit/254{phone_number[1:]}/{amount}",
+            f"{os.getenv('api_url')}/transactions/unprocessed_deposit/254{phone_number[1:]}/{amount}/{receipt_number}",
             headers=transaction_headers,
         )
         if transaction.status_code == HTTPStatus.OK:
             transaction_data = transaction.json()
-            if transaction_data["unprocessed_transaction_exists"]:
+            if transaction_data["unprocessed_transaction_exists"] is True and transaction_data["transaction_code"]:
                 # Fix the transaction
                 transaction_code = transaction_data["transaction_code"]
                 update_transaction = requests.put(
@@ -405,16 +403,16 @@ async def fix_mpesa_to_wallet_deposit(request):
                     headers=transaction_headers,
                 )
                 if update_transaction.status_code == HTTPStatus.OK:
-                    messages.success(request, "Transaction updated successfully.")
+                    messages.success(request, "Your transaction is being processed, refresh the page after 5 minutes.")
                 else:
                     messages.error(
                         request, "Failed to update transaction. confirm receipt number."
                     )
             else:
-                messages.error(request, "Transaction is being processed. Please wait.")
+                messages.error(request, "Transaction not found, please try again later.")
         else:
             messages.error(
-                request, "Failed to fetch transaction. please try again later."
+                request, f"{transaction.json()['detail']}. Confirm the receipt number and try again."
             )
 
     return redirect(reverse("member:dashboard"))
