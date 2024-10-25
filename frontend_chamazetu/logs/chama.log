@@ -2576,3 +2576,31 @@ INFO 2024-10-24 17:50:28,884 tasks Nairobi: 2024-10-24 17:50:28.884678+03:00
 INFO 2024-10-24 17:50:28,923 tasks ==========chama/tasks.py: create_rotating_contributions()==========
 INFO 2024-10-24 17:50:28,925 tasks Task ran at: 2024-10-24 17:50:28.925316
 INFO 2024-10-24 17:50:28,927 tasks Nairobi: 2024-10-24 17:50:28.927541+03:00
+INFO 2024-10-25 08:25:49,775 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-25 08:25:49,842 tasks Task ran at: 2024-10-25 08:25:49.842430
+INFO 2024-10-25 08:25:49,842 tasks Nairobi: 2024-10-25 08:25:49.842855+03:00
+INFO 2024-10-25 08:25:49,864 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-25 08:25:49,864 tasks Task ran at: 2024-10-25 08:25:49.864754
+INFO 2024-10-25 08:25:49,865 tasks Nairobi: 2024-10-25 08:25:49.865095+03:00
+INFO 2024-10-25 08:25:50,416 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-25 08:25:50,416 tasks Task ran at: 2024-10-25 08:25:50.416768
+INFO 2024-10-25 08:25:50,417 tasks Nairobi: 2024-10-25 08:25:50.417495+03:00
+INFO 2024-10-25 08:25:50,489 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-25 08:25:50,492 tasks Task ran at: 2024-10-25 08:25:50.491740
+INFO 2024-10-25 08:25:50,494 tasks Nairobi: 2024-10-25 08:25:50.494364+03:00
+INFO 2024-10-25 08:25:50,705 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-25 08:25:50,706 tasks Task ran at: 2024-10-25 08:25:50.706033
+INFO 2024-10-25 08:25:50,706 tasks Nairobi: 2024-10-25 08:25:50.706846+03:00
+INFO 2024-10-25 11:59:21,190 tasks ==========chama/tasks.py: check_and_update_accepting_members_status()==========
+INFO 2024-10-25 11:59:21,190 tasks Task ran at: 2024-10-25 11:59:21.190703
+INFO 2024-10-25 11:59:21,191 tasks Nairobi: 2024-10-25 11:59:21.191201+03:00
+ERROR 2024-10-25 11:59:21,209 tasks Failed to check and update accepting members status: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/chamas/check_and_update_accepting_members_status
+INFO 2024-10-25 12:11:39,559 tasks ==========chama/tasks.py: check_and_update_accepting_members_status()==========
+INFO 2024-10-25 12:11:39,560 tasks Task ran at: 2024-10-25 12:11:39.560450
+INFO 2024-10-25 12:11:39,561 tasks Nairobi: 2024-10-25 12:11:39.560997+03:00
+INFO 2024-10-25 12:24:38,260 tasks ==========chama/tasks.py: check_and_update_accepting_members_status()==========
+INFO 2024-10-25 12:24:38,261 tasks Task ran at: 2024-10-25 12:24:38.261044
+INFO 2024-10-25 12:24:38,261 tasks Nairobi: 2024-10-25 12:24:38.261407+03:00
+INFO 2024-10-25 12:24:38,355 tasks ==========chama/tasks.py: check_and_update_activities_accepting_members_status()==========
+INFO 2024-10-25 12:24:38,356 tasks Task ran at: 2024-10-25 12:24:38.356152
+INFO 2024-10-25 12:24:38,357 tasks Nairobi: 2024-10-25 12:24:38.357488+03:00

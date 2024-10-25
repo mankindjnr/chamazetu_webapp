@@ -510,7 +510,7 @@ async def contribute_to_merry_go_round(
         if not num_shares:
             raise HTTPException(status_code=404, detail="User shares not found")
 
-        amount_per_share = expected_amount / num_shares
+        amount_per_share = int(expected_amount / num_shares)
         activity_fine = activity.fine
         print("amount_per_share:", amount_per_share)
         print("activity_fine:", activity_fine)
@@ -531,7 +531,6 @@ async def contribute_to_merry_go_round(
 
         if fines:
             # retrieve the missed rotations correspnding to the fines
-            # first_get_the dates of the fines
             fine_dates = [fine.fine_date for fine in fines]
             print("fine_dates:\n", fine_dates)
             missed_rotations = (
@@ -541,18 +540,8 @@ async def contribute_to_merry_go_round(
                         models.RotatingContributions.rotation_date.in_(fine_dates),
                         models.RotatingContributions.contributor_id == user_id,
                         models.RotatingContributions.activity_id == activity_id,
-                        # add an OR condition to check if the fine is not paid but contribution is made
-                        or_(
-                            # case 1: the user hasn't contributed the full amt
-                            models.RotatingContributions.contributed_amount
-                            != models.RotatingContributions.expected_amount,
-                            # case 2: the user has contributed the full amount but the fine is not paid
-                            and_(
-                                models.RotatingContributions.contributed_amount
-                                == models.RotatingContributions.expected_amount,
-                                models.RotatingContributions.fine != activity_fine,
-                            ),
-                        ),
+                        models.RotatingContributions.contributed_on_time == False,
+                        models.RotatingContributions.contributed_amount + models.RotatingContributions.fine < models.RotatingContributions.expected_amount + activity_fine,
                     )
                 )
                 .all()
@@ -566,8 +555,8 @@ async def contribute_to_merry_go_round(
             if fines:
                 print("===fines===")
                 for fine in fines:
-                    print("expected_repayment:", fine.expected_repayment)
-                    amount_repaid_towards_fine = 0  # amount repaid towards the fine
+                    print("expected_repayment:", fine.expected_repayment, "fine_date:", fine.fine_date)
+                    amount_repaid_towards_fine = 0  # amount repaid towards this fine
                     fine_transaction_code = generate_transaction_code(
                         "manual_fine_repayment", wallet_id
                     )
@@ -603,7 +592,7 @@ async def contribute_to_merry_go_round(
                             )
                             missed_rotation.fine = activity_fine
                         else:
-                            print("<start_amt:", amount)
+                            print("else start_amt:", amount)
                             fine.expected_repayment = max(
                                 fine.expected_repayment - amount, 0
                             )
@@ -648,10 +637,12 @@ async def contribute_to_merry_go_round(
                         db.add(new_late_disbursement)
 
                         if amount == 0:
+                            print("===amount is 0: breaking===")
                             break_outer_loop = True
                             break
 
                     # after processing all the missed rotations for this fine, we record the transaction
+                    print("amount_repaid_towards_fine:", amount_repaid_towards_fine)
                     if amount_repaid_towards_fine > 0:
                         fine_transaction_data = {
                             "user_id": user_id,
@@ -676,11 +667,13 @@ async def contribute_to_merry_go_round(
 
                     # if the amount is 0, we break
                     if break_outer_loop:
+                        print("===breaking outer loop===")
                         break
 
             # if after fine repayment, the member has some amount left, we contribute towards the upcoming rotation_contribution
             print("===amount:", amount)
             if amount > 0 and expected_amount > 0:
+                print("======excess: we are now contributing to the next rotation=====")
                 transaction_code = generate_transaction_code(
                     "manual_contribution", wallet_id
                 )
@@ -711,6 +704,7 @@ async def contribute_to_merry_go_round(
                     if amount >= contributing_bal:
                         amount -= contributing_bal
                         rotation.contributed_amount += contributing_bal
+                        rotation.contributed_on_time = True
                         amount_contributed += contributing_bal
                         print("===amount_contributed:==", amount_contributed)
                     else:
@@ -744,7 +738,7 @@ async def contribute_to_merry_go_round(
 
             # update the wallet balance
             user_record = (
-                db.query(models.User).filter(models.User.id == user_id).first()
+                db.query(models.User).filter(models.User.id == user_id).with_for_update().first()
             )
             if user_record.wallet_balance < total_contribution + total_fines_repaid:
                 raise HTTPException(
@@ -870,11 +864,9 @@ async def automatic_merry_go_round_contributions(
                 .order_by(models.ActivityFine.fine_date)
                 .all()
             )
-            print("fines:", len(fines))
 
             # retrieve missed rotations that match the fines
             fine_dates = [fine.fine_date for fine in fines]
-            print("fine_dates:", fine_dates)
             missed_rotations = (
                 db.query(models.RotatingContributions)
                 .filter(
@@ -882,12 +874,12 @@ async def automatic_merry_go_round_contributions(
                         models.RotatingContributions.contributor_id.in_(user_ids),
                         models.RotatingContributions.rotation_date.in_(fine_dates),
                         models.RotatingContributions.activity_id == activity_id,
-                        # might have to add more checks but wait
+                        models.RotatingContributions.contributed_on_time == False,
+                        models.RotatingContributions.contributed_amount + models.RotatingContributions.fine < models.RotatingContributions.expected_amount + activity_fine,
                     )
                 )
                 .all()
             )
-            print("missed_rotations:", len(missed_rotations))
 
             # loop through each user within the activty and process contributions and fines
             for user in activity_users:
@@ -914,10 +906,6 @@ async def automatic_merry_go_round_contributions(
                                 and rotation.contributor_id == user_id
                                 and rotation.activity_id == activity_id
                             ]
-                            print(
-                                "missed_rotations_for_fine:",
-                                len(missed_rotations_for_fine),
-                            )
 
                             for missed_rotation in missed_rotations_for_fine:
                                 deducted = 0
@@ -1054,6 +1042,7 @@ async def automatic_merry_go_round_contributions(
                             if wallet_balance >= contributing_balance:
                                 wallet_balance -= contributing_balance
                                 rotation.contributed_amount += contributing_balance
+                                rotation.contributed_on_time = True
                                 amount_contributed += contributing_balance
                             elif (
                                 wallet_balance < contributing_balance

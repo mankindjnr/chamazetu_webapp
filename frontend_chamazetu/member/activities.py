@@ -629,9 +629,15 @@ async def get_increase_shares_page(request, activity_id):
 
 async def increase_shares(request, activity_id):
     if request.method == "POST":
-        max_shares = int(request.POST.get("max_shares"))
-        current_shares = int(request.POST.get("current_shares"))
-        new_shares = int(request.POST.get("new_shares"))
+        # ensure they are not empty
+        if not request.POST.get("max_shares") or not request.POST.get("current_shares") or not request.POST.get("new_shares"):
+            messages.error(request, "Please fill in all fields")
+            fallback = reverse("member:get_increase_shares_page", args=[activity_id])
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", fallback))
+
+        max_shares = request.POST.get("max_shares")
+        current_shares = request.POST.get("current_shares")
+        new_shares = request.POST.get("new_shares")
 
         if process_share_increase_request(request, activity_id, max_shares, current_shares, new_shares):
             url = f"{os.getenv('api_url')}/members/increase_shares/{activity_id}"
@@ -640,7 +646,7 @@ async def increase_shares(request, activity_id):
                 "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
             }
             data = {
-                "new_shares": new_shares,
+                "new_shares": int(new_shares),
             }
 
             resp = requests.post(url, headers=headers, json=data)
@@ -658,10 +664,13 @@ def process_share_increase_request(request, activity_id, max_shares, current_sha
     fallback = reverse("member:get_increase_shares_page", args=[activity_id])
     referer = request.META.get("HTTP_REFERER", fallback)
 
-    max_shares = int(request.POST.get("max_shares"))
-    current_shares = int(request.POST.get("current_shares"))
-    new_shares = int(request.POST.get("new_shares"))
-    phone_number = request.POST.get("phone_number")
+    if not max_shares or not current_shares or not new_shares:
+        messages.error(request, "Please fill in all fields")
+        return False
+
+    max_shares = int(max_shares)
+    current_shares = int(current_shares)
+    new_shares = int(new_shares)
 
     if (new_shares + current_shares) > max_shares:
         messages.error(request, "max shares exceeded, choose a lower number")
@@ -672,3 +681,39 @@ def process_share_increase_request(request, activity_id, max_shares, current_sha
         return False
 
     return True
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def get_late_joining_activity_page(request, activity_id):
+    url = f"{os.getenv('api_url')}/activities/late_joining_data/{activity_id}"
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    resp = requests.get(url, headers=headers)
+    if resp.status_code == HTTPStatus.OK:
+        data = resp.json()
+        print("=====late joining data=====")
+        print(data)
+        return render(
+            request,
+            "member/activity_late_join_page.html",
+            {
+                "activity_id": activity_id,
+                "data": data,
+            },
+        )
+    else:
+        print("=====failed to get late joining data=====")
+        print(resp.json())
+        messages.error(request, f"{resp.json()['detail']}")
+
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def join_activity_late(request, activity_id):
+    if request.method == "POST":
+        pass

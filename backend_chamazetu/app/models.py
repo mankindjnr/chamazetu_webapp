@@ -223,6 +223,7 @@ class Chama(Base):
     late_rotation_disbursements = relationship(
         "LateRotationDisbursements", back_populates="chama"
     )
+    chama_late_joining = relationship("ChamaLateJoining", back_populates="chama")
 
 
 # listen to the before_insert event to automatically set chama_code
@@ -729,6 +730,7 @@ class RotatingContributions(Base):
     contributed_amount = Column(Integer, nullable=False)
     fine = Column(Integer, nullable=False)
     rotation_date = Column(DateTime, nullable=False)
+    contributed_on_time = Column(Boolean, default=False)
 
     # relationships
     chama = relationship("Chama", back_populates="rotating_contributions")
@@ -779,3 +781,14 @@ class MerryGoRoundShareIncrease(Base):
 
     # relationships
     activity = relationship("Activity", back_populates="merry_go_round_share_increase")
+
+class ChamaLateJoining(Base):
+    __tablename__ = "chama_late_joining"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"), index=True)
+    late_joining_fee = Column(Integer, nullable=False)
+    deadline = Column(DateTime, nullable=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="chama_late_joining")

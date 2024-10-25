@@ -1790,6 +1790,7 @@ async def get_chama_emails(
 async def check_and_update_accepting_members_status(
     db: Session = Depends(database.get_db),
 ):
+    print("=====udpating acepting members status=====")
     try:
         today = datetime.now(nairobi_tz).date()
 
@@ -1804,11 +1805,14 @@ async def check_and_update_accepting_members_status(
             .all()
         )
 
+        if not chamas:
+            return {"message": "No chamas to update"}
+
         # update the accepting members status to false in an atomic transaction
-        with db.begin():
-            for chama in chamas:
-                chama.accepting_members = False
-            db.commit()
+        for chama in chamas:
+            chama.accepting_members = False
+
+        db.commit()
         return {"message": "Accepting members status updated successfully"}
     except Exception as e:
         db.rollback()

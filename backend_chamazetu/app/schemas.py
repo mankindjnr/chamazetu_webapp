@@ -992,3 +992,10 @@ class merryGoRoundShareIncreaseReq(BaseModel):
 
     class Config:
         from_attributes = True
+
+class newChamaMembers(BaseModel):
+    late_joining_fee: int
+    deadline: str
+
+    class Config:
+        from_attributes = True

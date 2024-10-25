@@ -35,7 +35,7 @@ app.conf.beat_schedule = {
     },
     # runs 5 minutes after midnight everyday
     "update_accepting_members": {
-        "task": "chama.tasks.check_and_update_accepting_members_status",
+        "task": "chama.tasks.update_accepting_members_chain",
         "schedule": crontab(minute=5, hour=0),
     },
     # runs at 5 in the morning everyday

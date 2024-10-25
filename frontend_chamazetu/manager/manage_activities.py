@@ -163,7 +163,8 @@ async def fines_tracker(request, activity_name, activity_id):
             )
         )
 
-
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
 async def order_management(request, activity_id):
     return render(request, "manager/order_management.html", {"activity_id": activity_id})
 
@@ -208,3 +209,42 @@ async def merry_go_round_share_increase(request, activity_id):
 
     return HttpResponseRedirect(reverse("manager:order_management", args=[activity_id]))
 
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def allow_new_activity_members(request, activity_id):
+    if request.method == "POST":
+        url = f"{os.getenv('API_URL')}/managers/allow_new_members_to_join/{activity_id}"
+        headers = {
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            "Content-Type": "application/json",
+        }
+
+        print("========request.POST========")
+        print(request.POST.get("deadline"))
+        print(request.POST.get("late_fee"))
+        print(request.POST.get("max_shares"))
+
+        # get the data from the form(deadline, adjustment fee, max_shares)
+        if not request.POST.get("deadline") or not request.POST.get("late_fee") or not request.POST.get("max_shares"):
+            messages.error(request, "Please fill in all fields")
+            fallback = reverse("manager:order_management", args=[activity_id])
+            referer = request.META.get("HTTP_REFERER", fallback)
+            return HttpResponseRedirect(referer)
+
+        deadline = request.POST.get("deadline")
+        adjustment_fee = request.POST.get("late_fee")
+        max_shares = request.POST.get("max_shares")
+
+        data = {
+            "deadline_date": deadline,
+            "adjustment_fee": adjustment_fee,
+            "max_no_shares": int(max_shares)
+        }
+
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == HTTPStatus.CREATED:
+            messages.success(request, "New members can now join this activity")
+        else:
+            messages.error(request, f"{response.json()['detail']}")
+
+    return redirect(reverse("manager:order_management", args=[activity_id]))

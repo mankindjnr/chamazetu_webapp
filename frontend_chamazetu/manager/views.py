@@ -43,6 +43,9 @@ from .manage_activities import (
     fines_tracker,
     order_management,
     merry_go_round_share_increase,
+    allow_new_activity_members,
 )
+
+from .manage_members import membership_management, allow_new_members
 
 

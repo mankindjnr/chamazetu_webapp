@@ -70,11 +70,18 @@
               </ul>
               <hr>
             <p>{{ activity.description }}</p>
+            {% if not activity.joining_closed %}
             <form action="{% url 'member:join_activity' chama_name activity.activity_id %}" method="post" class="d-flex align-items-center">
               {% csrf_token %}
               <input type="number" class="form-control form-control-sm me-2" placeholder="number of shares e.g 1" name="shares" id="shares" required min="1">
               <button type="submit" class="btn btn-success btn-sm" id="join_activity">Join</button>
             </form>
+            {% endif %}
+            {% if activity.late_joining_open %}
+            <button type="button" class="btn btn-success btn-sm"><a href="{% url 'member:get_late_joining_activity_page' activity.activity_id %}" style="color: white;">Late Join</a></button>
+            {% else %}
+            <button type="button" class="btn btn-danger btn-sm">Joining Closed</button>
+            {% endif %}
             <!-- hidden form - it will be displayed by the btn above -->
             </div>
         </div>

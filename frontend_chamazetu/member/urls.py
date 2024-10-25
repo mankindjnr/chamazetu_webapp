@@ -138,4 +138,14 @@ urlpatterns = [
         views.increase_shares,
         name="increase_shares",
     ),
+    path(
+        "get_late_joining_activity_page/<int:activity_id>",
+        views.get_late_joining_activity_page,
+        name="get_late_joining_activity_page",
+    ),
+    path(
+        "join_activity_late/<int:activity_id>",
+        views.join_activity_late,
+        name="join_activity_late",
+    ),
 ]

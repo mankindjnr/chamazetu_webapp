@@ -119,13 +119,6 @@ def set_contribution_date(first_contribution_date, chama_name):
 
     return None
 
-
-@shared_task
-def check_and_update_accepting_members_status():
-    # TODO: we will be checking if today is past the last joining day, if it is we will update the chama to not accepting members
-    pass
-
-
 # calculate daily interests for the chamas
 @shared_task
 def calculate_daily_mmf_interests():
@@ -274,6 +267,41 @@ def check_and_update_accepting_members_status():
         raise self.retry(exc=e)
 
     return response.status_code == HTTPStatus.OK
+
+@shared_task(
+    auto_retry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def check_and_update_activities_accepting_members_status(*args, **kwargs):
+    """
+    Check and update accepting members status
+    """
+    logger.info(
+        "==========chama/tasks.py: check_and_update_activities_accepting_members_status()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/activities/update_activities_accepting_members"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to check and update accepting members status: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.OK
+
+
+# chain the check_and_update_accepting_members_status and check_and_update_activities_accepting_members_status
+@shared_task
+def update_accepting_members_chain():
+    """
+    Chain the check_and_update_accepting_members_status and check_and_update_activities_accepting_members_status
+    """
+    check_chamas_task = check_and_update_accepting_members_status.s()
+    check_activities_task = check_and_update_activities_accepting_members_status.s()
+    return chain(check_chamas_task | check_activities_task)()
 
 
 # update the contribution days for chama activities

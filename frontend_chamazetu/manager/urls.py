@@ -149,4 +149,19 @@ urlpatterns = [
         views.merry_go_round_share_increase,
         name="merry_go_round_share_increase",
     ),
+    path(
+        "membership_management/<int:chama_id>",
+        views.membership_management,
+        name="membership_management",
+    ),
+    path(
+        "allow_new_members/<int:chama_id>",
+        views.allow_new_members,
+        name="allow_new_members",
+    ),
+    path(
+        "allow_new_activity_members/<int:activity_id>",
+        views.allow_new_activity_members,
+        name="allow_new_activity_members",
+    ),
 ]

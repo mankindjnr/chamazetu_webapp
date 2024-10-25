@@ -311,66 +311,76 @@
             
 
             <!-- allowNewMembers form -->
-            <div class="card" id="allowNewMembersForm" style="display: none;">
-              <div class="card-body">
-                  <div class="pagetitle d-flex justify-content-between align-items-center">
-                    <p class="beautiful-paragraph">This will allow members to increase their shares. You can set the maximum number of shares that members can add and the deadline for adding shares. You can also set a fee for late share adjustments if any.
-                      Those who increase their shares will be required to pay all past rotation contributions for the new shares.
-                    </p>
-                  </div>
-                <form class="p-3" action="" method="POST">
-                  {% csrf_token %}
-                  <div class="mb-3">
-                    <label for="amount" class="form-label">Maximum Number of Shares Users Can Add</label>
-                    <div class="input-group">
-                      <span class="input-group-text" id="basic-addon1">N0:</span>
-                      <input type="number" class="form-control" id="max_addon" name="max_addon" min="1" required>
-                      <small class="amount-error-message"></small>
+            <!-- increase shares form -->
+            <div class="card shadow-lg border-0" id="allowNewMembersForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Allow Late Members to Join the Activity</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                  <p class="arima-text text-secondary">
+                    You can set the maximum number of shares that members can have, the deadline for joining the activity and a fee for late share adjustments if any.
+                    New members will need to cover any past contributions for the new shares before the adjustment is made.
+                  </p>
+                </div>
             
-                    </div>
-                  </div>
-                 
-                  <div class="mb-3" id="deadline" style="display: none;">
-                    <label for="phonenumber" id="deadlin" class="form-label">Final Date to Add Shares</label>
-                    <div class="input-group">
-                      <input type="date" class="form-control" id="deadline" name="deadline" >
-                      <br/><small class="notify-manager" style="color: red;"> This date has to be earlier than the upcoming rotation date </small>
-                    </div>
-                  </div>
-
-                  <!-- fee -->
-                  <div class="mb-3" id="late_fee" style="display: none;">
-                    <label for="phonenumber" id="late_fee" class="form-label">Fee</label>
-                    <div class="input-group">
-                      <input type="text" class="form-control" id="walletnumber" name="walletnumber" minlength="6" placeholder="Enter 0 if there are no share adjustment fees">
-                      <br/><small class="fee-error-message"></small>
-                    </div>
-                  </div>
-
-                  <!-- notify members -->
+                <form class="p-3" action="{% url 'manager:allow_new_activity_members' activity_id %}" method="POST">
+                  {% csrf_token %}
+                  <!-- Maximum shares input -->
                   <div class="mb-3">
-                    <label for="notify_members" class="form-label">Notify members *</label>
-                    <br/><small id="joinHelp" class="form-text text-muted" style="color: darkgoldenrod;">Notify members that they can now increase their shares</small>
+                    <label for="max_addon" class="form-label fw-bold arima-text text-secondary">Maximum Number of Shares New Members Can Have</label>
                     <div class="input-group">
-                      <div class="input-group-text">
-                        <input type="checkbox" class="form-check-input" id="notify" name="notify" value="notify" onclick="toggleCheckBox('yes')">
-                        <label class="form-check-label ms-2" for="notify">Notify Members</label>
-                      </div>
-                      <div class="input-group-text">
-                        <input type="checkbox" class="form-check-input" id="dont_notify" name="dont_notify" value="dont_notify_members" onclick="toggleCheckBox('no')">
-                        <label class="form-check-label ms-2" for="dont_notify">Don't Notify Members</label>
-                      </div>
+                      <span class="input-group-text bg-light text-secondary fw-bold">Shares:</span>
+                      <input type="number" class="form-control border-0 shadow-sm" id="max_shares" name="max_shares" min="1" required>
+                      <small class="amount-error-message text-danger"></small>
                     </div>
-                    <small class="error-message" id="joinError" style="color: red; display: none;">Please select if to notify members or not to</small>
                   </div>
-
+            
+                  <!-- Deadline input -->
+                  <div class="mb-3" id="deadline">
+                    <label for="deadline" class="form-label fw-bold arima-text text-secondary">Final Date to Join</label>
+                    <div class="input-group">
+                      <input type="date" class="form-control border-0 shadow-sm" id="deadline" name="deadline" required>
+                    </div>
+                    <small class="notify-manager text-danger">This date must be earlier than the next rotation date.</small>
+                  </div>
+            
+                  <!-- Late fee input -->
+                  <div class="mb-3" id="late_fee">
+                    <label for="walletnumber" class="form-label fw-bold arima-text text-secondary">Late Adjustment Fee</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control border-0 shadow-sm" id="late_fee" name="late_fee" placeholder="Enter 0 if there is no fee" required>
+                    </div>
+                    <small class="fee-error-message text-danger"></small>
+                  </div>
+            
+                  <!-- Buttons -->
                   <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-outline-danger btn-sm close-btn">Close</button>
-                    <button type="submit" class="btn btn-outline-success btn-sm">Confirm</button>
+                    <button type="button" class="btn btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-success btn-sm">Allow New Members</button>
                   </div>
                 </form>
+                <script>
+                  function toggleCheckBox(selectedid, unselectedid) {
+                    const selectedCheckbox = document.getElementById(selectedid);
+                    const unselectedCheckbox = document.getElementById(unselectedid);
+            
+                    if (selectedCheckbox.checked) {
+                      unselectedCheckbox.checked = false;
+                    }
+            
+                    // check if neither of the checkboxes is checked, show error message
+                    const notifyError = document.getElementById('notifyError');
+                    if (!selectedCheckbox.checked && !unselectedCheckbox.checked) {
+                      notifyError.style.display = 'block';
+                    } else {
+                      notifyError.style.display = 'none';
+                    }
+                  }
+                </script>
               </div>
-            </div> <!-- End of allow new members form -->
+            </div> <!-- End increase shares form -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -456,33 +466,60 @@
   });
 </script>
 
-  <style>
-    /* Beautiful styling for the paragraph */
-    .beautiful-paragraph {
-      font-family: 'Arial', sans-serif;
-      font-size: 1.1em;
-      line-height: 1.5;
-      color: #5a5a5a;
-      border-left: 4px solid #28a745;
-      padding-left: 12px;
-      margin-bottom: 15px;
-    }
-
-    /* Beautiful styling for the paragraph */
-  .arima-text {
-    font-family: "Arima", system-ui;
-    font-optical-sizing: auto;
-    font-weight: 600;
-    font-style: normal;
+<style>
+  /* Beautiful styling for the paragraph */
+  .beautiful-paragraph {
+    font-family: 'Arial', sans-serif;
+    font-size: 1.1em;
+    line-height: 1.5;
+    color: #5a5a5a;
+    border-left: 4px solid #28a745;
+    padding-left: 12px;
+    margin-bottom: 15px;
   }
 
-  .teko-text {
-  font-family: "Teko", sans-serif;
+  /* Beautiful styling for the paragraph */
+.arima-text {
+  font-family: "Arima", system-ui;
   font-optical-sizing: auto;
   font-weight: 600;
   font-style: normal;
 }
-  </style>
+
+.teko-text {
+font-family: "Teko", sans-serif;
+font-optical-sizing: auto;
+font-weight: 600;
+font-style: normal;
+}
+
+.clickable-card {
+cursor: pointer;
+transition: transform 0.2s;
+}
+
+.clickable-card:hover {
+transform: scale(1.05);
+}
+
+.custom-input-group {
+  background-color: #f8f9fa; /* Light background color */
+  border-radius: 5px; /* Rounded corners */
+  padding: 10px; /* Padding around the group */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.custom-input-group .input-group-text {
+    background-color: #e9ecef; /* Slightly darker background for the label */
+    border: none; /* Remove border */
+    border-radius: 5px 0 0 5px; /* Rounded corners for the left side */
+}
+
+.custom-input {
+    border-radius: 0 5px 5px 0; /* Rounded corners for the right side */
+    background-color: #ffffff; /* White background for the input */
+}
+</style>
   
 
  {% endblock %}

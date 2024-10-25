@@ -22,6 +22,8 @@ from .activities import (
     rotation_contributions,
     get_increase_shares_page,
     increase_shares,
+    get_late_joining_activity_page,
+    join_activity_late,
 )
 from .member_transactions import (
     from_wallet_to_activity,

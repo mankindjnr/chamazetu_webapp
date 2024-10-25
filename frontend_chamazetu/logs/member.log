@@ -1804,3 +1804,12 @@ INFO 2024-10-24 16:51:47,879 tasks Nairobi: 2024-10-24 16:51:47.879936+03:00
 INFO 2024-10-24 16:51:48,922 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
 INFO 2024-10-24 16:51:48,923 tasks Task ran at: 2024-10-24 16:51:48.923145
 INFO 2024-10-24 16:51:48,923 tasks Nairobi: 2024-10-24 16:51:48.923486+03:00
+INFO 2024-10-25 12:00:00,177 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-10-25 12:00:00,235 tasks Task ran at: 2024-10-25 12:00:00.235171
+INFO 2024-10-25 12:00:00,235 tasks Nairobi: 2024-10-25 12:00:00.235557+03:00
+INFO 2024-10-25 12:00:00,247 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-10-25 12:00:00,249 tasks Task ran at: 2024-10-25 12:00:00.249513
+INFO 2024-10-25 12:00:00,250 tasks Nairobi: 2024-10-25 12:00:00.250238+03:00
+INFO 2024-10-25 12:00:00,339 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-10-25 12:00:00,340 tasks Task ran at: 2024-10-25 12:00:00.340041
+INFO 2024-10-25 12:00:00,340 tasks Nairobi: 2024-10-25 12:00:00.340433+03:00

@@ -133,6 +133,71 @@ async def get_manager_dashboard(
         raise HTTPException(status_code=400, detail="Failed to get manager dashboard")
 
 
+# manager allowing a late joining for the chama
+@router.post("/allow_new_chama_members/{chama_id}", status_code=status.HTTP_201_CREATED)
+async def allow_new_chama_members(
+    chama_id: int,
+    activation_data: schemas.newChamaMembers = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        today = datetime.now(nairobi_tz).date()
+        chama = db.query(models.Chama).filter(models.Chama.id == chama_id).first()
+        if not chama:
+            raise HTTPException(status_code=404, detail="Chama not found")
+
+        if chama.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to allow new chama members"
+            )
+
+        #  check for an existing active record
+        deadline = datetime.strptime(activation_data.deadline, "%Y-%m-%d").date()
+
+        active_record = (
+            db.query(models.ChamaLateJoining)
+            .filter(
+                and_(
+                    models.ChamaLateJoining.chama_id == chama_id,
+                    func.date(models.ChamaLateJoining.deadline) >= today,
+                )
+            )
+            .first()
+        )
+
+        if active_record:
+            raise HTTPException(
+                status_code=400, detail="An active late joining record already exists"
+            )
+
+        # create a new late joining record
+        new_record = models.ChamaLateJoining(
+            chama_id=chama_id,
+            deadline=deadline,
+            late_joining_fee=activation_data.late_joining_fee,
+        )
+
+        db.add(new_record)
+        db.commit()
+
+        return {"message": "New chama members allowed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"failed to allow new chama members, error: {http_exc}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"failed to allow new chama members, error: {exc}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to allow new chama members"
+        )
+
+
 # get all chamas connected to manager id
 @router.get(
     "/chamas",
@@ -1568,4 +1633,90 @@ async def allow_members_to_increase_shares(
         management_error_logger.error(f"Failed to activate share increase, error: {exc}")
         raise HTTPException(
             status_code=400, detail="Failed to activate share increase"
+        )
+
+# now we allow new members to join the merry-go-round
+@router.post(
+    "/allow_new_members_to_join/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def allow_new_members_to_join(
+    activity_id: int,
+    adjustment_data: schemas.merryGoRoundShareIncrease = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        today = datetime.now(nairobi_tz).date()
+        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        if activity.activity_type != "merry-go-round":
+            raise HTTPException(
+                status_code=400, detail="Activity is not a merry-go-round"
+            )
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to allow new members to join"
+            )
+
+        # check if there is an already active record in the MerryGoRoundShareIncrease table, by checking if the deadline is in the future and
+        # the allow_new_members is true
+        active_share_increase = (
+            db.query(models.MerryGoRoundShareIncrease)
+            .filter(
+                and_(
+                    models.MerryGoRoundShareIncrease.activity_id == activity_id,
+                    func.date(models.MerryGoRoundShareIncrease.deadline) > today,
+                    models.MerryGoRoundShareIncrease.allow_new_members == True,
+                )
+            )
+            .first()
+        )
+
+        if active_share_increase:
+            raise HTTPException(
+                status_code=400, detail="New members are already allowed to join"
+            )
+
+        # get the current cycle number for the activity
+        cycle_number = (
+            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
+            .filter(models.RotationOrder.activity_id == activity_id)
+            .scalar()
+        )
+        if not cycle_number or cycle_number == 0:
+            raise HTTPException(
+                status_code=400, detail="No rotation order has been created yet"
+            )
+
+        print(" =======setting new members to join======")
+
+        # insert the share increase data into the database
+        share_increase_activation = models.MerryGoRoundShareIncrease(
+            activity_id=activity_id,
+            max_shares = adjustment_data.max_no_shares,
+            allow_share_increase = False,
+            allow_new_members = True,
+            cycle_number=cycle_number,
+            activity_amount=activity.activity_amount,
+            adjustment_fee = adjustment_data.adjustment_fee,
+            deadline = datetime.strptime(adjustment_data.deadline_date, "%Y-%m-%d"),
+        )
+
+        db.add(share_increase_activation)
+        db.commit()
+
+        return {"message": "New members allowed to join successfully"}
+
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to allow new members to join, error: {exc}")
+        raise HTTPException(
+            status_code=400, detail="Failed to allow new members to join"
         )
