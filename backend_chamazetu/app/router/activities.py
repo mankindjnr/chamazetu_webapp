@@ -266,6 +266,7 @@ async def join_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
+        today = datetime.now(nairobi_tz).date()
         activity = (
             db.query(models.Activity).filter(models.Activity.id == activity_id).first()
         )
@@ -274,8 +275,15 @@ async def join_activity(
                 status_code=404, detail="Activity not found or does not exist"
             )
 
+        late_joining_open = db.query(models.MerryGoRoundShareIncrease).filter(
+            and_(
+                models.MerryGoRoundShareIncrease.activity_id == activity_id,
+                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+            )
+        ).first()
+
         # prevent joining if tday is past activity's last joining date
-        if datetime.now(nairobi_tz).date() > activity.last_joining_date.date():
+        if not late_joining_open and today > activity.last_joining_date.date():
             raise HTTPException(status_code=400, detail="You cannot join this activity")
 
         # check if the user is already a member of this chama frm the chama_user_association table
@@ -2316,3 +2324,115 @@ async def get_late_joining_data(
     except Exception as e:
         management_error_logger.error(f"Failed to get late joining data: {e}")
         raise HTTPException(status_code=400, detail="Failed to retrieve late joining data")
+
+@router.get("/disbursement_records/{activity_id}", status_code=status.HTTP_200_OK)
+async def activity_disbursement_records(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        # get all the disbursement records for the activity by retrieving all past records in the rotation order behind today
+        today = datetime.now(nairobi_tz).date()
+
+        disbursement_records = db.query(models.RotationOrder).filter(
+            and_(
+                models.RotationOrder.activity_id == activity_id,
+                func.date(models.RotationOrder.receiving_date) < today,
+            )
+        ).all()
+
+        if not disbursement_records:
+            disbursement_records = []
+
+        late_disbursement_records = (
+            db.query(models.LateRotationDisbursements)
+            .filter(
+                and_(
+                    models.LateRotationDisbursements.activity_id == activity_id,
+                    models.LateRotationDisbursements.disbursement_completed == False,
+                )
+            )
+            .all()
+        )
+
+        late_recipient_ids = list(set([late_recipient.late_recipient_id for late_recipient in late_disbursement_records]))
+        late_contributor_ids = list(set([late_recipient.late_contributor_id for late_recipient in late_disbursement_records]))
+
+        # create a dictionary of the late recipients and contributors with their names
+        late_recipients = (
+            db.query(models.User)
+            .filter(models.User.id.in_(late_recipient_ids))
+            .all()
+        )
+
+        late_contributors = (
+            db.query(models.User)
+            .filter(models.User.id.in_(late_contributor_ids))
+            .all()
+        )
+
+        late_recipients_dict = {late_recipient.id: f"{late_recipient.first_name} {late_recipient.last_name}" for late_recipient in late_recipients}
+        late_contributors_dict = {late_contributor.id: f"{late_contributor.first_name} {late_contributor.last_name}" for late_contributor in late_contributors}
+
+        if not late_disbursement_records:
+            late_disbursement_records = []
+
+        if not disbursement_records and not late_disbursement_records:
+            return {
+                "activity_id": activity_id,
+                "disbursement_records": [],
+                "late_disbursement_records": [],
+            }
+        
+        if disbursement_records:
+            disbursement_records_list = [
+                {
+                    "cycle_number": record.cycle_number,
+                    "order_in_rotation": record.order_in_rotation,
+                    "received_amount": record.received_amount,
+                    "expected_amount": record.expected_amount,
+                    "share_name": record.share_name,
+                    "receiving_date": record.receiving_date.strftime("%d-%B-%Y"),
+                    "disbursement": "Complete" if record.fulfilled else "Incomplete",
+                    "user_name": record.user_name,
+                }
+                for record in disbursement_records
+            ]
+
+        late_disbursement_records_list = []
+        if late_disbursement_records:
+            late_disbursement_records_list = [
+                {
+                    "pending_amount": late_record.late_contribution,
+                    "missed_date": late_record.missed_rotation_date.strftime("%d-%B-%Y"),
+                    "recipient_name": late_recipients_dict[late_record.late_recipient_id],
+                    "contributor_name": late_contributors_dict[late_record.late_contributor_id],
+                }
+                for late_record in late_disbursement_records
+            ]
+
+        return {
+            "chama_id": activity.chama_id,
+            "activity_id": activity_id,
+            "expected_amount": disbursement_records[0].expected_amount if disbursement_records else 0,
+            "disbursement_records": disbursement_records_list,
+            "late_disbursement_records": late_disbursement_records_list,
+        }
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Failed to get activity disbursement records(http error): {http_exc}"
+        )
+        raise http_exc
+    except Exception as e:
+        management_error_logger.error(
+            f"Failed to get activity disbursement records(exception error): {str(e)}"
+        )
+        raise HTTPException(
+            status_code=400, detail=f"Failed to get activity disbursement records {str(e)}"
+        )

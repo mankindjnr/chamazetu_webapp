@@ -1436,12 +1436,17 @@ async def auto_disburse_late_contributions(
                     == models.RotationOrder.receiving_date,
                     models.LateRotationDisbursements.activity_id
                     == models.RotationOrder.activity_id,
-                    models.RotationOrder.fulfilled == False,
                 ),
             )
             .filter(models.LateRotationDisbursements.disbursement_completed == False)
             .all()
         )
+        """
+        the above route might need to add filterr of is_fulfilled = False
+        expected_amount != contributed_amount
+        remember late disbursement include fines which are not part of the expected amount
+        #TODO: this is an assumption but wait till more testing is done
+        """
 
         if not late_disbursements:
             return {"message": "No recipients found for disbursement"}

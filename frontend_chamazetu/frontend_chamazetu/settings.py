@@ -33,7 +33,7 @@ ALLOWED_HOSTS = [
     "frontend.192.168.100.7.nip.io",
     "34.45.2.223",
     "35.223.24.137",
-    "eea0-102-213-49-8.ngrok-free.app",
+    "ccc4-102-213-49-8.ngrok-free.app",
 ]
 
 
@@ -78,7 +78,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://0.0.0.0:8000",
     "https://192.168.242.254:8000",
     "https://frontend.192.168.100.7.nip.io",
-    "https://eea0-102-213-49-8.ngrok-free.app",
+    "https://ccc4-102-213-49-8.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -87,7 +87,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://frontend.192.168.100.7.nip.io",
-    "https://eea0-102-213-49-8.ngrok-free.app",
+    "https://ccc4-102-213-49-8.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"

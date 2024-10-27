@@ -330,7 +330,7 @@ async def from_wallet_to_select_activity(request, chama_id, chama_name):
     if expected_contribution == 0:
         messages.error(request, "You have already contributed the expected amount")
         return HttpResponseRedirect(
-            reverse("member:access_chama", args=[chama_name, chama_i])
+            reverse("member:access_chama", args=[chama_name, chama_id])
         )
 
     # make a unified wallet contribution

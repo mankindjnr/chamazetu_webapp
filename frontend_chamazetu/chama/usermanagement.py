@@ -1,7 +1,7 @@
 import requests, jwt, json, os
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, HttpResponseServerError, JsonResponse
 from django.urls import reverse
 from functools import wraps
 from asgiref.sync import sync_to_async
@@ -36,9 +36,8 @@ def validate_token(request):
 
 
 def refresh_token(request):
-    print("---------refresh_token-PATH--------")
-    print(request.path)  # /manager/chama/vuka
     try:
+        current_role = request.COOKIES.get("current_role")
         refresh_token = request.COOKIES.get("refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
@@ -58,7 +57,8 @@ def refresh_token(request):
         )
         refresh_data = refresh_access.json()
         new_access_token = refresh_data["new_access_token"]
-        response = HttpResponseRedirect(request.path)
+        referer = request.META.get("HTTP_REFERER", f"{current_role}:dashboard")
+        response = HttpResponseRedirect(referer)
         response.set_cookie(
             "access_token",
             f"Bearer {new_access_token}",
@@ -71,14 +71,12 @@ def refresh_token(request):
         print("---------invalid_token---------")
         return HttpResponseRedirect(reverse("chama:signin"))
     except Exception as e:
-        print("---------error---------")
         return HttpResponseRedirect(reverse("chama:signin"))
 
 
 async def refresh_token_async(request):
-    print("---------refresh_token-PATH--------")
-    print(request.path)  # /manager/chama/vuka
     try:
+        current_role = request.COOKIES.get("current_role")
         refresh_token = request.COOKIES.get("refresh_token").split(" ")[1]
         print("---------refreshing_token---------")
         decoded_token = jwt.decode(
@@ -98,7 +96,8 @@ async def refresh_token_async(request):
         )
         refresh_data = refresh_access.json()
         new_access_token = refresh_data["new_access_token"]
-        response = HttpResponseRedirect(request.path)
+        referer = request.META.get("HTTP_REFERER", f"{current_role}:dashboard")
+        response = HttpResponseRedirect(referer)
         response.set_cookie(
             "access_token",
             f"Bearer {new_access_token}",
@@ -111,7 +110,6 @@ async def refresh_token_async(request):
         print("---------invalid_token---------")
         return HttpResponseRedirect(reverse("chama:signin"))
     except Exception as e:
-        print("---------error---------")
         return HttpResponseRedirect(reverse("chama:signin"))
 
 

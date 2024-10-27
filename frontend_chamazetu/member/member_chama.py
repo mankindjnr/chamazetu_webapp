@@ -20,6 +20,7 @@ from chama.decorate.validate_refresh_token import (
 from chama.rawsql import execute_sql
 from chama.chamas import (
     get_chama_id,
+    get_chama_name,
     get_chama_contribution_day,
     get_previous_contribution_date,
     public_chama_threads,
@@ -123,6 +124,12 @@ async def view_private_chama(request, chamaid):
 
     return redirect(reverse("member:dashboard"))
 
+# this will take chama_id, get its name and redirect to the access_chama view
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def get_chama_view(request, chama_id):
+    chama_name = get_chama_name(chama_id)
+    return redirect(reverse("member:access_chama", args=[chama_name, chama_id]))
 
 # viewing a chamas in the member dashboard where they can interact with specifc chama
 @async_tokens_in_cookies()

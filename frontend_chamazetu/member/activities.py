@@ -695,7 +695,7 @@ async def get_late_joining_activity_page(request, activity_id):
     if resp.status_code == HTTPStatus.OK:
         data = resp.json()
         print("=====late joining data=====")
-        print(data)
+        # print(data)
         return render(
             request,
             "member/activity_late_join_page.html",
@@ -706,7 +706,6 @@ async def get_late_joining_activity_page(request, activity_id):
         )
     else:
         print("=====failed to get late joining data=====")
-        print(resp.json())
         messages.error(request, f"{resp.json()['detail']}")
 
     referer = request.META.get("HTTP_REFERER", 'member:dashboard')
@@ -716,4 +715,59 @@ async def get_late_joining_activity_page(request, activity_id):
 @async_validate_and_refresh_token()
 async def join_activity_late(request, activity_id):
     if request.method == "POST":
-        pass
+        try:
+            max_shares = int(request.POST.get("max_shares"))
+            new_shares = int(request.POST.get("new_shares"))
+
+            if new_shares <= 0:
+                messages.error(request, "Invalid number of shares")
+                raise ValueError("Invalid number of shares")
+            if new_shares > max_shares:
+                messages.error(request, "max shares exceeded, choose a lower number")
+                raise ValueError("max shares exceeded, choose a lower number")
+
+            url = f"{os.getenv('api_url')}/members/join_merry_go_round_activity_late/{activity_id}"
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            }
+            data = {
+                "new_shares": new_shares,
+            }
+
+            resp = requests.post(url, headers=headers, json=data)
+            if resp.status_code == HTTPStatus.CREATED:
+                messages.success(request, "Successfully joined activity")
+                referer = request.META.get("HTTP_REFERER", "member:dashboard")
+                return HttpResponseRedirect(referer)  
+            else:
+                messages.error(request, f"{resp.json()['detail']}")
+                raise ValueError("Error: ")
+        except Exception as e:
+            fallback = reverse("member:get_late_joining_activity_page", args=[activity_id])
+            return HttpResponseRedirect(request.META.get("HTTP_REFERER", fallback))
+
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
+
+
+async def get_disbursement_records(request, activity_id):
+    url = f"{os.getenv('api_url')}/activities/disbursement_records/{activity_id}"
+    response = requests.get(url)
+
+    if response.status_code == HTTPStatus.OK:
+        data = response.json()
+        return render(
+            request,
+            "member/disbursement_records.html",
+            {
+                "activity_id": activity_id,
+                "disbursements": data,
+            },
+        )
+    else:
+        messages.error(request, "Failed to get disbursement records")
+
+    # fall back will be the rotation contributions page
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)

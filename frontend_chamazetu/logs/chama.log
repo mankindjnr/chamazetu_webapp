@@ -2604,3 +2604,18 @@ INFO 2024-10-25 12:24:38,261 tasks Nairobi: 2024-10-25 12:24:38.261407+03:00
 INFO 2024-10-25 12:24:38,355 tasks ==========chama/tasks.py: check_and_update_activities_accepting_members_status()==========
 INFO 2024-10-25 12:24:38,356 tasks Task ran at: 2024-10-25 12:24:38.356152
 INFO 2024-10-25 12:24:38,357 tasks Nairobi: 2024-10-25 12:24:38.357488+03:00
+INFO 2024-10-27 09:41:41,908 tasks =chama/tasks.py: setfines_updatedays_autodisburse_rotations_chain()=
+INFO 2024-10-27 09:41:41,978 tasks Task ran at: 2024-10-27 09:41:41.978170
+INFO 2024-10-27 09:41:41,978 tasks Nairobi: 2024-10-27 09:41:41.978570+03:00
+INFO 2024-10-27 09:41:41,987 tasks ==========chama/tasks.py: set_fines_for_missed_contributions()==========
+INFO 2024-10-27 09:41:41,987 tasks Task ran at: 2024-10-27 09:41:41.987400
+INFO 2024-10-27 09:41:41,987 tasks Nairobi: 2024-10-27 09:41:41.987844+03:00
+INFO 2024-10-27 09:41:42,465 tasks ==========chama/tasks.py: update_contribution_days()==========
+INFO 2024-10-27 09:41:42,466 tasks Task ran at: 2024-10-27 09:41:42.466332
+INFO 2024-10-27 09:41:42,467 tasks Nairobi: 2024-10-27 09:41:42.466921+03:00
+INFO 2024-10-27 09:41:42,557 tasks ==========member/tasks.py: auto_disburse_to_walletts()==========
+INFO 2024-10-27 09:41:42,558 tasks Task ran at: 2024-10-27 09:41:42.558299
+INFO 2024-10-27 09:41:42,559 tasks Nairobi: 2024-10-27 09:41:42.559017+03:00
+INFO 2024-10-27 09:41:42,822 tasks ==========chama/tasks.py: create_rotating_contributions()==========
+INFO 2024-10-27 09:41:42,823 tasks Task ran at: 2024-10-27 09:41:42.823521
+INFO 2024-10-27 09:41:42,823 tasks Nairobi: 2024-10-27 09:41:42.823866+03:00

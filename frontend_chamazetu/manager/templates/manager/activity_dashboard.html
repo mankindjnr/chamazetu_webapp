@@ -96,6 +96,15 @@
       </li>
       {% endif %}
 
+      {% if activity.activity_type == 'table-banking' %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-table-fill"></i>
+          <span>Table Banking</span> 
+        </a>
+      </li>
+      {% endif %}
+
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:fines_tracker' activity.activity_name activity_id %}">
           <i class="ri-close-circle-line"></i>
@@ -115,7 +124,7 @@
           <i class="ri-article-line"></i>
           <span>About Activity</span> 
         </a>
-      </li><!-- End about Page Nav -->
+      </li>
 
       <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_about_chama' chama_name %}">
@@ -208,6 +217,7 @@
             </div><!-- End account Card -->
 
               <!-- rotating contributions -->
+               {% if activity.activity_type == 'merry-go-round' %}
               <div class="col-12">
                 <div class="card recent-sales overflow-auto">
   
@@ -246,6 +256,7 @@
   
                 </div>
               </div><!-- End rotating contributions -->
+              {% endif %}
 
           </div>
         </div><!-- End Left side columns -->
@@ -306,6 +317,14 @@
     </section>
 
   </main><!-- End #main -->
+
+  <style>
+    a[disabled] {
+      pointer-events: none;
+      color: gray; /* Optional: Change the color to indicate it's disabled */
+      cursor: default;
+    }
+  </style>
   
 
  {% endblock %}

@@ -45,7 +45,18 @@ async def create_unprocessed_deposit_transaction(
             if not chama:
                 raise HTTPException(status_code=404, detail="Chama not found")
 
-            if chama.last_joining_date.date() < today:
+            chama_activities = db.query(models.Activity).filter(models.Activity.chama_id == chama_id).all()
+            activities_ids = [activity.id for activity in chama_activities]
+
+            late_joining_open = db.query(models.MerryGoRoundShareIncrease).filter(
+                and_(
+                    models.MerryGoRoundShareIncrease.activity_id.in_(activities_ids),
+                    func.DATE(models.MerryGoRoundShareIncrease.deadline) >= today,
+                )
+            ).all()
+                
+
+            if chama.last_joining_date.date() < today and not late_joining_open:
                 raise HTTPException(
                     status_code=400, detail="Chama registration period has ended"
                 )

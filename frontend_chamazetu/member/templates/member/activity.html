@@ -149,6 +149,7 @@
       </li>
 
       <!-- dropdown options -->
+       {% if activity_type == 'merry-go-round' %}
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#components-nav" data-bs-toggle="collapse" href="#">
           <i class="ri-user-settings-fill"></i></i><span>Share Management</span><i class="bi bi-chevron-down ms-auto"></i>
@@ -171,6 +172,7 @@
           </li>
         </ul>
       </li><!-- End dropdown -->
+      {% endif %}
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:get_about_activity' activity_name activity_id %}">

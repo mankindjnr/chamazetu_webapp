@@ -97,7 +97,7 @@
 
       <!-- TODO: Daily performance tracker -->
       <li class="nav-item">
-        <a class="nav-link collapsed" href="#">
+        <a class="nav-link collapsed" href="#" disabled>
           <i class="bi bi-grid"></i>
           <span>MMF performance</span> 
         </a>
@@ -107,6 +107,13 @@
         <a class="nav-link collapsed" href="{% url 'manager:membership_management' chama_id %}">
           <i class="ri-admin-fill"></i>
           <span>Membership Management</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="" disabled>
+          <i class="ri-file-paper-2-fill"></i>
+          <span>Constitution</span>
         </a>
       </li>
 
@@ -171,7 +178,8 @@
                         <div class="mb-3">
                           <label for="activity_type" class="form-label">Activity Type *</label>
                           <select class="form-select" id="activity_type" name="activity_type" onchange="showActivityOptions()">
-                            <option value="merry-go-round">merry-go-round</option>
+                            <option value="merry-go-round">Merry-Go-Round</option>
+                            <option value="table-banking">Table Banking</option>
                             <option value="saving">Saving</option>
                             <option value="welfare">Welfare</option>
                           </select>
@@ -803,5 +811,12 @@
 });
   </script>
   
+  <style>
+    a[disabled] {
+      pointer-events: none;
+      color: gray; /* Optional: Change the color to indicate it's disabled */
+      cursor: default;
+    }
+  </style>
 
  {% endblock %}

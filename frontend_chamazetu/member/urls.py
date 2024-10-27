@@ -15,6 +15,7 @@ urlpatterns = [
     path(
         "change_password/<int:user_id>", views.change_password, name="change_password"
     ),
+    path("get_chama_view/<int:chama_id>", views.get_chama_view, name="get_chama_view"),
     path(
         "access_chama/<str:chamaname>/<int:chama_id>",
         views.access_chama,
@@ -147,5 +148,10 @@ urlpatterns = [
         "join_activity_late/<int:activity_id>",
         views.join_activity_late,
         name="join_activity_late",
+    ),
+    path(
+        "get_disbursement_records/<int:activity_id>",
+        views.get_disbursement_records,
+        name="get_disbursement_records",
     ),
 ]

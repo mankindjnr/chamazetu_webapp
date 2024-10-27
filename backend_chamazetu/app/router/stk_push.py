@@ -139,13 +139,13 @@ async def stk_push(
         raise HTTPException(status_code=500, detail="Failed to generate access token")
 
     password, timestamp = generate_password()
-    callback_url = (
-        "https://chamazetu.com/api/callback/c2b"
-        if push_data.description != "Registration"
-        else "https://chamazetu.com/api/callback/registration"
-    )
+    # callback_url = (
+    #     "https://chamazetu.com/api/callback/c2b"
+    #     if push_data.description != "Registration"
+    #     else "https://chamazetu.com/api/callback/registration"
+    # )
 
-    # callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/registration"
+    callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/registration"
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}

@@ -138,6 +138,13 @@
       </li>
 
       <li class="nav-item">
+        <a class="nav-link collapsed" href="" disabled>
+          <i class="ri-file-paper-2-fill"></i>
+          <span>Constitution</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:get_about_chama' chama_name chama_id %}">
           <i class="ri-article-line"></i>
           <span>About Chama</span> 
@@ -209,7 +216,7 @@
 
                     <div class="d-flex justify-content-end">
                       <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('walletForm').style.display = 'none';">Close</button>
-                      <button type="submit" class="btn btn-outline-success btn-sm">Deposit</button>
+                      <button type="submit" class="btn btn-outline-success btn-sm">Contribute</button>
                     </div>
 
                   </form>
@@ -443,6 +450,14 @@
       });
   });
   </script>
+
+<style>
+  a[disabled] {
+    pointer-events: none;
+    color: gray; /* Optional: Change the color to indicate it's disabled */
+    cursor: default;
+  }
+</style>
   
 
 
