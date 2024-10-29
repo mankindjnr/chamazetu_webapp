@@ -183,6 +183,7 @@ async def access_activity(request, chama_name, chama_id, activity_type, activity
                 "weekly_headers": weekly_headers,
                 "weekly_contributions": weekly_contributions,
                 "wallet_balance": activity_data["wallet_balance"],
+                "personal_loan": activity_data["personal_loan"] if activity_data["activity_type"] == "table-banking" else None,
             },
         )
     return HttpResponseRedirect(
@@ -421,11 +422,14 @@ async def get_activity_data(request, activity_id, headers):
 
     if resp.status_code == HTTPStatus.OK:
         data = resp.json()
-        print("====generic data=====")
+        print("====all activities data=====")
         # print(data)
         return data
     else:
-        return None
+        messages.error(request, "Failed to get activity data")
+    
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
 
 
 # this will retrieve both the recent activity member transactions and also those done by the manager in that activity account

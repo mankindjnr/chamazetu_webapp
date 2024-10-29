@@ -999,3 +999,17 @@ class newChamaMembers(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Tbale banking
+class TableBankingRateBase(BaseModel):
+    interest_rate: float
+
+    class Config:
+        from_attributes = True
+
+class TableBankingRequestLoan(BaseModel):
+    requested_amount: int
+    contribution_day_is_today: bool
+
+    class Config:
+        from_attributes = True

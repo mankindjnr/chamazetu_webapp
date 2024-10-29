@@ -98,9 +98,23 @@
 
       {% if activity.activity_type == 'table-banking' %}
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
+        <a class="nav-link collapsed" href="{% url 'manager:get_soft_loans' activity_id %}">
           <i class="ri-table-fill"></i>
-          <span>Table Banking</span> 
+          <span>Soft Loans</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
+          <i class="ri-settings-5-fill"></i>
+          <span>Loan Settings</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:loan_eligibility' activity_id %}">
+          <i class="ri-settings-5-fill"></i>
+          <span>Eligibility Settings</span> 
         </a>
       </li>
       {% endif %}
@@ -172,8 +186,8 @@
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <!-- TODO:clickable to view fines tracker page -->
-                  <h5 class="card-title">missed contributions <span>| Total</span></h5>
+                  <!-- TODO:clickable to view the loans tracker page -->
+                  <h5 class="card-title">Unpaid Loans<span>| Total</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">

@@ -27,6 +27,7 @@ from .router import (
     stk_push,
     activities,
     chamazetu_admin,
+    table_banking,
 )
 
 setup_logging()
@@ -69,7 +70,7 @@ app.include_router(stk_push.router)
 app.include_router(activities.router)
 app.include_router(chamazetu_admin.router)
 app.include_router(sms_callback.router)
-
+app.include_router(table_banking.router)
 
 @app.get("/")
 async def root():

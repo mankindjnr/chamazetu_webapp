@@ -164,4 +164,39 @@ urlpatterns = [
         views.allow_new_activity_members,
         name="allow_new_activity_members",
     ),
+    path(
+        "get_soft_loans/<int:activity_id>",
+        views.get_soft_loans,
+        name="get_soft_loans",
+    ),
+    path(
+        "set_update_table_banking_interest_rate/<int:activity_id>",
+        views.set_update_table_banking_interest_rate,
+        name="set_update_table_banking_interest_rate",
+    ),
+    path(
+        "get_loan_settings/<int:activity_id>",
+        views.get_loan_settings,
+        name="get_loan_settings",
+    ),
+    path(
+        "update_loan_approval_settings/<int:activity_id>",
+        views.update_loan_approval_settings,
+        name="update_loan_approval_settings",
+    ),
+    path(
+        "loan_eligibility/<int:activity_id>",
+        views.loan_eligibility,
+        name="loan_eligibility",
+    ),
+    path(
+        "restrict_user/<int:activity_id>/<int:user_id>",
+        views.restrict_user,
+        name="restrict_user",
+    ),
+    path(
+        "allow_user/<int:activity_id>/<int:user_id>",
+        views.allow_user,
+        name="allow_user",
+    ),
 ]

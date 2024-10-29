@@ -485,11 +485,6 @@ async def contribute_to_merry_go_round(
             .filter(models.ActivityContributionDate.activity_id == activity_id)
             .scalar()
         )
-        print("expected_amount:", expected_amount)
-        print("amount:", amount)
-        print("user_id:", user_id, "email:", current_user.email)
-        print("transaction_date:", transaction_date)
-        print("next_contribution_date:", next_contribution_date)
 
         user = db.query(models.User).filter(models.User.id == user_id).first()
         wallet_id = user.wallet_id

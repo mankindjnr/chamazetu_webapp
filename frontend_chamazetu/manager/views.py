@@ -48,4 +48,14 @@ from .manage_activities import (
 
 from .manage_members import membership_management, allow_new_members
 
+from .table_banking import (
+    get_soft_loans,
+    set_update_table_banking_interest_rate,
+    get_loan_settings,
+    update_loan_approval_settings,
+    loan_eligibility,
+    restrict_user,
+    allow_user,
+)
+
 

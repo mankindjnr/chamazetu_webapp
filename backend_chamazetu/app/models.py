@@ -153,6 +153,12 @@ class User(Base):
         "LateRotationDisbursements",
         foreign_keys="LateRotationDisbursements.late_recipient_id",
     )
+    table_banking_requested_loans = relationship(
+        "TableBankingRequestedLoans", back_populates="user"
+    )
+    table_banking_loan_eligibility = relationship(
+        "TableBankingLoanEligibility", back_populates="user"
+    )
 
 
 class Chama(Base):
@@ -224,6 +230,9 @@ class Chama(Base):
         "LateRotationDisbursements", back_populates="chama"
     )
     chama_late_joining = relationship("ChamaLateJoining", back_populates="chama")
+    table_banking_dividends = relationship(
+        "TableBankingDividend", back_populates="chama"
+    )
 
 
 # listen to the before_insert event to automatically set chama_code
@@ -303,6 +312,21 @@ class Activity(Base):
     )
     merry_go_round_share_increase = relationship(
         "MerryGoRoundShareIncrease", back_populates="activity"
+    )
+    table_banking_dividends = relationship(
+        "TableBankingDividend", back_populates="activity"
+    )
+    table_banking_loan_management = relationship(
+        "TableBankingLoanManagement", back_populates="activity"
+    )
+    table_banking_requested_loans = relationship(
+        "TableBankingRequestedLoans", back_populates="activity"
+    )
+    table_banking_loan_settings = relationship(
+        "TableBankingLoanSettings", back_populates="activity"
+    )
+    table_banking_loan_eligibility = relationship(
+        "TableBankingLoanEligibility", back_populates="activity"
     )
 
 
@@ -792,3 +816,87 @@ class ChamaLateJoining(Base):
 
     # relationships
     chama = relationship("Chama", back_populates="chama_late_joining")
+
+
+class TableBankingDividend(Base):
+    __tablename__ = "table_banking_dividends"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    chama_id = Column(Integer, ForeignKey("chamas.id"), index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    unpaid_dividend_amount = Column(Float, nullable=False)
+    total_dividend_amount = Column(Float, nullable=False)
+    cycle_number = Column(Integer, nullable=False)
+
+    # relationships
+    chama = relationship("Chama", back_populates="table_banking_dividends")
+    activity = relationship("Activity", back_populates="table_banking_dividends")
+
+
+class TableBankingLoanManagement(Base):
+    __tablename__ = "table_banking_loan_management"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    total_loans_taken = Column(Float, nullable=False)
+    unpaid_loans = Column(Float, nullable=False)
+    paid_loans = Column(Float, nullable=False)
+    cycle_number = Column(Integer, nullable=False)
+
+    # relationships
+    activity = relationship("Activity", back_populates="table_banking_loan_management")
+
+
+class TableBankingLoanSettings(Base):
+    __tablename__ = "table_banking_loan_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    await_approval = Column(Boolean, default=False)
+    interest_rate = Column(Float, nullable=False)
+    grace_period = Column(Integer, nullable=False) #in days
+    updated_at = Column(DateTime, default=nairobi_now)
+
+    # relationships
+    activity = relationship("Activity", back_populates="table_banking_loan_settings")
+
+class TableBankingRequestedLoans(Base):
+    __tablename__ = "table_banking_requested_loans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    user_name = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    requested_amount = Column(Float, nullable=False)
+    standing_balance = Column(Float, nullable=False)
+    missed_payments = Column(Integer, nullable=False)
+    expected_interest = Column(Float, nullable=False)
+    total_required = Column(Float, nullable=False)
+    total_repaid = Column(Float, nullable=False)
+    loan_cleared = Column(Boolean, default=False)
+    request_date = Column(DateTime, default=nairobi_now)
+    expected_repayment_date = Column(DateTime, nullable=False)
+    repaid_date = Column(DateTime, nullable=True)
+    cycle_number = Column(Integer, nullable=False)
+    loan_approved = Column(Boolean, default=False)
+    loan_approved_date = Column(DateTime, nullable=True)
+
+    # relationships
+    activity = relationship("Activity", back_populates="table_banking_requested_loans")
+    user = relationship("User", back_populates="table_banking_requested_loans")
+
+class TableBankingLoanEligibility(Base):
+    __tablename__ = "table_banking_loan_eligibility"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    user_name = Column(String, nullable=False)
+    eligible = Column(Boolean, default=False)
+    loan_limit = Column(Float, nullable=True)
+    updated_at = Column(DateTime, default=nairobi_now)
+
+    # relationships
+    activity = relationship("Activity", back_populates="table_banking_loan_eligibility")
+    user = relationship("User", back_populates="table_banking_loan_eligibility")

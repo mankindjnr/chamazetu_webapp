@@ -10,9 +10,6 @@ from calendar import monthrange
 import calendar
 from sqlalchemy import func, update, and_, table, column, desc, select, insert
 
-#
-
-
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/activities", tags=["activities"])
@@ -639,6 +636,20 @@ async def get_activity_data(
             or 0.0
         )
 
+        # if this is a table-banking activity, fetch loans data for user
+        personal_loan = 0
+        if activity.activity_type == "table-banking":
+            personal_loan = (
+                db.query(func.coalesce(func.sum(models.TableBankingRequestedLoans.total_required), 0))
+                .filter(
+                    models.TableBankingRequestedLoans.user_id == current_user.id,
+                    models.TableBankingRequestedLoans.activity_id == activity_id,
+                    models.TableBankingRequestedLoans.loan_cleared == False,
+                )
+                .scalar()
+                or 0
+            )
+
         ## sum todays contributions to this activity
         today = datetime.now(nairobi_tz).date()
         today_contributions = (
@@ -771,6 +782,7 @@ async def get_activity_data(
             ]
 
         activity_data = {
+            "personal_loan": personal_loan,
             "activity_id": activity.id,
             "activity_name": activity.activity_title,
             "activity_type": activity.activity_type,

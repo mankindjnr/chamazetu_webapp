@@ -154,4 +154,14 @@ urlpatterns = [
         views.get_disbursement_records,
         name="get_disbursement_records",
     ),
+    path(
+        "get_soft_loans_page/<int:activity_id>",
+        views.get_soft_loans_page,
+        name="get_soft_loans_page",
+    ),
+    path(
+        "request_soft_loan/<int:activity_id>",
+        views.request_soft_loan,
+        name="request_soft_loan",
+    ),
 ]

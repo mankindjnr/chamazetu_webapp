@@ -41,3 +41,5 @@ from .profile_update import (
     update_linkedin_handle,
     update_facebook_handle,
 )
+
+from .table_banking import get_soft_loans_page, request_soft_loan

@@ -127,6 +127,15 @@
       </li>
       {% endif %}
 
+      {% if activity_type == 'table-banking' %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_soft_loans_page' activity_id %}">
+          <i class="ri-receipt-line"></i>
+          <span>Soft Loans</span> 
+        </a>
+      </li>
+      {% endif %}
+
       <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="">
           <i class="ri-receipt-line"></i>
@@ -188,7 +197,13 @@
   <main id="main" class="main">
 
     <div class="pagetitle d-flex justify-content-between align-items-center">
-      <h1>{{ activity_name }}</h1>
+      {% if activity_type == 'table-banking' and personal_loan > 0 %}
+      <button type="button" class="btn btn-success btn-sm" id="repayLoanBtn">
+        Pay Loan
+      </button>
+      {% else %}
+      <h5>{{ activity_name }}</h5>
+      {% endif %}
 
       <!-- messages after deposit trial -->
       {% if messages %}
@@ -270,26 +285,49 @@
             {% else %}
 
             <!-- Deposit Card -->
-              <div class="col-xxl-4 col-md-6">
-                <div class="card info-card sales-card">
+             {% if activity_type == 'table-banking' and personal_loan > 0 %}
+                <div class="col-xxl-4 col-md-6">
+                  <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
-                  <div class="card-body">
-                    <h5 class="card-title">Contributions <span>| Today</span></h5>
+                    <div class="card-body">
+                      <h5 class="card-title">Personal Loan <span>| Unpaid</span></h5>
 
-                    <div class="d-flex align-items-center">
-                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <small>Ksh:</small>
-                      </div>
-                      <div class="ps-3">
-                        <h6>{{ today_contributions }}</h6>
-                        <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+                      <div class="d-flex align-items-center">
+                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                          <small>Ksh:</small>
+                        </div>
+                        <div class="ps-3">
+                          <h6>0</h6>
+                          <!-- taken, standing, interest, total -->
+                          <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
 
+                        </div>
                       </div>
                     </div>
-                  </div>
 
+                  </div>
+                </div><!-- End deposit Card -->
+                {% else %}
+                <div class="col-xxl-4 col-md-6">
+                  <div class="card info-card sales-card">
+
+                    <div class="card-body">
+                      <h5 class="card-title">Contributions<span>| Today</span></h5>
+
+                      <div class="d-flex align-items-center">
+                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                          <small>Ksh:</small>
+                        </div>
+                        <div class="ps-3">
+                          <h6>{{ today_contributions }}</h6>
+
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
-              </div><!-- End deposit Card -->
+                {% endif %}
               {% endif %}
 
 
