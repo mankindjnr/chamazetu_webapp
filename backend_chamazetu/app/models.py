@@ -825,8 +825,8 @@ class TableBankingDividend(Base):
 
     chama_id = Column(Integer, ForeignKey("chamas.id"), index=True)
     activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
-    unpaid_dividend_amount = Column(Float, nullable=False)
-    total_dividend_amount = Column(Float, nullable=False)
+    unpaid_dividends = Column(Float, nullable=False)
+    paid_dividends = Column(Float, nullable=False)
     cycle_number = Column(Integer, nullable=False)
 
     # relationships
@@ -857,6 +857,7 @@ class TableBankingLoanSettings(Base):
     interest_rate = Column(Float, nullable=False)
     grace_period = Column(Integer, nullable=False) #in days
     updated_at = Column(DateTime, default=nairobi_now)
+    cycle_number = Column(Integer, nullable=False)
 
     # relationships
     activity = relationship("Activity", back_populates="table_banking_loan_settings")

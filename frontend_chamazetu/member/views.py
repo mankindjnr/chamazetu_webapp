@@ -15,6 +15,7 @@ from .member_chama import (
 )
 from .activities import (
     join_activity,
+    get_activity,
     access_activity,
     view_activity_members,
     get_about_activity,
@@ -42,4 +43,4 @@ from .profile_update import (
     update_facebook_handle,
 )
 
-from .table_banking import get_soft_loans_page, request_soft_loan
+from .table_banking import soft_loans, request_soft_loan

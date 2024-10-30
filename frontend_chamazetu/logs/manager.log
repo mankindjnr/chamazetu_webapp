@@ -1172,3 +1172,15 @@ INFO 2024-10-29 08:40:43,994 tasks Nairobi: 2024-10-29 08:40:43.994532+03:00
 INFO 2024-10-29 09:18:05,315 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
 INFO 2024-10-29 09:18:05,333 tasks Task ran at: 2024-10-29 09:18:05.333418
 INFO 2024-10-29 09:18:05,333 tasks Nairobi: 2024-10-29 09:18:05.333829+03:00
+INFO 2024-10-30 08:10:45,972 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-10-30 08:10:46,158 tasks Task ran at: 2024-10-30 08:10:46.158318
+INFO 2024-10-30 08:10:46,159 tasks Nairobi: 2024-10-30 08:10:46.158946+03:00
+INFO 2024-10-30 08:13:46,170 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-10-30 08:13:46,171 tasks Task ran at: 2024-10-30 08:13:46.171650
+INFO 2024-10-30 08:13:46,172 tasks Nairobi: 2024-10-30 08:13:46.172310+03:00
+INFO 2024-10-30 08:16:46,184 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-10-30 08:16:46,184 tasks Task ran at: 2024-10-30 08:16:46.184874
+INFO 2024-10-30 08:16:46,185 tasks Nairobi: 2024-10-30 08:16:46.185170+03:00
+INFO 2024-10-30 08:19:46,190 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-10-30 08:19:46,190 tasks Task ran at: 2024-10-30 08:19:46.190413
+INFO 2024-10-30 08:19:46,190 tasks Nairobi: 2024-10-30 08:19:46.190687+03:00

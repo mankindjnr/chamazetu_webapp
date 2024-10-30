@@ -39,7 +39,7 @@ load_dotenv()
 
 @async_tokens_in_cookies()
 @async_validate_and_refresh_token()
-async def get_soft_loans_page(request, activity_id):
+async def soft_loans(request, activity_id):
     url = f"{os.getenv('API_URL')}/table_banking/soft_loans/members/{activity_id}"
     headers = {
         "Content-Type": "application/json",
@@ -60,29 +60,32 @@ async def get_soft_loans_page(request, activity_id):
 @async_validate_and_refresh_token()
 async def request_soft_loan(request, activity_id):
     if request.method == "POST":
-        amount = request.POST.get("amount").strip()
-        if not amount or amount.isdigit() or int(amount) >= 1000:
+        amount = request.POST.get("request_amount").strip()
+        if not amount or not amount.isdigit() or int(amount) < 1000:
             messages.error(request, "Amount must be a number and greater than 999")
-            return redirect("member:get_soft_loans_page", activity_id=activity_id)
+            return redirect("member:soft_loans", activity_id=activity_id)
 
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
         }
+        print("=========to eligibility")
         eligibility_url = f"{os.getenv('API_URL')}/table_banking/soft_loans/eligibility/{activity_id}"
         eligibility_check = requests.get(eligibility_url, headers=headers)
+
+        print("=========to request")
         
         if eligibility_check.status_code == HTTPStatus.OK:
             url = f"{os.getenv('API_URL')}/table_banking/request_soft_loan/members/{activity_id}"
             data = {
-                "amount": int(amount),
+                "requested_amount": int(amount),
                 "contribution_day_is_today": eligibility_check.json()["contribution_day_is_today"],
             }
             loan_request = requests.post(url, headers=headers, json=data)
             if loan_request.status_code == HTTPStatus.CREATED:
                 messages.success(request, "Soft loan request submitted successfully")
             else:
-                messages.error(request, f"{response.json()['detail']}")
+                messages.error(request, f"{loan_request.json()['detail']}")
         else:
             messages.error(request, f"{eligibility_check.json()['detail']}")
 

@@ -84,6 +84,13 @@
         </a>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_activity' activity_id %}">
+          <i class="bi bi-house"></i>
+          <span>Activity Dashboard</span>
+        </a>
+      </li>
+
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
@@ -139,7 +146,7 @@
                   <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('requestLoanForm').style.display = 'none';" aria-label="Close"></button>
                     <h5 class="card-title">Request Loan</h5>
                     <small class="text-muted">Note: Minimum loan amount is Ksh: 1000</small>
-                  <form action="" method="POST">
+                  <form action="{% url 'member:request_soft_loan' activity_id %}" method="POST">
                     {% csrf_token %}
                     <div class="mb-3">
                       <label for="request_amount" class="form-label">Amount</label>
@@ -266,15 +273,15 @@
                       <td>{{ loan.standing_balance }}</td>
                       <td>{{ loan.expected_interest }} </td>
                       <td>{{ loan.total_required }} </td>
-                      <td>{{ loan.repaid }} </td>
+                      <td>{{ loan.total_repaid }} </td>
                       <td>{{ loan.missed_payments }} </td>
                       <td>{{ loan.requested_on }} </td>
-                      <td>{{ loan.expected_repayment_data }} </td>
+                      <td>{{ loan.expected_repayment_date }} </td>
                       <td>{{ loan.action }} </td>
                       <td>{{ loan.cycle_number }} </td>
                       <!-- <td>
                         love the idea of paying loans individually but it is not practical for now,
-                        <a href="{% url 'member:pay_loan' loan.id %}" class="btn btn-success btn-sm">Pay</a>
+                        <a href="" class="btn btn-success btn-sm">Pay</a>
                       </td> -->
                     </tr>
                     {% endfor %}
@@ -318,11 +325,11 @@
                       <th scope="col">Cycle Number</th>
                     </tr>
                   </thead>
-                  {% if data.my_loans %}
+                  {% if data.other_loans %}
                   <tbody>
-                    {% for loan in data.my_loans %}
+                    {% for loan in data.other_loans %}
                     <tr>
-                      <th scope="row">{{ loan.member }}</th>
+                      <th scope="row">{{ loan.user_name }}</th>
                       <td>{{ loan.requested_amount }}</td>
                       <td>{{ loan.standing_balance }}</td>
                       <td>{{ loan.expected_interest }} </td>
@@ -330,7 +337,7 @@
                       <td>{{ loan.repaid }} </td>
                       <td>{{ loan.missed_payments }} </td>
                       <td>{{ loan.requested_on }} </td>
-                      <td>{{ loan.expected_repayment_data }} </td>
+                      <td>{{ loan.expected_repayment_date }} </td>
                       <td>{{ loan.action }} </td>
                       <td>{{ loan.cycle_number }} </td>
                     </tr>

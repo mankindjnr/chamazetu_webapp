@@ -143,8 +143,6 @@ async def fines_tracker(request, activity_name, activity_id):
 
     if response.status_code == HTTPStatus.OK:
         fines_data = response.json()
-        print("========fines_data========")
-        print(fines_data)
         return render(
             request,
             "manager/fines_tracker.html",
@@ -218,11 +216,6 @@ async def allow_new_activity_members(request, activity_id):
             "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
             "Content-Type": "application/json",
         }
-
-        print("========request.POST========")
-        print(request.POST.get("deadline"))
-        print(request.POST.get("late_fee"))
-        print(request.POST.get("max_shares"))
 
         # get the data from the form(deadline, adjustment fee, max_shares)
         if not request.POST.get("deadline") or not request.POST.get("late_fee") or not request.POST.get("max_shares"):

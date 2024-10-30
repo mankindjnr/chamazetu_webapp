@@ -48,7 +48,6 @@ async def create_activity(
             db.add(new_activity)
             db.flush()  # flush to get the id of the newly created activity
 
-            # add the manager as a member of the activity
             activity_contribution = {
                 "chama_id": activity_data["chama_id"],
                 "activity_id": new_activity.id,
@@ -70,6 +69,18 @@ async def create_activity(
             )
             db.add(new_activity_account)
 
+            # if actvity table-banking, create a loan management and table banking dividends accounts
+            if activity_data["activity_type"] == "table-banking":
+                loan_management_entry = models.TableBankingLoanManagement(
+                    activity_id=new_activity.id, total_loans_taken=0.0, unpaid_loans=0.0, paid_loans=0.0, cycle_number=1
+                )
+                db.add(loan_management_entry)
+
+                table_banking_dividends_entry = models.TableBankingDividend(
+                    chama_id=activity_data["chama_id"], activity_id=new_activity.id, unpaid_dividends=0.0, paid_dividends=0.0, cycle_number=1
+                )
+                db.add(table_banking_dividends_entry)
+
         db.commit()
         # TODO:for mandatory activities, remember to add all members to the activity_members table(many to many)-THINK ABOUT IT
         return {"status": "success", "message": "Activity created successfully"}
@@ -81,6 +92,49 @@ async def create_activity(
         db.rollback()
         management_error_logger.error(f"Failed to create activity: {e}")
         raise HTTPException(status_code=400, detail="Failed to create activity")
+
+# retrieve the chama_name, chama_id, activity_type from activity_id
+@router.get(
+    "/details/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_activity_detail(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        activity = (
+            db.query(models.Activity)
+            .filter(models.Activity.id == activity_id)
+            .first()
+        )
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        chama = (
+            db.query(models.Chama)
+            .filter(models.Chama.id == activity.chama_id)
+            .first()
+        )
+        if not chama:
+            raise HTTPException(
+                status_code=404, detail="Chama not found or does not exist"
+            )
+
+        return {
+            "chama_name": chama.chama_name,
+            "chama_id": chama.id,
+            "activity_type": activity.activity_type,
+        }
+    except HTTPException as e:
+        management_error_logger.error(f"Failed to get activity properties: {e}")
+        raise e
+    except Exception as e:
+        management_error_logger.error(f"Failed to get activity properties: {e}")
+        raise HTTPException(status_code=400, detail="Failed to retrieve activity properties")
 
 
 # retrieve an activity by id as a manager
@@ -122,44 +176,71 @@ async def get_activity_by_id(
             .scalar()
         )
 
-
-        rotation_contributions = (
-            db.query(
-                models.RotatingContributions,
-                models.User.first_name,
-                models.User.last_name,
-            )
-            .join(
-                models.User,
-                models.User.id == models.RotatingContributions.contributor_id,
-            )
+        missed_contributions = (
+            db.query(func.coalesce(func.sum(models.ActivityFine.expected_repayment), 0))
             .filter(
-                and_(
-                    models.RotatingContributions.activity_id == activity_id,
-                    models.RotatingContributions.rotation_date
-                    == next_contribution_date,
-                )
+                models.ActivityFine.activity_id == activity_id,
+                models.ActivityFine.is_paid == False,
             )
-            .all()
+            .scalar()
+            or 0
         )
 
         rotation_contributions_resp = []
+        unpaid_loans = 0
+        if activity.activity_type == "merry-go-round":
+            rotation_contributions = (
+                db.query(
+                    models.RotatingContributions,
+                    models.User.first_name,
+                    models.User.last_name,
+                )
+                .join(
+                    models.User,
+                    models.User.id == models.RotatingContributions.contributor_id,
+                )
+                .filter(
+                    and_(
+                        models.RotatingContributions.activity_id == activity_id,
+                        models.RotatingContributions.rotation_date
+                        == next_contribution_date,
+                    )
+                )
+                .all()
+            )
 
-        if rotation_contributions:
-            rotation_contributions_resp = [
-                {
-                    "contributor_name": f"{contribution.first_name} {contribution.last_name}",
-                    "expected_amount": contribution.RotatingContributions.expected_amount,
-                    "contributed_amount": contribution.RotatingContributions.contributed_amount,
-                    "fine": contribution.RotatingContributions.fine,
-                    "rotation_date": contribution.RotatingContributions.rotation_date.strftime(
-                        "%d-%B-%Y"),
-                    "cycle_number": contribution.RotatingContributions.cycle_number,
-                    "contributing_share": contribution.RotatingContributions.contributing_share,
-                    "recipient_share": contribution.RotatingContributions.recipient_share,
-                }
-                for contribution in rotation_contributions
-            ]
+            if rotation_contributions:
+                rotation_contributions_resp = [
+                    {
+                        "contributor_name": f"{contribution.first_name} {contribution.last_name}",
+                        "expected_amount": contribution.RotatingContributions.expected_amount,
+                        "contributed_amount": contribution.RotatingContributions.contributed_amount,
+                        "fine": contribution.RotatingContributions.fine,
+                        "rotation_date": contribution.RotatingContributions.rotation_date.strftime(
+                            "%d-%B-%Y"),
+                        "cycle_number": contribution.RotatingContributions.cycle_number,
+                        "contributing_share": contribution.RotatingContributions.contributing_share,
+                        "recipient_share": contribution.RotatingContributions.recipient_share,
+                    }
+                    for contribution in rotation_contributions
+                ]
+
+
+        if activity.activity_type == "table-banking":
+            cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+                models.TableBankingLoanManagement.activity_id == activity_id
+            ).scalar()
+
+            loans_data = db.query(models.TableBankingLoanManagement).filter(
+                models.TableBankingLoanManagement.activity_id == activity_id,
+                models.TableBankingLoanManagement.cycle_number == cycle_number
+                ).first()
+
+            unapproved_loans = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.loan_approved == False,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+            ).count()
 
         activity = {
             "chama_id": activity.chama_id,
@@ -168,10 +249,14 @@ async def get_activity_by_id(
             "activity_amount": activity.activity_amount,
             "activity_balance": account,
             "activity_id": activity,
+            "unpaid_loans": loans_data.unpaid_loans if activity.activity_type == "table-banking" else 0,
+            "total_loans_taken": loans_data.total_loans_taken if activity.activity_type == "table-banking" else 0,
+            "unapproved_loans": unapproved_loans if activity.activity_type == "table-banking" else 0,
+            "missed_contributions": missed_contributions,
         }
 
         return {
-            "upcoming_rotation_date": next_contribution_date.strftime("%d-%B-%Y"),
+            "upcoming_contribution_date": next_contribution_date.strftime("%d-%B-%Y"),
             "activity": activity,
             "rotation_contributions": rotation_contributions_resp,
         }
@@ -639,11 +724,13 @@ async def get_activity_data(
         # if this is a table-banking activity, fetch loans data for user
         personal_loan = 0
         if activity.activity_type == "table-banking":
+            print("=======getting personal loan======")
             personal_loan = (
                 db.query(func.coalesce(func.sum(models.TableBankingRequestedLoans.total_required), 0))
                 .filter(
                     models.TableBankingRequestedLoans.user_id == current_user.id,
                     models.TableBankingRequestedLoans.activity_id == activity_id,
+                    models.TableBankingRequestedLoans.loan_approved == True,
                     models.TableBankingRequestedLoans.loan_cleared == False,
                 )
                 .scalar()

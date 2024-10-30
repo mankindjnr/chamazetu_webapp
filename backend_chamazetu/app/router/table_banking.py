@@ -10,6 +10,14 @@ from calendar import monthrange
 import calendar
 from sqlalchemy import func, update, and_, table, column, desc, select, insert
 
+from .date_functions import (
+    calculate_custom_interval,
+    calculate_monthly_interval,
+    calculate_daily_interval,
+    calculate_weekly_interval,
+    calculate_monthly_same_day_interval,
+)
+
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/table_banking", tags=["table_banking"])
@@ -57,6 +65,11 @@ async def set_update_interest_rate(
                 detail="Interest rate cannot be greater than 100",
             )
 
+        # from the loan management table, retrieve the current cycle number
+        cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id
+        ).scalar()
+
         # retrieve current rate if any
         current_rate = db.query(models.TableBankingLoanSettings).filter(
             models.TableBankingLoanSettings.activity_id == activity_id
@@ -68,6 +81,7 @@ async def set_update_interest_rate(
                 interest_rate=interest_rate.interest_rate,
                 grace_period=0,
                 updated_at=today,
+                cycle_number=1,
             )
             db.execute(new_rate)
         else:
@@ -80,6 +94,7 @@ async def set_update_interest_rate(
 
             current_rate.interest_rate = interest_rate.interest_rate
             current_rate.updated_at = today
+            current_rate.cycle_number = cycle_number
 
         db.commit()
 
@@ -184,15 +199,32 @@ async def get_soft_loans_data(
         if not interest_rate:
             return {"message": "Interest rate not set"}
 
-        #TODO: later add a subquery to check for the latest cycle number and filter with that
+        cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id
+        ).scalar()
+
         dividend = db.query(models.TableBankingDividend).filter(
-            models.TableBankingDividend.activity_id == activity_id
+            models.TableBankingDividend.activity_id == activity_id,
+            models.TableBankingDividend.cycle_number == cycle_number,
         ).first()
+
+        loans_management = db.query(models.TableBankingLoanManagement).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id,
+            models.TableBankingLoanManagement.cycle_number == cycle_number,
+        ).first()
+
+        account_balance = db.query(models.Activity_Account.account_balance).filter(
+            models.Activity_Account.activity_id == activity_id
+        ).scalar()
 
         return {
             "interest_rate": interest_rate,
-            "unpaid_dividend": dividend.unpaid_dividend_amount if dividend else 0.0,
-            "total_dividend": dividend.total_dividend_amount if dividend else 0.0,
+            "unpaid_dividend": dividend.unpaid_dividends if dividend else 0.0,
+            "paid_dividends": dividend.paid_dividends if dividend else 0.0,
+            "total_loans_taken": loans_management.total_loans_taken if loans_management else 0.0,
+            "unpaid_loans": loans_management.unpaid_loans if loans_management else 0.0,
+            "paid_loans": loans_management.paid_loans if loans_management else 0.0,
+            "account_balance": account_balance if account_balance else 0.0,
         }
     except HTTPException as http_exc:
         management_error_logger.error(
@@ -238,11 +270,14 @@ async def get_soft_loan_data(
                 detail="You are not a member of this activity",
             )
 
-        interest_rate = db.query(models.TableBankingLoanSettings.interest_rate).filter(
-            models.TableBankingLoanSettings.activity_id == activity_id
+        cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id
         ).scalar()
 
-        print(interest_rate, "interest_rate")
+        interest_rate = db.query(models.TableBankingLoanSettings.interest_rate).filter(
+            models.TableBankingLoanSettings.activity_id == activity_id,
+            models.TableBankingLoanSettings.cycle_number == cycle_number,
+        ).scalar()
 
         # get the member's soft loan data
         requested_loans = db.query(models.TableBankingRequestedLoans).filter(
@@ -256,7 +291,7 @@ async def get_soft_loan_data(
         other_loans = []
 
         if requested_loans:
-            my_loan_balance = sum([loan.total_required for loan in requested_loans if loan.user_id == current_user.id])
+            my_loan_balance = sum([loan.total_required for loan in requested_loans if loan.user_id == current_user.id and loan.loan_approved])
 
             my_loans = [
                 {
@@ -347,8 +382,13 @@ async def get_loan_settings(
                 detail="You are not allowed to view loan settings for this activity",
             )
 
+        cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id
+        ).scalar()
+
         loan_settings = db.query(models.TableBankingLoanSettings).filter(
-            models.TableBankingLoanSettings.activity_id == activity_id
+            models.TableBankingLoanSettings.activity_id == activity_id,
+            models.TableBankingLoanSettings.cycle_number == cycle_number,
         ).first()
 
         if not loan_settings:
@@ -424,7 +464,7 @@ async def get_eligibility_loans(
                     }
                 )
 
-        return {"eligibility_data": eligibility_data, chama_id: activity.chama_id}
+        return {"eligibility_data": eligibility_data, "chama_id": activity.chama_id}
 
     except HTTPException as http_exc:
         management_error_logger.error(
@@ -669,11 +709,11 @@ async def check_eligibility(
                 detail="You are not allowed to request a loan, please contact the manager",
             )
 
-
         # check if the user has an active loan
         active_loan = db.query(models.TableBankingRequestedLoans).filter(
             models.TableBankingRequestedLoans.activity_id == activity_id,
             models.TableBankingRequestedLoans.user_id == user_id,
+            models.TableBankingRequestedLoans.loan_approved == True,
             models.TableBankingRequestedLoans.loan_cleared == False,
         ).first()
 
@@ -684,10 +724,10 @@ async def check_eligibility(
             )
 
         # check if the user has any fines
-        fines = db.query(models.ActivityFines).filter(
-            models.ActivityFines.activity_id == activity_id,
-            models.ActivityFines.user_id == user_id,
-            models.ActivityFines.is_paid == False,
+        fines = db.query(models.ActivityFine).filter(
+            models.ActivityFine.activity_id == activity_id,
+            models.ActivityFine.user_id == user_id,
+            models.ActivityFine.is_paid == False,
         ).all()
 
         if fines:
@@ -698,11 +738,11 @@ async def check_eligibility(
 
         # check if the next contribution date is today
         today = datetime.now(nairobi_tz).date()
-        next_contribution = db.query(models.ActivityContributionDate.next_contribution_date).filter(
+        next_contribution_date = db.query(models.ActivityContributionDate.next_contribution_date).filter(
             models.ActivityContributionDate.activity_id == activity_id
-        ).first()
+        ).scalar()
 
-        if not next_contribution:
+        if not next_contribution_date:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Contribution dates not set, please contact the manager",
@@ -711,7 +751,7 @@ async def check_eligibility(
         if next_contribution_date.date() == today:
             # check if the user has contributed the required amount
             total_contributions = await get_member_contribution_so_far(user_id, activity_id, db)
-            expected_contribution = user_in_activity.shares * activity.shares_value
+            expected_contribution = user_in_activity.shares * user_in_activity.share_value
             if total_contributions < expected_contribution:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -726,20 +766,20 @@ async def check_eligibility(
         }
     except HTTPException as http_exc:
         management_error_logger.error(
-            f"Error occurred while checking eligibility for activity_id: {activity_id} - {http_exc.detail}"
+            f"Error occurred while checking eligibility for activity_id:http_exc: {activity_id} - {http_exc.detail}"
         )
         raise http_exc
     except Exception as exc:
         management_error_logger.error(
-            f"Error occurred while checking eligibility for activity_id: {activity_id} - {exc}"
+            f"Error occurred while checking eligibility for activity_id: exc: {activity_id} - {exc}"
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error occurred while checking eligibility for activity_id: {activity_id}",
+            detail=f"Error occurred while checking your eligibility for this activity",
         )
 
 # request a soft loan
-@router.post("/request_soft_loan/{activity_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/request_soft_loan/members/{activity_id}", status_code=status.HTTP_201_CREATED)
 async def request_soft_loan(
     activity_id: int,
     loan_request: schemas.TableBankingRequestLoan,
@@ -747,68 +787,143 @@ async def request_soft_loan(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
         user_id = current_user.id
         contribution_day_is_today = loan_request.contribution_day_is_today
         requested_amount = loan_request.requested_amount
 
-        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
-        activity = (
-            db.query(models.Activity)
-            .filter(models.Activity.id == activity_id)
-            .first()
+        with db.begin_nested():
+            activity = (
+                db.query(models.Activity)
+                .filter(models.Activity.id == activity_id)
+                .first()
+            )
+
+            if not activity:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+            user_in_activity = db.query(models.activity_user_association).filter(
+                and_(models.activity_user_association.c.activity_id == activity_id, models.activity_user_association.c.user_id == user_id)
+            ).first()
+
+            if not user_in_activity:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User is not a member of this activity",
+                )
+
+            # retrieve the loan settings
+            loan_settings = db.query(models.TableBankingLoanSettings).filter(
+                models.TableBankingLoanSettings.activity_id == activity_id
+            ).first()
+
+            if not loan_settings:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Please set the interest rate first",
+                )
+
+            # determine if approval is needed
+            await_approval = contribution_day_is_today and loan_settings.await_approval
+            expected_repayment_date = await calculate_repayment_date(today, activity, contribution_day_is_today)
+
+            cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
+                models.TableBankingLoanManagement.activity_id == activity_id
+            ).scalar()
+            expected_interest = round((requested_amount * loan_settings.interest_rate) / 100, 2)
+
+            loan_request = models.TableBankingRequestedLoans(
+                activity_id=activity_id,
+                user_name=f"{current_user.first_name} {current_user.last_name}",
+                user_id=user_id,
+                requested_amount=requested_amount,
+                standing_balance=requested_amount,
+                missed_payments=0,
+                expected_interest=expected_interest,
+                total_required=requested_amount + expected_interest,
+                total_repaid=0.0,
+                request_date=today,
+                expected_repayment_date=expected_repayment_date,
+                cycle_number=cycle_number,
+                loan_approved=not await_approval,
+                loan_cleared=False,
+            )
+            db.add(loan_request)
+
+            # if awaiting approval, do not update balances
+            if not await_approval:
+                activity_account = db.query(models.Activity_Account).filter(
+                    models.Activity_Account.activity_id == activity_id
+                ).with_for_update().first()
+                if not activity_account or activity_account.account_balance < requested_amount:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Insufficient activity account balance")
+
+                activity_account.account_balance -= requested_amount
+
+                # chama account balance
+                chama_account = db.query(models.Chama_Account).filter(
+                    models.Chama_Account.chama_id == activity.chama_id
+                ).with_for_update().first()
+
+                if not chama_account or chama_account.account_balance < requested_amount:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Insufficient chama account balance")
+
+                chama_account.account_balance -= requested_amount
+
+                # loan management table
+                loans_table = db.query(models.TableBankingLoanManagement).filter(
+                    models.TableBankingLoanManagement.activity_id == activity_id
+                ).with_for_update().first()
+
+                loans_table.total_loans_taken += requested_amount
+                loans_table.unpaid_loans += requested_amount
+
+                # update user wallet with the loan amount
+                user_wallet = db.query(models.User).filter(models.User.id == user_id).with_for_update().first()
+                if not user_wallet:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="User wallet not found",
+                    )
+
+                user_wallet.wallet_balance += requested_amount
+
+            db.commit()
+
+        return {"message": "Loan request successful"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while requesting soft loan for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while requesting soft loan for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while requesting soft loan for activity_id: {activity_id}",
         )
 
-        if not activity:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
-
-        user_in_activity = db.query(models.activity_user_association).filter(
-            and_(models.activity_user_association.c.activity_id == activity_id, models.activity_user_association.c.user_id == user_id)
-        ).first()
-
-        if not user_in_activity:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User is not a member of this activity",
-            )
-
-        # retrieve the loan settings
-        loan_settings = db.query(models.TableBankingLoanSettings).filter(
-            models.TableBankingLoanSettings.activity_id == activity_id
-        ).first()
-
-        if not loan_settings:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Please set the interest rate first",
-            )
-
-        await_approval = True
-        if contribution_day_is_today:
-            await_approval = loan_settings.await_approval
-        else:
-            await_approval = False
-
-        #TODO: retrieve the current cycle number
-        #TODO: repayment date will be this actvities frequency days from today
-        expected_repayment_date = None #import the date func and calculate the date
-
-        expected_interest = round((requested_amount * loan_settings.interest_rate) / 100, 2)
-        loan_request = {
-            "activity_id": activity_id,
-            "user_name": f"{current_user.first_name} {current_user.last_name}",
-            "user_id": user_id,
-            "requested_amount": requested_amount,
-            "standing_balance": requested_amount,
-            "missed_payments": 0,
-            "expected_interest": expected_interest,
-            "total_required": requested_amount + expected_interest,
-            "total_repaid": 0.0,
-            "request_date": today,
-            "expected_repayment_date": today + timedelta(days=30),
-            "cycle_number": 1,
-            "loan_approved": not await_approval,
-            "loan_cleared": False,
-        }
-
-        # if not awaiting approval - check activity account balance and disburse the loan tot the user
-        # if update the loan management table with total_loans_taken, if approved - update unpaid loans column as well.
+async def calculate_repayment_date(today, activity, contribution_day_is_today):
+    if contribution_day_is_today:
+        if activity.frequency == "daily":
+            return calculate_daily_interval(today.date())
+        elif activity.frequency == "weekly":
+            return calculate_weekly_interval(today.date())
+        elif activity.frequency == "monthly" and activity.interval in ["first", "second", "third", "fourth", "last"]:
+            return calculate_monthly_interval(today.date(), activity.interval, activity.contribution_day)
+        elif activity.frequency == "monthly" and activity.interval == "monthly":
+            return calculate_monthly_same_day_interval(today.date(), int(activity.contribution_day))
+        elif activity.frequency == "interval" and activity.interval == "custom":
+            return calculate_custom_interval(today.date(), int(activity.contribution_day))
+    else:
+        if activity.frequency == "daily":
+            return calculate_daily_interval(today.date())
+        elif activity.frequency == "weekly":
+            return calculate_weekly_interval(today.date())
+        elif activity.frequency == "monthly":
+            return today.date() + timedelta(days=30)
+        elif activity.frequency == "interval" and activity.interval == "custom":
+            return today.date() + timedelta(days=(int(activity.contribution_day)))

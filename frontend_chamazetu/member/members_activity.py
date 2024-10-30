@@ -286,7 +286,6 @@ def get_fines_data(chama_id):
     url = f"{os.getenv('api_url')}/chamas/all_fines/{chama_id}"
     response = requests.get(url)
 
-    print("=======fines data==============")
     all_fines = response.json()["fines"]
     fines_data = []
 
@@ -314,6 +313,7 @@ async def fines_tracker(request, chama_name, chama_id, activity_name, activity_i
             request,
             "member/fines_tracker.html",
             {
+                "chama_id": chama_id,
                 "role": "member",
                 "activity_name": activity_name,
                 "activity_id": activity_id,

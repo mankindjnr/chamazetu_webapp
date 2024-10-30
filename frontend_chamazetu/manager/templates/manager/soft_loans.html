@@ -79,20 +79,33 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="bi bi-house-door"></i>
+          <span>Chama Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="bi bi-house"></i>
+          <span>Activity Dashboard</span>
+        </a>
+      </li>
+
+      <li class="nav-heading">Pages</li>
+
+      <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
           <i class="ri-settings-5-line"></i>
           <span>Loan Settings</span>
         </a>
       </li>
 
-
-      <li class="nav-heading">Pages</li>
-
       <!-- TODO: check if activity has wait_approval on to show this -->
       <li class="nav-item">
         <a class="nav-link collapsed" href="" disabled>
           <i class="ri-check-double-line"></i>
-          <span>Pending Loan Approvals</span>
+          <span>unapproved_loans</span>
         </a>
       </li>
 
@@ -150,7 +163,7 @@
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <h6>0</h6>
+                      <h6>{{ soft_loans.account_balance }} </h6>
                     </div>
                   </div>
                 </div>
@@ -190,7 +203,7 @@
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <h6>0</h6>
+                      <h6>{{ soft_loans.unpaid_loans }} </h6>
                     </div>
                   </div>
                 </div>

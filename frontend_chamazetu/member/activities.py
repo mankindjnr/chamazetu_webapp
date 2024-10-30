@@ -43,9 +43,6 @@ load_dotenv()
 @async_validate_and_refresh_token()
 async def join_activity(request, chama_name, activity_id):
     if request.method == "POST":
-        print("=====join activity=====")
-        print("----", activity_id)
-
         chama_id = get_chama_id(chama_name)
         if await member_in_activity(request, activity_id):
             messages.error(request, "You are already in the activity")
@@ -56,8 +53,6 @@ async def join_activity(request, chama_name, activity_id):
                 )
             )
         shares = request.POST.get("shares")
-        print("=====share====")
-        print(shares)
         headers = {
             "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
             "Content-Type": "application/json",
@@ -131,6 +126,32 @@ async def member_in_activity(request, activity_id):
 #     return HttpResponseRedirect(
 #         reverse("member:access_chama", args=[chama_name, chama_id])
 #     )
+
+async def get_activity(request, activity_id):
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+    url = f"{os.getenv('api_url')}/activities/details/{activity_id}"
+    resp = requests.get(url, headers=headers)
+
+    if resp.status_code == HTTPStatus.OK:
+        details = resp.json()
+        chama_name = details["chama_name"]
+        chama_id = details["chama_id"]
+        activity_type = details["activity_type"]
+
+        return redirect(
+            reverse(
+                "member:activities",
+                args=[chama_name, chama_id, activity_type, activity_id],
+            )
+        )
+    else:
+        messages.error(request, "Failed to get activity details")
+
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
 
 
 @async_tokens_in_cookies()

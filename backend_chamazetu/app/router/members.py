@@ -2939,7 +2939,7 @@ async def increase_merry_go_round_shares(
                 elif frequency == "monthly" and interval == "monthly":
                     next_receiving_date = calculate_monthly_same_day_interval(last_receiving_date, int(contribution_day))
                 elif frequency == "interval" and interval == "custom":
-                    next_receiving_date = calculate_quarterly_interval(last_receiving_date, int(contribution_day))
+                    next_receiving_date = calculate_custom_interval(last_receiving_date, int(contribution_day))
                 
                 new_rotation = {
                     "user_name": f"{current_user.first_name} {current_user.last_name}",
@@ -3225,7 +3225,7 @@ async def join_merry_go_round_activity_late(
                 elif frequency == "monthly" and interval == "monthly":
                     next_receiving_date = calculate_monthly_same_day_interval(last_receiving_date, int(contribution_day))
                 elif frequency == "interval" and interval == "custom":
-                    next_receiving_date = calculate_quarterly_interval(last_receiving_date, int(contribution_day))
+                    next_receiving_date = calculate_custom_interval(last_receiving_date, int(contribution_day))
                 
                 new_rotation = {
                     "user_name": f"{current_user.first_name} {current_user.last_name}",

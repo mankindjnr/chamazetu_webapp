@@ -78,15 +78,39 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
-      <!-- <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
-          <i class="ri-settings-5-line"></i>
-          <span></span>
-        </a>
-      </li> -->
+      <ul class="sidebar-nav" id="sidebar-nav">
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="">
+            <i class="bi bi-house-door"></i>
+            <span>Chama Dashboard</span>
+          </a>
+        </li>
+  
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="">
+            <i class="bi bi-house"></i>
+            <span>Activity Dashboard</span>
+          </a>
+        </li>
 
 
       <li class="nav-heading">Pages</li>
+
+      <ul class="sidebar-nav" id="sidebar-nav">
+        
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="{% url 'manager:get_soft_loans' activity_id %}">
+            <i class="ri-table-fill"></i>
+            <span>Soft Loans</span> 
+          </a>
+        </li>
+  
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
+            <i class="ri-settings-5-fill"></i>
+            <span>Loan Settings</span> 
+          </a>
+        </li>
 
     </ul>
 

@@ -78,10 +78,26 @@
 
     <ul class="sidebar-nav" id="sidebar-nav">
 
+      <ul class="sidebar-nav" id="sidebar-nav">
+        
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="">
+            <i class="bi bi-house-door"></i>
+            <span>Chama Dashboard</span>
+          </a>
+        </li>
+  
+        <li class="nav-item">
+          <a class="nav-link collapsed" href="">
+            <i class="bi bi-house"></i>
+            <span>Activity Dashboard</span>
+          </a>
+        </li>
+
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
+        <a class="nav-link collapsed" href="{% url 'manager:loan_eligibility' activity_id %}">
           <i class="ri-settings-5-fill"></i>
           <span>Eligibility Settings</span>
         </a>
@@ -282,9 +298,9 @@
                   <div class="d-flex justify-content-end">
                     <button type="button" class="btn btn-outline-danger btn-sm me-2 close-btn">Close</button>
                     {% if settings.await_approval %}
-                    <button type="submit" class="btn btn-outline-primary">Disable Instant Approval</button>
-                    {% else %}
                     <button type="submit" class="btn btn-outline-primary">Enable Instant Approval</button>
+                    {% else %}
+                    <button type="submit" class="btn btn-outline-primary">Disable Instant Approval</button>
                     {% endif %}
                   </div>
                 </form>

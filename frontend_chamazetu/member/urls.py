@@ -22,6 +22,11 @@ urlpatterns = [
         name="access_chama",
     ),
     path(
+        "get_activity/<int:activity_id>",
+        views.get_activity,
+        name="get_activity",
+    ),
+    path(
         "activities/<str:chama_name>/<int:chama_id>/<str:activity_type>/<int:activity_id>",
         views.access_activity,
         name="activities",
@@ -155,9 +160,9 @@ urlpatterns = [
         name="get_disbursement_records",
     ),
     path(
-        "get_soft_loans_page/<int:activity_id>",
-        views.get_soft_loans_page,
-        name="get_soft_loans_page",
+        "soft_loans/<int:activity_id>",
+        views.soft_loans,
+        name="soft_loans",
     ),
     path(
         "request_soft_loan/<int:activity_id>",

@@ -117,6 +117,14 @@
           <span>Eligibility Settings</span> 
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-settings-5-fill"></i>
+          <span>Unapproved Loans</span> 
+          <span class="badge bg-danger"> {{ activity.unapproved_loans }} </span>
+        </a>
+      </li>
       {% endif %}
 
       <li class="nav-item">
@@ -181,32 +189,28 @@
         <div class="col-lg-8">
           <div class="row">
 
-            <!-- Sales Card -->
+            <!-- missed contributions -->
+
             <div class="col-xxl-4 col-md-6">
-              <div class="card info-card sales-card">
+              <a href="{% url 'manager:fines_tracker' activity.activity_name activity_id %}" style="text-decoration: none; color: inherit;">
+              <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
                 <div class="card-body">
-                  <!-- TODO:clickable to view the loans tracker page -->
-                  <h5 class="card-title">Unpaid Loans<span>| Total</span></h5>
+                  <h5 class="card-title">Missed Contributions<span>| Fines</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      {% if chama.today_deposits %}
-                      <h6>{{ chama.today_deposits }}</h6>
-                      {% else %}
-                      <h6>0</h6>
-                      {% endif %}
-                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
-
+                      <h6> {{ activity.missed_contributions }} </h6>
                     </div>
                   </div>
                 </div>
 
               </div>
-            </div><!-- End today deposits Card -->
+            </a>
+            </div>
 
             <!-- this activities account all available balance-->
             <div class="col-xxl-4 col-md-6">
@@ -221,14 +225,62 @@
                     </div>
                     <div class="ps-3">
                       <h6>{{ activity.activity_balance }}</h6>
-                      <!-- <span class="text-success small pt-1 fw-bold">8%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
-
                     </div>
                   </div>
                 </div>
 
               </div>
             </div><!-- End account Card -->
+
+            <!-- end of missed contributions -->
+
+            <!-- unpaid loans -->
+             {% if activity.activity_type == 'table-banking' %}
+            <div class="col-xxl-4 col-md-6">
+              <a href="{% url 'manager:get_soft_loans' activity_id %}" style="text-decoration: none; color: inherit;">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Unpaid Loans<span>| Total</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class="">Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6> {{ activity.unpaid_loans }} </h6>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </a>
+            </div><!-- End unpaid loans-->
+
+            <!-- loans taken so far -->
+            <div class="col-xxl-4 col-md-6">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <!-- TODO:clickable to show loans history: paginate by date (todays date minus one week )-->
+                  <h5 class="card-title">Total Loans<span>| Taken</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class="">Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6> {{ activity.total_loans_taken }} </h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+             <!-- end of loans taken so far -->
+            {% endif %}
 
               <!-- rotating contributions -->
                {% if activity.activity_type == 'merry-go-round' %}
@@ -239,7 +291,7 @@
                     <h5 class="card-title">Rotating Contributions <span></span></h5>
                     <div>
                       <hr>
-                      <button class="btn btn-outline-info btn-sm bi bi-calendar-event">Upcoming Rotation Date {{ upcoming_rotation_date }}</button>
+                      <button class="btn btn-outline-info btn-sm bi bi-calendar-event">Upcoming Rotation Date {{ upcoming_contribution_date }}</button>
                     </div>
   
                   <table class="table table-success table-striped-columns">

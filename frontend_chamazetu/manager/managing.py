@@ -361,7 +361,7 @@ async def chama_activity(request, activity_id):
                 "chama_name": chama_name,
                 "activity": activity_data,
                 "activity_id": activity_id,
-                "upcoming_rotation_date": activity_dashboard["upcoming_rotation_date"],
+                "upcoming_contribution_date": activity_dashboard["upcoming_contribution_date"],
                 "rotation_contributions": rotation_contributions,
             },
         )
