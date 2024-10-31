@@ -15,7 +15,7 @@ load_dotenv()
 
 
 from .. import schemas, database, utils, oauth2, models
-from app.celery import process_callback, chama_registration_callback, b2c_result, complete_unprocessed_deposit
+from app.celery import process_callback, chama_registration_callback, process_b2c_result, complete_unprocessed_deposit
 from .stk_push import stk_push_status, generate_access_token, generate_password
 
 router = APIRouter(prefix="/callback", tags=["callback"])
@@ -312,7 +312,7 @@ def extract_result_parameters(result: dict) -> dict:
 async def b2c_result(result: dict):
     print("=====b2c result=====")
     # print(result)
-    b2c_result.delay(result)
+    process_b2c_result.delay(result)
     transaction_info_logger.info(f"Received B2C result: {result}")
     return {"message": "B2C result processed successfully."}
 

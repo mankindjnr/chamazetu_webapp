@@ -334,11 +334,9 @@ def extract_result_parameters(result: dict) -> dict:
     return extracted_result
 
 @celery_app.task
-def b2c_result(result: dict):
+def process_b2c_result(result: dict):
     db: Session = next(database.get_db())
     try:
-        print("=====b2c result=====")
-        print(result)
         transaction_info_logger.info(f"Result: {result}")
         today = datetime.now(nairobi_tz).date()
 
@@ -446,20 +444,20 @@ def b2c_result(result: dict):
             return {"message": "Transaction processed successfully."}
 
         # calculate rewards coins
-        print("===fee difference:", chamazetu_fees.difference)
+        # print("===fee difference:", chamazetu_fees.difference)
         fee_difference = chamazetu_fees.difference
         # calculate the reward coins at 1 shilling = 2.5 coins
         reward_coins = fee_difference * 2.5
-        print("===reward coins:", reward_coins)
+        # print("===reward coins:", reward_coins)
         # cost of issued coins while redemption is at 10 coins = 1 shilling
         cost_of_issued_coins = reward_coins * 0.1
-        print("===cost of issued coins:", cost_of_issued_coins)
+        # print("===cost of issued coins:", cost_of_issued_coins)
         # net charge after rewarding the user
         net_charge = fee_difference - cost_of_issued_coins
-        print("===net charge:", net_charge)
+        # print("===net charge:", net_charge)
         # update the user's reward coins - zetucoins
         user.zetucoins += int(reward_coins)
-        print("===user's reward coins:", user.zetucoins)
+        # print("===user's reward coins:", user.zetucoins)
 
         # update chamazetu's reward coins
         chamazetu = (
@@ -487,7 +485,6 @@ def complete_unprocessed_deposit(result: dict):
     try:
         # user_id and unprocessed_code
         user_id, unprocessed_code = result['Result']['ReferenceData']['ReferenceItem']['Value'].split('/')
-        print(user_id, unprocessed_code)
         # extract phone number
         phone_number = result['Result']['ResultParameters']['ResultParameter'][0]['Value'].split(' ')[0]
 
