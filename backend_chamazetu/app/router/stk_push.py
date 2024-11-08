@@ -145,7 +145,7 @@ async def stk_push(
         else "https://chamazetu.com/api/callback/registration"
     )
 
-    # callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/c2b"
+    callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/c2b"
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}

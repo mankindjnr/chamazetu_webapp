@@ -71,7 +71,7 @@ async def check_transaction_status(
             "OriginatorConversationID": unprocessed_code,
             "PartyA": 4138859,
             "IdentifierType": "4",
-            "ResultURL": "https://20jb26ww-9400.uks1.devtunnels.ms/callback/status/result",
+            "ResultURL": "https://chamazetu.com/api/callback/status/result",
             "QueueTimeOutURL": "https://chamazetu.com/api/TransactionStatus/queue",
             "Remarks": "Transaction status query",
             "Occasion": f"{current_user.id}/{unprocessed_code}",
