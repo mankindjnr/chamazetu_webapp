@@ -27,44 +27,70 @@ nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 
 # transaction status function
-async def check_transaction_status(transaction_id: str, user_id: int, unprocessed_code: str) -> dict:
-    # print("=====checking transaction status=====")
-    # print(unprocessed_code)
-    url = os.getenv("TRANSACTION_STATUS_URL")
-    access_token = await generate_access_token()
-    password, timestamp = generate_password()
+@router.put(
+    "/fix_unprocessed_deposit/{unprocessed_code}/{receipt_number}",
+    status_code=status.HTTP_200_OK,
+)
+async def check_transaction_status(
+    unprocessed_code: str,
+    receipt_number: str,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+) -> dict:
+    try:
+        user = db.query(models.User).filter(models.User.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        # Retrieve the transaction
+        transaction = (
+            db.query(models.WalletTransaction)
+            .filter(models.WalletTransaction.transaction_code == unprocessed_code)
+            .first()
+        )
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
-    }
+        if not transaction:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Transaction not found.",
+            )
 
-    data = {
-        "user_id": user_id,
-        unprocessed_code: unprocessed_code,
-    }
+        url = os.getenv("TRANSACTION_STATUS_URL")
+        access_token = await generate_access_token()
+        password, timestamp = generate_password()
 
-    payload = {
-        "Initiator": os.getenv("STATUS_CHECK_INITIATOR_NAME"),
-        "SecurityCredential": os.getenv("STATUS_CHECK_SECURITY_CREDENTIAL"),
-        "CommandID": "TransactionStatusQuery",
-        "TransactionID": transaction_id,
-        "OriginatorConversationID": unprocessed_code,
-        "PartyA": 4138859,
-        "IdentifierType": "4",
-        "ResultURL": "https://chamazetu.com/api/callback/status/result",
-        "QueueTimeOutURL": "https://chamazetu.com/TransactionStatus/queue",
-        "Remarks": "Transaction status query",
-        "Occasion": f"{user_id}/{unprocessed_code}",
-    }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {access_token}",
+        }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        response_data = response.json()
+        payload = {
+            "Initiator": os.getenv("STATUS_CHECK_INITIATOR_NAME"),
+            "SecurityCredential": os.getenv("STATUS_CHECK_SECURITY_CREDENTIAL"),
+            "CommandID": "TransactionStatusQuery",
+            "TransactionID": receipt_number,
+            "OriginatorConversationID": unprocessed_code,
+            "PartyA": 4138859,
+            "IdentifierType": "4",
+            "ResultURL": "https://20jb26ww-9400.uks1.devtunnels.ms/callback/status/result",
+            "QueueTimeOutURL": "https://chamazetu.com/api/TransactionStatus/queue",
+            "Remarks": "Transaction status query",
+            "Occasion": f"{current_user.id}/{unprocessed_code}",
+        }
 
-    return response_data
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            response_data = response.json()
 
+        return response_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while processing the transaction."
+        )
+"""
+====response_data====
+{'OriginatorConversationID': 'bcd8-4d43-b6a9-f918f352a9e329921621', 'ConversationID': 'AG_20241108_2020651bad15260c074b', 'ResponseCode': '0', 'ResponseDescription': 'Accept the service request successfully.'}
+"""
 # status result function
 @router.post("/status/result", status_code=status.HTTP_201_CREATED)
 async def status_result(result: dict):
@@ -152,123 +178,6 @@ async def update_pending_callback_data(
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"message": "Callback data updated successfully."}
-
-
-@router.put("/update_callback_transactions", status_code=status.HTTP_200_OK)
-async def update_callback_transactions(
-    db: Session = Depends(database.get_db),
-):
-    transaction_info_logger.info("Updating callback transactions")
-    try:
-        kenya_tz = ZoneInfo("Africa/Nairobi")
-        five_minutes_ago = datetime.now(kenya_tz) - timedelta(minutes=5)
-
-        # Retrieve all pending callback transactions
-        pending_transactions = (
-            db.query(models.CallbackData)
-            .filter(models.CallbackData.Status == "Pending")
-            .filter(models.CallbackData.TransactionDate <= five_minutes_ago)
-            .all()
-        )
-
-        if pending_transactions:
-            transaction_info_logger.info("Updating callback transactions")
-            transaction_info_logger.info(
-                f"Transactions to update: {len(pending_transactions)}"
-            )
-            for transaction in pending_transactions:
-                transaction_info_logger.info(
-                    f"Updating transaction: {transaction.MpesaReceiptNumber}"
-                )
-                transaction_id = transaction.MpesaReceiptNumber
-
-                # Call the stk_push_status function directly
-                response = await check_transaction_status(transaction_id)
-                transaction_info_logger.info(f"Response: {response}")
-
-                if response["ResponseCode"] == "0":
-                    # Update transaction status to success
-                    transaction.Status = "Success"
-                else:
-                    # Update transaction status to failed with reason
-                    transaction.Status = "Failed"
-                    transaction.ResultDesc = response["ResponseDescription"]
-                    transaction.ResultCode = response["ResponseCode"]
-
-                db.add(transaction)
-
-            db.commit()
-        return {"message": "Callback transactions updated successfully"}
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as e:
-        # Handle any other exceptions
-        db.rollback()
-        transaction_error_logger.error(
-            f"Failed to update callback transactions: {str(e)}"
-        )
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# if a user  deposits to mpesa and the amount doesn't reflect in the wallet, we can update that if they provide the transaction code
-@router.put(
-    "/fix_unprocessed_deposit/{transaction_code}/{receipt_number}",
-    status_code=status.HTTP_200_OK,
-)
-async def fix_unprocessed_deposit(
-    transaction_code: str,
-    receipt_number: str,
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-
-    try:
-        user = db.query(models.User).filter(models.User.id == current_user.id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        # Retrieve the transaction
-        transaction = (
-            db.query(models.WalletTransaction)
-            .filter(models.WalletTransaction.transaction_code == transaction_code)
-            .first()
-        )
-
-        if not transaction:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Transaction not found.",
-            )
-
-        # check the status of the transaction using the receipt number
-        response = await check_transaction_status(receipt_number, user.id, transaction_code)
-        transaction_info_logger.info(f"Response: {response}")
-
-        if response["ResponseCode"] == "0":
-            # Update the transaction status to success
-            # transaction.transaction_completed = True
-            # transaction.transaction_code = receipt_number
-            # transaction.transaction_type = "deposit"
-            # db.add(transaction)
-
-            # # Update the wallet balance
-            # user.wallet_balance += transaction.amount
-            # db.add(user)
-
-            # db.commit()
-            return {"message": "Transaction has been initiated successfully."}
-        else:
-            transaction_error_logger.error(f"Failed to update transaction: {response}")
-            raise HTTPException(
-                status_code=400, detail="Failed to update transaction status."
-            )
-    except HTTPException as http_exc:
-        transaction_error_logger.error(f"Failed to update transaction: {str(http_exc)}")
-        raise http_exc
-    except Exception as e:
-        # Handle any other exceptions
-        db.rollback()
-        transaction_error_logger.error(f"Failed to update transaction: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 def get_phone_number(result):

@@ -812,6 +812,10 @@ class StkPushBase(BaseModel):
 
 class StkPushStatusBase(BaseModel):
     checkout_request_id: str
+    unprocessed_transaction_code: str
+    phone_number: str
+    destination_wallet: str
+    amount: int
 
     class Config:
         from_attributes = True

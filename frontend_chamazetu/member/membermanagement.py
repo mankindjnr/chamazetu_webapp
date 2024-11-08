@@ -1,7 +1,7 @@
 import requests, jwt, json, threading, os
 from dotenv import load_dotenv
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import  HttpResponseRedirect, HttpResponse, JsonResponse, HttpResponseServerError
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
@@ -269,3 +269,19 @@ def process_invite(request, invite_to, name, id):
             )
 
     return redirect(reverse("chama:signin"))
+
+def self_service(request):
+    url = f"{os.getenv('api_url')}/members/self_service_transactions"
+    headers = {
+        "Content-type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == HTTPStatus.OK:
+        return render(request, "member/self_service.html", {"transactions": response.json()["incomplete_deposits"]})
+    else:
+        messages.error(request, "An error occurred, please try again later")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)

@@ -109,13 +109,11 @@ async def check_unprocessed_deposit_transaction(
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # we will also check if the transaction has happened atleast 5 minutes ago
-        five_minutes_ago = datetime.now(nairobi_tz).replace(
+        # we will also check if the transaction has happened atleast 2 minutes ago
+        two_minutes_ago = datetime.now(nairobi_tz).replace(
             tzinfo=None, microsecond=0
-        ) - timedelta(minutes=5)
-        print("------five minutes ago------")
-        print(five_minutes_ago)
-        print("====24 hours ago====")
+        ) - timedelta(minutes=2)
+        print(two_minutes_ago)
         one_day_ago = datetime.now(nairobi_tz).replace(
             tzinfo=None, microsecond=0
         ) - timedelta(hours=24)
@@ -149,7 +147,7 @@ async def check_unprocessed_deposit_transaction(
                     models.WalletTransaction.amount == amount,
                     models.WalletTransaction.transaction_completed == False,
                     models.WalletTransaction.transaction_date >= one_day_ago,
-                    models.WalletTransaction.transaction_date <= five_minutes_ago,
+                    models.WalletTransaction.transaction_date <= two_minutes_ago,
                     models.WalletTransaction.transaction_type
                     == "unprocessed wallet deposit",
                 )
@@ -164,6 +162,49 @@ async def check_unprocessed_deposit_transaction(
             "unprocessed_transaction_exists": True,
             "transaction_code": unprocessed_transaction.transaction_code,
         }
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to check unprocessed transaction: {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to check unprocessed transaction"
+        )
+
+
+
+@router.get(
+    "/backup_unprocessed_deposit",
+    status_code=status.HTTP_200_OK,
+)
+async def retrieve_unprocessed_deposit_transaction(
+    transaction_data: schemas.StkPushStatusBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    try:
+        unprocessed_code = transaction_data.unprocessed_transaction_code
+        phone_number = transaction_data.phone_number
+        wallet_id = transaction_data.destination_wallet
+        amount = transaction_data.amount
+
+        unprocessed_transaction = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.transaction_code == unprocessed_code,
+                    models.WalletTransaction.origin == phone_number,
+                    models.WalletTransaction.destination == wallet_id,
+                    models.WalletTransaction.amount == amount,
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_type == "unprocessed wallet deposit",
+                )
+            )
+            .first()
+        )
+
+        if unprocessed_transaction:
+            return {"status": "pending"}
+
+        return {"status": "completed"}
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:

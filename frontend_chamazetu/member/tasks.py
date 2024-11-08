@@ -163,6 +163,62 @@ def update_users_profile_image(headers, new_profile_image_name):
     return None
 
 
+@shared_task
+def initiate_deposit_task(amount, phonenumber, wallet_id, transaction_code):
+    # initiate stkpush request
+    url = f"{os.getenv('api_url')}/request/push"
+    data = {
+        "amount": amount,
+        "phone_number": f"254{phonenumber[1:]}",
+        "transaction_destination": wallet_id,
+        "transaction_code": transaction_code,
+        "description": "loading wallet",
+        }
+
+    response = requests.post(url, json=data)
+
+    if response.status_code == HTTPStatus.CREATED and response.json().get("ResponseCode") == "0":
+        checkout_request_id = response.json().get("CheckoutRequestID")
+
+        # schedule the status check 45 seconds later
+        query_stk_push_status.apply_async(
+            (checkout_request_id, transaction_code, phonenumber, wallet_id, amount),
+            countdown=45,
+        )
+
+# TODO: later i can add the 'query_stk_push_status' as the below task if i see it fit With the above task and bind=True
+# def query_stk_push_status(self, CheckoutRequestID, transaction_code, phonenumber, wallet_id, amount)
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 2, "countdown": 5},
+)
+def status_backup_transaction_update(CheckoutRequestID, transaction_code, phonenumber, wallet_id, amount):
+    time.sleep(10)
+    transaction_check_url = f"{os.getenv('api_url')}/transactions/backup_unprocessed_deposit"
+    data = {
+        "checkout_request_id": CheckoutRequestID,
+        "unprocessed_transaction_code": transaction_code,
+        "phone_number": phonenumber,
+        "destination_wallet": wallet_id,
+        "amount": amount,
+        }
+
+    transaction_check = requests.get(transaction_check_url, json=data)
+    if transaction_check.status_code == HTTPStatus.OK and transaction_check.json().get("status") == "completed":
+        return transaction_check.status_code == HTTPStatus.OK
+
+    time.sleep(10)
+    try:
+        update_transaction = requests.put(
+            f"{os.getenv('api_url')}/request/status-backup_transaction_update", json=data)
+        update_transaction.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to update transaction status backup: {e}")
+        raise status_backup_transaction_update.retry(exc=e)
+
+    return update_transaction.status_code == HTTPStatus.OK
+
+
 @shared_task(bind=True)
 def mpesa_request(
     self, amount, checkoutrequestid, user_id, phonenumber, destination, transaction_code

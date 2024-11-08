@@ -1,0 +1,167 @@
+{% extends "member/members_list_base.html" %}
+{% load static %}
+
+<title>{% block title %}chamaZetu Terms Of Service{% endblock %}</title>
+
+{% block content %} 
+<!-- ======= Header ======= -->
+<header id="header" class="fixed-top">
+    <div class="container d-flex align-items-center">
+
+        <h3 class="logo me-auto"><a href=""><span>Terms Of</span> Service</h3>
+        <!-- Uncomment below if you prefer to use an image logo -->
+        <!-- <a href="index.html" class="logo me-auto me-lg-0"><img src="{% static 'member/img/logo.png' %}" alt="" class="img-fluid"></a>-->
+
+        <nav id="navbar" class="navbar order-last order-lg-0">
+            <ul>
+                <li><a href=""></a></li>
+                <li><a href="{% url 'chama:index' %}">HOME</a></li>
+            </ul>
+    <i class="bi bi-list mobile-nav-toggle"></i>
+  </nav><!-- .navbar -->
+
+</div>
+</header><!-- End Header -->
+
+<main id="main">
+
+<!-- ======= Breadcrumbs ======= -->
+ <!-- messages after join trial -->
+  {% if messages %}
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %} 
+
+
+<!-- ======= Features Section ======= -->
+<section id="terms-of-service" class="terms-of-service">
+  <div class="container" data-aos="fade-up">
+    <div class="section-title">
+      <h2 class="mb-3"></h2>
+      <h2 class="mt-6 text-center" style="color: #28a745; font-weight: bold;">chamaZetu Terms of Service</h2>
+      <p class="text-center" style="color: #555; font-size: 1.1em;">
+        Please review the following terms and conditions before engaging with chamaZetu's services.
+      </p>
+    </div>
+
+    <div class="terms-content" style="color: #333; font-size: 1em;">
+      <p><strong>Last Updated:</strong> 05-November-2024 </p>
+
+      <p>
+        Welcome to chamaZetu. These Terms of Service ("Terms") govern your use of the chamaZetu platform, operated by 
+        chamaZetu ("we," "us," "our," or "chamaZetu"). By accessing or using chamaZetu, you agree to these Terms.
+        If you do not agree, you may not use the platform.
+      </p>
+
+      <h4 style="color: #28a745; font-weight: bold;">1. Overview of Services</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li>Digital wallet management and contributions tracking</li>
+        <li>Financial services for group saving activities (e.g., merry-go-rounds, table banking)</li>
+        <li>Access to curated financial products and investment options</li>
+        <li>Management tools for Chama groups, such as automated disbursements, fines, and custom rules for table banking</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">2. Eligibility</h4>
+      <p>To use chamaZetu, you must:</p>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li>Be at least 18 years old or of legal age to form a binding contract in your jurisdiction.</li>
+        <li>Have the legal capacity to accept these Terms.</li>
+        <li>Not be barred from using chamaZetu under applicable laws.</li>
+      </ul>
+      <p>If you use chamaZetu on behalf of an organization or group, you confirm that you have the authority to bind the organization to these Terms.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">3. Account Registration and Security</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>Account Setup:</strong> You must provide accurate information to set up your account. Keep your information updated.</li>
+        <li><strong>Account Security:</strong> You are responsible for maintaining the security of your account.</li>
+        <li><strong>Multiple Accounts:</strong> You may only hold one active account unless otherwise authorized by us.</li>
+        <li><strong>Account Termination:</strong> We reserve the right to suspend or terminate your account if you violate these Terms.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">4. Chama Contributions and Wallet Management</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>Contributions:</strong> Make periodic contributions based on your Chama's schedule, e.g., monthly, weekly.</li>
+        <li><strong>Automated Contributions:</strong> Automated deductions per your Chama's schedule if enabled.</li>
+        <li><strong>Interest and Earnings:</strong> Wallets and balances may earn daily interest based on activity.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">5. Investment and Financial Services</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>Access to Investment Products:</strong> Curated investment options are available. Review risks before participating.</li>
+        <li><strong>Risk Acknowledgment:</strong> chamaZetu does not guarantee returns.</li>
+        <li><strong>Table Banking:</strong> Managers may set loan limits or block users from loans per Chama agreements.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">6. Fees and Payments</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>Transaction Fees:</strong> Certain actions, including withdrawals, may incur fees disclosed in advance.</li>
+        <li><strong>Payment Authorization:</strong> By using chamaZetu, you authorize us to charge any fees associated with your platform use.</li>
+        <li><strong>Refunds:</strong> Fees are generally non-refundable.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">7. User Conduct</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li>Prohibited activities include engaging in fraud, harassment, or interference with the platform's security or functionality.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">8. Data Privacy and Security</h4>
+      <p>We collect and use your data per our Privacy Policy. Security measures are in place, but absolute security is not guaranteed.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">9. Intellectual Property</h4>
+      <p>All content on chamaZetu is owned or licensed by us. Unauthorized reproduction is prohibited.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">10. Third-Party Services</h4>
+      <p>chamaZetu may include links or integrations with third-party services. Review third-party terms before use.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">11. Disclaimers and Limitation of Liability</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>No Warranty:</strong> chamaZetu is provided "as is" without warranties of any kind.</li>
+        <li><strong>Limitation of Liability:</strong> We are not liable for any indirect or consequential damages.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">12. Indemnification</h4>
+      <p>You agree to indemnify chamaZetu for any claims arising from your platform use or breach of these Terms.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">13. Termination</h4>
+      <ul style="list-style-type: disc; padding-left: 1.5em;">
+        <li><strong>By You:</strong> You may terminate your account at any time.</li>
+        <li><strong>By chamaZetu:</strong> We may suspend or terminate your account if you violate these Terms.</li>
+      </ul>
+
+      <h4 style="color: #28a745; font-weight: bold;">14. Governing Law</h4>
+      <p>These Terms are governed by the laws of Kenya, with disputes resolved through arbitration in Nairobi.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">15. Changes to Terms</h4>
+      <p>chamaZetu may update these Terms. We will notify users of significant changes.</p>
+
+      <h4 style="color: #28a745; font-weight: bold;">16. Contact Information</h4>
+      <p>
+        For questions, contact us at:<br>
+        <strong>Email:</strong> <a href="mailto:support@chamaZetu.com">support@chamaZetu.com</a><br>
+        <strong>Phone:</strong> +254 720090889<br>
+        <strong>Address:</strong> A4 Mountain Road, Kahawa West, Nairobi, Kenya
+      </p>
+
+      <p>
+        By using chamaZetu, you agree to abide by these Terms of Service. If you have any questions, please contact us before proceeding.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+
+</main><!-- End #main -->
+<!--  -->
+
+{% endblock %}

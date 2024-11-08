@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 # Create your views here.
-from .membermanagement import dashboard, profile, change_password, process_invite
+from .membermanagement import dashboard, profile, change_password, process_invite, self_service
 from .member_chama import (
     view_chama,
     view_private_chama,

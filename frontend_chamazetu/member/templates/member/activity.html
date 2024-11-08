@@ -30,14 +30,7 @@
           </a>
         </li><!-- End Search Icon-->
 
-        <!-- wallet trigger button - the modal body is in main section to avoid conflicts -->
-        <!-- TODO: see if removing this would be good, only display the amount but deposit funcionality to be kept in main dashboard -->
         <li class="nav-item dropdown">
-
-          <!-- <a class="nav-icon">
-            <button type="button" class="btn btn-dark bi bi-wallet" data-bs-toggle="modal" data-bs-target="#walletModal">
-              Ksh: {{ wallet.wallet_balance }}
-          </button> -->
           <!-- Button trigger wallet deposit modal -->
           <button type="button" class="btn btn-dark bi bi-wallet">Ksh: {{ wallet_balance }}</button>
           </a>
@@ -125,6 +118,13 @@
           <span>Rotating Contributions</span>
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_disbursement_records' activity_id %}">
+          <i class="ri-article-line"></i>
+          <span>Disbursement Records</span> 
+        </a>
+      </li>
       {% endif %}
 
       {% if activity_type == 'table-banking' %}
@@ -132,6 +132,14 @@
         <a class="nav-link collapsed" href="{% url 'member:soft_loans' activity_id %}">
           <i class="ri-receipt-line"></i>
           <span>Soft Loans</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-file-excel-2-line"></i>
+           <!-- we will add a loan history in the  page to show all approved and cleared loans -->
+          <span>Loan History</span> 
         </a>
       </li>
       {% endif %}
@@ -407,7 +415,7 @@
                   <tbody>
                     {% for contribution in weekly_contributions %}
                     <tr>
-                      <th scope="row">{{ contribution.user_name }}</th>
+                      <th scope="row">{{ contribution.member }}</th>
                       <td>{{ contribution.expected }}</td>
                       <td>{{ contribution.contributed }}</td>
                       <td>{{ contribution.Sunday }} </td>

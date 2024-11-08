@@ -145,7 +145,7 @@ async def stk_push(
         else "https://chamazetu.com/api/callback/registration"
     )
 
-    # callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/registration"
+    # callback_url = "https://20jb26ww-9400.uks1.devtunnels.ms/callback/c2b"
 
     url = os.getenv("STK_PUSH_URL")
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -189,49 +189,6 @@ async def stk_push(
             transaction_error_logger.error(f"Error: {str(e)}")
             raise HTTPException(status_code=400, detail="Failed to initiate STK push")
 
-
-@router.get("/status/{checkout_request_id}")
-async def stk_push_status(checkout_request_id: str):
-    query_url = os.getenv("STK_PUSH_QUERY_URL")
-
-    password, timestamp = generate_password()
-
-    token = await generate_access_token()
-    if not token:
-        raise HTTPException(status_code=500, detail="Failed to get OAuth token")
-
-    query_headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}",
-    }
-
-    query_payload = {
-        "BusinessShortCode": shortcode,
-        "Password": password,
-        "Timestamp": timestamp,
-        "CheckoutRequestID": checkout_request_id,
-    }
-
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                query_url, headers=query_headers, json=query_payload
-            )
-            response.raise_for_status()  # Raise exception for non-2xx status codes
-            response_data = response.json()
-
-            return response_data
-    except httpx.RequestError as e:
-        transaction_error_logger.error(f"HTTP request error: {str(e)}")
-        raise HTTPException(status_code=400, detail="Failed to query STK push status")
-    except httpx.HTTPStatusError as e:
-        transaction_error_logger.error(f"HTTP status error: {str(e)}")
-        raise HTTPException(status_code=400, detail="Failed to query STK push status")
-    except ValueError as e:
-        transaction_error_logger.error(f"Value error: {str(e)}")
-        raise HTTPException(status_code=400, detail="Failed to query STK push status")
-
-
 @router.post("/send", status_code=status.HTTP_201_CREATED)
 async def send_money(
     send_data: schemas.SendMoneyBase = Body(...),
@@ -268,8 +225,6 @@ async def send_money(
         async with httpx.AsyncClient() as client:
             response = await client.post(url, headers=headers, json=payload)
             response.raise_for_status()
-            print("=====sending======")
-            print(response.json())
             return response.json()
     except httpx.RequestError as e:
         transaction_error_logger.error(f"HTTP request error: {str(e)}")
@@ -280,3 +235,124 @@ async def send_money(
     except ValueError as e:
         transaction_error_logger.error(f"Value error: {str(e)}")
         raise HTTPException(status_code=400, detail="Failed to send money")
+
+
+@router.put("/status-backup_transaction_update", status_code=status.HTTP_200_OK)
+async def backup_transaction_update(
+    transaction_data: schemas.StkPushStatusBase = Body(...),
+    db: Session = Depends(database.get_db),
+):
+
+    checkout_request_id = transaction_data.checkout_request_id
+    unprocessed_code = transaction_data.unprocessed_transaction_code
+    phone_number = transaction_data.phone_number
+    wallet = transaction_data.destination_wallet
+    amount = transaction_data.amount
+
+    print("==transaction_data==\n", transaction_data)
+
+    transaction = (
+        db.query(models.WalletTransaction)
+        .filter(
+            and_(
+                models.WalletTransaction.transaction_type == "unprocessed wallet deposit",
+                models.WalletTransaction.transaction_code == unprocessed_code,
+                models.WalletTransaction.origin == phone_number,
+                models.WalletTransaction.destination == wallet,
+                models.WalletTransaction.amount == amount,
+                models.WalletTransaction.transaction_completed == False,
+            )
+        )
+        .with_for_update().first()
+    )
+
+    if not transaction:
+        # transaction may hvae been fulfilled by another the callback
+        print("==transaction not found==\n")
+        transaction_error_logger.error(
+            f"Transaction {unprocessed_code} not found for update"
+        )
+        return {"message": "Transaction not found"}
+
+    # check the status of the checkout request
+    status_data = await stk_push_status(checkout_request_id)
+    print("==status_data==\n", status_data)
+
+    if status_data.get("ResultCode") == "0":
+        print("==past result code==\n")
+        user_wallet = (
+            db.query(models.User)
+            .filter(models.User.id == transaction.user_id)
+            .with_for_update().first()
+        )
+
+        if user_wallet:
+            # update the wallet balance
+            user_wallet.wallet_balance += amount
+            transaction.transaction_type = "deposit"
+            transaction.transaction_code = transaction.transaction_code.replace(
+                "UWD", "PWD"
+            )
+            transaction.transaction_completed = True
+            db.commit()
+            db.refresh(transaction)
+            db.refresh(user_wallet)
+
+            transaction_info_logger.info(
+                f"Transaction {unprocessed_code} completed successfully"
+            )
+
+            return {"message": "Transaction completed successfully"}
+        else:
+            transaction_error_logger.error(
+                f"User {transaction.user_id} not found for transaction {unprocessed_code}"
+            )
+            raise HTTPException(status_code=400, detail="Transaction failed")
+    else:
+        transaction_error_logger.error(
+            f"Transaction {unprocessed_code} failed with error code {status_data.get('ResultCode')}"
+        )
+        raise HTTPException(status_code=400, detail="Transaction failed")
+
+async def stk_push_status(checkout_request_id: str):
+    query_url = os.getenv("STK_PUSH_QUERY_URL")
+
+    password, timestamp = generate_password()
+
+    token = await generate_access_token()
+    if not token:
+        raise HTTPException(status_code=500, detail="Failed to get OAuth token")
+
+    query_headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    }
+
+    query_payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "CheckoutRequestID": checkout_request_id,
+    }
+
+    print("==query_payload==\n", query_payload)
+    print("==query_headers==\n", query_headers)
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                query_url, headers=query_headers, json=query_payload
+            )
+            response.raise_for_status()  # Raise exception for non-2xx status codes
+            response_data = response.json()
+
+            return response_data
+    except httpx.RequestError as e:
+        transaction_error_logger.error(f"HTTP request error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to query STK push status")
+    except httpx.HTTPStatusError as e:
+        transaction_error_logger.error(f"HTTP status error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to query STK push status")
+    except ValueError as e:
+        transaction_error_logger.error(f"Value error: {str(e)}")
+        raise HTTPException(status_code=400, detail="Failed to query STK push status")

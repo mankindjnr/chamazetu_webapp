@@ -19,6 +19,23 @@ management_info_logger = logging.getLogger("management_info")
 management_error_logger = logging.getLogger("management_error")
 
 
+
+
+# function that gets an activity by id
+async def get_active_activity_by_id(activity_id: int, db: Session):
+    return (
+        db.query(models.Activity)
+        .filter(
+            and_(
+                models.Activity.id == activity_id,
+                models.Activity.is_deleted == False,
+                models.Activity.is_active == True,
+            )
+        )
+        .first()
+    )
+
+
 # create an activity
 @router.post(
     "/", response_model=schemas.CreateActivityResp, status_code=status.HTTP_201_CREATED
@@ -72,7 +89,7 @@ async def create_activity(
             # if actvity table-banking, create a loan management and table banking dividends accounts
             if activity_data["activity_type"] == "table-banking":
                 loan_management_entry = models.TableBankingLoanManagement(
-                    activity_id=new_activity.id, total_loans_taken=0.0, unpaid_loans=0.0, paid_loans=0.0, cycle_number=1
+                    activity_id=new_activity.id, total_loans_taken=0.0, unpaid_loans=0.0, paid_loans=0.0, unpaid_interest=0.0, paid_interest=0.0, cycle_number=1
                 )
                 db.add(loan_management_entry)
 
@@ -104,11 +121,8 @@ async def get_activity_detail(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity)
-            .filter(models.Activity.id == activity_id)
-            .first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
+
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -148,9 +162,7 @@ async def get_activity_by_id(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -242,6 +254,12 @@ async def get_activity_by_id(
                 models.TableBankingRequestedLoans.loan_cleared == False,
             ).count()
 
+            # dividend so far
+            dividend_data = db.query(models.TableBankingDividend).filter(
+                models.TableBankingDividend.activity_id == activity_id,
+                models.TableBankingDividend.cycle_number == cycle_number
+            ).first()
+
         activity = {
             "chama_id": activity.chama_id,
             "activity_name": activity.activity_title,
@@ -249,9 +267,11 @@ async def get_activity_by_id(
             "activity_amount": activity.activity_amount,
             "activity_balance": account,
             "activity_id": activity,
-            "unpaid_loans": loans_data.unpaid_loans if activity.activity_type == "table-banking" else 0,
+            "unpaid_loans": loans_data.unpaid_loans + loans_data.unpaid_interest if activity.activity_type == "table-banking" else 0,
             "total_loans_taken": loans_data.total_loans_taken if activity.activity_type == "table-banking" else 0,
             "unapproved_loans": unapproved_loans if activity.activity_type == "table-banking" else 0,
+            "cycle_number": cycle_number if activity.activity_type == "table-banking" else 0,
+            "unpaid_dividends": dividend_data.unpaid_dividends if activity.activity_type == "table-banking" else 0,
             "missed_contributions": missed_contributions,
         }
 
@@ -284,7 +304,9 @@ async def get_all_activities(
             db.query(models.Activity)
             .filter(
                 and_(
-                    models.Activity.chama_id == chama_id
+                    models.Activity.chama_id == chama_id,
+                    models.Activity.is_deleted == False,
+                    models.Activity.is_active == True,
                 )
             )
             .all()
@@ -349,9 +371,8 @@ async def join_activity(
 ):
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
+
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -477,9 +498,7 @@ async def get_merry_go_round_activity(
 ):
     try:
         # fetch activity and eager load related accout and user data in one go
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -687,9 +706,7 @@ async def get_activity_data(
 ):
     try:
         # fetch activity and eager load related accout and user data in one go
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -928,6 +945,7 @@ async def update_activity_contribution_days(
                 and_(
                     models.ActivityContributionDate.next_contribution_date < today,
                     models.Activity.last_joining_date <= today,
+                    models.ActivityContributionDate.activity_is_active == True,
                 )
             )
             .all()
@@ -1148,6 +1166,7 @@ async def set_fines_for_missed_contributions(
                     func.date(models.ActivityContributionDate.next_contribution_date)
                     < today,
                     func.date(models.Activity.last_joining_date) < today,
+                    models.ActivityContributionDate.activity_is_active == True,
                 )
             )
             .all()
@@ -1169,7 +1188,14 @@ async def set_fines_for_missed_contributions(
                 models.activity_user_association.c.shares,
                 models.activity_user_association.c.share_value,
             )
-            .filter(models.activity_user_association.c.activity_id.in_(activity_ids))
+            .filter(
+                and_(
+                    models.activity_user_association.c.activity_id.in_(activity_ids),
+                    models.activity_user_association.c.user_is_active == True,
+                    models.activity_user_association.c.activity_is_deleted == False,
+                    models.activity_user_association.c.activity_is_active == True,
+                )
+            )
             .all()
         )
 
@@ -1376,9 +1402,7 @@ async def get_chama_activity_members(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -1446,9 +1470,7 @@ async def get_about_activity(
     # TODO: later retrieve the shares he current user has in this activity and the amount of money he has contributed so far
     # they will have the option to change the number of shares they hold.
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -1577,9 +1599,7 @@ async def toggle_restart_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -1623,9 +1643,7 @@ async def toggle_is_deleted_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -1668,9 +1686,7 @@ async def activity_rotation_order(
 
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -1891,7 +1907,6 @@ async def create_rotation_contributions(
 
         # list of distinct activity_ids whose highest cycle_number's receiving_date is not past today
         activities_with_rotation_order = [result.activity_id for result in results_one]
-        print("==activity_ids==\n", activities_with_rotation_order)
 
         if not activities_with_rotation_order:
             return {
@@ -1924,6 +1939,9 @@ async def create_rotation_contributions(
                     ActivityContributionDate.activity_type == "merry-go-round",
                     # ensure the activity has a rotation order
                     Activity.id.in_(activities_with_rotation_order),
+                    Activity.is_active == True,
+                    Activity.is_deleted == False,
+
                 ),
             )
             .all()
@@ -1936,14 +1954,13 @@ async def create_rotation_contributions(
             }
 
         print("==========activities found================")
-        for activity in activities:
-            print(activity.activity_title)
-            print()
+        # for activity in activities:
+        #     print(activity.activity_title)
+        #     print()
 
         # get actvity ids
         print("====activities ids====")
         activity_ids = [activity.id for activity in activities]
-        print(activity_ids)
 
         # this will get the highest cycle number for each activity
         cycle_numbers = (
@@ -1958,9 +1975,6 @@ async def create_rotation_contributions(
             {"activity_id": cycle[0], "cycle_number": cycle[1]}
             for cycle in cycle_numbers
         ]
-
-        print("=====cycle numbers======")
-        print(cycle_numbers_dict)
 
         # get the upcoming rotation contribution date from the activity contribution date table as the next contribution date for all the activities
         activities_next_contribution_dates = (
@@ -1980,8 +1994,7 @@ async def create_rotation_contributions(
             }
             for date in activities_next_contribution_dates
         ]
-        print("=====rotation dates======")
-        print(rotation_dates)
+
 
         # get the upcoming recipients for the activities by using the next contribution date and the RotationOrder table
         upcoming_recipients = (
@@ -2012,8 +2025,6 @@ async def create_rotation_contributions(
             for recipient in upcoming_recipients
         ]
 
-        print("=====upcoming recipients======")
-        print(upcoming_recipients_dict)
 
         activities_users = (
             db.query(RotationOrder)
@@ -2112,9 +2123,7 @@ async def create_rotation_contribution_for_activity(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -2230,9 +2239,7 @@ async def get_activity_fines(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
 
         if not activity:
             raise HTTPException(
@@ -2484,6 +2491,7 @@ async def activity_disbursement_records(
 
         if not disbursement_records and not late_disbursement_records:
             return {
+                "chama_id": activity.chama_id,
                 "activity_id": activity_id,
                 "disbursement_records": [],
                 "late_disbursement_records": [],

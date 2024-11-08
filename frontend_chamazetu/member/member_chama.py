@@ -54,7 +54,7 @@ from chama.tasks import (
     setfines_updatedays_autodisburse_rotations_chain,
     update_accepting_members_chain,
 )
-from manager.tasks import late_auto_disbursements
+from manager.tasks import make_late_auto_disbursements
 
 from chama.usermanagement import (
     validate_token,
@@ -153,7 +153,7 @@ async def access_chama(request, chamaname, chama_id):
         # create_rotation_contributions.delay()
         # setfines_updatedays_autodisburse_rotations_chain.delay()
         # merry_go_round_activity_auto_contributions.delay()
-        # late_auto_disbursements.delay()
+        # make_late_auto_disbursements.delay()
         # update_accepting_members_chain.delay()
         chama_data = chama.json()
         return render(
@@ -436,8 +436,6 @@ def chama_activities(request, chama_name, chama_id):
     )
 
     if resp.status_code == HTTPStatus.OK:
-        print("========activites    =========")
-        print(resp.json())
         return render(
             request,
             "member/activities_list.html",

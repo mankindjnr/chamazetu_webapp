@@ -26,6 +26,7 @@ from .members import (
 )
 from .activities import get_activity_info
 from .transaction_code import generate_transaction_code
+from .tasks import status_backup_transaction_update
 
 load_dotenv()
 
@@ -153,11 +154,8 @@ async def get_transaction_header(request, current_user):
 # check the difference between the amount deposited and the amount expected within a chama contribution interval
 def difference_btwn_contributed_and_expected(user_id, activity_id):
     amount_expected = get_member_expected_contribution(user_id, activity_id)
-    print("====expected: ", amount_expected)
     amount_contributed_so_far = get_member_contribution_so_far(user_id, activity_id)
-    print("====contributed: ", amount_contributed_so_far)
     remaining_balance = amount_expected - amount_contributed_so_far
-    print("====remaining: ", remaining_balance)
     if remaining_balance < 0:
         return 0
 
@@ -256,17 +254,25 @@ async def deposit_to_wallet(request, amount, phonenumber):
                     )
 
                     if stk_request_resp.status_code == HTTPStatus.CREATED:
-                        messages.success(request, "Mpesa Request sent successfully.")
+                        CheckoutRequestID = stk_request_resp.json()["CheckoutRequestID"]
+                        ResponseCode = stk_request_resp.json()["ResponseCode"]
+                        if ResponseCode == "0":
+                            # status_backup_transaction_update.delay(
+                            #     CheckoutRequestID,
+                            #     transaction_code,
+                            #     f"254{phonenumber[1:]}",
+                            #     wallet_id,
+                            #     amount,
+                            # )
+                            messages.success(request, "Mpesa Request sent successfully.")
                     else:
                         messages.error(
-                            request, "Failed to send mpesa request, please try again."
+                            request, "Mpesa request failed, please try again in a few minutes."
                         )
-
                 else:
                     messages.error(
                         request, "Failed to record transaction, please try again."
                     )
-
             except httpx.TimeoutException:
                 messages.error(request, "Failed to send mpesa request")
             except httpx.RequestError as exc:
@@ -274,8 +280,8 @@ async def deposit_to_wallet(request, amount, phonenumber):
 
     return redirect(reverse("member:dashboard"))
 
-
 # ==========================================================
+
 # ==========================================================
 
 
@@ -381,8 +387,6 @@ async def fix_mpesa_to_wallet_deposit(request):
         if not receipt_number:
             messages.error(request, "Invalid receipt number.")
             return redirect(reverse("member:dashboard"))
-
-        print("====receipt_number: ", receipt_number)
 
         transaction_headers = await get_transaction_header(
             request, request.COOKIES.get("current_user")

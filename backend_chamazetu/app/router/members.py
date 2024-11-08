@@ -16,6 +16,7 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
+from .activities import get_active_activity_by_id
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -241,7 +242,6 @@ async def chama_dashboard(
             .first()
         )
 
-        print("=======", a_chama_member)
         if not a_chama_member:
             raise HTTPException(status_code=404, detail="Member not in chama")
 
@@ -264,11 +264,15 @@ async def chama_dashboard(
                 and_(
                     ActivityContribution.chama_id == chama_id,
                     ActivityUserAssoc.c.user_id == current_user.id,
+                    ActivityUserAssoc.c.user_is_active == True,
+                    ActivityUserAssoc.c.activity_is_deleted == False,
                 )
             )
             .order_by(desc(ActivityContribution.next_contribution_date))
             .all()
         )
+
+        chama_activities_ids = [activity.activity_id for activity in chama_activities]
         print("====chama activities====")
 
         user_wallet_balance = (
@@ -280,13 +284,13 @@ async def chama_dashboard(
 
         if not user_wallet_balance:
             user_wallet_balance = 0.0
-        print(user_wallet_balance)
 
         chama_total_fines = (
             db.query(func.coalesce(func.sum(models.ActivityFine.expected_repayment), 0))
             .filter(models.ActivityFine.chama_id == chama_id)
             .filter(models.ActivityFine.user_id == current_user.id)
             .filter(models.ActivityFine.is_paid == False)
+            .filter(models.ActivityFine.activity_id.in_(chama_activities_ids))
             .scalar()
         )
         print("====chama total fines====")
@@ -373,9 +377,7 @@ async def get_member_shares(
     db: Session = Depends(database.get_db),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -463,9 +465,7 @@ async def contribute_to_merry_go_round(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -550,7 +550,6 @@ async def contribute_to_merry_go_round(
             if fines:
                 print("===fines===")
                 for fine in fines:
-                    print("expected_repayment:", fine.expected_repayment, "fine_date:", fine.fine_date)
                     amount_repaid_towards_fine = 0  # amount repaid towards this fine
                     fine_transaction_code = generate_transaction_code(
                         "manual_fine_repayment", wallet_id
@@ -561,20 +560,15 @@ async def contribute_to_merry_go_round(
                         for rotation in missed_rotations
                         if rotation.rotation_date == fine.fine_date
                     ]
-                    print("num_rotations:", len(missed_rotations_for_fine))
 
                     for missed_rotation in missed_rotations_for_fine:
-                        print("missed_rotation:", missed_rotation.contributing_share)
                         missed_balance = (
                             missed_rotation.expected_amount
                             - missed_rotation.contributed_amount
                         ) + activity_fine
-                        print("missed_balance:", missed_balance)
 
                         if amount >= missed_balance:
-                            print("start_amt:", amount)
                             amount -= missed_balance
-                            print("end_amt:", amount)
                             fine_amount_repaid = missed_balance
                             fine.expected_repayment = max(
                                 fine.expected_repayment - missed_balance, 0
@@ -587,7 +581,6 @@ async def contribute_to_merry_go_round(
                             )
                             missed_rotation.fine = activity_fine
                         else:
-                            print("else start_amt:", amount)
                             fine.expected_repayment = max(
                                 fine.expected_repayment - amount, 0
                             )
@@ -614,7 +607,6 @@ async def contribute_to_merry_go_round(
                             else:
                                 missed_rotation.contributed_amount += fine_amount_repaid
 
-                        print("fine_amount_repaid:", fine_amount_repaid)
                         total_fines_repaid += fine_amount_repaid
                         # here we will record this transaction for late disbursement
                         late_disbursement_record = {
@@ -632,12 +624,10 @@ async def contribute_to_merry_go_round(
                         db.add(new_late_disbursement)
 
                         if amount == 0:
-                            print("===amount is 0: breaking===")
                             break_outer_loop = True
                             break
 
                     # after processing all the missed rotations for this fine, we record the transaction
-                    print("amount_repaid_towards_fine:", amount_repaid_towards_fine)
                     if amount_repaid_towards_fine > 0:
                         fine_transaction_data = {
                             "user_id": user_id,
@@ -688,10 +678,8 @@ async def contribute_to_merry_go_round(
                     )
                     .all()
                 )
-                print("num:", len(upcoming_rotations))
 
                 for rotation in upcoming_rotations:
-                    print("rotation:", rotation.contributing_share)
                     contributing_bal = (
                         rotation.expected_amount - rotation.contributed_amount
                     )
@@ -701,16 +689,13 @@ async def contribute_to_merry_go_round(
                         rotation.contributed_amount += contributing_bal
                         rotation.contributed_on_time = True
                         amount_contributed += contributing_bal
-                        print("===amount_contributed:==", amount_contributed)
                     else:
                         rotation.contributed_amount += amount
                         amount_contributed += amount
-                        print("===amount_contributed:", amount_contributed)
                         amount = 0
 
                     # sum the total contribution
                     total_contribution += amount_contributed
-                    print("===total_contribution:", total_contribution)
 
                     if amount == 0:
                         break
@@ -779,9 +764,7 @@ async def automatic_merry_go_round_contributions(
     db: Session = Depends(database.get_db),
 ):
     try:
-        print("===start auto contributions====")
         today = datetime.now(nairobi_tz).date()
-        print("===today:", today)
         transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None)
         # retrieve all merry go round activities whose next contribution date is today and have their id in the activity_contribution_date table activity_id
         # for this we will use two tables, the activity_contribution_date and the auto_contribution
@@ -801,7 +784,6 @@ async def automatic_merry_go_round_contributions(
             )
             .all()
         )
-        print("activities:", len(activities))
 
         if not activities:
             print("No merry go round activities today")
@@ -811,14 +793,12 @@ async def automatic_merry_go_round_contributions(
         for activity in activities:
             print("==========activity==========")
             activity_id = activity.activity_id
-            print("activity_id:", activity_id)
             chama_id = activity.chama_id
             activity_fine = (
                 db.query(models.Activity.fine)
                 .filter(models.Activity.id == activity_id)
                 .scalar()
             )
-            print("activity_fine:", activity_fine)
 
             # retrieeve auto contributors for the current activity
             activity_users = (
@@ -837,14 +817,12 @@ async def automatic_merry_go_round_contributions(
                 )
                 .all()
             )
-            print("activity_users:", len(activity_users))
 
             if not activity_users:
                 # no auto contributors for this activity, go to the next activity
                 continue
 
             user_ids = [user.user_id for user in activity_users]
-            print("user_ids:", user_ids)
 
             # retrieve any unpaid fines for the users in the activity
             fines = (
@@ -882,8 +860,6 @@ async def automatic_merry_go_round_contributions(
                 user_id = user.user_id
                 wallet_id = user.wallet_id
                 wallet_balance = user.wallet_balance
-                print("user_id:", user_id)
-                print("wallet_bal:", wallet_balance)
                 total_fines_repaid = 0
                 total_contribution = 0
                 break_outer_loop = False
@@ -955,7 +931,6 @@ async def automatic_merry_go_round_contributions(
                                     wallet_balance = 0
 
                                 total_fines_repaid += deducted
-                                print("total_fines_repaid:", total_fines_repaid)
 
                                 # record late disbursement record
                                 late_disbursement_record = {
@@ -973,7 +948,6 @@ async def automatic_merry_go_round_contributions(
                                 )
 
                                 if wallet_balance == 0:
-                                    print("===wallet 0 =====")
                                     break_outer_loop = True
                                     break
 
@@ -1074,7 +1048,6 @@ async def automatic_merry_go_round_contributions(
 
                     # update the wallet balance
                     if total_contribution + total_fines_repaid > 0:
-                        print("=====update wallet bal====")
                         user_record = (
                             db.query(models.User)
                             .filter(models.User.id == user_id)
@@ -1085,7 +1058,6 @@ async def automatic_merry_go_round_contributions(
                             db.rollback()
                             continue
 
-                        print("wallet_balance==:", user_record.wallet_balance)
                         if (
                             user_record.wallet_balance
                             < total_contribution + total_fines_repaid
@@ -1096,7 +1068,6 @@ async def automatic_merry_go_round_contributions(
                             total_contribution + total_fines_repaid
                         )
 
-                        print("====updating activity account====")
                         # update the activity account balance
                         activity_account = (
                             db.query(models.Activity_Account)
@@ -1537,9 +1508,7 @@ async def contribute_to_generic_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -1704,8 +1673,8 @@ def generate_transaction_code(transaction_type, destination):
         "share increase adjustment cost": "SIAC",
     }
 
-    # get the current timestamp - date - month - year - hour - minute - second
-    timestamp = datetime.now(nairobi_tz).strftime("%d%m%Y%H%M%S")
+    # get the current timestamp - date - month - year - hour - minute - second - microsecond
+    timestamp = datetime.now(nairobi_tz).strftime("%d%m%Y%H%M%S%f")
     # generate a random 4-digit number to ensure uniqueness
     unique_number = random.randint(1000, 9999)
 
@@ -1982,6 +1951,7 @@ async def set_auto_contribute(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
+        #TODO: retrieve this activity if is_deleted is False
         # add a record to the auto_contribution table
         contribution_amount = (
             db.query(models.Activity.activity_amount)
@@ -1990,8 +1960,6 @@ async def set_auto_contribute(
         )
         if not contribution_amount:
             raise HTTPException(status_code=404, detail="Activity not found")
-
-        print("contrib:", contribution_amount)
 
         # users shares in this activity from tha activites_user_association table
         user_shares = (
@@ -2004,8 +1972,6 @@ async def set_auto_contribute(
             )
             .one_or_none()
         )
-
-        print("user shares:", user_shares)
 
         if not user_shares:
             raise HTTPException(
@@ -2468,9 +2434,7 @@ async def get_activity_rotation_contribution(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -2561,6 +2525,7 @@ async def get_activity_rotation_contribution(
 
         if not upcoming_recipient:
             return {
+                "chama_id": activity.chama_id,
                 "pooled_so_far": pooled_so_far,
                 "rotation_order": rotation_order,
                 "upcoming_rotation_date": rotation_date,
@@ -2604,6 +2569,7 @@ async def get_activity_rotation_contribution(
 
         if not rotation_contributions:
             return {
+                "chama_id": activity.chama_id,
                 "pooled_so_far": pooled_so_far,
                 "rotation_order": rotation_order,
                 "upcoming_rotation_date": rotation_date,
@@ -2641,6 +2607,7 @@ async def get_activity_rotation_contribution(
 
         if not received_rotations:
             return {
+                "chama_id": activity.chama_id,
                 "pooled_so_far": pooled_so_far,
                 "rotation_order": rotation_order,
                 "upcoming_rotation_date": rotation_date,
@@ -2662,6 +2629,7 @@ async def get_activity_rotation_contribution(
         ]
 
         return {
+            "chama_id": activity.chama_id,
             "pooled_so_far": pooled_so_far,
             "rotation_order": rotation_order,
             "upcoming_rotation_date": rotation_date,
@@ -3354,4 +3322,90 @@ async def join_merry_go_round_activity_late(
         transaction_error_logger.error(f"Failed to add new member {exc}")
         raise HTTPException(
             status_code=400, detail="Failed to add new member"
+        )
+
+# retrieve all incomplete deposits for a user past  3 minutes ago and within 10 hrs
+@router.get("/self_service_transactions", status_code=status.HTTP_200_OK)
+async def self_service_transactions(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        three_minutes_ago = today - timedelta(minutes=2)
+        ten_hours_ago = today - timedelta(hours=10)
+
+        incomplete_deposits = (
+            db.query(models.WalletTransaction)
+            .filter(
+                and_(
+                    models.WalletTransaction.user_id == current_user.id,
+                    models.WalletTransaction.transaction_completed == False,
+                    models.WalletTransaction.transaction_type == "unprocessed wallet deposit",
+                    models.WalletTransaction.transaction_date >= ten_hours_ago,
+                    models.WalletTransaction.transaction_date <= three_minutes_ago,
+                )
+            )
+            .all()
+        )
+
+        if not incomplete_deposits:
+            print("No incomplete deposits found")
+            return {"message": "No incomplete deposits found"}
+
+        incomplete_deposits_resp = [
+            {
+                "transaction_id": deposit.id,
+                "amount": deposit.amount,
+                "phone_number": deposit.origin,
+                "transaction_code": deposit.transaction_code,
+                "transaction_time": deposit.transaction_date.strftime("%Y-%B-%d %H:%M:%S"),
+            }
+            for deposit in incomplete_deposits
+        ]
+
+        return {"incomplete_deposits": incomplete_deposits_resp}
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get incomplete deposits {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get incomplete deposits"
+        )
+
+
+# retrieve a users missed amounts total through email
+# first retrieve their id through that email then use it to sum the all missed_amount and fine from the activity_fines table related to them:
+@router.get("/missed_amounts_total/{email}", status_code=status.HTTP_200_OK)
+async def missed_amounts_total(
+    email: str,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        user = db.query(models.User).filter(models.User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        missed_amounts = (
+            db.query(
+                func.coalesce(func.sum(models.ActivityFine.missed_amount), 0),
+                func.coalesce(func.sum(models.ActivityFine.fine), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityFine.user_id == user.id,
+                    models.ActivityFine.is_paid == False,
+                    )
+                )
+            .first()
+        )
+
+        missed_amounts_resp = {
+            "missed_amount": missed_amounts[0],
+            "fine": missed_amounts[1],
+        }
+
+        return missed_amounts_resp
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get missed amounts total {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get missed amounts total"
         )

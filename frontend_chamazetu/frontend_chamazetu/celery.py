@@ -40,7 +40,7 @@ app.conf.beat_schedule = {
     },
     # runs at 5 in the morning everyday
     "disburse_late_fines": {
-        "task": "manager.tasks.late_auto_disbursements",
+        "task": "manager.tasks.make_late_auto_disbursements",
         "schedule": crontab(minute=0, hour=5),
     },
 }

@@ -31,5 +31,11 @@ def index(request):
     return render(request, "chama/index.html")
 
 
-def helpful_videos(request):
+def how_to_videos(request):
     return render(request, "chama/helpful_videos.html")
+
+def terms_of_service(request):
+    return render(request, "chama/terms_of_service.html")
+
+def privacy_policy(request):
+    return render(request, "chama/privacy_policy.html")

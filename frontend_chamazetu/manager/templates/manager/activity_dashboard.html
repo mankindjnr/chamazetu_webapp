@@ -100,7 +100,15 @@
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_soft_loans' activity_id %}">
           <i class="ri-table-fill"></i>
-          <span>Soft Loans</span> 
+          <span>Soft Loans</span>
+          <span class="badge bg-danger"> {{ activity.unapproved_loans }} </span>
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-file-excel-fill"></i>
+          <span>Loan History</span> 
         </a>
       </li>
 
@@ -118,13 +126,6 @@
         </a>
       </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="">
-          <i class="ri-settings-5-fill"></i>
-          <span>Unapproved Loans</span> 
-          <span class="badge bg-danger"> {{ activity.unapproved_loans }} </span>
-        </a>
-      </li>
       {% endif %}
 
       <li class="nav-item">
@@ -137,7 +138,7 @@
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:view_activity_members' activity.activity_name activity_id %}">
           <i class="ri-group-2-line"></i>
-          <span>Activity Members List</span> 
+          <span>Activity Members</span> 
         </a>
       </li>
 
@@ -186,12 +187,20 @@
       <div class="row">
 
         <!-- Left side columns -->
+         {% if activity.activity_type == 'table-banking' %}
+        <div class="col-lg-12">
+          {% else %}
         <div class="col-lg-8">
+          {% endif %}
           <div class="row">
 
             <!-- missed contributions -->
 
+            {% if activity.activity_type == 'table-banking' %}
+            <div class="col-xxl-4 col-md-4">
+              {% else %}
             <div class="col-xxl-4 col-md-6">
+              {% endif %}
               <a href="{% url 'manager:fines_tracker' activity.activity_name activity_id %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
@@ -212,8 +221,12 @@
             </a>
             </div>
 
-            <!-- this activities account all available balance-->
+            <!-- this activity account all available balance-->
+            {% if activity.activity_type == 'table-banking' %}
+            <div class="col-xxl-4 col-md-4">
+              {% else %}
             <div class="col-xxl-4 col-md-6">
+              {% endif %}
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
@@ -236,12 +249,12 @@
 
             <!-- unpaid loans -->
              {% if activity.activity_type == 'table-banking' %}
-            <div class="col-xxl-4 col-md-6">
+             <div class="col-xxl-4 col-md-4">
               <a href="{% url 'manager:get_soft_loans' activity_id %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Unpaid Loans<span>| Total</span></h5>
+                  <h5 class="card-title">Unpaid Loans<span>| principal + interest</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -258,12 +271,12 @@
             </div><!-- End unpaid loans-->
 
             <!-- loans taken so far -->
-            <div class="col-xxl-4 col-md-6">
+            <div class="col-xxl-4 col-md-4">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
                   <!-- TODO:clickable to show loans history: paginate by date (todays date minus one week )-->
-                  <h5 class="card-title">Total Loans<span>| Taken</span></h5>
+                  <h5 class="card-title">Total Loans<span>| principal</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -280,6 +293,29 @@
               </div>
             </div>
              <!-- end of loans taken so far -->
+
+             <!-- interest earned / dividend unpaid nad cycle number -->
+             <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Interest Earned<span>| Dividend | {{ activity.cycle_number }} </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class="">Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6> {{ activity.unpaid_dividends }} </h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+              <!-- end of interest paid in -->
             {% endif %}
 
               <!-- rotating contributions -->
@@ -328,6 +364,7 @@
         </div><!-- End Left side columns -->
 
         <!-- Right side columns -->
+         {% if activity.activity_type != 'table-banking' %}
         <div class="col-lg-4">
 
           <!-- money moved from an activity to the main account and back-->
@@ -378,6 +415,7 @@
           <!-- End transactions Report -->
 
         </div><!-- End Right side columns -->
+        {% endif %}
 
       </div>
     </section>

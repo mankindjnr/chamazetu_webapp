@@ -516,14 +516,14 @@ async def delete_activity(request, activity_id):
     }
 
     resp = requests.delete(
-        f"{os.getenv('api_url')}/activities/is_deleted/{activity_id}",
+        f"{os.getenv('api_url')}/managers/delete_activity/{activity_id}",
         headers=headers,
     )
 
     if resp.status_code == HTTPStatus.OK:
         messages.success(request, "Activity deleted successfully.")
     else:
-        messages.error(request, "An error occurred, try again.")
+        messages.error(request, f"{resp.json().get('detail')}")
 
     return redirect(reverse("manager:dashboard"))
 

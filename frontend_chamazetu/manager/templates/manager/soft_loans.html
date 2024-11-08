@@ -79,14 +79,7 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
-          <i class="bi bi-house-door"></i>
-          <span>Chama Dashboard</span>
-        </a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="">
+        <a class="nav-link collapsed" href="{% url 'manager:chama_activity' activity_id %}">
           <i class="bi bi-house"></i>
           <span>Activity Dashboard</span>
         </a>
@@ -103,8 +96,8 @@
 
       <li class="nav-item">
         <a class="nav-link collapsed" href="" disabled>
-          <i class="ri-check-double-line"></i>
-          <span>Unapproved_loans</span>
+          <i class="ri-file-excel-fill"></i>
+          <span>Loan History</span>
         </a>
       </li>
 
@@ -155,7 +148,7 @@
 
                 <div class="card-body">
                   <!-- TODO:clickable to view fines tracker page -->
-                  <h5 class="card-title">Account Balance<span>| Loan Reserves </span></h5>
+                  <h5 class="card-title">Account<span>| Loan Reserves </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -169,26 +162,6 @@
 
               </div>
             </div><!-- End today deposits Card -->
-
-            <!-- unpaid dividend -->
-            <div class="col-xxl-4 col-md-4">
-              <div class="card info-card revenue-card">
-
-                <div class="card-body">
-                  <h5 class="card-title">Unpaid Dividend <span>| So Far</span></h5>
-
-                  <div class="d-flex align-items-center">
-                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <small class="">Ksh:</small>
-                    </div>
-                    <div class="ps-3">
-                      <h6>{{ soft_loans.unpaid_dividend }}</h6>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div><!-- End unpaid dividend -->
 
             <!-- unpaid loans -->
             <div class="col-xxl-4 col-md-4">
@@ -210,13 +183,33 @@
               </div>
             </div><!-- End unpaid loans -->
 
-             <!-- actitvity weekly -->
+            <!-- unpaid dividend -->
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card revenue-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Dividend <span>| activity total</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class="">Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6>{{ soft_loans.unpaid_dividend }}</h6>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div><!-- End unpaid dividend -->
+
+             <!-- unapproved loans -->
              <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
                   <div class="d-flex justify-content-between">
-                    <h5 class="card-title">Current Loans <span>| New</span></h5>
+                    <h5 class="card-title">Unapproved Loans <span>| approve/Reject</span></h5>
                     <h5 class="card-title">Interest Rate: {{ soft_loans.interest_rate }}%</h5>
                   </div>
                   <div>
@@ -227,22 +220,26 @@
                   <thead>
                     <tr>
                       <th scope="col">Member</th>
-                      <th scope="col">Order In Rotation</th>
-                      <th scope="col">Share Name</th>
-                      <th scope="col">Payout Date</th>
-                      <th scope="col">Rotation Status</th>
+                      <th scope="col">Requested Amount</th>
+                      <th scope="col">Expected Interest</th>
+                      <th scope="col">Requested On</th>
+                      <th scope="col">Cycle Number</th>
+                      <th scope="col" class="text-success" >Approve</th>
+                      <th scope="col" class="text-danger" >Reject</th>
                       <!-- may have to add an upcoming contribution status column to track if each share has contributed towards the upcoming date-->
                     </tr>
                   </thead>
-                  {% if rotation_order %}
+                  {% if soft_loans.unapproved_loans %}
                   <tbody>
-                    {% for order in rotation_order %}
+                    {% for loan in soft_loans.unapproved_loans %}
                     <tr>
-                      <th scope="row">{{ order.user_name }}</th>
-                      <td>{{ order.order_in_rotation }}</td>
-                      <td>{{ order.share_name }} </td>
-                      <td>{{ order.receiving_date }} </td>
-                      <td>{{ order.fulfilled }} </td>
+                      <th scope="row">{{ loan.user_name }}</th>
+                      <td>{{ loan.requested_amount }}</td>
+                      <td>{{ loan.expected_interest }} </td>
+                      <td>{{ loan.requested_on }} </td>
+                      <td>{{ loan.cycle_number }} </td>
+                      <td><a href="" class="btn btn-success">Approve</a></td>
+                      <td><a href="" class="btn btn-danger">Reject</a></td>
                     </tr>
                     {% endfor %}
                   </tbody>
@@ -252,7 +249,60 @@
                 </div>
 
               </div>
-            </div><!-- End weekly activity -->
+            </div><!-- End unapprove loans section -->
+
+            <!-- approve but uncleared loans -->
+             <div class="col-12">
+              <div class="card recent-sales overflow-auto">
+
+                <div class="card-body">
+                  <div class="d-flex justify-content-between">
+                    <h5 class="card-title">Approved Loans <span>| uncleared</span></h5>
+                  </div>
+                  <div>
+                    <hr>
+                  </div>
+
+                <table class="table table-success table-striped-columns">
+                  <thead>
+                    <tr>
+                      <th scope="col">Member</th>
+                      <th scope="col">Requested Amount</th>
+                      <th scope="col">Standing Balance</th>
+                      <th scope="col">Expected Interest</th>
+                      <th scope="col">Total Required</th>
+                      <th scope="col">Total Repaid</th>
+                      <th scope="col">Missed Payments</th>
+                      <th scope="col">Requested On</th>
+                      <th scope="col">Repayment Date</th>
+                      <th scope="col">Cycle Number</th>
+                    </tr>
+                  </thead>
+                  {% if soft_loans.approved_loans %}
+                  <tbody>
+                    {% for loan in soft_loans.approved_loans %}
+                    <tr>
+                      <th scope="row">{{ loan.user_name }}</th>
+                      <td>{{ loan.requested_amount }}</td>
+                      <td>{{ loan.standing_balance }} </td>
+                      <td>{{ loan.expected_interest }} </td>
+                      <td>{{ loan.total_required }} </td>
+                      <td>{{ loan.total_repaid }} </td>
+                      <td>{{ loan.missed_payments }} </td>
+                      <td>{{ loan.requested_on }} </td>
+                      <td>{{ loan.expected_repayment_date }} </td>
+                      <td>{{ loan.cycle_number }} </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  {% endif %}
+                </table>
+
+                </div>
+
+              </div>
+            </div>
+            <!-- end uncleared loand -->
 
           </div>
         </div><!-- End Left side columns -->

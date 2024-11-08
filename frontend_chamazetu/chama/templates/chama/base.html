@@ -73,7 +73,7 @@
     
               <li><a href="{% url 'chama:signin' %}" target="_blank" rel="noopener noreferrer">login</a></li>
               <li><a href="{% url 'chama:chamas' %}" target="_blank" rel="noopener noreferrer">public chamas</a></li>
-              <li><a href="#">Services</a></li>
+              <li><a href="{% url 'chama:how_to_videos' %}" target="_blank" rel="noopener noreferrer">How To</a></li>
               <li><a href="{% url 'chama:signup' %}" target="_blank" rel="noopener noreferrer">signup</a></li>
               </li>
               {% endif %}
@@ -120,10 +120,10 @@
               <div class="col-lg-2 col-md-6 footer-links">
                 <h4>Useful Links</h4>
                 <ul>
-                  <li><i class="bx bx-chevron-right"></i> <a href="#">Home</a></li>
-                  <li><i class="bx bx-chevron-right"></i> <a href="#">About us</a></li>
-                  <li><i class="bx bx-chevron-right"></i> <a href="#">Terms of service</a></li>
-                  <li><i class="bx bx-chevron-right"></i> <a href="#">Privacy policy</a></li>
+                  <li><i class="bx bx-chevron-right"></i> <a href="https://chamazetu.com">Home</a></li>
+                  <li><i class="bx bx-chevron-right"></i> <a href="{% url 'chama:how_to_videos' %}">How To</a></li>
+                  <li><i class="bx bx-chevron-right"></i> <a href="{% url 'chama:terms_of_service' %}">Terms of service</a></li>
+                  <li><i class="bx bx-chevron-right"></i> <a href="{% url 'chama:privacy_policy' %}">Privacy policy</a></li>
                 </ul>
               </div>
     
@@ -132,6 +132,7 @@
                 <ul>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Savings management</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Group contributions</a></li>
+                  <li><i class="bx bx-chevron-right"></i> <a href="#">Soft Loans tracking</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Automated notifications</a></li>
                   <li><i class="bx bx-chevron-right"></i> <a href="#">Chama Creation and Oversight</a></li>
                 </ul>

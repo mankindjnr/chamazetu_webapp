@@ -217,14 +217,56 @@ async def get_soft_loans_data(
             models.Activity_Account.activity_id == activity_id
         ).scalar()
 
+        loans = db.query(models.TableBankingRequestedLoans).filter(
+            models.TableBankingRequestedLoans.activity_id == activity_id,
+            models.TableBankingRequestedLoans.rejected == False,
+            models.TableBankingRequestedLoans.loan_cleared == False,
+        ).all()
+
+        unapproved_loans, approved_loans = [], []
+
+        if loans:
+            unapproved_loans = [
+                {
+                    "loan_id": loan.id,
+                    "user_name": loan.user_name,
+                    "requested_amount": loan.requested_amount,
+                    "expected_interest": loan.expected_interest,
+                    "requested_on": loan.request_date.strftime("%Y-%B-%d"),
+                    "cycle_number": loan.cycle_number,
+                }
+                for loan in loans
+                if not loan.loan_approved
+            ]
+
+            approved_loans = [
+                {
+                    "loan_id": loan.id,
+                    "user_name": loan.user_name,
+                    "requested_amount": loan.requested_amount,
+                    "standing_balance": loan.standing_balance,
+                    "expected_interest": loan.expected_interest,
+                    "total_required": loan.total_required,
+                    "total_repaid": loan.total_repaid,
+                    "missed_payments": loan.missed_payments,
+                    "expected_repayment_date": loan.expected_repayment_date.strftime("%Y-%B-%d"),
+                    "requested_on": loan.request_date.strftime("%Y-%B-%d"),
+                    "cycle_number": loan.cycle_number,
+                }
+                for loan in loans
+                if loan.loan_approved
+            ]
+
         return {
             "interest_rate": interest_rate,
             "unpaid_dividend": dividend.unpaid_dividends if dividend else 0.0,
             "paid_dividends": dividend.paid_dividends if dividend else 0.0,
             "total_loans_taken": loans_management.total_loans_taken if loans_management else 0.0,
-            "unpaid_loans": loans_management.unpaid_loans if loans_management else 0.0,
+            "unpaid_loans": loans_management.unpaid_loans + loans_management.unpaid_interest if loans_management else 0.0,
             "paid_loans": loans_management.paid_loans if loans_management else 0.0,
             "account_balance": account_balance if account_balance else 0.0,
+            "unapproved_loans": unapproved_loans,
+            "approved_loans": approved_loans,
         }
     except HTTPException as http_exc:
         management_error_logger.error(
@@ -285,6 +327,11 @@ async def get_soft_loan_data(
             models.TableBankingRequestedLoans.loan_cleared == False,
         ).all()
 
+        dividend = db.query(models.TableBankingDividend).filter(
+            models.TableBankingDividend.activity_id == activity_id,
+            models.TableBankingDividend.cycle_number == cycle_number,
+        ).first()
+
         # get the sum of the requested loans
         my_loan_balance = 0.0
         my_loans = []
@@ -339,6 +386,7 @@ async def get_soft_loan_data(
         return {
             "chama_id": activity.chama_id,
             "rate": interest_rate,
+            "unpaid_dividend": dividend.unpaid_dividends if dividend else 0.0,
             "my_loan_balance": my_loan_balance,
             "my_loans": my_loans,
             "other_loans": other_loans,
@@ -820,7 +868,7 @@ async def request_soft_loan(
             if not loan_settings:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Please set the interest rate first",
+                    detail="Please ask the manager to set the interest rate first",
                 )
 
             # determine if approval is needed

@@ -6,6 +6,7 @@ app_name = "member"
 
 urlpatterns = [
     path("dashboard", views.dashboard, name="dashboard"),
+    path("self_service", views.self_service, name="self_service"),
     path("profile/<int:user_id>", views.profile, name="profile"),
     path(
         "invite/<str:invite_to>/<str:name>/<int:id>",

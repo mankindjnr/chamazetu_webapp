@@ -118,29 +118,29 @@ def fulfill_pending_withdrawal_requests(self):
     logging.info("Completed fulfill_pending_withdrawal_requests task")
 
 
-@shared_task(
-    autoretry_for=(requests.exceptions.RequestException,),
-    retry_kwargs={"max_retries": 3},
-)
-def late_auto_disbursements():
-    """
-    auto contributions for merry_go_round_activities
-    """
-    logger.info(
-        "==========chama/tasks.py: merry_go_round_activity_auto_disburse()=========="
-    )
-    logger.info(f"Task ran at: {datetime.now()}")
-    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
-    response = requests.post(
-        f"{os.getenv('api_url')}/managers/auto_disburse_late_contributions"
-    )
-    try:
-        response.raise_for_status()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to auto disburse late contributions: {e}")
-        raise self.retry(exc=e)
+# @shared_task(
+#     autoretry_for=(requests.exceptions.RequestException,),
+#     retry_kwargs={"max_retries": 3},
+# )
+# def late_auto_disbursements():
+#     """
+#     auto contributions for merry_go_round_activities
+#     """
+#     logger.info(
+#         "==========chama/tasks.py: merry_go_round_activity_auto_disburse()=========="
+#     )
+#     logger.info(f"Task ran at: {datetime.now()}")
+#     logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+#     response = requests.post(
+#         f"{os.getenv('api_url')}/managers/auto_disburse_late_contributions"
+#     )
+#     try:
+#         response.raise_for_status()
+#     except requests.exceptions.RequestException as e:
+#         logger.error(f"Failed to auto disburse late contributions: {e}")
+#         raise self.retry(exc=e)
 
-    return response.status_code == HTTPStatus.CREATED
+#     return response.status_code == HTTPStatus.CREATED
 
 
 # test route 1 to disburse late contributions
@@ -148,7 +148,7 @@ def late_auto_disbursements():
     autoretry_for=(requests.exceptions.RequestException,),
     retry_kwargs={"max_retries": 3},
 )
-def late_auto_disbursements():
+def make_late_auto_disbursements():
     """
     auto disburse late contributions for merry_go_round_activities
     """

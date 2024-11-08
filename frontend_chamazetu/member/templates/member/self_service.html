@@ -5,7 +5,7 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="{% url 'manager:dashboard' %}" class="logo d-flex align-items-center">
+      <a href="{% url 'member:dashboard' %}" class="logo d-flex align-items-center">
         <img src="{% static 'chama/img/favicon.png' %}" alt="">
         <span class="d-none d-lg-block">Dashboard</span>
       </a>
@@ -33,7 +33,7 @@
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
             <!-- <img src="{{ chama.manager_profile_picture }}" alt="Profile" class="rounded-circle img-fluid"> -->
-            <i class="bi bi-person-circle">manager</i>
+            <i class="bi bi-person-circle">member</i>
             <span class="d-none d-md-block dropdown-toggle ps-2"></span>
           </a><!-- End Profile Iamge Icon -->
 
@@ -79,32 +79,14 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <ul class="sidebar-nav" id="sidebar-nav">
-  
         <li class="nav-item">
-          <a class="nav-link collapsed" href="{% url 'manager:chama_activity' activity_id %}">
-            <i class="bi bi-house"></i>
-            <span>Activity Dashboard</span>
+          <a class="nav-link collapsed" href="{% url 'member:dashboard' %}">
+            <i class="bi bi-house-door"></i>
+            <span>Dashboard</span>
           </a>
         </li>
-
-
+  
       <li class="nav-heading">Pages</li>
-
-      <ul class="sidebar-nav" id="sidebar-nav">
-        
-        <li class="nav-item">
-          <a class="nav-link collapsed" href="{% url 'manager:get_soft_loans' activity_id %}">
-            <i class="ri-table-fill"></i>
-            <span>Soft Loans</span> 
-          </a>
-        </li>
-  
-        <li class="nav-item">
-          <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
-            <i class="ri-settings-5-fill"></i>
-            <span>Loan Settings</span> 
-          </a>
-        </li>
 
     </ul>
 
@@ -112,7 +94,7 @@
 
   <main id="main" class="main">
     <div class="pagetitle d-flex justify-content-between align-items-center">
-      <h1>Loan Eligibility Settings</h1>
+      <a href="{% url 'member:dashboard' %}" class="btn btn-light btn-sm">Home</a>
 
         <div class="search-bar">
           {% if messages %}
@@ -124,13 +106,7 @@
           </div>
           {% endif %}
         </div>
-      
-      <div class="ml-auto">
-          
-      </div>
-
-
-
+ 
     </div><!-- End Page Title -->
 
     <section class="section dashboard">
@@ -140,13 +116,15 @@
         <div class="col-lg-12">
           <div class="row">
 
-
-             <!-- actitvity weekly -->
+             <!-- disbursement records -->
              <div class="col-12">
               <div class="card recent-sales overflow-auto">
 
                 <div class="card-body">
-                    <h5 class="card-title">Activity Members <span>| All</span></h5>
+                  <div class="d-flex justify-content-between">
+                    <h5 class="card-title">Wallet Top Ups <span></span></h5>
+                    <h5 class="card-title">Incomplete</h5>
+                  </div>
                   <div>
                     <hr>
                   </div>
@@ -154,38 +132,82 @@
                 <table class="table table-success table-striped-columns">
                   <thead>
                     <tr>
-                      <th scope="col">Member</th>
-                      <th scope="col">Set Loan Limit</th>
-                      <th scope="col">Restrict Loan Access</th>
-                      <!-- may have to add an upcoming contribution status column to track if each share has contributed towards the upcoming date-->
+                      <th scope="col">Amount</th>
+                      <th scope="col">Transaction Time</th>
+                      <!-- <th scope="col">Reference No:</th> -->
+                      <th scope="col">Phone Number</th>
+                      <th scope="col">Mpesa Receipt Number</th>
+                      <th scope="col">Action</th>
                     </tr>
                   </thead>
-                  {% if eligibility_data %}
+                  {% if transactions %}
                   <tbody>
-                    {% for record in eligibility_data %}
+                    {% for transaction in transactions %}
                     <tr>
-                      <th scope="row">{{ record.user_name }} </th>
-                      <td> {{ record.loan_limit }} </td>
-                      <td>
-                        {% if record.eligible %}
-                            <a href="{% url 'manager:restrict_user' activity_id record.user_id %}" class="btn btn-sm btn-danger">Restrict</a>
-                        {% else %}
-                            <a href="{% url 'manager:allow_user' activity_id record.user_id %}" class="btn btn-sm btn-success">Allow</a>
-                        {% endif %}
-                    </td>
+                      <th scope="row">Ksh {{ transaction.amount }}</th>
+                      <td>{{ transaction.transaction_time }}</td>
+                      <!-- <td>{{ transaction.reference_no }} </td> -->
+                      <td>{{ transaction.phone_number }} </td>
+                      <form class="p-3" action="{% url 'member:fix_mpesa_to_wallet_deposit' %}" method="post">
+                        {% csrf_token %}
+                        <td><input type="text" class="form-control form-control-sm me-2" id="receipt_number" name="receipt_number" placeholder="i.e SID7HI18" required></td>
+                        <td> <a href="{% url 'member:fix_mpesa_to_wallet_deposit' %}" class="btn btn-success btn-sm">Fix</a></td>
+                      </form>
                     </tr>
                     {% endfor %}
                   </tbody>
                   {% endif %}
                 </table>
+                <!-- small notification -->
+                 <small class="text-muted"></small>
 
                 </div>
 
               </div>
-            </div><!-- End weekly activity -->
+            </div><!-- End disbursement records -->
 
+            <!-- late disbursement records -->
+            <div class="col-12">
+              <div class="card recent-sales overflow-auto">
 
-            <!-- table showing those with more than 0 numbers of missed rotation and pending still -->
+                <div class="card-body">
+                  <h5 class="card-title">Outbound Transactions <span></span></h5>
+                  <div>
+                    <hr>
+                  </div>
+
+                <table class="table table-success table-striped-columns">
+                  <thead>
+                    <tr>
+                      <th scope="col">From</th>
+                      <th scope="col">To</th>
+                      <th scope="col">Amount</th>
+                      <th scope="col">Transaction Time</th>
+                      <th scope="col">Reference No:</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  {% if disbursements.late_disbursement_records %}
+                  <tbody>
+                    {% for record in disbursements.late_disbursement_records %}
+                    <tr>
+                      <th scope="row">{{ record.contributor_name }}</th>
+                      <td>{{ record.pending_amount }}</td>
+                      <td>{{ record.missed_date }} </td>
+                      <td>{{ record.recipient_name }} </td>
+                      <td>{{ record.recipient_name }} </td>
+                      <td></td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  {% endif %}
+                </table>
+                <small class="text-muted">Note: Reverse transactions sent to the wrong number within 20 minutes.</small>
+
+                </div>
+
+              </div>
+            </div><!-- End late disbursement records -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -216,42 +238,10 @@
         </div>End Right side columns -->
 
       </div>
+
     </section>
 
   </main><!-- End #main -->
-
-  <script>
-    // notification
-    document.addEventListener("DOMContentLoaded", function() {
-    var chama_created = document.getElementById("chama_created");
-    if (chama_created) {
-      setTimeout(function() {
-        chama_created.style.display = "none";
-      }, 6000);
-    }
-
-    let buttons = ["setRateBtn"];
-      buttons.forEach(function(buttonid){
-        var button = document.getElementById(buttonid);
-        if (button) {
-          button.addEventListener("click", function() {
-            let form = document.getElementById("interestForm");
-            if (form) {
-              if (form.style.display === "none") {
-                form.style.display = "block";
-              } else {
-                form.style.display = "none";
-              }
-            } else {
-              console.log("transaction form not found");
-            }
-          });
-        } else {
-          console.log(buttonid + " not found");
-        }
-      });
-  });
-  </script>
   
 
  {% endblock %}

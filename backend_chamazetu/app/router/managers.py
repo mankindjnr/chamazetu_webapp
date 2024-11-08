@@ -15,6 +15,8 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
+from .members import get_active_activity_by_id
+
 from .. import schemas, database, utils, oauth2, models
 
 router = APIRouter(prefix="/managers", tags=["managers"])
@@ -240,10 +242,17 @@ async def get_chama(
 
         activities = (
             db.query(models.ActivityContributionDate)
-            .filter(models.ActivityContributionDate.chama_id == group_id)
+            .filter(
+                and_(
+                    models.ActivityContributionDate.chama_id == group_id,
+                    models.ActivityContributionDate.activity_is_active == True,
+                )
+            )
             .order_by(desc(models.ActivityContributionDate.next_contribution_date))
             .all()
         )
+
+        activities_ids = [activity.activity_id for activity in activities]
 
         # total unpaid fines
         total_fines = (
@@ -252,6 +261,7 @@ async def get_chama(
                 and_(
                     models.ActivityFine.chama_id == group_id,
                     models.ActivityFine.is_paid == False,
+                    models.ActivityFine.activity_id.in_(activities_ids),
                 )
             )
             .scalar()
@@ -405,9 +415,8 @@ async def create_random_rotation_order(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
+        print(" ======past the activity detection=============")
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -460,7 +469,7 @@ async def create_random_rotation_order(
             .filter(
                 and_(
                     models.activity_user_association.c.activity_id == activity_id,
-                    models.activity_user_association.c.is_active == True,
+                    models.activity_user_association.c.activity_is_active == True,
                 )
             )
             .all()
@@ -574,9 +583,7 @@ async def disburse_funds(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = (
-            db.query(models.Activity).filter(models.Activity.id == activity_id).first()
-        )
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -922,11 +929,11 @@ async def auto_disburse_to_wallets(
                     == models.ActivityContributionDate.previous_contribution_date,
                     models.RotationOrder.fulfilled == False,
                     models.RotationOrder.received_amount == 0,
+                    models.ActivityContributionDate.activity_is_active == True,
                 )
             )
             .all()
         )
-        print("recipients", len(recipients))
 
         if not recipients:
             return {"message": "No recipients found for disbursement"}
@@ -935,9 +942,7 @@ async def auto_disburse_to_wallets(
             activity_id = recipient.activity_id
             chama_id = recipient.chama_id
             user_id = recipient.recipient_id
-            print(
-                "activity_id:", activity_id, "chama_id:", chama_id, "user_id:", user_id
-            )
+
 
             # get the pooled amount for the recipient
             pooled_so_far = (
@@ -973,7 +978,6 @@ async def auto_disburse_to_wallets(
                 if not recipient_record:
                     raise HTTPException(status_code=404, detail="Recipient not found")
 
-                print("recipient", recipient_record.first_name)
 
                 recipient_record.wallet_balance += pooled_so_far
 
@@ -1569,7 +1573,7 @@ async def allow_members_to_increase_shares(
 ):
 
     try:
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -1654,7 +1658,7 @@ async def allow_new_members_to_join(
 
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        activity = await get_active_activity_by_id(activity_id, db)
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -1725,3 +1729,68 @@ async def allow_new_members_to_join(
         raise HTTPException(
             status_code=400, detail="Failed to allow new members to join"
         )
+
+
+# manager deleting an activity, this is what will happen when the manager deletes an activity:
+# the actvity will be marked as deleted, the rotation order will be marked as deleted, the activity contribution dates will be mark activity_is_active as false, activity account will be marked as deleted
+# all activities_user association table records will mark activity_is_active as false and will delete all auto_contribution records for this activity
+@router.delete(
+    "/delete_activity/{activity_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def delete_activity(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        activity = await get_active_activity_by_id(activity_id, db)
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to delete this activity"
+            )
+
+        with db.begin_nested():
+            # mark the activity as deleted
+            activity.is_deleted = True
+            activity.is_active = False
+            activity.deleted_at = today
+
+            # mark the rotation order as deleted
+            # db.query(models.RotationOrder).filter(
+            #     models.RotationOrder.activity_id == activity_id
+            # ).update({"is_deleted": True}, synchronize_session=False)
+
+            # mark the activity contribution dates as inactive
+            db.query(models.ActivityContributionDate).filter(
+                models.ActivityContributionDate.activity_id == activity_id
+            ).update({"activity_is_active": False}, synchronize_session=False)
+
+            # mark the activity account as deleted
+            db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).update({"is_deleted": True}, synchronize_session=False)
+
+            # mark all activities_user association table records as inactive
+            db.query(models.activity_user_association).filter(
+                models.activity_user_association.c.activity_id == activity_id
+            ).update({"activity_is_active": False, "activity_is_deleted": True}, synchronize_session=False)
+
+            # delete all auto_contribution records for this activity
+            db.query(models.AutoContribution).filter(
+                models.AutoContribution.activity_id == activity_id
+            ).delete()
+
+        db.commit()
+        return {"message": "Activity deleted successfully"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to delete activity, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to delete activity")

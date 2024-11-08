@@ -175,7 +175,12 @@
         <a class="nav-link collapsed" href="#selfServiceForm" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="selfServiceForm">
           <i class="ri-question-line"></i><span>Self Service</span>
         </a>
+        
+        </div>
         <div class="collapse" id="selfServiceForm">
+          <div class="alert alert-info">
+            <strong>Notice:</strong>Ensure atleast 5 minutes have passed since the transaction was made.
+          </div>
           <form class="p-3" action="{% url 'member:fix_mpesa_to_wallet_deposit' %}" method="post">
             {% csrf_token %}
             <div class="mb-3">

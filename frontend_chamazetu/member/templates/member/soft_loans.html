@@ -199,7 +199,7 @@
             </div>
             <!-- End loan form -->
 
-            <div class="col-xxl-4 col-md-6">
+            <div class="col-xxl-4 col-md-4">
               <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
                 <div class="card-body">
@@ -218,11 +218,11 @@
               </div>
             </div>
 
-            <div class="col-xxl-4 col-md-6">
+            <div class="col-xxl-4 col-md-4">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Account Balance <span>| loan reserves</span> <span>| {{ data.rate }}%</span> </h5>
+                  <h5 class="card-title">Account <span>| loan reserves {% if data.rate %} | {{ data.rate }}% {% endif %} </span> </h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -230,6 +230,25 @@
                     </div>
                     <div class="ps-3">
                       <h6>{{ data.account_balance }}</h6>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Dividend <span>| activity total</span> </h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small>Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6>{{ data.unpaid_dividend }}</h6>
                     </div>
                   </div>
                 </div>

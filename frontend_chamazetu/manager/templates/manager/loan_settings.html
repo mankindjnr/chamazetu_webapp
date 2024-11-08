@@ -79,16 +79,9 @@
     <ul class="sidebar-nav" id="sidebar-nav">
 
       <ul class="sidebar-nav" id="sidebar-nav">
-        
-        <li class="nav-item">
-          <a class="nav-link collapsed" href="">
-            <i class="bi bi-house-door"></i>
-            <span>Chama Dashboard</span>
-          </a>
-        </li>
   
         <li class="nav-item">
-          <a class="nav-link collapsed" href="">
+          <a class="nav-link collapsed" href="{% url 'manager:chama_activity' activity_id %}">
             <i class="bi bi-house"></i>
             <span>Activity Dashboard</span>
           </a>
@@ -212,7 +205,7 @@
                     <div class="ps-3">
                       <span class="text-success pt-2 fw-bold">                     
                       </span> <span class="text-muted small pt-2 ps-1">
-                        Will members have a grace period to past due date before they are penalized?
+                        Will members have a grace period to pay their loans past the due date?
                       </span>
     
                     </div>

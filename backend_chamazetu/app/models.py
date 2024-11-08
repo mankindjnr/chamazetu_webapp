@@ -60,15 +60,13 @@ activity_user_association = Table(
     Column("shares", Integer, nullable=False, default=1, index=True),
     Column("share_value", Integer, nullable=False, default=0, index=True),
     Column("date_joined", DateTime, default=nairobi_now),
-    Column("is_active", Boolean, default=True),
-    Column("is_deleted", Boolean, default=False),
+    Column("user_is_active", Boolean, default=True),
+    Column("activity_is_active", Boolean, default=True),
+    Column("activity_is_deleted", Boolean, default=False),
     UniqueConstraint(
         "user_id", "activity_id", name="unique_activity_user_relationship"
     ),
 )
-
-# relationship between chamas and signatories/secrataries/treasurers/chairman/vice_chairman/organizers - one table
-
 
 # Define the many-to-many relationship table between chamas and investments one chama can have many investments and one investment can belong to many chamas
 chama_investment_association = Table(
@@ -80,14 +78,13 @@ chama_investment_association = Table(
 
 
 # user model to replace the member and manager models below
-# TODO:user id to nulable false after production
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(
         String,
-        nullable=True,
+        nullable=False,
         unique=True,
         index=True,
         default=lambda: f"940{next_user_id}",
@@ -200,9 +197,6 @@ class Chama(Base):
     )
     rules = relationship("Rule", back_populates="chama")
     faqs = relationship("Faq", back_populates="chama")
-    chama_contribution_day = relationship(
-        "ChamaContributionDay", cascade="all,delete", back_populates="chama"
-    )
     chama_mmf_withdrawals = relationship(
         "ChamaMMFWithdrawal", cascade="all,delete", back_populates="chama"
     )
@@ -285,6 +279,7 @@ class Activity(Base):
     updated_at = Column(DateTime, nullable=False, default=nairobi_now)
     is_active = Column(Boolean, nullable=False, default=True)
     is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     mandatory = Column(Boolean, default=False)
 
     # relationships
@@ -338,6 +333,7 @@ class Activity_Account(Base):
     activity_id = Column(Integer, ForeignKey("activities.id"), nullable=False)
     account_balance = Column(Float, nullable=False)
     activity = relationship("Activity", back_populates="activity_accounts")
+    is_deleted = Column(Boolean, default=False)
 
 
 # activity contribution date tracker
@@ -352,6 +348,7 @@ class ActivityContributionDate(Base):
     frequency = Column(String, nullable=False)
     previous_contribution_date = Column(DateTime, nullable=False)
     next_contribution_date = Column(DateTime, nullable=False)
+    activity_is_active = Column(Boolean, default=True)
 
     # relationships
     chama = relationship("Chama", back_populates="activity_contribution_date")
@@ -552,16 +549,6 @@ class AutoContribution(Base):
     # relationships
     activity = relationship("Activity", back_populates="auto_contributions")
     user = relationship("User", back_populates="auto_contributions")  # one to many
-
-
-# this table will have chama and its next contribution date
-class ChamaContributionDay(Base):
-    __tablename__ = "chama_contribution_day"
-
-    id = Column(Integer, primary_key=True, index=True)
-    chama_id = Column(Integer, ForeignKey("chamas.id", ondelete="CASCADE"))
-    next_contribution_date = Column(DateTime, default=nairobi_now, nullable=False)
-    chama = relationship("Chama", back_populates="chama_contribution_day")
 
 
 # this table tracks pending chama withdrawals and their last withdrawal date
@@ -841,7 +828,9 @@ class TableBankingLoanManagement(Base):
     activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
     total_loans_taken = Column(Float, nullable=False)
     unpaid_loans = Column(Float, nullable=False)
+    unpaid_interest = Column(Float, nullable=False)
     paid_loans = Column(Float, nullable=False)
+    paid_interest = Column(Float, nullable=False)
     cycle_number = Column(Integer, nullable=False)
 
     # relationships
@@ -882,6 +871,7 @@ class TableBankingRequestedLoans(Base):
     cycle_number = Column(Integer, nullable=False)
     loan_approved = Column(Boolean, default=False)
     loan_approved_date = Column(DateTime, nullable=True)
+    rejected = Column(Boolean, default=False)
 
     # relationships
     activity = relationship("Activity", back_populates="table_banking_requested_loans")

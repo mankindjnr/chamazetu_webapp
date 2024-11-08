@@ -273,7 +273,7 @@ async def organise_weekly_contributions(
 ):
     weekly_data = defaultdict(
         lambda: {
-            "user_name": "",
+            "member": "",
             "user_id": 0,
             "shares": 0,
             "Sunday": 0,
@@ -292,7 +292,7 @@ async def organise_weekly_contributions(
 
     # loop through the weekly contributions
     for contribution in weekly_contributions_raw:
-        user_name = f"{contribution['first_name']} {contribution['last_name']}"
+        member = f"{contribution['first_name']} {contribution['last_name']}"
         user_id = contribution["user_id"]
         shares = contribution["shares"]
         # convert the date to a datetime object to find the day of the week
@@ -300,7 +300,7 @@ async def organise_weekly_contributions(
         day_of_week = date.strftime("%A")  # full name of the day of the week
 
         # add the amount to the corresponding day for that user
-        weekly_data[(user_id, shares)]["user_name"] = user_name
+        weekly_data[(user_id, shares)]["member"] = member
         weekly_data[(user_id, shares)]["user_id"] = user_id
         weekly_data[(user_id, shares)]["shares"] = shares
         weekly_data[(user_id, shares)][day_of_week] += contribution["amount"]
@@ -359,7 +359,7 @@ async def organise_weekly_group_contributions(
     # initialize result dictionary for each user
     result = defaultdict(
         lambda: {
-            "user_name": "",
+            "member": "",
             "user_id": 0,
             "shares": 0,
             **{day: 0 for day in [list(day.keys())[0] for day in days_of_week]},
@@ -375,7 +375,7 @@ async def organise_weekly_group_contributions(
 
     # process each contribution and match with the respective day in the date mapping
     for contribution in weekly_contributions_raw:
-        user_name = f"{contribution['first_name']} {contribution['last_name']}"
+        member = f"{contribution['first_name']} {contribution['last_name']}"
         user_id = contribution["user_id"]
         shares = contribution["shares"]
         contribution_date = datetime.strptime(contribution["date"], "%Y-%m-%d").date()
@@ -383,7 +383,7 @@ async def organise_weekly_group_contributions(
         # find the corresponding day f te week for the contributiion date
         for day, date in date_mapping.items():
             if contribution_date == date:
-                result[(user_id, shares)]["user_name"] = user_name
+                result[(user_id, shares)]["member"] = member
                 result[(user_id, shares)]["user_id"] = user_id
                 result[(user_id, shares)]["shares"] = shares
                 result[(user_id, shares)][day] += contribution["amount"]
@@ -410,11 +410,11 @@ async def organise_weekly_group_contributions(
     else:
         headers = [list(day.keys())[0] for day in days_of_week]
 
-    # Ensure 'expected' and 'contributed' come after 'user_name'
-    weekly_headers = ["user_name", "expected", "contributed"] + [
+    # Ensure 'expected' and 'contributed' come after 'member'
+    weekly_headers = ["member", "expected", "contributed"] + [
         header
         for header in headers
-        if header not in ["user_name", "expected", "contributed"]
+        if header not in ["member", "expected", "contributed"]
     ]
 
     return (final_result, weekly_headers)
@@ -607,6 +607,7 @@ async def rotation_contributions(request, activity_id):
             "member/rotation_contributions.html",
             {
                 "activity_id": activity_id,
+                "chama_id": data["chama_id"],
                 "pooled": data["pooled_so_far"],
                 "rotation_order": data["rotation_order"],
                 "upcoming_rotation_date": data["upcoming_rotation_date"],
@@ -619,7 +620,8 @@ async def rotation_contributions(request, activity_id):
         messages.error(
             request, "Failed to get rotation contributions, please try again later."
         )
-    return HttpResponseRedirect(reverse("member:dashboard"))
+    referer = request.META.get("HTTP_REFERER", 'member:dashboard')
+    return HttpResponseRedirect(referer)
 
 @async_tokens_in_cookies()
 @async_validate_and_refresh_token()
@@ -782,6 +784,8 @@ async def get_disbursement_records(request, activity_id):
 
     if response.status_code == HTTPStatus.OK:
         data = response.json()
+        print("=====disbursement records=====")
+        print(data)
         return render(
             request,
             "member/disbursement_records.html",

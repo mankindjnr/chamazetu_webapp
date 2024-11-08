@@ -1876,3 +1876,54 @@ INFO 2024-10-31 17:24:41,213 tasks Nairobi: 2024-10-31 17:24:41.213175+03:00
 INFO 2024-10-31 17:24:43,023 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
 INFO 2024-10-31 17:24:43,031 tasks Task ran at: 2024-10-31 17:24:43.031766
 INFO 2024-10-31 17:24:43,032 tasks Nairobi: 2024-10-31 17:24:43.032583+03:00
+INFO 2024-11-05 09:18:05,711 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-11-05 09:18:05,752 tasks Task ran at: 2024-11-05 09:18:05.752881
+INFO 2024-11-05 09:18:05,754 tasks Nairobi: 2024-11-05 09:18:05.753920+03:00
+INFO 2024-11-05 09:18:05,775 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-05 09:18:05,776 tasks Task ran at: 2024-11-05 09:18:05.776836
+INFO 2024-11-05 09:18:05,777 tasks Nairobi: 2024-11-05 09:18:05.777210+03:00
+INFO 2024-11-05 09:21:05,786 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-05 09:21:05,787 tasks Task ran at: 2024-11-05 09:21:05.786944
+INFO 2024-11-05 09:21:05,787 tasks Nairobi: 2024-11-05 09:21:05.787443+03:00
+INFO 2024-11-05 09:21:08,497 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-11-05 09:21:08,497 tasks Task ran at: 2024-11-05 09:21:08.497761
+INFO 2024-11-05 09:21:08,498 tasks Nairobi: 2024-11-05 09:21:08.498735+03:00
+INFO 2024-11-05 12:47:44,458 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-11-05 12:47:44,480 tasks Task ran at: 2024-11-05 12:47:44.479987
+INFO 2024-11-05 12:47:44,480 tasks Nairobi: 2024-11-05 12:47:44.480610+03:00
+INFO 2024-11-05 12:47:45,115 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-05 12:47:45,116 tasks Task ran at: 2024-11-05 12:47:45.116521
+INFO 2024-11-05 12:47:45,117 tasks Nairobi: 2024-11-05 12:47:45.117228+03:00
+INFO 2024-11-05 12:47:45,637 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-11-05 12:47:45,639 tasks Task ran at: 2024-11-05 12:47:45.638935
+INFO 2024-11-05 12:47:45,640 tasks Nairobi: 2024-11-05 12:47:45.640437+03:00
+INFO 2024-11-06 12:00:00,191 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-11-06 12:00:00,240 tasks Task ran at: 2024-11-06 12:00:00.239971
+INFO 2024-11-06 12:00:00,240 tasks Nairobi: 2024-11-06 12:00:00.240391+03:00
+INFO 2024-11-06 12:00:00,247 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-06 12:00:00,248 tasks Task ran at: 2024-11-06 12:00:00.248205
+INFO 2024-11-06 12:00:00,248 tasks Nairobi: 2024-11-06 12:00:00.248497+03:00
+INFO 2024-11-06 12:00:00,272 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-11-06 12:00:00,272 tasks Task ran at: 2024-11-06 12:00:00.272525
+INFO 2024-11-06 12:00:00,272 tasks Nairobi: 2024-11-06 12:00:00.272841+03:00
+INFO 2024-11-07 12:00:00,015 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-11-07 12:00:00,072 tasks Task ran at: 2024-11-07 12:00:00.072052
+INFO 2024-11-07 12:00:00,072 tasks Nairobi: 2024-11-07 12:00:00.072833+03:00
+INFO 2024-11-07 12:00:00,081 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-07 12:00:00,081 tasks Task ran at: 2024-11-07 12:00:00.081257
+INFO 2024-11-07 12:00:00,081 tasks Nairobi: 2024-11-07 12:00:00.081506+03:00
+INFO 2024-11-07 12:00:00,204 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-11-07 12:00:00,204 tasks Task ran at: 2024-11-07 12:00:00.204900
+INFO 2024-11-07 12:00:00,205 tasks Nairobi: 2024-11-07 12:00:00.205402+03:00
+ERROR 2024-11-07 18:28:38,570 tasks Failed to update transaction status backup: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/request/status-backup_transaction_update
+ERROR 2024-11-07 18:48:20,798 tasks Failed to update transaction status backup: 500 Server Error: Internal Server Error for url: http://chamazetu_backend:9400/request/status-backup_transaction_update
+ERROR 2024-11-07 18:53:47,101 tasks Failed to update transaction status backup: 400 Client Error: Bad Request for url: http://chamazetu_backend:9400/request/status-backup_transaction_update
+INFO 2024-11-08 12:00:00,020 tasks ==========member/tasks.py: make_auto_contributions()==========
+INFO 2024-11-08 12:00:00,075 tasks Task ran at: 2024-11-08 12:00:00.075576
+INFO 2024-11-08 12:00:00,077 tasks Nairobi: 2024-11-08 12:00:00.076873+03:00
+INFO 2024-11-08 12:00:00,094 tasks ==========member/tasks.py: auto_contribute()==========
+INFO 2024-11-08 12:00:00,095 tasks Task ran at: 2024-11-08 12:00:00.095095
+INFO 2024-11-08 12:00:00,095 tasks Nairobi: 2024-11-08 12:00:00.095626+03:00
+INFO 2024-11-08 12:00:00,200 tasks ==========chama/tasks.py: merry_go_round_activity_auto_contributions()==========
+INFO 2024-11-08 12:00:00,200 tasks Task ran at: 2024-11-08 12:00:00.200837
+INFO 2024-11-08 12:00:00,201 tasks Nairobi: 2024-11-08 12:00:00.201082+03:00
