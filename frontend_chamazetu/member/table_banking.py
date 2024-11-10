@@ -91,3 +91,30 @@ async def request_soft_loan(request, activity_id):
 
     referer = request.META.get("HTTP_REFERER", "member:dashboard")
     return HttpResponseRedirect(referer)
+
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def loan_repayment(request, activity_id):
+    if request.method == "POST":
+        amount = request.POST.get("repayment_amount").strip()
+        if not amount or not amount.isdigit() or int(amount) < 100:
+            messages.error(request, "Amount must be a number and atleast 100")
+            referer = request.META.get("HTTP_REFERER", "member:dashboard")
+            return HttpResponseRedirect(referer)
+
+        url = f"{os.getenv('API_URL')}/table_banking/soft_loans/repayment/members/{activity_id}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+        }
+        data = {"amount": int(amount)}
+
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == HTTPStatus.CREATED:
+            messages.success(request, "Loan repayment successful")
+        else:
+            messages.error(request, f"{response.json()['detail']}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)

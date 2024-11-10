@@ -17,6 +17,7 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
+from .activities import get_active_activity_by_id, get_active_user_in_activity, get_activity_cycle_number
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -894,6 +895,7 @@ async def request_soft_loan(
                 expected_repayment_date=expected_repayment_date,
                 cycle_number=cycle_number,
                 loan_approved=not await_approval,
+                loan_approved_date=today if not await_approval else None,
                 loan_cleared=False,
             )
             db.add(loan_request)
@@ -925,6 +927,7 @@ async def request_soft_loan(
 
                 loans_table.total_loans_taken += requested_amount
                 loans_table.unpaid_loans += requested_amount
+                loans_table.unpaid_interest += expected_interest
 
                 # update user wallet with the loan amount
                 user_wallet = db.query(models.User).filter(models.User.id == user_id).with_for_update().first()
@@ -975,3 +978,167 @@ async def calculate_repayment_date(today, activity, contribution_day_is_today):
             return today.date() + timedelta(days=30)
         elif activity.frequency == "interval" and activity.interval == "custom":
             return today.date() + timedelta(days=(int(activity.contribution_day)))
+
+
+# paying a soft loan - prioriity is to pay the interest first
+@router.post("/soft_loans/repayment/members/{activity_id}", status_code=status.HTTP_201_CREATED)
+async def pay_soft_loan(
+    activity_id: int,
+    loan_payment: schemas.TableBankingPayLoan = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        if current_user.wallet_balance < loan_payment.amount:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient wallet balance",
+            )
+
+        activity = await get_active_activity_by_id(activity_id, db)
+        if not activity:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+        user_in_activity = await get_active_user_in_activity(activity_id, current_user.id, db)
+
+        if not user_in_activity:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User is not a member of this activity",
+            )
+
+        cycle_number = await get_activity_cycle_number(activity_id, db)
+
+        with db.begin_nested():
+            requested_loans = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.user_id == current_user.id,
+                models.TableBankingRequestedLoans.loan_approved == True,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+            ).order_by(models.TableBankingRequestedLoans.request_date).with_for_update().all()
+
+            if not requested_loans:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="No outstanding loans found",
+                )
+
+            loan_management = db.query(models.TableBankingLoanManagement).filter(
+                models.TableBankingLoanManagement.activity_id == activity_id,
+                models.TableBankingLoanManagement.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            dividends = db.query(models.TableBankingDividend).filter(
+                models.TableBankingDividend.activity_id == activity_id,
+                models.TableBankingDividend.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            if not dividends or not loan_management:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Loan management or dividends not found",
+                )
+
+            paying_amount = loan_payment.amount
+            total_repaid = 0.0
+            total_interest_paid = 0.0
+            total_principal_paid = 0.0
+
+            for loan in requested_loans:
+                loan_payment_details = process_loan_payment(loan, paying_amount)
+                paying_amount -= loan_payment_details["total_repaid"]
+                total_interest_paid += loan_payment_details["interest_paid"]
+                total_principal_paid += loan_payment_details["principal_paid"]
+                total_repaid += loan_payment_details["total_repaid"]
+
+                if loan_payment_details["loan_cleared"]:
+                    loan.loan_cleared = True
+                    loan.repaid_date = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+
+                # update the loan management table
+            loan_management.paid_loans += total_principal_paid
+            loan_management.paid_interest += total_interest_paid
+            loan_management.unpaid_loans -= total_principal_paid
+            loan_management.unpaid_interest -= total_interest_paid
+
+            # update dividends with the interest paid (unpaid dividends)
+            dividends.unpaid_dividends += total_interest_paid
+
+            # update the activity account balance
+            activity_account = db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).with_for_update().first()
+
+            if not activity_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Activity account not found",
+                )
+            
+            activity_account.account_balance += total_repaid
+
+            # update the chama account balance
+            chama_account = db.query(models.Chama_Account).filter(
+                models.Chama_Account.chama_id == activity.chama_id
+            ).with_for_update().first()
+
+            if not chama_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Chama account not found",
+                )
+
+            chama_account.account_balance += total_repaid
+
+            # update the user wallet
+            user_record = db.query(models.User).filter(models.User.id == current_user.id).with_for_update().first()
+            user_record.wallet_balance -= total_repaid
+
+            db.commit()
+
+        return {"message": "Loan payment successful"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while paying soft loan for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while paying soft loan for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while paying soft loan for this activity",
+        )
+
+
+def process_loan_payment(loan, paying_amount):
+    """Helper function to process payment for a single loan."""
+    interest_paid = 0.0
+    principal_paid = 0.0
+    total_repaid = 0.0
+
+    if loan.expected_interest > 0:
+        pay_interest = min(loan.expected_interest, paying_amount)
+        interest_paid += pay_interest
+        paying_amount -= pay_interest
+        total_repaid += pay_interest
+        loan.expected_interest -= pay_interest
+
+    if paying_amount > 0 and loan.standing_balance > 0:
+        pay_principal = min(loan.standing_balance, paying_amount)
+        principal_paid += pay_principal
+        paying_amount -= pay_principal
+        total_repaid += pay_principal
+        loan.standing_balance -= pay_principal
+
+    loan.total_repaid += total_repaid
+    loan.total_required -= total_repaid
+
+    return {
+        "interest_paid": interest_paid,
+        "principal_paid": principal_paid,
+        "total_repaid": total_repaid,
+        "loan_cleared": loan.standing_balance == 0 and loan.expected_interest == 0,
+    }

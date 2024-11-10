@@ -175,13 +175,13 @@
                 <div class="card-body">
                   <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('payLoanForm').style.display = 'none';" aria-label="Close"></button>
                     <h5 class="card-title">Pay Loan</h5>
-                  <form action="" method="POST">
+                  <form action="{% url 'member:loan_repayment' activity_id %}" method="POST">
                     {% csrf_token %}
                     <div class="mb-3">
                       <label for="pay_amount" class="form-label">Amount</label>
                       <div class="input-group">
                         <span class="input-group-text" id="basic-addon1">Ksh:</span>
-                        <input type="number" class="form-control" id="pay_amount" name="pay_amount" min="100" required>
+                        <input type="number" class="form-control" id="repayment_amount" name="repayment_amount" min="100" required>
                         <small class="error-message"></small>
                       </div>
                     </div>

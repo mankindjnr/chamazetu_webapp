@@ -35,6 +35,26 @@ async def get_active_activity_by_id(activity_id: int, db: Session):
         .first()
     )
 
+async def get_active_user_in_activity(activity_id: int, user_id: int, db: Session):
+    return (
+        db.query(models.activity_user_association)
+        .filter(
+            and_(
+                models.activity_user_association.c.activity_id == activity_id,
+                models.activity_user_association.c.user_id == user_id,
+                models.activity_user_association.c.user_is_active == True,
+            )
+        )
+        .first()
+    )
+
+async def get_activity_cycle_number(activity_id: int, db: Session):
+    return (
+        db.query(func.max(models.TableBankingLoanManagement.cycle_number))
+        .filter(models.TableBankingLoanManagement.activity_id == activity_id)
+        .scalar()
+    )
+
 
 # create an activity
 @router.post(

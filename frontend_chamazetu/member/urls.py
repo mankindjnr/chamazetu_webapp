@@ -170,4 +170,9 @@ urlpatterns = [
         views.request_soft_loan,
         name="request_soft_loan",
     ),
+    path(
+        "loan_repayment/<int:activity_id>",
+        views.loan_repayment,
+        name="loan_repayment",
+    ),
 ]

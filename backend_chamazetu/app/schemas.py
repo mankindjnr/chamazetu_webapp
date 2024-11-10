@@ -1017,3 +1017,9 @@ class TableBankingRequestLoan(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TableBankingPayLoan(BaseModel):
+    amount: int
+
+    class Config:
+        from_attributes = True
