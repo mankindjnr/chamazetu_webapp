@@ -26,7 +26,7 @@ app.conf.beat_schedule = {
     # executed a little past midnight everyday
     "setfines_updatedays_autodisburse_rotations": {
         "task": "chama.tasks.setfines_updatedays_autodisburse_rotations_chain",
-        "schedule": crontab(minute=30, hour=0),
+        "schedule": crontab(minute=20, hour=0),
     },
     # run everyday at 12 noon
     "make_auto_contributions": {
@@ -42,6 +42,11 @@ app.conf.beat_schedule = {
     "disburse_late_fines": {
         "task": "manager.tasks.make_late_auto_disbursements",
         "schedule": crontab(minute=0, hour=5),
+    },
+    # runs 45 minutes past midnight everyday
+    "update_table_banking_loan_records": {
+        "task": "chama.tasks.update_table_banking_loan_records",
+        "schedule": crontab(minute=45, hour=0),
     },
 }
 

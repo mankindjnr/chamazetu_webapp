@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 import logging, random, time
 from typing import List
 from uuid import uuid4
+import re
 
 from .date_functions import (
     calculate_custom_interval,
@@ -184,7 +185,7 @@ async def member_dashboard(
                     "%H:%M:%S"
                 ),
                 "transaction_amount": transaction.transactionamount,
-                "receiver_phone": (transaction.receiverpartypublicname).split("-")[0],
+                "receiver_phone": re.sub(r'(\d{6})(\d{4})', r'******\2', (transaction.receiverpartypublicname).split("-")[0]),
                 "receiver_name": (transaction.receiverpartypublicname).split("-")[1],
             }
             for transaction in sent_transactions
@@ -3408,4 +3409,109 @@ async def missed_amounts_total(
         transaction_error_logger.error(f"Failed to get missed amounts total {e}")
         raise HTTPException(
             status_code=400, detail="Failed to get missed amounts total"
+        )
+
+# how much has the user contributed from the first_contribution_date to today, if its a restart then from the restart date
+# this will include all transaction make contribution and late contribution, we will then retrieve all paid fines within the same period
+# and sum them up
+async def contributions_total(activity_id: int, user_id: int, db: Session):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # get the first contribution date
+        activity = await get_active_activity_by_id(activity_id, db)
+
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        start_date = None
+        if not activity.restart and not activity.restart_date:
+            print("====first contribution date====", activity.first_contribution_date)
+            start_date = activity.first_contribution_date
+        else:
+            print("====restart date====", activity.restart_date)
+            start_date = activity.restart_date
+
+        if not start_date:
+            raise HTTPException(status_code=404, detail="No start date found")
+
+        contributions = (
+            db.query(
+                func.coalesce(func.sum(models.ActivityTransaction.amount), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityTransaction.user_id == user_id,
+                    models.ActivityTransaction.activity_id == activity_id,
+                    func.date(models.ActivityTransaction.transaction_date) >= start_date,
+                    func.date(models.ActivityTransaction.transaction_date) <= today,
+                    models.ActivityTransaction.transaction_type == "contribution",
+                    models.ActivityTransaction.transaction_completed == True,
+                )
+            )
+            .scalar()
+        )
+
+        late_contributions = (
+            db.query(
+                func.coalesce(func.sum(models.ActivityTransaction.amount), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityTransaction.user_id == user_id,
+                    models.ActivityTransaction.activity_id == activity_id,
+                    func.date(models.ActivityTransaction.transaction_date) >= start_date,
+                    func.date(models.ActivityTransaction.transaction_date) <= today,
+                    models.ActivityTransaction.transaction_type == "late contribution",
+                    models.ActivityTransaction.transaction_completed == True,
+                )
+            )
+            .scalar()
+        )
+
+        paid_fines = (
+            db.query(
+                func.coalesce(func.sum(models.ActivityFine.fine), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityFine.user_id == user_id,
+                    models.ActivityFine.activity_id == activity_id,
+                    models.ActivityFine.is_paid == True,
+                    func.date(models.ActivityFine.paid_date) >= start_date,
+                    func.date(models.ActivityFine.paid_date) <= today,
+                )
+            )
+            .scalar()
+        )
+
+        unpaid_fines = (
+            db.query(
+                func.coalesce(func.sum(models.ActivityFine.fine), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityFine.user_id == user_id,
+                    models.ActivityFine.activity_id == activity_id,
+                    models.ActivityFine.is_paid == False,
+                    func.date(models.ActivityFine.fine_date) >= start_date,
+                    func.date(models.ActivityFine.fine_date) <= today,
+                )
+            )
+            .scalar()
+        )
+
+        return {
+            "contributions": contributions,
+            "late_contributions": late_contributions,
+            "paid_fines": paid_fines,
+            "unpaid_fines": unpaid_fines,
+        }
+    except Exception as e:
+        transaction_error_logger.error(f"Failed to get contributions total {e}")
+        raise HTTPException(
+            status_code=400, detail="Failed to get contributions total"
         )

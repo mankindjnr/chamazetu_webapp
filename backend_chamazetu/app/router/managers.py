@@ -292,6 +292,8 @@ async def get_chama(
         # organizing response data
         investment_balance = invst_account.amount_invested if invst_account else 0.0
         general_account = acct_balance.account_balance if acct_balance else 0.0
+        available_balance = acct_balance.available_balance if acct_balance else 0.0
+
         chama_activities = [
             {
                 "contribution_date": activity.next_contribution_date,
@@ -309,6 +311,7 @@ async def get_chama(
                 "manager_profile_picture": manager_profile,
                 "investment_balance": investment_balance,
                 "general_account": general_account,
+                "available_balance": available_balance,
                 "total_fines": total_fines,
                 "activities": chama_activities,
             }

@@ -5,6 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, HttpRe
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from datetime import datetime, date, timedelta
+from zoneinfo import ZoneInfo
 from django.contrib import messages
 from collections import defaultdict
 from http import HTTPStatus
@@ -37,6 +38,7 @@ from chama.usermanagement import (
 
 load_dotenv()
 
+nairobi_tz = ZoneInfo("Africa/Nairobi")
 
 # work on detecting if the user is already in the activity
 @async_tokens_in_cookies()
@@ -165,6 +167,9 @@ async def access_activity(request, chama_name, chama_id, activity_type, activity
     activity_data = await get_activity_data(request, activity_id, headers)
     recent_transactions = await get_recent_activity_transactions(request, activity_id)
 
+    today = datetime.now(nairobi_tz).date()
+    one_week_ago = (today - timedelta(days=7)).strftime("%Y-%m-%d")
+
     weekly_contributions = None
     weekly_headers = None
     if activity_data["activity_frequency"] == "weekly":
@@ -205,6 +210,8 @@ async def access_activity(request, chama_name, chama_id, activity_type, activity
                 "weekly_contributions": weekly_contributions,
                 "wallet_balance": activity_data["wallet_balance"],
                 "personal_loan": activity_data["personal_loan"] if activity_data["activity_type"] == "table-banking" else None,
+                "from_date": one_week_ago,
+                "to_date": today.strftime("%Y-%m-%d"),
             },
         )
     return HttpResponseRedirect(

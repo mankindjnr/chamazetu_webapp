@@ -12,6 +12,7 @@ from .member_chama import (
     auto_contribute_settings,
     chama_activities,
     get_chama_view,
+    investment_marketplace,
 )
 from .activities import (
     join_activity,
@@ -43,4 +44,4 @@ from .profile_update import (
     update_facebook_handle,
 )
 
-from .table_banking import soft_loans, request_soft_loan, loan_repayment
+from .table_banking import soft_loans, request_soft_loan, loan_repayment, loan_history, retrieve_loan_history, dividend_records

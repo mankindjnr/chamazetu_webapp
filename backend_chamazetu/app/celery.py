@@ -43,8 +43,8 @@ celery_app.conf.update(
 
 
 
-@celery_app.task
-def process_callback(unprocessed_code: str, transaction_data: dict):
+@celery_app.task(bind=True, max_retries=3, default_retry_delay=60)
+def process_callback(self, unprocessed_code: str, transaction_data: dict):
     db: Session = next(database.get_db())
     try:
         print("======c2b callback=====")
@@ -63,14 +63,13 @@ def process_callback(unprocessed_code: str, transaction_data: dict):
         mpesa_receipt_number = transaction_data["Body"]["stkCallback"][
             "CallbackMetadata"
         ]["Item"][1]["Value"]
-        transaction_date = datetime.strptime(
-            str(
-                transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3][
-                    "Value"
-                ]
-            )[:14],
-            "%Y%m%d%H%M%S",
-        )
+
+        print("into the transaction date")
+        print(transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3]["Value"])
+        transaction_date_str = str(transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3]["Value"])[:14]
+        transaction_date = datetime.strptime(transaction_date_str, "%Y%m%d%H%M%S")
+        print("===past the transaction date===")
+
         phone_number = str(
             transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][4][
                 "Value"
@@ -139,10 +138,17 @@ def process_callback(unprocessed_code: str, transaction_data: dict):
 
         print("======c2b callback commiting=====")
         db.commit()
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         db.rollback()
         transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to update transaction")
+
+        # retry the task
+        try:
+            self.retry(exc=e, countdown=60)
+        except self.MaxRetriesExceededError:
+            raise HTTPException(status_code=500, detail="Failed to update transaction")
 
 @celery_app.task
 def chama_registration_callback(unprocessed_code: str, registration_data: dict):
@@ -401,7 +407,6 @@ def process_b2c_result(result: dict):
             db.rollback()
             raise HTTPException(status_code=404, detail="Fee not found")
 
-        # TODO: remember to minus the transaction charges from the wallet balance as well
         user.wallet_balance -= (
             result_dict["TransactionAmount"] + chamazetu_fees.chamazetu_to_mpesa
         )
@@ -467,7 +472,6 @@ def process_b2c_result(result: dict):
             .first()
         )
         chamazetu.withdrawal_fees += net_charge
-        print("===chamazetu's withdrawal fees:", chamazetu.withdrawal_fees)
         # how much shillings is the reward coins worth
         chamazetu.reward_coins += cost_of_issued_coins
 

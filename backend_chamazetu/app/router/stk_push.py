@@ -249,8 +249,6 @@ async def backup_transaction_update(
     wallet = transaction_data.destination_wallet
     amount = transaction_data.amount
 
-    print("==transaction_data==\n", transaction_data)
-
     transaction = (
         db.query(models.WalletTransaction)
         .filter(
@@ -276,7 +274,6 @@ async def backup_transaction_update(
 
     # check the status of the checkout request
     status_data = await stk_push_status(checkout_request_id)
-    print("==status_data==\n", status_data)
 
     if status_data.get("ResultCode") == "0":
         print("==past result code==\n")

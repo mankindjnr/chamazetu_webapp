@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from datetime import datetime, timedelta
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import (
@@ -315,8 +316,6 @@ async def chama(request, key):
     )
     if chama_resp.status_code == HTTPStatus.OK:
         chama_data = chama_resp.json()["chama"]
-        print("========chama access============")
-        print(chama_data)
         return render(
             request,
             "manager/chamadashboard.html",
@@ -328,6 +327,7 @@ async def chama(request, key):
                 "profile_picture": chama_data["manager_profile_picture"],
                 "investment_balance": chama_data["investment_balance"],
                 "general_account": chama_data["general_account"],
+                "available_balance": chama_data["available_balance"],
                 "total_fines": chama_data["total_fines"],
                 "activities": chama_data["activities"],
             },
@@ -349,8 +349,8 @@ async def chama_activity(request, activity_id):
     )
     if activity_resp.status_code == HTTPStatus.OK:
         activity_dashboard = activity_resp.json()
-        print("========activty access============")
-        # print(activity_dashboard)
+        today = datetime.now(nairobi_tz).date()
+        one_week_ago = (today - timedelta(days=7)).strftime("%Y-%m-%d")
         activity_data = activity_dashboard["activity"]
         rotation_contributions = activity_dashboard["rotation_contributions"]
         chama_name = get_chama_name(activity_data["chama_id"])
@@ -363,6 +363,8 @@ async def chama_activity(request, activity_id):
                 "activity_id": activity_id,
                 "upcoming_contribution_date": activity_dashboard["upcoming_contribution_date"],
                 "rotation_contributions": rotation_contributions,
+                "from_date": one_week_ago,
+                "to_date": today.strftime("%Y-%m-%d"),
             },
         )
 

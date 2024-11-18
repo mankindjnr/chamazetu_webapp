@@ -106,8 +106,8 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
-          <i class="ri-file-excel-fill"></i>
+        <a class="nav-link collapsed" href="{% url 'member:loan_history' activity_id from_date to_date %}">
+          <i class="ri-file-excel-2-line"></i>
           <span>Loan History</span> 
         </a>
       </li>
@@ -149,6 +149,15 @@
         </a>
       </li>
 
+      {% if activity.activity_type == 'table-banking' %}
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:dividend_disbursement' activity_id %}">
+          <i class="ri-file-list-3-line"></i>
+          <span>Dividends</span> 
+        </a>
+      </li>
+      {% endif %}
+
       <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_about_chama' chama_name %}">
           <i class="bi bi-grid"></i>
@@ -178,7 +187,6 @@
       <div class="ml-auto">
         <h1>{{ activity.activity_type }}</h1>
       </div>
-
 
 
     </div><!-- End Page Title -->
@@ -296,6 +304,7 @@
 
              <!-- interest earned / dividend unpaid nad cycle number -->
              <div class="col-xxl-4 col-md-4">
+              <a href="{% url 'manager:dividend_disbursement' activity_id %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card">
 
                 <div class="card-body">
@@ -314,6 +323,7 @@
                 </div>
 
               </div>
+            </a>
             </div>
               <!-- end of interest paid in -->
             {% endif %}

@@ -155,3 +155,44 @@ async def add_user_to_activity(
     except Exception as e:
         db.rollback()
         management_error_logger.error(f"Error adding user to activity: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
+
+
+@router.post("/add_to_the_marketplace", status_code=status.HTTP_201_CREATED)
+async def add_to_the_marketplace(
+    investment: schemas.InvestmentMarketPlace,
+    db: Session = Depends(database.get_db),
+):
+
+    try:
+        # a list of suitable activities
+        suitable_activities = []
+        for activity in investment.suitable_activities:
+            suitable_activities.append(activity.activity_type)
+    
+        new_investment = models.InvestmentMarketplace(
+            investment_title=investment.investment_title,
+            description=investment.description,
+            suitable_activities = suitable_activities,
+        )
+
+        db.add(new_investment)
+        db.commit()
+
+        return {"message": "Investment added to marketplace successfully"}
+    except HTTPException as http_exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error adding to the marketplace: {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as e:
+        db.rollback()
+        management_error_logger.error(f"Error adding to the marketplace: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )

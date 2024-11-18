@@ -272,6 +272,8 @@ async def get_activity_by_id(
                 models.TableBankingRequestedLoans.activity_id == activity_id,
                 models.TableBankingRequestedLoans.loan_approved == False,
                 models.TableBankingRequestedLoans.loan_cleared == False,
+                models.TableBankingRequestedLoans.cycle_number == cycle_number,
+                models.TableBankingRequestedLoans.rejected == False,
             ).count()
 
             # dividend so far
@@ -761,7 +763,6 @@ async def get_activity_data(
         # if this is a table-banking activity, fetch loans data for user
         personal_loan = 0
         if activity.activity_type == "table-banking":
-            print("=======getting personal loan======")
             personal_loan = (
                 db.query(func.coalesce(func.sum(models.TableBankingRequestedLoans.total_required), 0))
                 .filter(

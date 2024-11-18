@@ -304,6 +304,32 @@ def update_accepting_members_chain():
     return chain(check_chamas_task | check_activities_task)()
 
 
+# update table banking loan records
+@shared_task(
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={"max_retries": 3},
+)
+def update_table_banking_loan_records():
+    """
+    Update table banking loan records
+    """
+    logger.info(
+        "==========chama/tasks.py: update_table_banking_loan_records()=========="
+    )
+    logger.info(f"Task ran at: {datetime.now()}")
+    logger.info(f"Nairobi: {datetime.now(nairobi_tz)}")
+    response = requests.put(
+        f"{os.getenv('api_url')}/table_banking/update_table_banking_loans"
+    )
+    try:
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to update table banking loan records: {e}")
+        raise self.retry(exc=e)
+
+    return response.status_code == HTTPStatus.OK
+
+
 # update the contribution days for chama activities
 @shared_task(
     autoretry_for=(requests.exceptions.RequestException,),

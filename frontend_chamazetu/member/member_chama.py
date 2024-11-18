@@ -53,6 +53,7 @@ from chama.tasks import (
     create_rotation_contributions,
     setfines_updatedays_autodisburse_rotations_chain,
     update_accepting_members_chain,
+    update_table_banking_loan_records,
 )
 from manager.tasks import make_late_auto_disbursements
 
@@ -140,7 +141,6 @@ async def access_chama(request, chamaname, chama_id):
         "Content-type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
-    print("======headers======")
 
     chama = requests.get(
         f"{os.getenv('api_url')}/members/chama_dashboard/{chama_id}", headers=headers
@@ -152,6 +152,7 @@ async def access_chama(request, chamaname, chama_id):
         # auto_disburse_to_walletts.delay()
         # create_rotation_contributions.delay()
         # setfines_updatedays_autodisburse_rotations_chain.delay()
+        # update_table_banking_loan_records.delay()
         # merry_go_round_activity_auto_contributions.delay()
         # make_late_auto_disbursements.delay()
         # update_accepting_members_chain.delay()
@@ -308,7 +309,6 @@ async def get_about_chama(request, chama_name, chama_id):
         headers=headers,
     )
 
-    print(f"============={role}===about================")
     if chama_data.status_code == HTTPStatus.OK:
         # print(chama_data.json())
         chama = chama_data.json().get("chama")
@@ -446,3 +446,27 @@ def chama_activities(request, chama_name, chama_id):
         return HttpResponseRedirect(
             reverse("member:access_chama", args=[chama_name, chama_id])
         )
+
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def investment_marketplace(request, chama_id):
+    url = f"{os.getenv('api_url')}/chamas/investment_marketplace/{chama_id}"
+
+    response = requests.get(url)
+    if response.status_code == HTTPStatus.OK:
+        marketplace_investments = response.json()["investment_marketplace"]
+        return render(
+            request,
+            "manager/investment_marketplace.html",
+            {
+                "role": "member",
+                "chama_id": chama_id,
+                "marketplace_investments": marketplace_investments,
+            },
+        )
+    else:
+        messages.error(request, "Failed to fetch marketplace data")
+
+    referer = request.META.get("HTTP_REFERER", reverse("member:dashboard"))
+    return HttpResponseRedirect(referer)

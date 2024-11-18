@@ -44,6 +44,7 @@ from .manage_activities import (
     order_management,
     merry_go_round_share_increase,
     allow_new_activity_members,
+    investment_marketplace,
 )
 
 from .manage_members import membership_management, allow_new_members
@@ -56,6 +57,10 @@ from .table_banking import (
     loan_eligibility,
     restrict_user,
     allow_user,
+    approve_loan,
+    decline_loan,
+    disburse_dividends,
+    dividend_disbursement,
 )
 
 

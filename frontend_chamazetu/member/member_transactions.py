@@ -257,13 +257,13 @@ async def deposit_to_wallet(request, amount, phonenumber):
                         CheckoutRequestID = stk_request_resp.json()["CheckoutRequestID"]
                         ResponseCode = stk_request_resp.json()["ResponseCode"]
                         if ResponseCode == "0":
-                            # status_backup_transaction_update.delay(
-                            #     CheckoutRequestID,
-                            #     transaction_code,
-                            #     f"254{phonenumber[1:]}",
-                            #     wallet_id,
-                            #     amount,
-                            # )
+                            status_backup_transaction_update.delay(
+                                CheckoutRequestID,
+                                transaction_code,
+                                f"254{phonenumber[1:]}",
+                                wallet_id,
+                                amount,
+                            )
                             messages.success(request, "Mpesa Request sent successfully.")
                     else:
                         messages.error(
@@ -283,7 +283,6 @@ async def deposit_to_wallet(request, amount, phonenumber):
 # ==========================================================
 
 # ==========================================================
-
 
 @async_tokens_in_cookies()
 async def from_wallet_to_select_activity(request, chama_id, chama_name):
@@ -428,6 +427,10 @@ async def from_wallet_to_mpesa(request, amount, phone_number):
     current_user = request.COOKIES.get("current_user")
     user_id = get_user_id(current_user)
 
+    if amount > 250000:
+        messages.error(request, "Amount should not exceed 250,000.")
+        return redirect(reverse("member:dashboard"))
+
     # fetch wallet info
     wallet_balance = get_wallet_balance(request)
     if wallet_balance is None:
@@ -482,6 +485,7 @@ async def from_wallet_to_mpesa(request, amount, phone_number):
                 try:
                     resp = await client.post(url_mpesa, json=data_mpesa)
                     if resp.status_code == HTTPStatus.CREATED:
+                        print("====b2c resp.json()====: ", resp.json())
                         messages.success(
                             request, "Withdrawal request sent successfully"
                         )

@@ -241,3 +241,26 @@ async def allow_new_activity_members(request, activity_id):
             messages.error(request, f"{response.json()['detail']}")
 
     return redirect(reverse("manager:order_management", args=[activity_id]))
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def investment_marketplace(request, chama_id):
+    url = f"{os.getenv('API_URL')}/chamas/investment_marketplace/{chama_id}"
+
+    response = requests.get(url)
+    if response.status_code == HTTPStatus.OK:
+        marketplace_investments = response.json()["investment_marketplace"]
+        return render(
+            request,
+            "manager/investment_marketplace.html",
+            {
+                "role": "manager",
+                "chama_id": chama_id,
+                "marketplace_investments": marketplace_investments,
+            },
+        )
+    else:
+        messages.error(request, "Failed to fetch marketplace data")
+
+    referer = request.META.get("HTTP_REFERER", reverse("manager:dashboard"))
+    return HttpResponseRedirect(referer)

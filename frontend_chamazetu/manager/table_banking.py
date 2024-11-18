@@ -7,7 +7,7 @@ from django.middleware.csrf import get_token
 from django.urls import reverse
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.contrib import messages
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import asyncio, aiohttp
 from zoneinfo import ZoneInfo
 from http import HTTPStatus
@@ -49,10 +49,12 @@ nairobi_tz = ZoneInfo("Africa/Nairobi")
 async def get_soft_loans(request, activity_id):
     url = f"{os.getenv('api_url')}/table_banking/soft_loans/manager/{activity_id}"
     response = requests.get(url)
+    today = datetime.now(nairobi_tz).date()
+    one_week_ago = (today - timedelta(days=7)).strftime("%Y-%m-%d")
 
     if response.status_code == HTTPStatus.OK:
         soft_loans = response.json()
-        return render(request, "manager/soft_loans.html", {"activity_id": activity_id, "soft_loans": soft_loans})
+        return render(request, "manager/soft_loans.html", {"activity_id": activity_id, "soft_loans": soft_loans, "from_date": one_week_ago, "to_date": today.strftime("%Y-%m-%d")})
     else:
         messages.error(request, f"{response.json().get('detail')}")
 
@@ -180,3 +182,93 @@ async def allow_user(request, activity_id, user_id):
 
         referer = request.META.get("HTTP_REFERER", "member:dashboard")
         return HttpResponseRedirect(referer)
+
+
+async def approve_loan(request, activity_id, loan_id):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    url = f"{os.getenv('api_url')}/table_banking/approve_loan/{activity_id}/{loan_id}"
+    response = requests.put(url, headers=headers)
+
+    if response.status_code == HTTPStatus.OK:
+        messages.success(request, "Loan approved successfully")
+    else:
+        messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)
+
+async def decline_loan(request, activity_id, loan_id):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    url = f"{os.getenv('api_url')}/table_banking/decline_loan/{activity_id}/{loan_id}"
+    response = requests.put(url, headers=headers)
+
+    if response.status_code == HTTPStatus.OK:
+        messages.success(request, "Loan declined successfully")
+    else:
+        messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def dividend_disbursement(request, activity_id):
+    url = f"{os.getenv('api_url')}/table_banking/dividend_disbursement_records/{activity_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        records = response.json()
+        return render(request, "manager/dividend_disbursement_records.html", {"activity_id": activity_id, "role": "manager", "records": records})
+    else:
+        messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)
+
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def disburse_dividends(request, activity_id):
+    if request.method == "POST":
+        request_data = request.POST
+        next_date = request_data.get("contribution_date")
+        disbursement_type = request_data.get("disbursement_type")
+
+        if not next_date or not disbursement_type:
+            messages.error(request, "Please select the next contribution date and the type of disbursement")
+            referer = request.META.get("HTTP_REFERER", "member:dashboard")
+            return HttpResponseRedirect(referer)
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+        }
+        url = None
+        if disbursement_type == "dividends_and_principal":
+            url = f"{os.getenv('api_url')}/table_banking/disburse_dividends_and_principal/{activity_id}"
+        elif disbursement_type == "dividends_and_principal_and_fines":
+            url = f"{os.getenv('api_url')}/table_banking/disburse_dividends_and_principal_fines/{activity_id}"
+
+        data = {"next_contribution_date": next_date}
+
+        response = requests.put(url, json=data, headers=headers)
+
+        if response.status_code == HTTPStatus.OK:
+            messages.success(request, "Dividends disbursed successfully")
+        else:
+            messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)

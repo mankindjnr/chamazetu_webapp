@@ -1873,3 +1873,55 @@ async def check_and_update_accepting_members_status(
         raise HTTPException(
             status_code=400, detail="Failed to update accepting members status"
         )
+
+
+# retrieve investment marketplace data
+@router.get(
+    "/investment_marketplace/{chama_id}",
+    status_code=status.HTTP_200_OK,
+)
+async def get_investment_marketplace_data(
+    chama_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        # retrieve activity types of actviities in this chama
+        activity_types = (
+            db.query(models.Activity.activity_type)
+            .filter(models.Activity.chama_id == chama_id)
+            .distinct()
+            .all()
+        )
+
+        activity_types_list = [activity[0] for activity in activity_types]
+
+        investment_marketplace = (
+            db.query(models.InvestmentMarketplace).order_by(
+                desc(models.InvestmentMarketplace.id)
+            )
+        ).all()
+
+        if not investment_marketplace:
+            raise HTTPException(
+                status_code=404, detail="Investment marketplace data not found"
+            )
+
+        return {
+            "investment_marketplace": [
+                {
+                    "id": investment.id,
+                    "title": investment.investment_title,
+                    "description": investment.description,
+                    "suitable": any(activity in investment.suitable_activities for activity in activity_types_list),
+                    "thumbnail": investment.thumbnail,
+                }
+                for investment in investment_marketplace
+            ]
+        }
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get investment marketplace data, error: {e}"
+        )
+        raise HTTPException(
+            status_code=400, detail="Failed to retrieve investment marketplace data"
+        )

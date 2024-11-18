@@ -18,6 +18,7 @@ from .date_functions import (
     calculate_monthly_same_day_interval,
 )
 from .activities import get_active_activity_by_id, get_active_user_in_activity, get_activity_cycle_number
+from .members import contributions_total
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -326,6 +327,7 @@ async def get_soft_loan_data(
         requested_loans = db.query(models.TableBankingRequestedLoans).filter(
             models.TableBankingRequestedLoans.activity_id == activity_id,
             models.TableBankingRequestedLoans.loan_cleared == False,
+            models.TableBankingRequestedLoans.rejected == False,
         ).all()
 
         dividend = db.query(models.TableBankingDividend).filter(
@@ -475,6 +477,8 @@ async def get_eligibility_loans(
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
+        cycle_number = await get_activity_cycle_number(activity_id, db)
+
         # get all users in the activity
         users = db.query(models.User).join(
             models.activity_user_association,
@@ -488,7 +492,8 @@ async def get_eligibility_loans(
 
         # get the loan settings
         loan_settings = db.query(models.TableBankingLoanSettings).filter(
-            models.TableBankingLoanSettings.activity_id == activity_id
+            models.TableBankingLoanSettings.activity_id == activity_id,
+            models.TableBankingLoanSettings.cycle_number == cycle_number,
         ).first()
         
         eligibility_data = []
@@ -861,9 +866,12 @@ async def request_soft_loan(
                     detail="User is not a member of this activity",
                 )
 
+            cycle_number = await get_activity_cycle_number(activity_id, db)
+
             # retrieve the loan settings
             loan_settings = db.query(models.TableBankingLoanSettings).filter(
-                models.TableBankingLoanSettings.activity_id == activity_id
+                models.TableBankingLoanSettings.activity_id == activity_id,
+                models.TableBankingLoanSettings.cycle_number == cycle_number,
             ).first()
 
             if not loan_settings:
@@ -879,7 +887,7 @@ async def request_soft_loan(
             cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
                 models.TableBankingLoanManagement.activity_id == activity_id
             ).scalar()
-            expected_interest = round((requested_amount * loan_settings.interest_rate) / 100, 2)
+            expected_interest = calculate_interest(requested_amount, loan_settings.interest_rate)
 
             loan_request = models.TableBankingRequestedLoans(
                 activity_id=activity_id,
@@ -922,7 +930,8 @@ async def request_soft_loan(
 
                 # loan management table
                 loans_table = db.query(models.TableBankingLoanManagement).filter(
-                    models.TableBankingLoanManagement.activity_id == activity_id
+                    models.TableBankingLoanManagement.activity_id == activity_id,
+                    models.TableBankingLoanManagement.cycle_number == cycle_number,
                 ).with_for_update().first()
 
                 loans_table.total_loans_taken += requested_amount
@@ -1142,3 +1151,824 @@ def process_loan_payment(loan, paying_amount):
         "total_repaid": total_repaid,
         "loan_cleared": loan.standing_balance == 0 and loan.expected_interest == 0,
     }
+
+
+# approve loans as manager
+@router.put("/approve_loan/{activity_id}/{loan_id}", status_code=status.HTTP_200_OK)
+async def approve_loan(
+    activity_id: int,
+    loan_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        activity = await get_active_activity_by_id(activity_id, db)
+
+        if not activity:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not allowed to approve loans for this activity",
+            )
+
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        with db.begin_nested():
+            loan = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.id == loan_id,
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.loan_approved == False,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+            ).first()
+
+            if not loan:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Loan not found",
+                )
+
+            cycle_number = await get_activity_cycle_number(activity_id, db)
+
+            # loan management table
+            loan_management = db.query(models.TableBankingLoanManagement).filter(
+                models.TableBankingLoanManagement.activity_id == activity_id,
+                models.TableBankingLoanManagement.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            if not loan_management:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Loan management not found",
+                )
+
+
+            loan_management.unpaid_loans += loan.requested_amount
+            loan_management.unpaid_interest += loan.expected_interest
+            loan_management.total_loans_taken += loan.requested_amount
+
+            loan.loan_approved = True
+            loan.loan_approved_date = today
+            # updating the expected_repayment_date to the an interval of this activity from the current date(today)
+            loan.expected_repayment_date = await calculate_repayment_date(today, activity, True)
+
+
+            # update the activity account balance
+            activity_account = db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).with_for_update().first()
+
+            if not activity_account or activity_account.account_balance < loan.requested_amount:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Insufficient activity account balance",
+                )
+
+            activity_account.account_balance -= loan.requested_amount
+
+            # update the chama account balance
+            chama_account = db.query(models.Chama_Account).filter(
+                models.Chama_Account.chama_id == activity.chama_id
+            ).with_for_update().first()
+
+            if not chama_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Chama account not found",
+                )
+
+            chama_account.account_balance -= loan.requested_amount
+
+            # update the user wallet
+            user_record = db.query(models.User).filter(models.User.id == loan.user_id).with_for_update().first()
+            if not user_record:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User wallet not found",
+                )
+
+            user_record.wallet_balance += loan.requested_amount
+
+            db.commit()
+
+        return {"message": "Loan approved successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while approving loan for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while approving loan for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while approving loan for activity_id: {activity_id}",
+        )
+
+
+# reject loans as manager
+@router.put("/decline_loan/{activity_id}/{loan_id}", status_code=status.HTTP_200_OK)
+async def reject_loan(
+    activity_id: int,
+    loan_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        activity = await get_active_activity_by_id(activity_id, db)
+
+        if not activity:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not allowed to reject loans for this activity",
+            )
+
+
+        loan = db.query(models.TableBankingRequestedLoans).filter(
+            models.TableBankingRequestedLoans.id == loan_id,
+            models.TableBankingRequestedLoans.activity_id == activity_id,
+            models.TableBankingRequestedLoans.loan_approved == False,
+            models.TableBankingRequestedLoans.loan_cleared == False,
+        ).first()
+
+        if not loan:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Loan not found",
+            )
+
+        loan.loan_approved = False
+        loan.rejected = True
+
+        db.commit()
+
+        return {"message": "Loan rejected successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while rejecting loan for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while rejecting loan for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while rejecting loan for activity_id: {activity_id}",
+        )
+
+
+# retrieving all approved loans requested from a certain date to another
+@router.get("/loan_history/{activity_id}", status_code=status.HTTP_200_OK)
+async def retrieve_loan_history(
+    activity_id: int,
+    dates: schemas.TableBankingLoanHistory,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        activity = await get_active_activity_by_id(activity_id, db)
+
+        if not activity:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+        cycle_number = await get_activity_cycle_number(activity_id, db)
+
+        from_date = datetime.strptime(dates.from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(dates.to_date, "%Y-%m-%d")
+
+        # order by request date in descending order
+        requested_loans = db.query(models.TableBankingRequestedLoans).filter(
+            models.TableBankingRequestedLoans.activity_id == activity_id,
+            models.TableBankingRequestedLoans.cycle_number == cycle_number,
+            func.date(models.TableBankingRequestedLoans.request_date) >= from_date.date(),
+            func.date(models.TableBankingRequestedLoans.request_date) <= to_date.date(),
+        ).order_by(models.TableBankingRequestedLoans.request_date.desc()).all()
+
+        loans = [
+            {
+                "user_name": loan.user_name,
+                "requested_amount": loan.requested_amount,
+                "standing_balance": loan.standing_balance,
+                "missed_payments": loan.missed_payments,
+                "expected_interest": loan.expected_interest,
+                "total_required": loan.total_required,
+                "total_repaid": loan.total_repaid,
+                "missed_payments": loan.missed_payments,
+                "request_date": loan.request_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "expected_repayment_date": loan.expected_repayment_date.strftime("%Y-%m-%d"),
+                "repaid_date": loan.repaid_date.strftime("%Y-%m-%d %H:%M:%S") if loan.repaid_date else "",
+                "loan_approved": "approved" if loan.loan_approved else "rejected",
+                "loan_approved_date": loan.loan_approved_date.strftime("%Y-%m-%d %H:%M:%S") if loan.loan_approved_date else "",
+                "loan_cleared": "cleared" if loan.loan_cleared else "not cleared",
+            }
+            for loan in requested_loans
+        ]
+
+        loans_data = db.query(models.TableBankingLoanManagement).filter(
+            models.TableBankingLoanManagement.activity_id == activity_id,
+            models.TableBankingLoanManagement.cycle_number == cycle_number,
+        ).first()
+
+
+        return {"loans": loans, "unpaid_loans": loans_data.unpaid_loans, "paid_loans": loans_data.paid_loans, "paid_interest": loans_data.paid_interest, "unpaid_interest": loans_data.unpaid_interest}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while retrieving loan history for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        management_error_logger.error(
+            f"Error occurred while retrieving loan history for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while retrieving loan history for this activity",
+        )
+
+
+# updating the loan records if they are past the expected repayment date, loan cleared=false and approved=true - all loans for active activities and users
+# we will update two tables, requested_loans and loan_management.
+# we will update the standing balance as the total required amount and calculate new interest on that standing balance
+# we will update the missed_payments + 1, we will also update the total required amount and the expected_repayment_date
+# for loan management, we will update total_loans_taken, unpaid_loans, unpaid_interest
+# total_loans_taken = total_loans_taken + previous expected_interest
+# unpaid_loans = unpaid_loans + previous expected_interest
+# unpaid_interest = unpaid_interest + new expected_interest
+
+@router.put("/update_table_banking_loans", status_code=status.HTTP_200_OK)
+async def update_table_banking_loans(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        with db.begin():
+            # get all activities
+            activities = db.query(models.Activity).filter(
+                and_(
+                    models.Activity.is_active == True,
+                    models.Activity.activity_type == "table-banking",
+                )
+            ).all()
+
+            activity_ids = [activity.id for activity in activities]
+            print("===activity ids:\n", activity_ids)
+
+            overdue_loans = (
+                db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id.in_(activity_ids),
+                models.TableBankingRequestedLoans.loan_approved == True,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+                func.date(models.TableBankingRequestedLoans.expected_repayment_date) < today,
+                )
+                .with_for_update()
+                .all()
+            )
+            print("===overdue loans:\n", overdue_loans)
+
+            if not overdue_loans:
+                return {"message": "No overdue loans found"}
+
+            # organize loans by activity for easier managemnet updates
+            loans_by_activity = {}
+            for loan in overdue_loans:
+                if loan.activity_id not in loans_by_activity:
+                    loans_by_activity[loan.activity_id] = []
+                loans_by_activity[loan.activity_id].append(loan)
+
+            for activity in activities:
+                cycle_number = await get_activity_cycle_number(activity.id, db)
+                interest_rate = db.query(models.TableBankingLoanSettings.interest_rate).filter(
+                    models.TableBankingLoanSettings.activity_id == activity.id
+                ).scalar()
+
+                if activity.id not in loans_by_activity:
+                    # skip if there are no overdue loans for this activity
+                    continue
+
+                # loan management record for this activity
+                loan_management = db.query(models.TableBankingLoanManagement).filter(
+                    models.TableBankingLoanManagement.activity_id == activity.id,
+                    models.TableBankingLoanManagement.cycle_number == cycle_number,
+                ).with_for_update().first()
+
+                if not loan_management:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Loan management not found",
+                    )
+
+                # aggregate values for bulk updating loan management
+                total_previous_interest = 0.0
+                total_new_interest = 0.0
+
+                for loan in loans_by_activity[activity.id]:
+                    # update the loan record
+                    previous_expected_interest = loan.expected_interest
+
+                    loan.standing_balance = loan.total_required
+                    loan.expected_interest = calculate_interest(loan.standing_balance, interest_rate)
+                    loan.missed_payments += 1
+                    loan.total_required = loan.standing_balance + loan.expected_interest
+                    loan.expected_repayment_date = await calculate_repayment_date(loan.expected_repayment_date, activity, True)
+
+
+                    total_previous_interest += previous_expected_interest
+                    total_new_interest += loan.expected_interest - previous_expected_interest
+
+                # update the loan management record
+                loan_management.total_loans_taken += total_previous_interest
+                loan_management.unpaid_loans += total_previous_interest
+                loan_management.unpaid_interest += total_new_interest
+
+            db.commit()
+
+        return {"message": "Loan records updated successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while updating loan records - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while updating loan records - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while updating loan records",
+        )
+
+def calculate_interest(balance, interest_rate):
+    return round((balance * interest_rate) / 100)
+
+
+# dividend records - we will retrive all users in this activity their ames, number of shares
+# sum of active loans for each user, sum of active fines and their dividend so far
+#this are records only
+@router.get("/dividend_disbursement_records/{activity_id}", status_code=status.HTTP_200_OK)
+async def dividend_disbursement_records(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+
+    try:
+        activity = await get_active_activity_by_id(activity_id, db)
+        if not activity:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+        cycle_number = await get_activity_cycle_number(activity_id, db)
+        if not cycle_number:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No cycle number found",
+            )
+
+        # get all the users in this activity - active users
+        active_users = (
+            db.query(
+                models.activity_user_association,
+                models.User.first_name,
+                models.User.last_name,
+                )
+                .join(models.User, models.User.id == models.activity_user_association.c.user_id)
+                .filter(
+                    models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_is_active == True,
+                    ).all()
+                    )
+
+        user_ids = [user.user_id for user in active_users]
+
+        # get the dividend records for this cycle
+        dividends = db.query(models.TableBankingDividend).filter(
+            models.TableBankingDividend.activity_id == activity_id,
+            models.TableBankingDividend.cycle_number == cycle_number,
+        ).first()
+
+        if not dividends:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Dividends not found",
+            )
+
+        # get all the active loans for this cycle in this activity
+        active_loans_users = db.query(models.TableBankingRequestedLoans).filter(
+            models.TableBankingRequestedLoans.activity_id == activity_id,
+            models.TableBankingRequestedLoans.loan_approved == True,
+            models.TableBankingRequestedLoans.loan_cleared == False,
+            models.TableBankingRequestedLoans.cycle_number == cycle_number,
+            models.TableBankingRequestedLoans.user_id.in_(user_ids),
+        ).all()
+
+
+        # get all the active fines for this cycle in this activity
+        active_fines_users = db.query(models.ActivityFine).filter(
+            models.ActivityFine.activity_id == activity_id,
+            models.ActivityFine.is_paid == False,
+            models.ActivityFine.user_id.in_(user_ids),
+        ).all()
+
+        active_loans_fines_users_ids = [loan.user_id for loan in active_loans_users] + [fine.user_id for fine in active_fines_users]
+
+        activity_account = db.query(models.Activity_Account.account_balance).filter(
+            models.Activity_Account.activity_id == activity_id
+        ).scalar()
+
+        num_of_shares = sum([user.shares for user in active_users])
+        dividend_per_share = int(dividends.unpaid_dividends / num_of_shares)
+        
+        # Create a dictionary with user contributions data indexed by user_id for quicker access
+        user_contributions_dict = {
+            user.user_id: {
+                "contributions": result["contributions"],
+                "late_contributions": result["late_contributions"],
+                "paid_fines": result["paid_fines"],
+                "unpaid_fines": result["unpaid_fines"],
+            }
+            for user in active_users
+            for result in [await contributions_total(activity_id, user.user_id, db)]
+        }
+
+        # Generate dividend records with direct access to user contributions data
+        dividend_records = [
+            {
+                "user_name": f"{user.first_name} {user.last_name}",
+                "shares": user.shares,
+                "active_loans": sum(loan.standing_balance for loan in active_loans_users if loan.user_id == user.user_id) + sum(loan.expected_interest for loan in active_loans_users if loan.user_id == user.user_id),
+                "active_fines": sum(fine.expected_repayment for fine in active_fines_users if fine.user_id == user.user_id),
+                "dividend_earned": user.shares * dividend_per_share,
+                "eligible": "yes" if user.user_id not in active_loans_fines_users_ids else "no",
+                "contributions": user_contributions_dict[user.user_id]["contributions"],
+                "late_contributions": user_contributions_dict[user.user_id]["late_contributions"],
+                "paid_fines": user_contributions_dict[user.user_id]["paid_fines"],
+                "unpaid_fines": user_contributions_dict[user.user_id]["unpaid_fines"],
+                "principal": (
+                    user_contributions_dict[user.user_id]["contributions"]
+                    + user_contributions_dict[user.user_id]["late_contributions"]
+                    - user_contributions_dict[user.user_id]["paid_fines"]
+                    - user_contributions_dict[user.user_id]["unpaid_fines"]
+                ),
+            }
+            for user in active_users
+        ]
+
+        return {"dividend_records": dividend_records, "activity_account_balance": activity_account, "dividend_earned": dividends.unpaid_dividends}
+
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while retrieving dividend records for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        management_error_logger.error(
+            f"Error occurred while retrieving dividend records for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while retrieving dividend records for this activity",
+        )
+
+
+# disburse dividends only
+@router.put("/disburse_dividends_only/{activity_id}", status_code=status.HTTP_200_OK)
+async def disburse_dividends_only(
+    activity_id: int,
+    next_contribution_date: schemas.NextContributionDate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        next_contribution_date = datetime.strptime(next_contribution_date.next_contribution_date, "%Y-%m-%d")
+        with db.begin_nested():
+            activity = await get_active_activity_by_id(activity_id, db)
+
+            if not activity:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+            if activity.manager_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not allowed to disburse dividends for this activity",
+                )
+
+            cycle_number = await get_activity_cycle_number(activity_id, db)
+
+            # get the dividends for this cycle
+            dividends = db.query(models.TableBankingDividend).filter(
+                models.TableBankingDividend.activity_id == activity_id,
+                models.TableBankingDividend.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            if not dividends:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dividends not found",
+                )
+
+            # get all the users in this activity
+            active_users = db.query(models.activity_user_association).filter(
+                models.activity_user_association.c.activity_id == activity_id,
+                models.activity_user_association.c.user_is_active == True,
+            ).all()
+            user_ids = [user.user_id for user in active_users]
+
+            # active loans for this cycle in this activity
+            active_loans_users = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.loan_approved == True,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+                models.TableBankingRequestedLoans.cycle_number == cycle_number,
+            ).distinct().all()
+
+
+            active_fines_users = db.query(models.ActivityFine).filter(
+                models.ActivityFine.activity_id == activity_id,
+                models.ActivityFine.is_paid == False,
+            ).distinct().all()
+
+            active_loans_fines_users_ids = [loan.user_id for loan in active_loans_users] + [fine.user_id for fine in active_fines_users]
+
+            users_to_disburse = [user for user in active_users if user.user_id not in active_loans_fines_users_ids]
+
+            total_amount_disbursed = 0.0
+            sum_of_all_shares = sum([user.shares for user in active_users])
+            dividend_per_share = dividends.unpaid_dividends / sum_of_all_shares
+
+            disbursement_records = []
+            for user in users_to_disburse:
+                dividend_earned = user.shares * dividend_per_share
+
+                user_wallet = db.query(models.User).filter(models.User.id == user.user_id).with_for_update().first()
+                # add a disbursement record
+                disbursement_records.append(models.TableBankingDividendDisbursement(
+                    activity_id=activity_id,
+                    user_id=user.user_id,
+                    user_name = f"{user_wallet.first_name} {user_wallet.last_name}",
+                    shares=user.shares,
+                    dividend_amount=int(dividend_earned),
+                    principal_amount=0.0,
+                    disbursement_date=today,
+                    cycle_number=cycle_number,
+                ))
+
+                total_amount_disbursed += dividend_earned
+                user_wallet.wallet_balance += int(dividend_earned)
+
+            # bulk insert
+            db.bulk_save_objects(disbursement_records)
+
+            # update the dividend table
+            dividends.paid_dividends += total_amount_disbursed
+            dividends.unpaid_dividends -= total_amount_disbursed
+
+            # new entry for the next cycle
+            db.add(models.TableBankingDividend(
+                chama_id=activity.chama_id,
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                unpaid_dividends=0.0,
+                paid_dividends=0.0,
+            ))
+
+            # new entry for the next cycle in the loan management table
+            db.add(models.TableBankingLoanManagement(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                total_loans_taken=0.0,
+                unpaid_loans=0.0,
+                paid_loans=0.0,
+                unpaid_interest=0.0,
+                paid_interest=0.0,
+            ))
+
+            # update the activity contribution date table with the next contribution date
+            contribution_date = db.query(models.ActivityContributionDate).filter(
+                models.ActivityContributionDate.activity_id == activity_id
+            ).with_for_update().first()
+
+            if not contribution_date:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Contribution date not found",
+                )
+
+            contribution_date.next_contribution_date = next_contribution_date
+            contribution_date.previous_contribution_date = today.date()
+
+            # update the activity account balance
+            activity_account = db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).with_for_update().first()
+
+            chama_account = db.query(models.Chama_Account).filter(
+                models.Chama_Account.chama_id == activity.chama_id
+            ).with_for_update().first()
+
+            if not activity_account or not chama_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Activity account or chama account not found",
+                )
+
+            activity_account.account_balance -= total_amount_disbursed
+            chama_account.account_balance -= total_amount_disbursed
+
+            # update activity restart to true and restart date to the next contribution date
+            activity.restart = True
+            activity.restart_date = next_contribution_date
+
+            db.commit()
+
+        return {"message": "Dividends disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while disbursing dividends for activity"
+        )
+
+# disburse dividends and principal
+@router.put("/disburse_dividends_and_principal/{activity_id}", status_code=status.HTTP_200_OK)
+async def disburse_dividends_and_principal(
+    activity_id: int,
+    next_contribution_date: schemas.NextContributionDate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        next_contribution_date = datetime.strptime(next_contribution_date.next_contribution_date, "%Y-%m-%d")
+        with db.begin_nested():
+            activity = await get_active_activity_by_id(activity_id, db)
+
+            if not activity:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+            if activity.manager_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not allowed to disburse dividends for this activity",
+                )
+
+            cycle_number = await get_activity_cycle_number(activity_id, db)
+
+            # get the dividends for this cycle
+            dividends = db.query(models.TableBankingDividend).filter(
+                models.TableBankingDividend.activity_id == activity_id,
+                models.TableBankingDividend.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            if not dividends:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dividends not found",
+                )
+
+            # get all the users in this activity
+            active_users = db.query(models.activity_user_association).filter(
+                models.activity_user_association.c.activity_id == activity_id,
+                models.activity_user_association.c.user_is_active == True,
+            ).all()
+            user_ids = [user.user_id for user in active_users]
+
+            # active loans for this cycle in this activity
+            active_loans_users = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.loan_approved == True,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+                models.TableBankingRequestedLoans.cycle_number == cycle_number,
+            ).distinct().all()
+
+
+            active_fines_users = db.query(models.ActivityFine).filter(
+                models.ActivityFine.activity_id == activity_id,
+                models.ActivityFine.is_paid == False,
+            ).distinct().all()
+
+            active_loans_fines_users = [loan.user_id for loan in active_loans_users] + [fine.user_id for fine in active_fines_users]
+
+            users_to_disburse = [user for user in active_users if user.user_id not in active_loans_fines_users]
+
+            total_amount_disbursed = 0.0
+            sum_of_all_shares = sum([user.shares for user in active_users])
+            dividend_per_share = dividends.unpaid_dividends / sum_of_all_shares
+
+            disbursement_records = []
+            for user in users_to_disburse:
+                dividend_earned = user.shares * dividend_per_share
+
+                user_contribution = await contributions_total(activity_id, user.user_id, db)
+                principal_amount = user_contribution["contributions"] + user_contribution["late_contributions"] - user_contribution["paid_fines"] - user_contribution["unpaid_fines"]
+
+                user_wallet = db.query(models.User).filter(models.User.id == user.user_id).with_for_update().first()
+                # add a disbursement record
+                disbursement_records.append(models.TableBankingDividendDisbursement(
+                    activity_id=activity_id,
+                    user_id=user.user_id,
+                    user_name = f"{user_wallet.first_name} {user_wallet.last_name}",
+                    shares=user.shares,
+                    dividend_amount=int(dividend_earned),
+                    principal_amount=int(principal_amount),
+                    disbursement_date=today,
+                    cycle_number=cycle_number,
+                ))
+
+                total_amount_disbursed += dividend_earned + principal_amount
+                user_wallet.wallet_balance += int(dividend_earned + principal_amount)
+
+            # bulk insert
+            db.bulk_save_objects(disbursement_records)
+
+            # update the dividend table
+            dividends.paid_dividends += total_amount_disbursed
+            dividends.unpaid_dividends -= total_amount_disbursed
+
+            # new entry for the next cycle
+            db.add(models.TableBankingDividend(
+                chama_id=activity.chama_id,
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                unpaid_dividends=0.0,
+                paid_dividends=0.0,
+            ))
+
+            # new entry for the next cycle in the loan management table
+            db.add(models.TableBankingLoanManagement(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                total_loans_taken=0.0,
+                unpaid_loans=0.0,
+                paid_loans=0.0,
+                unpaid_interest=0.0,
+                paid_interest=0.0,
+            ))
+
+            # update the activity contribution date table with the next contribution date
+            contribution_date = db.query(models.ActivityContributionDate).filter(
+                models.ActivityContributionDate.activity_id == activity_id
+            ).with_for_update().first()
+
+            if not contribution_date:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Contribution date not found",
+                )
+
+            contribution_date.next_contribution_date = next_contribution_date
+            contribution_date.previous_contribution_date = today.date()
+
+            # update the activity account balance
+            activity_account = db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).with_for_update().first()
+
+            chama_account = db.query(models.Chama_Account).filter(
+                models.Chama_Account.chama_id == activity.chama_id
+            ).with_for_update().first()
+
+            if not activity_account or not chama_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Activity account or chama account not found",
+                )
+
+            activity_account.account_balance -= total_amount_disbursed
+            chama_account.account_balance -= total_amount_disbursed
+
+            # update activity restart to true and restart date to the next contribution date
+            activity.restart = True
+            activity.restart_date = next_contribution_date
+
+            db.commit()
+
+        return {"message": "Dividends and principal disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends and principal for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends and principal for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while disbursing dividends and principal for activity"
+        )

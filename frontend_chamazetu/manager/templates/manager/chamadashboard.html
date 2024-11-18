@@ -122,7 +122,21 @@
           <i class="ri-article-line"></i>
           <span>About chama</span> 
         </a>
-      </li><!-- End about Page Nav -->
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="">
+          <i class="ri-shopping-cart-2-fill"></i>
+          <span>chamaZetu Shop</span> 
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:investment_marketplace' chama_id %}">
+          <i class="ri-stock-fill"></i>
+          <span>Investment Marketplace</span> 
+        </a>
+      </li>
 
     </ul>
 
@@ -181,6 +195,7 @@
                             <option value="merry-go-round">Merry-Go-Round</option>
                             <option value="table-banking">Table Banking</option>
                             <option value="saving">Saving</option>
+                            <option value="52-weeks-challenge">52 Weeks Challenge</option>
                             <option value="welfare">Welfare</option>
                           </select>
                           <!-- helper message -->
@@ -546,8 +561,8 @@
                       <small class="">Ksh:</small>
                     </div>
                     <div class="ps-3">
-                      <span class="text-primary small pt-1 fw-bold">Total Balance</span> <span class="text-success small pt-2 ps-1">{{ general_account }}</span><br/>
-                      <span class="text-primary small pt-1 fw-bold">Available Balance</span> <span class="text-success small pt-2 ps-1">0</span>
+                      <span class="text-primary small pt-1">Total Balance</span> <span class="text-success small pt-2 ps-1 fw-bold">{{ general_account }}</span><br/>
+                      <span class="text-primary small pt-1">Available Balance</span> <span class="text-success small pt-2 ps-1 fw-bold">{{ available_balance }} </span>
 
                     </div>
                   </div>

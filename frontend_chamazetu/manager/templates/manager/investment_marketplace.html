@@ -1,0 +1,78 @@
+{% extends "member/members_list_base.html" %}
+{% load static %}
+
+{% block title %}Marketplace{% endblock %}
+
+{% block content %} 
+<!-- ======= Header ======= -->
+<header id="header" class="fixed-top">
+    <div class="container d-flex align-items-center">
+
+        <h1 class="logo me-auto"><a href="#"><span>Investment</span> Marketplace</a></h1>
+        <!-- Uncomment below if you prefer to use an image logo -->
+        <!-- <a href="index.html" class="logo me-auto me-lg-0"><img src="{% static 'member/img/logo.png' %}" alt="" class="img-fluid"></a>-->
+
+        <nav id="navbar" class="navbar order-last order-lg-0">
+            <ul>
+              {% if role == 'member' %}
+              <li><a href="{% url 'member:dashboard' %}">Home</a></li>
+              {% elif role == 'manager' %}
+                <li><a href="{% url 'manager:dashboard' %}">Home</a></li>
+              {% endif %}
+            </ul>
+    <i class="bi bi-list mobile-nav-toggle"></i>
+  </nav><!-- .navbar -->
+
+</div>
+</header><!-- End Header -->
+
+<main id="main">
+
+<!-- ======= Breadcrumbs ======= -->
+<section id="breadcrumbs" class="breadcrumbs">
+  <div class="container">
+  </div>
+</section><!-- End Breadcrumbs -->
+
+
+<!-- ======= Features Section ======= -->
+<section id="features" class="features">
+  <div class="container" data-aos="fade-up">
+
+    <div class="section-title">
+      <p class="fw-bold">A list of curated investment opportunities for your chama</p>
+    </div>
+
+<!-- ============================================== -->
+<!-- TODO: managers to get buttons to remove members/suspend them and other member control features -->
+
+  <div class="row container">
+    {% for investment in marketplace_investments %}
+    <div class="card border-success mb-3 ms-5" style="max-width: 18rem;">
+      
+      <div>
+        <div class="icon-box justify-content-between"> 
+          <i class="ri-stock-line" style="color: #ffbb2c;"></i>
+          <h3>{{ investment.title }}</h3>
+          {% if investment.suitable %}
+          <i class="ri-star-fill"  style="color: #1ef40a; font-size: 12px;"></i>
+          {% endif %}
+        </div>
+      </div>
+      <img src="{{ investment.thumbnail }}" style="height: 150px; object-fit: cover;" class="card-img-top img-fluid" alt="profile">
+      <div class="card-footer bg-transparent border-success">
+        <p>{{ investment.description }}</p>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <!-- ================================================ -->
+
+  </div>
+</section><!-- End Features Section -->
+
+</main><!-- End #main -->
+
+  {% endblock %}

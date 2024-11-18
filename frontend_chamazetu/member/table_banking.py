@@ -118,3 +118,55 @@ async def loan_repayment(request, activity_id):
 
     referer = request.META.get("HTTP_REFERER", "member:dashboard")
     return HttpResponseRedirect(referer)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def loan_history(request, activity_id, from_date, to_date):
+    url = f"{os.getenv('api_url')}/table_banking/loan_history/{activity_id}"
+    data = {"from_date": from_date, "to_date": to_date}
+    role = request.COOKIES.get("current_role")
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    response = requests.get(url, headers=headers, json=data)
+
+    if response.status_code == HTTPStatus.OK:
+        return render(request, "member/loan_history.html", {"activity_id": activity_id, "role": role, "data": response.json(), "from_date": from_date, "to_date": to_date})
+    else:
+        messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)
+
+
+async def retrieve_loan_history(request, activity_id):
+    if request.method == "POST":
+        from_date = request.POST.get("fromDate")
+        to_date = request.POST.get("toDate")
+    if not from_date or not to_date:
+        messages.error(request, "Please provide both from and to dates")
+        referer = request.META.get("HTTP_REFERER", "member:dashboard")
+        return HttpResponseRedirect(referer)
+
+    return redirect("member:loan_history", activity_id=activity_id, from_date=from_date, to_date=to_date)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def dividend_records(request, activity_id):
+    url = f"{os.getenv('api_url')}/table_banking/dividend_disbursement_records/{activity_id}"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code == HTTPStatus.OK:
+        records = response.json()
+        return render(request, "manager/dividend_disbursement_records.html", {"activity_id": activity_id, "role": "member", "records": records})
+    else:
+        messages.error(request, f"{response.json().get('detail')}")
+
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)

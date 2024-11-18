@@ -95,8 +95,8 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="" disabled>
-          <i class="ri-file-excel-fill"></i>
+        <a class="nav-link collapsed" href="{% url 'member:loan_history' activity_id from_date to_date %}">
+          <i class="ri-file-excel-2-line"></i>
           <span>Loan History</span>
         </a>
       </li>
@@ -238,8 +238,8 @@
                       <td>{{ loan.expected_interest }} </td>
                       <td>{{ loan.requested_on }} </td>
                       <td>{{ loan.cycle_number }} </td>
-                      <td><a href="" class="btn btn-success">Approve</a></td>
-                      <td><a href="" class="btn btn-danger">Reject</a></td>
+                      <td><a href="{% url 'manager:approve_loan' activity_id loan.loan_id %}" class="btn btn-success">Approve</a></td>
+                      <td><a href="{% url 'manager:decline_loan' activity_id loan.loan_id %}" class="btn btn-danger">Reject</a></td>
                     </tr>
                     {% endfor %}
                   </tbody>

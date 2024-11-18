@@ -199,4 +199,29 @@ urlpatterns = [
         views.allow_user,
         name="allow_user",
     ),
+    path(
+        "approve_loan/<int:activity_id>/<int:loan_id>",
+        views.approve_loan,
+        name="approve_loan",
+    ),
+    path(
+        "decline_loan/<int:activity_id>/<int:loan_id>",
+        views.decline_loan,
+        name="decline_loan",
+    ),
+    path(
+        "disburse_dividends/<int:activity_id>",
+        views.disburse_dividends,
+        name="disburse_dividends",
+    ),
+    path(
+        "dividend_disbursement/<int:activity_id>",
+        views.dividend_disbursement,
+        name="dividend_disbursement",
+    ),
+    path(
+        "investment_marketplace/<int:chama_id>",
+        views.investment_marketplace,
+        name="investment_marketplace",
+    ),
 ]

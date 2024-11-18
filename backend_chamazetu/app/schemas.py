@@ -101,6 +101,7 @@ class ChamaDetails(BaseModel):
     manager_profile_picture: str
     investment_balance: float
     general_account: float
+    available_balance: float
     total_fines: float
     activities: List[ChamaActivity]
 
@@ -1020,6 +1021,34 @@ class TableBankingRequestLoan(BaseModel):
 
 class TableBankingPayLoan(BaseModel):
     amount: int
+
+    class Config:
+        from_attributes = True
+
+class TableBankingLoanHistory(BaseModel):
+    from_date: str
+    to_date: str
+
+    class Config:
+        from_attributes = True
+
+class NextContributionDate(BaseModel):
+    next_contribution_date: str
+
+    class Config:
+        from_attributes = True
+
+
+class SuitableActivity(BaseModel):
+    activity_type: str
+
+    class Config:
+        from_attributes = True
+
+class InvestmentMarketPlace(BaseModel):
+    investment_title: str
+    description: str
+    suitable_activities: List[SuitableActivity]
 
     class Config:
         from_attributes = True

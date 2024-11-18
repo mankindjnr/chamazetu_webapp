@@ -136,12 +136,19 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="">
-          <i class="ri-file-excel-2-line"></i>
-           <!-- we will add a loan history in the  page to show all approved and cleared loans -->
-          <span>Loan History</span> 
+          <a class="nav-link collapsed" href="{% url 'member:loan_history' activity_id from_date to_date %}">
+            <i class="ri-file-excel-2-line"></i>
+            <span>Loan History</span> 
+          </a>
+      </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:dividend_records' activity_id %}">
+          <i class="ri-file-excel-2-fill"></i>
+          <span>Dividend Records</span> 
         </a>
       </li>
+
       {% endif %}
 
       <!-- <li class="nav-item">
@@ -206,9 +213,7 @@
 
     <div class="pagetitle d-flex justify-content-between align-items-center">
       {% if activity_type == 'table-banking' and personal_loan > 0 %}
-      <button type="button" class="btn btn-success btn-sm" id="repayLoanBtn">
-        Pay Loan
-      </button>
+      <button class="btn btn-danger btn-sm" id="payLoanButton">Pay Loan</button>
       {% else %}
       <h5>{{ activity_name }}</h5>
       {% endif %}
@@ -239,8 +244,34 @@
         <div class="col-lg-8">
           <div class="row">
 
-            <!-- wallet form -->
             <div class="col-12">
+              <!-- pay soft loan -->
+              <div class="card" id="payLoanForm" style="display: none;">
+                <div class="card-body">
+                  <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('payLoanForm').style.display = 'none';" aria-label="Close"></button>
+                    <h5 class="card-title">Pay Loan</h5>
+                  <form action="{% url 'member:loan_repayment' activity_id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="pay_amount" class="form-label">Amount</label>
+                      <div class="input-group">
+                        <span class="input-group-text" id="basic-addon1">Ksh:</span>
+                        <input type="number" class="form-control" id="repayment_amount" name="repayment_amount" min="100" required>
+                        <small class="error-message"></small>
+                      </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="btn btn-outline-danger btn-sm" style="margin-right: 12px;" onclick="document.getElementById('payLoanForm').style.display = 'none';">Close</button>
+                      <button type="submit" class="btn btn-outline-success btn-sm">Confirm Payment</button>
+                    </div>
+
+                  </form>
+
+                </div>
+              </div>
+               <!-- end of soft loan pay form -->
+              <!-- wallet form -->
               <div class="card" id="walletForm" style="display: none;">
                 <div class="card-body">
                   <button type="button" class="btn-close btn-sm" style="position: absolute; top: 10px; right: 10px;" onclick="document.getElementById('walletForm').style.display = 'none';" aria-label="Close"></button>
@@ -265,8 +296,8 @@
 
                 </div>
               </div>
+              <!-- end of wallet form -->
             </div>
-            <!-- End wallet form -->
 
              <!-- check if chama.member_incurred_fines is greater than zero -->
               <!-- member total fines-->
@@ -545,26 +576,40 @@
       }, 6000);
     }
 
-    let buttons = ["activityTransactionBtn", "selectActivityTransactionBtn"];
-      buttons.forEach(function(buttonid){
-        var button = document.getElementById(buttonid);
-        if (button) {
-          button.addEventListener("click", function() {
-            let form = document.getElementById("walletForm");
-            if (form) {
-              if (form.style.display === "none") {
-                form.style.display = "block";
-              } else {
-                form.style.display = "none";
-              }
-            } else {
-              console.log("transaction form not found");
-            }
-          });
+    const payLoanButton = document.getElementById('payLoanButton');
+    const payLoanForm = document.getElementById('payLoanForm');
+    const activityTransactionBtn = document.getElementById('activityTransactionBtn');
+    const walletForm = document.getElementById('walletForm');
+
+    // check if the payloan button exists
+    if (payLoanButton) {
+      payLoanButton.addEventListener('click', function() {
+        if (payLoanForm.style.display === 'none') {
+          payLoanForm.style.display = 'block';
+          walletForm.style.display = 'none';
         } else {
-          console.log(buttonid + " not found");
+          payLoanForm.style.display = 'none';
         }
       });
+
+      activityTransactionBtn.addEventListener('click', function() {
+        if (walletForm.style.display === 'none') {
+          walletForm.style.display = 'block';
+          payLoanForm.style.display = 'none';
+        } else {
+          walletForm.style.display = 'none';
+        }
+      });
+    } else {
+      activityTransactionBtn.addEventListener('click', function() {
+        if (walletForm.style.display === 'none') {
+          walletForm.style.display = 'block';
+        } else {
+          walletForm.style.display = 'none';
+        }
+      });
+    }
+    
   });
   </script>
   

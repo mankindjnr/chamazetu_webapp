@@ -14,6 +14,7 @@ from sqlalchemy import (
     Sequence,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import ARRAY
 from .database import Base, SessionLocal
 from datetime import datetime
 from pytz import timezone
@@ -156,6 +157,9 @@ class User(Base):
     table_banking_loan_eligibility = relationship(
         "TableBankingLoanEligibility", back_populates="user"
     )
+    table_banking_dividend_disbursement = relationship(
+        "TableBankingDividendDisbursement", back_populates="user"
+    )
 
 
 class Chama(Base):
@@ -227,6 +231,10 @@ class Chama(Base):
     table_banking_dividends = relationship(
         "TableBankingDividend", back_populates="chama"
     )
+    chama_investment_marketplace = relationship(
+        "ChamaInvestmentMarketplace", back_populates="chama"
+    )
+
 
 
 # listen to the before_insert event to automatically set chama_code
@@ -322,6 +330,9 @@ class Activity(Base):
     )
     table_banking_loan_eligibility = relationship(
         "TableBankingLoanEligibility", back_populates="activity"
+    )
+    table_banking_dividend_disbursement = relationship(
+        "TableBankingDividendDisbursement", back_populates="activity"
     )
 
 
@@ -810,8 +821,8 @@ class TableBankingDividend(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    chama_id = Column(Integer, ForeignKey("chamas.id"), index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"), index=True, nullable=False)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
     unpaid_dividends = Column(Float, nullable=False)
     paid_dividends = Column(Float, nullable=False)
     cycle_number = Column(Integer, nullable=False)
@@ -825,7 +836,7 @@ class TableBankingLoanManagement(Base):
     __tablename__ = "table_banking_loan_management"
 
     id = Column(Integer, primary_key=True, index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
     total_loans_taken = Column(Float, nullable=False)
     unpaid_loans = Column(Float, nullable=False)
     unpaid_interest = Column(Float, nullable=False)
@@ -841,7 +852,7 @@ class TableBankingLoanSettings(Base):
     __tablename__ = "table_banking_loan_settings"
 
     id = Column(Integer, primary_key=True, index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
     await_approval = Column(Boolean, default=False)
     interest_rate = Column(Float, nullable=False)
     grace_period = Column(Integer, nullable=False) #in days
@@ -855,7 +866,7 @@ class TableBankingRequestedLoans(Base):
     __tablename__ = "table_banking_requested_loans"
 
     id = Column(Integer, primary_key=True, index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
     user_name = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     requested_amount = Column(Float, nullable=False)
@@ -881,8 +892,8 @@ class TableBankingLoanEligibility(Base):
     __tablename__ = "table_banking_loan_eligibility"
 
     id = Column(Integer, primary_key=True, index=True)
-    activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     user_name = Column(String, nullable=False)
     eligible = Column(Boolean, default=False)
     loan_limit = Column(Float, nullable=True)
@@ -891,3 +902,46 @@ class TableBankingLoanEligibility(Base):
     # relationships
     activity = relationship("Activity", back_populates="table_banking_loan_eligibility")
     user = relationship("User", back_populates="table_banking_loan_eligibility")
+
+
+class TableBankingDividendDisbursement(Base):
+    __tablename__ = "table_banking_dividend_disbursement"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    user_name = Column(String, nullable=False)
+    shares = Column(Integer, nullable=False)
+    dividend_amount = Column(Float, nullable=False)
+    principal_amount = Column(Float, nullable=False)
+    disbursement_date = Column(DateTime, default=nairobi_now)
+    cycle_number = Column(Integer, nullable=False)
+
+    # relationships
+    activity = relationship("Activity", back_populates="table_banking_dividend_disbursement")
+    user = relationship("User", back_populates="table_banking_dividend_disbursement")
+
+class InvestmentMarketplace(Base):
+    __tablename__ = "investment_marketplace"
+
+    id = Column(Integer, primary_key=True, index=True)
+    investment_title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    suitable_activities = Column(ARRAY(String), nullable=False)
+    thumbnail = Column(String, nullable=False)
+
+    # relationships
+    chama_investment_marketplace = relationship("ChamaInvestmentMarketplace", back_populates="investment_marketplace")
+
+# chamas and the invest marketplace they have invested in
+class ChamaInvestmentMarketplace(Base):
+    __tablename__ = "chama_investment_marketplace"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chama_id = Column(Integer, ForeignKey("chamas.id"), index=True, nullable=False)
+    investment_marketplace_id = Column(Integer, ForeignKey("investment_marketplace.id"), index=True, nullable=False)
+    investment_amount = Column(Float, nullable=False)
+    investment_date = Column(DateTime, default=nairobi_now)
+
+    chama = relationship("Chama", back_populates="chama_investment_marketplace")
+    investment_marketplace = relationship("InvestmentMarketplace", back_populates="chama_investment_marketplace")

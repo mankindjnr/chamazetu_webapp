@@ -175,4 +175,24 @@ urlpatterns = [
         views.loan_repayment,
         name="loan_repayment",
     ),
+    path(
+        "loan_history/<int:activity_id>/<str:from_date>/<str:to_date>",
+        views.loan_history,
+        name="loan_history",
+    ),
+    path(
+        "retrieve_loan_history/<int:activity_id>",
+        views.retrieve_loan_history,
+        name="retrieve_loan_history",
+    ),
+    path(
+        "dividend_records/<int:activity_id>",
+        views.dividend_records,
+        name="dividend_records",
+    ),
+    path(
+        "investment_marketplace/<int:chama_id>",
+        views.investment_marketplace,
+        name="investment_marketplace",
+    ),
 ]
