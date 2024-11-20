@@ -34,11 +34,9 @@ ALLOWED_HOSTS = [
     "34.45.2.223",
     "102.37.140.49",
     "34.122.181.167",
-    "4f49-102-213-49-14.ngrok-free.app",
+    "faaa-102-213-49-10.ngrok-free.app",
 ]
 
-
-# Application definition
 
 INSTALLED_APPS = [
     "chama.apps.ChamaConfig",
@@ -68,9 +66,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# SECURE_SSL_REDIRECT = True
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
 
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:8000",
@@ -79,7 +74,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://0.0.0.0:8000",
     "https://192.168.242.254:8000",
     "https://frontend.192.168.100.7.nip.io",
-    "https://4f49-102-213-49-14.ngrok-free.app",
+    "https://faaa-102-213-49-10.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -88,7 +83,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://frontend.192.168.100.7.nip.io",
-    "https://4f49-102-213-49-14.ngrok-free.app",
+    "https://faaa-102-213-49-10.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"

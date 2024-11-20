@@ -87,15 +87,10 @@ async def check_transaction_status(
         raise HTTPException(
             status_code=500, detail="An error occurred while processing the transaction."
         )
-"""
-====response_data====
-{'OriginatorConversationID': 'bcd8-4d43-b6a9-f918f352a9e329921621', 'ConversationID': 'AG_20241108_2020651bad15260c074b', 'ResponseCode': '0', 'ResponseDescription': 'Accept the service request successfully.'}
-"""
+
 # status result function
 @router.post("/status/result", status_code=status.HTTP_201_CREATED)
 async def status_result(result: dict):
-    print("=====status result=====")
-    # print(result)
     complete_unprocessed_deposit.delay(result)
     transaction_info_logger.info(f"Received status result: {result}")
     return {"message": "Status result processed successfully."}
@@ -229,7 +224,6 @@ async def b2c_result(result: dict):
 @router.post("/b2c/queue", status_code=status.HTTP_201_CREATED)
 async def b2c_queue(timeout: dict):
     print("=====b2c timeout=====")
-    print(timeout)
     transaction_error_logger.error(f"Failed to update transaction\n: {timeout}")
     return {"message": "B2C timeout processed successfully."}
 

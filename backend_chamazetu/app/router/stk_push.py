@@ -266,7 +266,6 @@ async def backup_transaction_update(
 
     if not transaction:
         # transaction may hvae been fulfilled by another the callback
-        print("==transaction not found==\n")
         transaction_error_logger.error(
             f"Transaction {unprocessed_code} not found for update"
         )
@@ -276,7 +275,6 @@ async def backup_transaction_update(
     status_data = await stk_push_status(checkout_request_id)
 
     if status_data.get("ResultCode") == "0":
-        print("==past result code==\n")
         user_wallet = (
             db.query(models.User)
             .filter(models.User.id == transaction.user_id)
@@ -331,9 +329,6 @@ async def stk_push_status(checkout_request_id: str):
         "Timestamp": timestamp,
         "CheckoutRequestID": checkout_request_id,
     }
-
-    print("==query_payload==\n", query_payload)
-    print("==query_headers==\n", query_headers)
 
     try:
         async with httpx.AsyncClient() as client:

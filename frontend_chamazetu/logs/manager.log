@@ -1250,3 +1250,9 @@ INFO 2024-11-18 08:38:42,490 tasks Nairobi: 2024-11-18 08:38:42.490220+03:00
 INFO 2024-11-18 08:41:42,499 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
 INFO 2024-11-18 08:41:42,500 tasks Task ran at: 2024-11-18 08:41:42.500271
 INFO 2024-11-18 08:41:42,500 tasks Nairobi: 2024-11-18 08:41:42.500727+03:00
+INFO 2024-11-20 15:00:05,515 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-11-20 15:00:05,624 tasks Task ran at: 2024-11-20 15:00:05.624313
+INFO 2024-11-20 15:00:05,624 tasks Nairobi: 2024-11-20 15:00:05.624629+03:00
+INFO 2024-11-20 15:03:06,688 tasks ==========chama/tasks.py: merry_go_round_activity_auto_disburse()==========
+INFO 2024-11-20 15:03:06,689 tasks Task ran at: 2024-11-20 15:03:06.689167
+INFO 2024-11-20 15:03:06,689 tasks Nairobi: 2024-11-20 15:03:06.689440+03:00
