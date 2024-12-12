@@ -224,4 +224,9 @@ urlpatterns = [
         views.investment_marketplace,
         name="investment_marketplace",
     ),
+    path(
+        "set_last_contribution_date/<int:activity_id>",
+        views.set_last_contribution_date,
+        name="set_last_contribution_date",
+    ),
 ]

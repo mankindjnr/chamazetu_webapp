@@ -28,13 +28,12 @@ ALLOWED_HOSTS = [
     "localhost",
     "chamazetu.com",
     "www.chamazetu.com",
-    "192.168.242.254",
+    "192.168.100.12",
     "0.0.0.0",
-    "frontend.192.168.100.7.nip.io",
     "34.45.2.223",
     "102.37.140.49",
     "34.122.181.167",
-    "faaa-102-213-49-10.ngrok-free.app",
+    "159b-102-213-49-77.ngrok-free.app"
 ]
 
 
@@ -57,7 +56,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -68,22 +67,20 @@ MIDDLEWARE = [
 
 
 CORS_ALLOWED_ORIGINS = [
-    "https://localhost:8000",
+    "http://localhost",
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://0.0.0.0:8000",
-    "https://192.168.242.254:8000",
-    "https://frontend.192.168.100.7.nip.io",
-    "https://faaa-102-213-49-10.ngrok-free.app",
+    "https://192.168.100.12",
+    "https://159b-102-213-49-77.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://localhost",
+    "http://localhost:80",
     "https://127.0.0.1",
     "https://chamazetu.com",
     "https://www.chamazetu.com",
-    "https://frontend.192.168.100.7.nip.io",
-    "https://faaa-102-213-49-10.ngrok-free.app",
+    "https://159b-102-213-49-77.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
@@ -154,11 +151,11 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # WHITENOISE
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -186,69 +183,69 @@ result_backend = os.getenv("result_backend")
 CELERY_BEAT_SCHEDULER = os.getenv("CELERY_BEAT_SCHEDULER")
 
 
-# Logging configuration
-if not os.path.exists(os.path.join(BASE_DIR, "logs")):
-    os.mkdir(os.path.join(BASE_DIR, "logs"))
+# # Logging configuration
+# if not os.path.exists(os.path.join(BASE_DIR, "logs")):
+#     os.mkdir(os.path.join(BASE_DIR, "logs"))
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {message}",
-            "style": "{",
-        },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "console": {
-            "level": "ERROR",
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-        "chama_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/chama.log"),
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-        "manager_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/manager.log"),
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-        "member_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/member.log"),
-            "maxBytes": 1024 * 1024 * 5,  # 5MB
-            "backupCount": 5,
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "chama": {
-            "handlers": ["chama_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "manager": {
-            "handlers": ["manager_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        "member": {
-            "handlers": ["member_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "verbose": {
+#             "format": "{levelname} {asctime} {module} {message}",
+#             "style": "{",
+#         },
+#         "simple": {
+#             "format": "{levelname} {message}",
+#             "style": "{",
+#         },
+#     },
+#     "handlers": {
+#         "console": {
+#             "level": "ERROR",
+#             "class": "logging.StreamHandler",
+#             "formatter": "verbose",
+#         },
+#         "chama_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.RotatingFileHandler",
+#             "filename": os.path.join(BASE_DIR, "logs/chama.log"),
+#             "maxBytes": 1024 * 1024 * 5,  # 5MB
+#             "backupCount": 5,
+#             "formatter": "verbose",
+#         },
+#         "manager_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.RotatingFileHandler",
+#             "filename": os.path.join(BASE_DIR, "logs/manager.log"),
+#             "maxBytes": 1024 * 1024 * 5,  # 5MB
+#             "backupCount": 5,
+#             "formatter": "verbose",
+#         },
+#         "member_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.RotatingFileHandler",
+#             "filename": os.path.join(BASE_DIR, "logs/member.log"),
+#             "maxBytes": 1024 * 1024 * 5,  # 5MB
+#             "backupCount": 5,
+#             "formatter": "verbose",
+#         },
+#     },
+#     "loggers": {
+#         "chama": {
+#             "handlers": ["chama_file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#         "manager": {
+#             "handlers": ["manager_file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#         "member": {
+#             "handlers": ["member_file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#     },
+# }

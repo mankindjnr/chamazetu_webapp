@@ -128,17 +128,20 @@
                     <div class="mt-2 mb-3" id="feeSection">
                       <div class="alert alert-info">
                         Disbursing dividends restarts this activity cycle. Ensure that all members have paid their contributions before disbursing dividends. Members
-                        who have not paid their contributions till the previous contribution date and those with unpaid loans will not receive dividends.
+                        who have not paid their contributions till the final contribution date and those with unpaid loans will not receive dividends.
+                        Only eligible will receive dividends.
                       </div>
                     </div>
 
-                    <h5 class="card-title">Disburse Dividends To Active Members</h5>
+                    <h5 class="card-title">Disburse Dividends To Active & Eligible Members</h5>
                     <form action="{% url 'manager:disburse_dividends' activity_id %}" method="post" id="disbursementForm">
                         {% csrf_token %}
 
                         <div class="mb-3">
                           <label for="fine" class="form-label">Next Contribution Date *</label>
                           <input type="date" class="form-control" id="contribution_date" name="contribution_date" required>
+                          <!-- helper message -->
+                          <small id="contributionHelp" class="form-text text-info">Select the first contribution date for the next cycle</small>
                         </div>
 
                         <div class="mb-3">

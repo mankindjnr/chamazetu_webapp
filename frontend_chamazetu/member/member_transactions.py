@@ -485,7 +485,6 @@ async def from_wallet_to_mpesa(request, amount, phone_number):
                 try:
                     resp = await client.post(url_mpesa, json=data_mpesa)
                     if resp.status_code == HTTPStatus.CREATED:
-                        print("====b2c resp.json()====: ", resp.json())
                         messages.success(
                             request, "Withdrawal request sent successfully"
                         )

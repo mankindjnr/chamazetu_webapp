@@ -17,27 +17,12 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
-from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
-from chama.decorate.validate_refresh_token import (
-    validate_and_refresh_token,
-    async_validate_and_refresh_token,
-)
-from chama.rawsql import execute_sql
-from chama.thread_urls import fetch_chama_data, fetch_data
+from chama.decorate.tokens_in_cookies import async_tokens_in_cookies
+from chama.decorate.validate_refresh_token import async_validate_and_refresh_token
 from chama.chamas import get_chama_id, get_chama_number_of_members, get_chama_name
 from member.members import get_user_full_profile, get_user_id
-from chama.tasks import (
-    update_activities_contribution_days,
-    set_contribution_date,
-    send_email_invites,
-    create_activity_rotation_contributions,
-)
 
-from chama.usermanagement import (
-    validate_token,
-    refresh_token,
-    check_token_validity,
-)
+from .manage_activities import last_contribution_date
 
 load_dotenv()
 
@@ -242,12 +227,25 @@ async def dividend_disbursement(request, activity_id):
 @async_validate_and_refresh_token()
 async def disburse_dividends(request, activity_id):
     if request.method == "POST":
+        today = datetime.now(nairobi_tz).date()
+        final_contribution_date = await last_contribution_date(activity_id)
+        if final_contribution_date:
+            final_contribution_date = datetime.strptime(final_contribution_date, "%Y-%m-%d").date()
+            if today < final_contribution_date:
+                messages.error(request, "You cannot disburse dividends before the last contribution date")
+                referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+                return HttpResponseRedirect(referer)
+        else:
+            messages.error(request, "Please set the last contribution date before disbursement")
+            referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+            return HttpResponseRedirect(referer)
+
         request_data = request.POST
         next_date = request_data.get("contribution_date")
         disbursement_type = request_data.get("disbursement_type")
 
-        if not next_date or not disbursement_type:
-            messages.error(request, "Please select the next contribution date and the type of disbursement")
+        if not next_date or not disbursement_type or today >= datetime.strptime(next_date, "%Y-%m-%d").date():
+            messages.error(request, "Please set the next contribution date and the type of disbursement")
             referer = request.META.get("HTTP_REFERER", "member:dashboard")
             return HttpResponseRedirect(referer)
 
@@ -259,7 +257,7 @@ async def disburse_dividends(request, activity_id):
         if disbursement_type == "dividends_and_principal":
             url = f"{os.getenv('api_url')}/table_banking/disburse_dividends_and_principal/{activity_id}"
         elif disbursement_type == "dividends_and_principal_and_fines":
-            url = f"{os.getenv('api_url')}/table_banking/disburse_dividends_and_principal_fines/{activity_id}"
+            url = f"{os.getenv('api_url')}/table_banking/disburse_dividends_principal_fines/{activity_id}"
 
         data = {"next_contribution_date": next_date}
 

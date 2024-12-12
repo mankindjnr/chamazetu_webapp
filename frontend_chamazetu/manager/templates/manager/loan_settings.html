@@ -188,6 +188,33 @@
               </div>
             </div><!-- End of loan approval card -->
 
+            <!-- set final contribution day card-->
+            <div class="col-xxl-4 col-md-4" >
+              <div class="card info-card revenue-card clickable-card" id="finalDayCard">
+
+                <div class="card-body">
+                  <h5 class="card-title">Final Cont. Day<span>| End Cycle</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-stop-circle-line"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-success pt-2 fw-bold">                     
+                      </span> <span class="text-muted small pt-2 ps-1">
+                        When to end the contribution cycle for this activity.
+                      </span>
+    
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+
+            <!-- end final contribution day card -->
+
             <!-- TODO: managers to set if loans can be requested before the contribution day or only on the contribution day -->
              <!-- for now, if a loan is taken before a contribution day, it has to await approval -->
 
@@ -305,8 +332,44 @@
                   </div>
                 </form>
               </div>
-            </div> <!-- End interest rate form -->
+            </div>
              <!-- end of loan approval form -->
+
+             <!-- final contribution day form -->
+             <div class="card shadow-lg border-0" id="finalDayForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Final Contribution Day Settings</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                  <p class="arima-text text-secondary">
+                    This will be the final day members can contribute and/or request loans from this activity. After this day, no more contributions or loan requests will be allowed.
+                    Dividends can be disbursed on a day of your choice after this day and the next cycle will begin.               
+                  </p>
+                </div>
+            
+                <form class="p-3" action="{% url 'manager:set_last_contribution_date' activity_id %}" method="POST">
+                  {% csrf_token %}
+
+                  <div class="mb-3">
+                    <label for="final_date" class="form-label fw-bold arima-text text-secondary">Final Contribution Date</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light text-secondary fw-bold">Date:</span>
+                      <input type="date" class="form-control border-0 shadow-sm" id="final_date" name="final_date" required>
+                      <small class="amount-error-message text-danger"></small>
+                    </div>
+                  </div>
+                  <!-- Buttons -->
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Set Final Contribution Date</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+             <!-- end final contribution day form -->
 
           </div>
         </div><!-- End Left side columns -->
@@ -341,13 +404,17 @@
     const forms = document.querySelectorAll('.card-body + .card');
 
 
-    // retrieve all card ids
+    // interest rate card and form
     const interestRateCard = document.getElementById('interestRateCard');
     const interestRateForm = document.getElementById('interestRateForm');
 
     // loan approval card and form
     const loanApprovalCard = document.getElementById('loanApprovalCard');
     const loanApprovalForm = document.getElementById('loanApprovalForm');
+
+    // final contribution day card and form
+    const finalDayCard = document.getElementById('finalDayCard');
+    const finalDayForm = document.getElementById('finalDayForm');
 
     // show the form when the card is clicked and hide all other cards
     interestRateCard.addEventListener('click', function() {
@@ -363,6 +430,16 @@
       loanApprovalForm.style.display = 'block';
       cards.forEach(c => {
         if (c !== loanApprovalForm) {
+          c.style.display = 'none';
+        }
+      });
+    });
+
+    // final contribution day card and form
+    finalDayCard.addEventListener('click', function() {
+      finalDayForm.style.display = 'block';
+      cards.forEach(c => {
+        if (c !== finalDayForm) {
           c.style.display = 'none';
         }
       });

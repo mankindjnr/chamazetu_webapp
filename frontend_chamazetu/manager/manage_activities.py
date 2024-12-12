@@ -43,6 +43,11 @@ load_dotenv()
 
 nairobi_tz = ZoneInfo("Africa/Nairobi")
 
+# return to the previous page
+def go_back(request):
+    referer = request.META.get("HTTP_REFERER", reverse("manager:dashboard"))
+    return HttpResponseRedirect(referer)
+
 
 # accessing rotating contributions page
 async def rotating_order(request, activity_id):
@@ -264,3 +269,39 @@ async def investment_marketplace(request, chama_id):
 
     referer = request.META.get("HTTP_REFERER", reverse("manager:dashboard"))
     return HttpResponseRedirect(referer)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def set_last_contribution_date(request, activity_id):
+    if request.method == "POST":
+        url = f"{os.getenv('API_URL')}/activities/last_contribution_date/{activity_id}"
+        headers = {
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            "Content-Type": "application/json",
+        }
+
+        # get the data from the form
+        last_contribution_date = request.POST.get("final_date")
+        if not last_contribution_date:
+            messages.error(request, "Please select a date")
+            return go_back(request)
+
+        data = {
+            "last_contribution_date": last_contribution_date,
+        }
+
+        response = requests.put(url, headers=headers, json=data)
+        if response.status_code == HTTPStatus.OK:
+            messages.success(request, "Final contribution date set successfully")
+        else:
+            messages.error(request, f"{response.json()['detail']}")
+
+    return go_back(request)
+
+async def last_contribution_date(activity_id):
+    print("=======final contr daya========")
+    url = f"{os.getenv('API_URL')}/activities/last_contribution_date/{activity_id}"
+    response = requests.get(url)
+    if response.status_code == HTTPStatus.OK:
+        return response.json()["last_contribution_date"]
+    return None

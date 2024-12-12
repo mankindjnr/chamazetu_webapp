@@ -142,13 +142,6 @@
         </a>
       </li>
 
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:get_about_activity' activity.activity_name activity_id %}">
-          <i class="ri-article-line"></i>
-          <span>About Activity</span> 
-        </a>
-      </li>
-
       {% if activity.activity_type == 'table-banking' %}
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:dividend_disbursement' activity_id %}">
@@ -157,6 +150,14 @@
         </a>
       </li>
       {% endif %}
+
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'member:get_about_activity' activity.activity_name activity_id %}">
+          <i class="ri-article-line"></i>
+          <span>About Activity</span> 
+        </a>
+      </li>
 
       <!-- <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'manager:get_about_chama' chama_name %}">
