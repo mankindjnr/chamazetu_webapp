@@ -334,6 +334,10 @@ class Activity(Base):
     table_banking_dividend_disbursement = relationship(
         "TableBankingDividendDisbursement", back_populates="activity"
     )
+    last_contribution_dates = relationship(
+        "LastContributionDate", back_populates="activity"
+    )
+    activity_cycles = relationship("ActivityCycle", back_populates="activity")
 
 
 # activty accounts
@@ -648,6 +652,7 @@ class ActivityFine(Base):
     fine_date = Column(DateTime, nullable=False)
     is_paid = Column(Boolean, default=False)
     paid_date = Column(DateTime, nullable=True)  # date fine was paid in total
+    cycle_number = Column(Integer, nullable=False)
 
     # relationships
     chama = relationship("Chama", back_populates="activity_fines")
@@ -914,6 +919,7 @@ class TableBankingDividendDisbursement(Base):
     shares = Column(Integer, nullable=False)
     dividend_amount = Column(Float, nullable=False)
     principal_amount = Column(Float, nullable=False)
+    fine_amount = Column(Float, nullable=False)
     disbursement_date = Column(DateTime, default=nairobi_now)
     cycle_number = Column(Integer, nullable=False)
 
@@ -945,3 +951,25 @@ class ChamaInvestmentMarketplace(Base):
 
     chama = relationship("Chama", back_populates="chama_investment_marketplace")
     investment_marketplace = relationship("InvestmentMarketplace", back_populates="chama_investment_marketplace")
+
+
+class LastContributionDate(Base):
+    __tablename__ = "last_contribution_dates"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    last_contribution_date = Column(DateTime, default=nairobi_now)
+    updated_at = Column(DateTime, default=nairobi_now)
+    cycle_number = Column(Integer, nullable=False)
+
+    activity = relationship("Activity", back_populates="last_contribution_dates")
+
+
+class ActivityCycle(Base):
+    __tablename__ = "activity_cycles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    cycle_number = Column(Integer, nullable=False)
+
+    activity = relationship("Activity", back_populates="activity_cycles")

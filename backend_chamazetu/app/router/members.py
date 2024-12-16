@@ -17,7 +17,7 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
-from .activities import get_active_activity_by_id
+from .activities import get_active_activity_by_id, get_activity_cycle_number
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -491,7 +491,6 @@ async def contribute_to_merry_go_round(
         wallet_id = user.wallet_id
         wallet_balance = user.wallet_balance
 
-        print("wallet_id:", wallet_id)
         num_shares = (
             db.query(models.activity_user_association.c.shares)
             .filter(
@@ -508,8 +507,6 @@ async def contribute_to_merry_go_round(
 
         amount_per_share = int(expected_amount / num_shares)
         activity_fine = activity.fine
-        print("amount_per_share:", amount_per_share)
-        print("activity_fine:", activity_fine)
 
         missed_rotations = None
         fines = (
@@ -528,7 +525,6 @@ async def contribute_to_merry_go_round(
         if fines:
             # retrieve the missed rotations correspnding to the fines
             fine_dates = [fine.fine_date for fine in fines]
-            print("fine_dates:\n", fine_dates)
             missed_rotations = (
                 db.query(models.RotatingContributions)
                 .filter(
@@ -3423,17 +3419,24 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
 
         # get the first contribution date
         activity = await get_active_activity_by_id(activity_id, db)
+        cycle_number = await get_activity_cycle_number(activity_id, db)
 
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
-        start_date = None
+        start_date, last_contribution_day = None, None
         if not activity.restart and not activity.restart_date:
-            print("====first contribution date====", activity.first_contribution_date)
             start_date = activity.first_contribution_date
         else:
-            print("====restart date====", activity.restart_date)
             start_date = activity.restart_date
+
+        last_contribution_day = db.query(models.LastContributionDate.last_contribution_date).filter(
+            models.LastContributionDate.activity_id == activity_id,
+            models.LastContributionDate.cycle_number == cycle_number,
+        ).scalar()
+        print("=====past last contribtion date=======")
+        print(last_contribution_day)
+
 
         if not start_date:
             raise HTTPException(status_code=404, detail="No start date found")
@@ -3447,13 +3450,14 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
                     models.ActivityTransaction.user_id == user_id,
                     models.ActivityTransaction.activity_id == activity_id,
                     func.date(models.ActivityTransaction.transaction_date) >= start_date,
-                    func.date(models.ActivityTransaction.transaction_date) <= today,
+                    func.date(models.ActivityTransaction.transaction_date) <= last_contribution_day if last_contribution_day else today,
                     models.ActivityTransaction.transaction_type == "contribution",
                     models.ActivityTransaction.transaction_completed == True,
                 )
             )
             .scalar()
         )
+        print("past contributions")
 
         late_contributions = (
             db.query(

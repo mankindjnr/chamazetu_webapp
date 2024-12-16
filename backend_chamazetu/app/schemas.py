@@ -1038,6 +1038,12 @@ class NextContributionDate(BaseModel):
     class Config:
         from_attributes = True
 
+class LastContributionDate(BaseModel):
+    last_contribution_date: str
+
+    class Config:
+        from_attributes = True
+
 
 class SuitableActivity(BaseModel):
     activity_type: str

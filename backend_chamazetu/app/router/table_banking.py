@@ -17,7 +17,7 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
-from .activities import get_active_activity_by_id, get_active_user_in_activity, get_activity_cycle_number
+from .activities import get_active_activity_by_id, get_active_user_in_activity, get_activity_cycle_number, get_activity_fines_sum, chamaActivity
 from .members import contributions_total
 
 from .. import schemas, database, utils, oauth2, models
@@ -1519,11 +1519,12 @@ async def dividend_disbursement_records(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        cycle_number = chama_activity.current_activity_cycle()
         if not cycle_number:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1606,7 +1607,7 @@ async def dividend_disbursement_records(
                 "dividend_earned": user.shares * dividend_per_share,
                 "eligible": "yes" if user.user_id not in active_loans_fines_users_ids else "no",
                 "contributions": user_contributions_dict[user.user_id]["contributions"],
-                "late_contributions": user_contributions_dict[user.user_id]["late_contributions"],
+                "late_contributions": user_contributions_dict[user.user_id]["late_contributions"] - user_contributions_dict[user.user_id]["paid_fines"],
                 "paid_fines": user_contributions_dict[user.user_id]["paid_fines"],
                 "unpaid_fines": user_contributions_dict[user.user_id]["unpaid_fines"],
                 "principal": (
@@ -1648,8 +1649,8 @@ async def disburse_dividends_only(
         today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
         next_contribution_date = datetime.strptime(next_contribution_date.next_contribution_date, "%Y-%m-%d")
         with db.begin_nested():
-            activity = await get_active_activity_by_id(activity_id, db)
-
+            chama_activity = chamaActivity(db, activity_id)
+            activity = chama_activity.activity()
             if not activity:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
@@ -1659,7 +1660,7 @@ async def disburse_dividends_only(
                     detail="You are not allowed to disburse dividends for this activity",
                 )
 
-            cycle_number = await get_activity_cycle_number(activity_id, db)
+            cycle_number = chama_activity.current_activity_cycle()
 
             # get the dividends for this cycle
             dividends = db.query(models.TableBankingDividend).filter(
@@ -1736,6 +1737,11 @@ async def disburse_dividends_only(
                 cycle_number=cycle_number + 1,
                 unpaid_dividends=0.0,
                 paid_dividends=0.0,
+            ))
+
+            db.add(models.ActivityCycle(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
             ))
 
             # new entry for the next cycle in the loan management table
@@ -1815,8 +1821,8 @@ async def disburse_dividends_and_principal(
         today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
         next_contribution_date = datetime.strptime(next_contribution_date.next_contribution_date, "%Y-%m-%d")
         with db.begin_nested():
-            activity = await get_active_activity_by_id(activity_id, db)
-
+            chama_activity = chamaActivity(db, activity_id)
+            activity = chama_activity.activity()
             if not activity:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
@@ -1826,8 +1832,7 @@ async def disburse_dividends_and_principal(
                     detail="You are not allowed to disburse dividends for this activity",
                 )
 
-            cycle_number = await get_activity_cycle_number(activity_id, db)
-
+            cycle_number = chama_activity.current_activity_cycle()
             # get the dividends for this cycle
             dividends = db.query(models.TableBankingDividend).filter(
                 models.TableBankingDividend.activity_id == activity_id,
@@ -1906,6 +1911,195 @@ async def disburse_dividends_and_principal(
                 cycle_number=cycle_number + 1,
                 unpaid_dividends=0.0,
                 paid_dividends=0.0,
+            ))
+
+            db.add(models.ActivityCycle(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+            ))
+
+            # new entry for the next cycle in the loan management table
+            db.add(models.TableBankingLoanManagement(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                total_loans_taken=0.0,
+                unpaid_loans=0.0,
+                paid_loans=0.0,
+                unpaid_interest=0.0,
+                paid_interest=0.0,
+            ))
+
+            # update the activity contribution date table with the next contribution date
+            contribution_date = db.query(models.ActivityContributionDate).filter(
+                models.ActivityContributionDate.activity_id == activity_id
+            ).with_for_update().first()
+
+            if not contribution_date:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Contribution date not found",
+                )
+
+            contribution_date.next_contribution_date = next_contribution_date
+            contribution_date.previous_contribution_date = today.date()
+
+            # update the activity account balance
+            activity_account = db.query(models.Activity_Account).filter(
+                models.Activity_Account.activity_id == activity_id
+            ).with_for_update().first()
+
+            chama_account = db.query(models.Chama_Account).filter(
+                models.Chama_Account.chama_id == activity.chama_id
+            ).with_for_update().first()
+
+            if not activity_account or not chama_account:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Activity account or chama account not found",
+                )
+
+            activity_account.account_balance -= total_amount_disbursed
+            chama_account.account_balance -= total_amount_disbursed
+
+            # update activity restart to true and restart date to the next contribution date
+            activity.restart = True
+            activity.restart_date = next_contribution_date
+
+            db.commit()
+
+        return {"message": "Dividends and principal disbursed successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends and principal for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Error occurred while disbursing dividends and principal for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while disbursing dividends and principal for activity"
+        )
+
+
+# disburse dividends, principal and fines collected to the members according to their shares
+@router.put("/disburse_dividends_principal_fines/{activity_id}", status_code=status.HTTP_200_OK)
+async def disburse_dividends_principal_fines(
+    activity_id: int,
+    next_contribution_date: schemas.NextContributionDate,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+        next_contribution_date = datetime.strptime(next_contribution_date.next_contribution_date, "%Y-%m-%d")
+        with db.begin_nested():
+            chama_activity = chamaActivity(db, activity_id)
+            activity = cha_activity.activity()
+
+            if not activity:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
+
+            if activity.manager_id != current_user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not allowed to disburse dividends for this activity",
+                )
+
+            cycle_number = chama_activity.current_activity_cycle()
+
+            # get the dividends for this cycle
+            dividends = db.query(models.TableBankingDividend).filter(
+                models.TableBankingDividend.activity_id == activity_id,
+                models.TableBankingDividend.cycle_number == cycle_number,
+            ).with_for_update().first()
+
+            if not dividends:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dividends not found",
+                )
+
+            # get all the users in this activity
+            active_users = db.query(models.activity_user_association).filter(
+                models.activity_user_association.c.activity_id == activity_id,
+                models.activity_user_association.c.user_is_active == True,
+            ).all()
+            user_ids = [user.user_id for user in active_users]
+
+            # active loans for this cycle in this activity
+            active_loans_users = db.query(models.TableBankingRequestedLoans).filter(
+                models.TableBankingRequestedLoans.activity_id == activity_id,
+                models.TableBankingRequestedLoans.loan_approved == True,
+                models.TableBankingRequestedLoans.loan_cleared == False,
+                models.TableBankingRequestedLoans.cycle_number == cycle_number,
+            ).distinct().all()
+
+
+            active_fines_users = db.query(models.ActivityFine).filter(
+                models.ActivityFine.activity_id == activity_id,
+                models.ActivityFine.is_paid == False,
+            ).distinct().all()
+
+            active_loans_fines_users = [loan.user_id for loan in active_loans_users] + [fine.user_id for fine in active_fines_users]
+
+            users_to_disburse = [user for user in active_users if user.user_id not in active_loans_fines_users]
+
+            total_amount_disbursed = 0.0
+            sum_of_paid_fines = await get_activity_fines_sum(activity_id, db)
+            sum_of_all_shares = sum([user.shares for user in active_users])
+            dividend_per_share = dividends.unpaid_dividends / sum_of_all_shares
+
+            # sum of all shares of users who are not in active loans or fines (users_to_disburse)
+            sum_of_eligible_shares = sum([user.shares for user in users_to_disburse])
+            fine_per_eligible_share = sum_of_paid_fines / sum_of_eligible_shares
+
+            disbursement_records = []
+            for user in users_to_disburse:
+                dividend_earned = user.shares * dividend_per_share
+                fines_earned = user.shares * fine_per_eligible_share
+
+                user_contribution = await contributions_total(activity_id, user.user_id, db)
+                principal_amount = user_contribution["contributions"] + user_contribution["late_contributions"] - user_contribution["paid_fines"] - user_contribution["unpaid_fines"]
+
+                user_wallet = db.query(models.User).filter(models.User.id == user.user_id).with_for_update().first()
+                # add a disbursement record
+                disbursement_records.append(models.TableBankingDividendDisbursement(
+                    activity_id=activity_id,
+                    user_id=user.user_id,
+                    user_name = f"{user_wallet.first_name} {user_wallet.last_name}",
+                    shares=user.shares,
+                    dividend_amount=int(dividend_earned),
+                    principal_amount=int(principal_amount),
+                    fines_amount=int(fines_earned),
+                    disbursement_date=today,
+                    cycle_number=cycle_number,
+                ))
+
+                total_amount_disbursed += dividend_earned + principal_amount + fines_earned
+                user_wallet.wallet_balance += int(dividend_earned + principal_amount)
+
+            # bulk insert
+            db.bulk_save_objects(disbursement_records)
+
+            # update the dividend table
+            dividends.paid_dividends += total_amount_disbursed
+            dividends.unpaid_dividends -= total_amount_disbursed
+
+            # new entry for the next cycle
+            db.add(models.TableBankingDividend(
+                chama_id=activity.chama_id,
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
+                unpaid_dividends=0.0,
+                paid_dividends=0.0,
+            ))
+
+            db.add(models.ActivityCycle(
+                activity_id=activity_id,
+                cycle_number=cycle_number + 1,
             ))
 
             # new entry for the next cycle in the loan management table

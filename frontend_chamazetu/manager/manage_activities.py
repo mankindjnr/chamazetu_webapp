@@ -299,7 +299,6 @@ async def set_last_contribution_date(request, activity_id):
     return go_back(request)
 
 async def last_contribution_date(activity_id):
-    print("=======final contr daya========")
     url = f"{os.getenv('API_URL')}/activities/last_contribution_date/{activity_id}"
     response = requests.get(url)
     if response.status_code == HTTPStatus.OK:
