@@ -28,12 +28,12 @@ ALLOWED_HOSTS = [
     "localhost",
     "chamazetu.com",
     "www.chamazetu.com",
-    "192.168.100.12",
+    "192.168.100.14",
     "0.0.0.0",
     "34.45.2.223",
     "102.37.140.49",
     "34.122.181.167",
-    "53fe-102-213-49-77.ngrok-free.app"
+    "99f3-102-213-49-76.ngrok-free.app"
 ]
 
 
@@ -56,7 +56,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -71,16 +70,17 @@ CORS_ALLOWED_ORIGINS = [
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://0.0.0.0:8000",
-    "https://192.168.100.12",
-    "https://53fe-102-213-49-77.ngrok-free.app",
+    "https://192.168.100.14",
+    "https://99f3-102-213-49-76.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:80",
+    "http://192.168.100.14",
     "https://127.0.0.1",
     "https://chamazetu.com",
     "https://www.chamazetu.com",
-    "https://53fe-102-213-49-77.ngrok-free.app",
+    "https://99f3-102-213-49-76.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"
@@ -153,9 +153,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-
-# WHITENOISE
-# STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
