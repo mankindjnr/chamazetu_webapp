@@ -129,7 +129,7 @@
       {% endif %}
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:fines_tracker' activity.activity_name activity_id %}">
+        <a class="nav-link collapsed" href="{% url 'manager:fines_tracker' activity.activity_name activity_id from_date to_date %}">
           <i class="ri-close-circle-line"></i>
           <span>Fines Tracker</span>
         </a>
@@ -210,7 +210,7 @@
               {% else %}
             <div class="col-xxl-4 col-md-6">
               {% endif %}
-              <a href="{% url 'manager:fines_tracker' activity.activity_name activity_id %}" style="text-decoration: none; color: inherit;">
+              <a href="{% url 'manager:fines_tracker' activity.activity_name activity_id from_date to_date %}" style="text-decoration: none; color: inherit;">
               <div class="card info-card sales-card" style="background-color: rgb(218, 33, 33);">
 
                 <div class="card-body">
@@ -327,6 +327,30 @@
             </a>
             </div>
               <!-- end of interest paid in -->
+
+
+            <!-- fines collected so far in the current cycle -->
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Fines Collected<span>| paid</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small class="">Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6> {{ activity.paid_fines }} </h6>
+                      <!-- <span class="text-success small pt-1 fw-bold">12%</span> <span class="text-muted small pt-2 ps-1">increase</span> -->
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+             <!-- end of fines collected this cycle -->
             {% endif %}
 
               <!-- rotating contributions -->

@@ -35,7 +35,7 @@ from .member_transactions import (
     wallet_transactions,
     fix_mpesa_to_wallet_deposit,
 )
-from .members_activity import members_tracker, fines_tracker
+from .members_activity import members_tracker, fines_tracker, search_fines
 from .profile_update import (
     update_profile_image,
     update_phone_number,

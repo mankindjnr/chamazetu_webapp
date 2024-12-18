@@ -135,7 +135,7 @@ urlpatterns = [
         name="disburse_funds",
     ),
     path(
-        "fines_tracker/<str:activity_name>/<int:activity_id>",
+        "fines_tracker/<str:activity_name>/<int:activity_id>/<str:from_date>/<str:to_date>",
         views.fines_tracker,
         name="fines_tracker",
     ),
@@ -228,5 +228,10 @@ urlpatterns = [
         "set_last_contribution_date/<int:activity_id>",
         views.set_last_contribution_date,
         name="set_last_contribution_date",
+    ),
+    path(
+        "transfer_fines/<int:activity_id>",
+        views.transfer_fines,
+        name="transfer_fines",
     ),
 ]

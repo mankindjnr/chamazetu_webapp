@@ -41,20 +41,14 @@
   <aside id="sidebar" class="sidebar">
 
     <ul class="sidebar-nav" id="sidebar-nav">
-
-      <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'member:get_chama_view' chama_id %}">
-          <i class="bi bi-house-door"></i>
-          <span>Chama Dashboard</span>
-        </a>
-      </li>
-
+      {% if role == 'member' %}
       <li class="nav-item">
         <a class="nav-link collapsed" href="{% url 'member:get_activity' activity_id %}">
           <i class="bi bi-house"></i>
           <span>Activity Dashboard</span>
         </a>
       </li>
+      {% endif %}
 
       <li class="nav-heading">Pages</li>
 
@@ -88,31 +82,41 @@
   </aside><!-- End Sidebar-->
 
   <main id="main" class="main">
-    <div class="pagetitle d-flex justify-content-between align-items-center">
-      <h1>{{ activity_name }}</h1>
 
-      <!-- messages after deposit trial -->
-      {% if messages %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
-          {% for message in messages %}
-            {{ message }}
-          {% endfor %}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endif %}
-
-      <!-- TODO:
-        <div class="ml-auto">
-        <button type="button" class="btn btn-success btn-sm">
-          3 months
-        </button>
-
-        <button type="button" class="btn btn-success btn-sm">
-          six months
-        </button>
-      </div> -->
-
-    </div><!-- End Page Title -->
+      <form action="{% url 'member:search_fines' activity_name activity_id %}" method="POST">
+        {% csrf_token %}
+        <div class="pagetitle d-flex flex-column flex-md-row justify-content-between">
+        
+          <div class="d-flex flex-column flex-md-row align-items-start ms-3 mb-3 mb-md-0">
+            <div class="d-flex align-items-center mb-2 mb-md-0">
+              <span class="me-2">From:</span>
+              <input type="date" class="form-control form-control-sm" id="fromDate" name="fromDate" value="{{ dates.from_date }}" required>
+            </div>
+            <div class="d-flex align-items-start ms-md-3">
+              <span class="me-2 ms-2">To:</span>
+              <input type="date" class="form-control form-control-sm" id="toDate" name="toDate" value="{{ dates.to_date }}" required>
+            </div>
+          </div>
+  
+          <!-- messages after deposit trial -->
+          {% if messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert" id="chama_created">
+              {% for message in messages %}
+                {{ message }}
+              {% endfor %}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endif %}
+          <!-- end messages -->
+          <div class="ml-auto">
+            <!-- Button trigger wallet deposit modal-->
+            <button type="submit" class="btn btn-success btn-sm" id="searchHistory">
+              Search Fines
+            </button>
+          </div>
+  
+      </div><!-- End Page Title -->
+      </form>
 
     <section class="section dashboard">
         <!-- Left side columns -->

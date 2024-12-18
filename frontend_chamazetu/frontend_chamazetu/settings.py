@@ -22,7 +22,7 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT"))
 SECRET_KEY = os.getenv("DJANGO_SECRET")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("ENVIRONMENT") == "DEVELOPMENT"
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -33,7 +33,7 @@ ALLOWED_HOSTS = [
     "34.45.2.223",
     "102.37.140.49",
     "34.122.181.167",
-    "99f3-102-213-49-76.ngrok-free.app"
+    "50a0-102-213-49-73.ngrok-free.app"
 ]
 
 
@@ -71,7 +71,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://www.chamazetu.com",
     "https://0.0.0.0:8000",
     "https://192.168.100.14",
-    "https://99f3-102-213-49-76.ngrok-free.app",
+    "https://50a0-102-213-49-73.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -80,7 +80,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://127.0.0.1",
     "https://chamazetu.com",
     "https://www.chamazetu.com",
-    "https://99f3-102-213-49-76.ngrok-free.app",
+    "https://50a0-102-213-49-73.ngrok-free.app",
 ]
 
 ROOT_URLCONF = "frontend_chamazetu.urls"

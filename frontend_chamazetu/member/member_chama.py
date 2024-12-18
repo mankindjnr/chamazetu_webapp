@@ -103,8 +103,6 @@ async def view_private_chama(request, chamaid):
     resp = requests.get(urls)
     if resp.status_code == HTTPStatus.OK:
         chama = resp.json()
-        print("=======chama private access========")
-        print(chama)
         return render(
             request,
             "chama/blog_chama.html",

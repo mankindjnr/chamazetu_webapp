@@ -183,33 +183,78 @@
 
             <!-- end disburse dividend form -->
 
-                <!-- unpaid loans total -->
-                <div class="col-xxl-4 col-md-6">
-                  <div class="card info-card sales-card">
+            <!-- activity account -->
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card">
 
-                    <div class="card-body">
-                      <h5 class="card-title">Account Balance<span>| activity</span></h5>
+                <div class="card-body">
+                  <h5 class="card-title">Account Balance<span>| activity</span></h5>
 
-                      <div class="d-flex align-items-center">
-                        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                          <small>Ksh:</small>
-                        </div>
-                        <div class="ps-3">
-                          <h6>{{ records.activity_account_balance }}</h6>
-
-                        </div>
-                      </div>
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small>Ksh:</small>
                     </div>
+                    <div class="ps-3">
+                      <h6>{{ records.activity_account_balance }}</h6>
 
+                    </div>
                   </div>
-                </div><!-- End deposit Card -->
+                </div>
+
+              </div>
+            </div><!-- End activity account-->
+
+            <!-- fines collected -->
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card">
+
+                <div class="card-body">
+                  <h5 class="card-title">Fines Collected <span>|{% if records.activity_category == 'public' %} <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#fineTransferModal">Transfer</button>{% endif %} </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <small>Ksh:</small>
+                    </div>
+                    <div class="ps-3">
+                      <h6>{{ records.paid_fines }}</h6>
+
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- fine transfer modal -->
+
+            <div class="modal fade" id="fineTransferModal" tabindex="-1" aria-labelledby="fineTransferModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="fineTransferModalLabel">Transfer Fines To Manager Wallet</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p>Are you sure you want to transfer all fines collected to the manager's wallet?</p>
+                  </div>
+                  <div class="modal-footer">
+                    <form action="{% url 'manager:transfer_fines' activity_id %}" method="post">
+                      {% csrf_token %}
+                      <button type="button" class="btn btn-sm btn-success">Confirm Transfer</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- end of fines collected -->
 
               <!-- Dividends -->
-            <div class="col-xxl-4 col-md-6">
+            <div class="col-xxl-4 col-md-4">
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Dividend Earned <span>| this cycle </span></h5> <!--switch to num of members joined -->
+                  <h5 class="card-title">Dividend Earned <span>| Cycle {{records.cycle_number}} </span></h5> <!--switch to num of members joined -->
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">

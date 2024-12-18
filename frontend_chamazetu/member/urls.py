@@ -44,9 +44,14 @@ urlpatterns = [
         name="members_tracker",
     ),
     path(
-        "fines_tracker/<str:chama_name>/<int:chama_id>/<str:activity_name>/<int:activity_id>",
+        "fines_tracker/<str:activity_name>/<int:activity_id>/<str:from_date>/<str:to_date>",
         views.fines_tracker,
         name="fines_tracker",
+    ),
+    path(
+        "search_fines/<str:activity_name>/<int:activity_id>",
+        views.search_fines,
+        name="search_fines",
     ),
     path(
         "view_activity_members/<str:activity_name>/<int:activity_id>",

@@ -21,6 +21,8 @@ from .tasks import sending_email
 
 load_dotenv()
 
+is_development = os.getenv("ENVIRONMENT") == 'DEVELOPMENT'
+
 
 def validate_token(request):
     try:
@@ -62,7 +64,7 @@ def refresh_token(request):
         response.set_cookie(
             "access_token",
             f"Bearer {new_access_token}",
-            secure=True,
+            secure=not is_development,
             httponly=True,
             samesite="Strict",
         )
@@ -101,7 +103,7 @@ async def refresh_token_async(request):
         response.set_cookie(
             "access_token",
             f"Bearer {new_access_token}",
-            secure=True,
+            secure=not is_development,
             httponly=True,
             samesite="Strict",
         )
@@ -166,28 +168,28 @@ def signin(request):
             response.set_cookie(
                 "current_user",
                 current_user,
-                secure=True,
+                secure=not is_development,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
                 "current_role",
                 role,
-                secure=True,
+                secure=not is_development,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
                 f"access_token",
                 f"Bearer {access_tokens.get('access_token')}",
-                secure=True,
+                secure=not is_development,
                 httponly=True,
                 samesite="Strict",
             )
             response.set_cookie(
                 f"refresh_token",
                 f"Bearer {refresh_tokens.get('refresh_token')}",
-                secure=True,
+                secure=not is_development,
                 httponly=True,
                 samesite="Strict",
             )

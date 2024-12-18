@@ -297,13 +297,14 @@ def get_fines_data(chama_id):
     return fines_data
 
 
-async def fines_tracker(request, chama_name, chama_id, activity_name, activity_id):
+async def fines_tracker(request, activity_name, activity_id, from_date, to_date):
     url = f"{os.getenv('api_url')}/activities/fines/{activity_id}"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
-    response = requests.get(url, headers=headers)
+    data = {"from_date": from_date, "to_date": to_date}
+    response = requests.get(url, json=data, headers=headers)
 
     if response.status_code == HTTPStatus.OK:
         fines_data = response.json()
@@ -313,21 +314,36 @@ async def fines_tracker(request, chama_name, chama_id, activity_name, activity_i
             request,
             "member/fines_tracker.html",
             {
-                "chama_id": chama_id,
                 "role": "member",
                 "activity_name": activity_name,
                 "activity_id": activity_id,
                 "fines": fines_data,
+                "dates": data,
             },
         )
     else:
         messages.error(request, "An error occurred while fetching fines data")
 
-    return HttpResponseRedirect(
-        reverse(
-            "member:activities", args=[chama_name, chama_id, activity_type, activity_id]
-        )
-    )
+    referer = request.META.get("HTTP_REFERER", "member:dashboard")
+    return HttpResponseRedirect(referer)
+
+async def search_fines(request, activity_name, activity_id):
+    if request.method == "POST":
+        from_date = request.POST.get("fromDate")
+        to_date = request.POST.get("toDate")
+    if not from_date or not to_date:
+        messages.error(request, "Please provide both from and to dates")
+        referer = request.META.get("HTTP_REFERER", "member:dashboard")
+        return HttpResponseRedirect(referer)
+    
+    current_role = request.COOKIES.get("current_role")
+    if  current_role == "member":
+        return redirect("member:fines_tracker", activity_name=activity_name, activity_id=activity_id, from_date=from_date, to_date=to_date)
+    elif current_role == "manager":
+        return redirect("manager:fines_tracker", activity_name=activity_name, activity_id=activity_id, from_date=from_date, to_date=to_date)
+
+    referer = request.META.get("HTTP_REFERER", "/")
+    return HttpResponseRedirect(referer)
 
 
 def organise_fines(fines):

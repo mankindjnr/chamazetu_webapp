@@ -138,33 +138,34 @@ async def disburse_funds(request, activity_id):
     return HttpResponseRedirect(reverse("manager:rotating_order", args=[activity_id]))
 
 
-async def fines_tracker(request, activity_name, activity_id):
+async def fines_tracker(request, activity_name, activity_id, from_date, to_date):
     url = f"{os.getenv('api_url')}/activities/fines/{activity_id}"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
     }
-    response = requests.get(url, headers=headers)
+    data = {"from_date": from_date, "to_date": to_date}
+    response = requests.get(url, json=data, headers=headers)
 
     if response.status_code == HTTPStatus.OK:
         fines_data = response.json()
         return render(
             request,
-            "manager/fines_tracker.html",
+            "member/fines_tracker.html",
             {
                 "role": "manager",
                 "activity_name": activity_name,
                 "activity_id": activity_id,
                 "fines": fines_data,
+                "dates": data,
             },
         )
     else:
-        return HttpResponseRedirect(
-            reverse(
-                "manager:chama_activity",
-                args=[activity_id],
-            )
-        )
+        messages.error(request, f"{response.json().get('detail')}")
+    
+    referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+    return HttpResponseRedirect(referer)
+        
 
 @async_tokens_in_cookies()
 @async_validate_and_refresh_token()
@@ -304,3 +305,7 @@ async def last_contribution_date(activity_id):
     if response.status_code == HTTPStatus.OK:
         return response.json()["last_contribution_date"]
     return None
+
+
+async def transfer_fines(request, activity_id):
+    pass

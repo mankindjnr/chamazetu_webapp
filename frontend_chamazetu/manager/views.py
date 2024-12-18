@@ -46,6 +46,7 @@ from .manage_activities import (
     allow_new_activity_members,
     investment_marketplace,
     set_last_contribution_date,
+    transfer_fines,
 )
 
 from .manage_members import membership_management, allow_new_members
