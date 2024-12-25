@@ -43,6 +43,14 @@ class chamaActivity:
 
         return activity
 
+    def activity_chama_category(self) -> str:
+        """is the activity part of a public or private chama"""
+        chama_category = self.db.query(models.Chama.category).filter(
+            models.Chama.id == self.activity().chama_id
+        ).scalar()
+
+        return chama_category
+
     def activity_manager(self) -> dict:
         """retrieve the manager for given activity"""
         manager_id = self.db.query(models.Activity.manager_id).filter(
@@ -230,22 +238,39 @@ class chamaActivity:
 
     def current_cycle_paid_fines(self) -> Float:
         """retrieve the total paid fines for an activity"""
-        dates = self.activity_dates()
-        start_cycle_date = dates["restart_date"] if dates["restart_date"] else dates["first_contribution_date"]
-        end_cycle_date = dates["last_contribution_date"] if dates["last_contribution_date"] else datetime.now(nairobi_tz).date()
-
         paid_fines = self.db.query(func.coalesce(func.sum(models.ActivityFine.fine), 0)).filter(
             models.ActivityFine.activity_id == self.activity_id,
             models.ActivityFine.is_paid == True,
-            models.ActivityFine.fine_date >= start_cycle_date,
-            models.ActivityFine.fine_date <= end_cycle_date,
+            models.ActivityFine.cycle_number == self.current_activity_cycle(),
         ).scalar()
 
         return paid_fines or 0.0
 
+    def fines_available_for_transfer(self) -> int:
+        """we will first check if there is a fines transfer record for the current cycle
+        in the ManagerFiesTransfer table. if there is, we will only sum the paid_fines whose
+        paid_date is > than the transfer date and <= today. if there is no transfer record, if there is no transfer record,
+        we will return the current_cycle_paid_fines
+        """
 
+        today = datetime.now(nairobi_tz).date()
+        previous_transfer = self.db.query(models.ManagerFinesTransfer).filter(
+            models.ManagerFinesTransfer.activity_id == self.activity_id,
+            models.ManagerFinesTransfer.cycle_number == self.current_activity_cycle(),
+        ).first()
 
+        if previous_transfer:
+            paid_fines = self.db.query(func.coalesce(func.sum(models.ActivityFine.fine), 0)).filter(
+                models.ActivityFine.activity_id == self.activity_id,
+                models.ActivityFine.is_paid == True,
+                models.ActivityFine.cycle_number == self.current_activity_cycle(),
+                models.ActivityFine.paid_date > previous_transfer.transfer_date,
+                models.ActivityFine.paid_date <= today,
+            ).scalar()
+        else:
+            paid_fines = self.current_cycle_paid_fines()
 
+        return paid_fines or 0.0
 
 # function that gets an activity by id
 async def get_active_activity_by_id(activity_id: int, db: Session):
@@ -437,6 +462,8 @@ async def get_activity_by_id(
 
         missed_contributions = chama_activity.current_cycle_unpaid_fines_and_missed_amount()["total_unpaid"]
 
+        paid_fines = chama_activity.current_cycle_paid_fines()
+
         rotation_contributions_resp = []
         unpaid_loans = 0
         if activity.activity_type == "merry-go-round":
@@ -479,13 +506,11 @@ async def get_activity_by_id(
 
         if activity.activity_type == "table-banking":
             cycle_number = chama_activity.current_activity_cycle()
-            print("==========cycle number:", cycle_number)
 
             loans_data = db.query(models.TableBankingLoanManagement).filter(
                 models.TableBankingLoanManagement.activity_id == activity_id,
                 models.TableBankingLoanManagement.cycle_number == cycle_number
                 ).first()
-            print("==========loans data:", loans_data)
 
             unapproved_loans = db.query(models.TableBankingRequestedLoans).filter(
                 models.TableBankingRequestedLoans.activity_id == activity_id,
@@ -520,6 +545,7 @@ async def get_activity_by_id(
             "cycle_number": cycle_number if activity.activity_type == "table-banking" else 0,
             "unpaid_dividends": dividend_data.unpaid_dividends if activity.activity_type == "table-banking" else 0,
             "missed_contributions": missed_contributions,
+            "paid_fines": paid_fines,
         }
 
         return {
@@ -2553,17 +2579,23 @@ async def create_rotation_contribution_for_activity(
 )
 async def get_activity_fines(
     activity_id: int,
+    dates: schemas.TableBankingLoanHistory = Body(...),
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity_is_active()
 
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
             )
+
+        from_date = datetime.strptime(dates.from_date, "%Y-%m-%d").date()
+        to_date = datetime.strptime(dates.to_date, "%Y-%m-%d").date()
+        
 
         # fetch all the fines in this activity
         fines = (
@@ -2583,6 +2615,8 @@ async def get_activity_fines(
                 and_(
                     models.ActivityFine.activity_id == activity_id,
                     models.ActivityFine.is_paid == False,
+                    models.ActivityFine.fine_date >= from_date,
+                    models.ActivityFine.fine_date <= to_date,
                 )
             )
             .all()
@@ -2618,7 +2652,7 @@ async def get_activity_fines(
 async def update_accepting_members(
     db: Session = Depends(database.get_db),
 ):
-
+    print("========updating activities accepting members========")
     try:
         today = datetime.now(nairobi_tz).date()
 

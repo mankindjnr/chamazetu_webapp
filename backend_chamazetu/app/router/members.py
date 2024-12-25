@@ -3424,7 +3424,7 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
-        start_date, last_contribution_day = None, None
+        start_date, end_date = None, None
         if not activity.restart and not activity.restart_date:
             start_date = activity.first_contribution_date
         else:
@@ -3435,7 +3435,8 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
             models.LastContributionDate.cycle_number == cycle_number,
         ).scalar()
         print("=====past last contribtion date=======")
-        print(last_contribution_day)
+        if not last_contribution_day:
+            end_date = today
 
 
         if not start_date:
@@ -3450,7 +3451,7 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
                     models.ActivityTransaction.user_id == user_id,
                     models.ActivityTransaction.activity_id == activity_id,
                     func.date(models.ActivityTransaction.transaction_date) >= start_date,
-                    func.date(models.ActivityTransaction.transaction_date) <= last_contribution_day if last_contribution_day else today,
+                    func.date(models.ActivityTransaction.transaction_date) <= end_date,
                     models.ActivityTransaction.transaction_type == "contribution",
                     models.ActivityTransaction.transaction_completed == True,
                 )

@@ -234,4 +234,22 @@ urlpatterns = [
         views.transfer_fines,
         name="transfer_fines",
     ),
+    path(
+        "update_user_row/<int:activity_id>/<int:user_id>",
+        views.update_user_row,
+        name="update_user_row",
+    ),
 ]
+
+
+
+# console.log(`UserId: ${user_dd}, ActivityId: ${ativity_id}, LoanLimit: ${loanLimit}, RestrictLoan: ${restrictLoan}`)
+#         fetch(`/manager/update_user_row/${activity_id}/${user_id}`, {
+#           method: 'POST',
+#           headers: {
+#             'Content-Type': 'application/json',
+#             'X-CSRFToken': '{{ csrf_token }}'
+#           },
+#           body: JSON.stringify({
+#             loan_limit: loanLimit,
+#             restrict_loan: restrictLoan

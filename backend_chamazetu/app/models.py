@@ -29,9 +29,9 @@ def nairobi_now():
     return datetime.now(nairobi_tz).replace(tzinfo=None)
 
 
-user_id_seq = Sequence("user_id_seq", start=940, increment=1)
-wallet_id_seq = Sequence("wallet_id_seq", start=470, increment=1)
-chama_code_seq = Sequence("chama_code_seq", start=490, increment=3)
+user_id_seq = Sequence("user_id_seq", metadata=Base.metadata, start=940, increment=1)
+wallet_id_seq = Sequence("wallet_id_seq", metadata=Base.metadata, start=470, increment=1)
+chama_code_seq = Sequence("chama_code_seq", metadata=Base.metadata, start=490, increment=1)
 
 # define the many-to-many relationship table between chamas and users
 # add is_manager, is_member, is_secretary, is_signatory, is_treasurer, is_chairman, is_vice_chairman, is_organizer, is_member, is_admin, is_super_admin
@@ -160,6 +160,10 @@ class User(Base):
     table_banking_dividend_disbursement = relationship(
         "TableBankingDividendDisbursement", back_populates="user"
     )
+    manager_activities = relationship("ManagerActivity", back_populates="manager")
+    manager_fines_transfer = relationship(
+        "ManagerFinesTransfer", back_populates="manager"
+    )
 
 
 class Chama(Base):
@@ -249,13 +253,13 @@ def set_chama_code(mapper, connection, target):
 # listen to the before_insert event to automatically set user_id
 @event.listens_for(User, "before_insert")
 def set_user_id(mapper, connection, target):
-    next_user_id = connection.execute(user_id_seq)
+    next_user_id = connection.execute(sa.text("SELECT nextval('user_id_seq')")).scalar()
     target.user_id = f"940{next_user_id}"
 
 
 @event.listens_for(User, "before_insert")
 def set_wallet_id(mapper, connection, target):
-    next_wallet_id = connection.execute(wallet_id_seq)
+    next_wallet_id = connection.execute(sa.text("SELECT nextval('wallet_id_seq')")).scalar()
     # random 2letters
     letters = string.ascii_uppercase
     random_letters = "".join(random.choice(letters) for i in range(2))
@@ -338,6 +342,10 @@ class Activity(Base):
         "LastContributionDate", back_populates="activity"
     )
     activity_cycles = relationship("ActivityCycle", back_populates="activity")
+    manager_activities = relationship("ManagerActivity", back_populates="activity")
+    manager_fines_transfer = relationship(
+        "ManagerFinesTransfer", back_populates="activity"
+    )
 
 
 # activty accounts
@@ -973,3 +981,32 @@ class ActivityCycle(Base):
     cycle_number = Column(Integer, nullable=False)
 
     activity = relationship("Activity", back_populates="activity_cycles")
+
+class ManagerActivity(Base):
+    __tablename__ = "manager_activities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    manager_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    action = Column(String, nullable=False)
+    item = Column(String, nullable=False)
+    receiver = Column(String, nullable=False)
+    action_date = Column(DateTime, default=nairobi_now)
+
+    # relationships
+    manager = relationship("User", back_populates="manager_activities")
+    activity = relationship("Activity", back_populates="manager_activities")
+
+class ManagerFinesTransfer(Base):
+    __tablename__ = "manager_fines_transfer"
+
+    id = Column(Integer, primary_key=True, index=True)
+    manager_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    activity_id = Column(Integer, ForeignKey("activities.id"), index=True, nullable=False)
+    amount = Column(Integer, nullable=False)
+    transfer_date = Column(String, nullable=False)
+    current_cycle = Column(DateTime, default=nairobi_now)
+
+    # relationships
+    manager = relationship("User", back_populates="manager_fines_transfer")
+    activity = relationship("Activity", back_populates="manager_fines_transfer")

@@ -63,6 +63,7 @@ from .table_banking import (
     decline_loan,
     disburse_dividends,
     dividend_disbursement,
+    update_user_row,
 )
 
 

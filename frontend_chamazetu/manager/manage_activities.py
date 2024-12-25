@@ -308,4 +308,19 @@ async def last_contribution_date(activity_id):
 
 
 async def transfer_fines(request, activity_id):
-    pass
+    if request.method == "POST":
+        url = f"{os.getenv('API_URL')}/managers/transfer_fines/{activity_id}"
+        headers = {
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            "Content-Type": "application/json",
+        }
+
+        transfer = requests.post(url, headers=headers)
+
+        if transfer.status_code == HTTPStatus.CREATED:
+            messages.success(request, "Fines transferred successfully")
+        else:
+            messages.error(request, "Failed to transfer fines, please try again later")
+
+    referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+    return HttpResponseRedirect(referer)

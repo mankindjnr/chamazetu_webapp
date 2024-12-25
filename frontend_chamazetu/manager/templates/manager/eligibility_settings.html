@@ -147,73 +147,46 @@
 
                 <div class="card-body">
                     <h5 class="card-title">Activity Members <span>| All</span></h5>
+                    <p class="card-text">0 loan limit means no loan limit, to restrict a member from taking a loan, check the blacklist checkbox and click update</p>
                   <div>
                     <hr>
                   </div>
 
-                <table class="table table-success table-striped-columns">
-                  <thead>
-                    <tr>
-                      <th scope="col">Member</th>
-                      <th scope="col">Set Loan Limit</th>
-                      <th scope="col">Restrict Loan Access</th>
-                      <!-- may have to add an upcoming contribution status column to track if each share has contributed towards the upcoming date-->
-                    </tr>
-                  </thead>
-                  {% if eligibility_data %}
-                  <tbody>
-                    {% for record in eligibility_data %}
-                    <tr>
-                      <th scope="row">{{ record.user_name }} </th>
-                      <td> {{ record.loan_limit }} </td>
-                      <td>
-                        {% if record.eligible %}
-                            <a href="{% url 'manager:restrict_user' activity_id record.user_id %}" class="btn btn-sm btn-danger">Restrict</a>
-                        {% else %}
-                            <a href="{% url 'manager:allow_user' activity_id record.user_id %}" class="btn btn-sm btn-success">Allow</a>
-                        {% endif %}
-                    </td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        <th scope="col">Member</th>
+                        <th scope="col">Loan Limit</th>
+                        <th scope="col">Blacklist</th>
+                        <th scope="col">Action</th>
+                      </tr>
+                    </thead>
+                    {% if eligibility_data %}
+                      <tbody>
+                      {% for record in eligibility_data %}
+                      <tr>
+                        <th scope="row">{{ record.user_name }}</th>
+                        <td>
+                          <input type="number" value="{{ record.loan_limit }}" class="form-control loan-limit" data-user-id="{{ record.user_id }}" />
+                        </td>
+                        <td>
+                          <input type="checkbox" class="form-check-input blacklist" data-user-id="{{ record.user_id }}" {% if not record.eligible %} checked {% endif %} />
+                        </td>
+                        <td>
+                          <button class="btn btn-sm btn-primary update-row" data-user-id="{{ record.user_id }}" activity_id="{{ activity_id }}">Update</button>
+                      </tr>
+                      {% endfor %}
+                      </tbody>
                   {% endif %}
-                </table>
+                  </table>
 
                 </div>
 
               </div>
             </div><!-- End weekly activity -->
 
-
-            <!-- table showing those with more than 0 numbers of missed rotation and pending still -->
-
           </div>
         </div><!-- End Left side columns -->
-        
-
-        <!-- Right side columns -->
-        <!-- <div class="col-lg-4">
-
-          <div class="card">
-
-          <div class="card">
-
-            <div class="card-body">
-              <h5 class="card-title">Unpaid Contributions<span>|</span></h5>
-              <div class="activity">
-                <div class="activity-item d-flex">
-                  <i class='bi bi-circle-fill activity-badge text-danger align-self-start'></i>
-                  <div class="activity-content">
-                    <p class="fw-bold text-dark">toni kibe share Omega missed 250ksh towards amos share alpha</p>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-
-        </div>End Right side columns -->
 
       </div>
     </section>
@@ -221,35 +194,39 @@
   </main><!-- End #main -->
 
   <script>
-    // notification
-    document.addEventListener("DOMContentLoaded", function() {
-    var chama_created = document.getElementById("chama_created");
-    if (chama_created) {
-      setTimeout(function() {
-        chama_created.style.display = "none";
-      }, 6000);
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+    // Handle Row Update
+    console.log('DOM Loaded');
+    const updateRowButtons = document.querySelectorAll('.update-row');
+    
+    updateRowButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const userId = button.getAttribute('data-user-id');
+        const activityId = document.querySelector('.update-row').getAttribute('activity_id');
+        const loanLimit = document.querySelector(`.loan-limit[data-user-id="${userId}"]`).value;
+        const restrictLoan = document.querySelector(`.blacklist[data-user-id="${userId}"]`).checked ? 1 : 0;
 
-    let buttons = ["setRateBtn"];
-      buttons.forEach(function(buttonid){
-        var button = document.getElementById(buttonid);
-        if (button) {
-          button.addEventListener("click", function() {
-            let form = document.getElementById("interestForm");
-            if (form) {
-              if (form.style.display === "none") {
-                form.style.display = "block";
-              } else {
-                form.style.display = "none";
-              }
-            } else {
-              console.log("transaction form not found");
-            }
-          });
-        } else {
-          console.log(buttonid + " not found");
-        }
+        console.log(`UserId: ${userId}, ActivityId: ${activityId}, LoanLimit: ${loanLimit}, RestrictLoan: ${restrictLoan}`)
+        console.log("script loaded");
+        fetch(`/manager/update_user_row/${activityId}/${userId}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ loan_limit: loanLimit, restrict_loan: restrictLoan })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert('Row updated successfully');
+          } else {
+            alert('Error updating row: ' + data.message);
+          }
+        })
+        .catch(error => console.error('Error:', error));
       });
+    });
   });
   </script>
   

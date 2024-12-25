@@ -468,16 +468,13 @@ async def get_eligibility_loans(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity)
-            .filter(models.Activity.id == activity_id)
-            .first()
-        )
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        cycle_number = chama_activity.current_activity_cycle()
 
         # get all users in the activity
         users = db.query(models.User).join(
@@ -504,7 +501,7 @@ async def get_eligibility_loans(
                     {
                         "user_id": user.id,
                         "user_name": f"{user.first_name} {user.last_name}",
-                        "loan_limit": "Not set" if not user_eligibility.loan_limit else user_eligibility.loan_limit,
+                        "loan_limit": 0 if not user_eligibility.loan_limit else user_eligibility.loan_limit,
                         "eligible": user_eligibility.eligible,
                     }
                 )
@@ -513,7 +510,7 @@ async def get_eligibility_loans(
                     {
                         "user_id": user.id,
                         "user_name": f"{user.first_name} {user.last_name}",
-                        "loan_limit": "Not set",
+                        "loan_limit": 0,
                         "eligible": True,
                     }
                 )
@@ -1531,6 +1528,8 @@ async def dividend_disbursement_records(
                 detail="No cycle number found",
             )
 
+        paid_fines = chama_activity.current_cycle_paid_fines()
+
         # get all the users in this activity - active users
         active_users = (
             db.query(
@@ -1620,7 +1619,14 @@ async def dividend_disbursement_records(
             for user in active_users
         ]
 
-        return {"dividend_records": dividend_records, "activity_account_balance": activity_account, "dividend_earned": dividends.unpaid_dividends}
+        return {
+            "dividend_records": dividend_records,
+            "activity_account_balance": activity_account, 
+            "dividend_earned": dividends.unpaid_dividends,
+            "cycle_number": cycle_number,
+            "paid_fines": paid_fines,
+            "activity_category": chama_activity.activity_chama_category(),
+        }
 
     except HTTPException as http_exc:
         management_error_logger.error(

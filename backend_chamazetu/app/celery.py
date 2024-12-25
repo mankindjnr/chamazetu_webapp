@@ -47,8 +47,6 @@ celery_app.conf.update(
 def process_callback(self, unprocessed_code: str, transaction_data: dict):
     db: Session = next(database.get_db())
     try:
-        print("======c2b callback=====")
-        print()
         response_code = transaction_data["Body"]["stkCallback"]["ResultCode"]
         if not response_code == 0:
             raise HTTPException(status_code=400, detail="The service request failed.")
@@ -68,8 +66,6 @@ def process_callback(self, unprocessed_code: str, transaction_data: dict):
         print(transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3]["Value"])
         transaction_date_str = str(transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][3]["Value"])[:14]
         transaction_date = datetime.strptime(transaction_date_str, "%Y%m%d%H%M%S")
-        print("===past the transaction date===")
-
         phone_number = str(
             transaction_data["Body"]["stkCallback"]["CallbackMetadata"]["Item"][4][
                 "Value"
@@ -135,8 +131,6 @@ def process_callback(self, unprocessed_code: str, transaction_data: dict):
             Status="Success",
         )
         db.add(new_callback)
-
-        print("======c2b callback commiting=====")
         db.commit()
     except HTTPException as http_exc:
         raise http_exc
@@ -544,3 +538,77 @@ def complete_unprocessed_deposit(result: dict):
         db.rollback()
         transaction_error_logger.error(f"Failed to update transaction\n: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@celery_app.task
+def initiaite_final_fines_transfer_to_manager_wallet(activity_id: int, collected_fines:int, manager_id: int):
+    db: Session = next(database.get_db())
+
+    try:
+        today = datetime.now(nairobi_tz).date()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+
+        # begin transaction block for atomicity
+        with db.begin_nested():
+            # record the fines transfer
+            db.add(models.ManagerFinesTranser(
+                manager_id = manager_id,
+                activity_id = activity_id,
+                amount = collected_fines,
+                transfer_date = today,
+                current_cycle = chama_activity.current_activity_cycle()
+            ))
+
+
+            # update the manager's wallet balance
+            manager_wallet = (
+                db.query(models.User)
+                .filter(models.User.id == manager_id)
+                .with_for_update()
+                .first()
+            )
+
+            if not manager_wallet:
+                raise HTTPException(status_code=404, detail="Manager not found")
+
+            manager_wallet.wallet_balance += collected_fines
+
+            # update the activity account balance
+            activity_account = (
+                db.query(models.Activity_Account)
+                .filter(models.Activity_Account.activity_id == activity_id)
+                .with_for_update()
+                .first()
+            )
+
+            if not activity_account:
+                raise HTTPException(status_code=404, detail="Activity account not found")
+
+            activity_account.account_balance -= collected_fines
+
+            # update the chama account balance
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == activity.chama_id)
+                .with_for_update()
+                .first()
+            )
+
+            if not chama_account:
+                raise HTTPException(status_code=404, detail="Chama account not found")
+
+            chama_account.account_balance -= collected_fines
+
+        db.commit()
+
+        return {"message": "Fines transferred successfully"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to transfer fines, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to transfer fines")

@@ -506,31 +506,31 @@ async def add_member_to_chama(
 
     # check if this chama has any activities open to late joining
     chama_activities = (
-        db.query(models.Activities)
+        db.query(models.Activity)
         .filter(models.Activity.chama_id == chama_id)
         .all()
     )
 
-    activity_ids = [activity.activity_id for activity in chama_activities]
+    activity_ids = [activity.id for activity in chama_activities]
 
-    late_joining_open = False
+    # late_joining_open = False
 
-    if chama_activities:
-        allowed_activities = db.query(models.MerryGoRoundShareIncrease).filter(
-            and_(
-                models.MerryGoRoundShareIncrease.activity_id.in_(activity_ids),
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
-            )
-        ).all()
+    # if chama_activities:
+    #     allowed_activities = db.query(models.MerryGoRoundShareIncrease).filter(
+    #         and_(
+    #             models.MerryGoRoundShareIncrease.activity_id.in_(activity_ids),
+    #             func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+    #         )
+    #     ).all()
 
-        if allowed_activities:
-            late_joining_open = True
+    #     if allowed_activities:
+    #         late_joining_open = True
 
-    if not late_joining_open and chama.last_joining_date.date() < today:
-        raise HTTPException(
-            status_code=400,
-            detail="You cannot join the chama after the last joining date",
-        )
+    # if not late_joining_open and chama.last_joining_date.date() < today:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail="You cannot join the chama after the last joining date",
+        # )
 
     try:
         existing_membership = (

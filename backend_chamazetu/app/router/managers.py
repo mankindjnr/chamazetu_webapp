@@ -16,8 +16,10 @@ from .date_functions import (
     calculate_monthly_same_day_interval,
 )
 from .members import get_active_activity_by_id
+from .activities import chamaActivity
 
 from .. import schemas, database, utils, oauth2, models
+from app.celery import initiaite_final_fines_transfer_to_manager_wallet
 
 router = APIRouter(prefix="/managers", tags=["managers"])
 
@@ -1797,3 +1799,97 @@ async def delete_activity(
         db.rollback()
         management_error_logger.error(f"Failed to delete activity, error: {exc}")
         raise HTTPException(status_code=400, detail="Failed to delete activity")
+
+
+# transfer fines from activty to manager wallet - update wallet bal, activty account bal and chama account bal
+@router.post(
+    "/transfer_fines/{activity_id}",
+    status_code=status.HTTP_201_CREATED,
+)
+async def transfer_fines_to_manager_wallet(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not allowed to transfer fines"
+            )
+
+        # get the fines for the activity
+        collected_fines = chama_activity.fines_available_for_transfer()
+
+        if not collected_fines:
+            return {"message": "No fines to transfer"}
+
+        # begin transaction block for atomicity
+        with db.begin_nested():
+            # record the fines transfer
+            db.add(models.ManagerFinesTranser(
+                manager_id = current_user.id,
+                activity_id = activity_id,
+                amount = collected_fines,
+                transfer_date = today,
+                current_cycle = chama_activity.current_activity_cycle()
+            ))
+
+
+            # update the manager's wallet balance
+            manager_wallet = (
+                db.query(models.User)
+                .filter(models.User.id == current_user.id)
+                .with_for_update()
+                .first()
+            )
+
+            if not manager_wallet:
+                raise HTTPException(status_code=404, detail="Manager not found")
+
+            manager_wallet.wallet_balance += collected_fines
+
+            # update the activity account balance
+            activity_account = (
+                db.query(models.Activity_Account)
+                .filter(models.Activity_Account.activity_id == activity_id)
+                .with_for_update()
+                .first()
+            )
+
+            if not activity_account:
+                raise HTTPException(status_code=404, detail="Activity account not found")
+
+            activity_account.account_balance -= collected_fines
+
+            # update the chama account balance
+            chama_account = (
+                db.query(models.Chama_Account)
+                .filter(models.Chama_Account.chama_id == activity.chama_id)
+                .with_for_update()
+                .first()
+            )
+
+            if not chama_account:
+                raise HTTPException(status_code=404, detail="Chama account not found")
+
+            chama_account.account_balance -= collected_fines
+
+        db.commit()
+        last_contribution_date = chama_activity.activity_dates()["last_contribution_date"]
+        if today > last_contribution_date:
+            # if the disbursemnet is after the last contribution date, initiate the final fines transfer to the manager's wallet
+            initiaite_final_fines_transfer_to_manager_wallet.delay(activity_id, collected_fines, current_user.id)
+
+        return {"message": "Fines transferred successfully"}
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(f"Failed to transfer fines, error: {exc}")
+        raise HTTPException(status_code=400, detail="Failed to transfer fines")

@@ -1,6 +1,6 @@
 import requests, jwt, json, threading, os, calendar
 from dotenv import load_dotenv
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
@@ -16,6 +16,8 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from chama.decorate.tokens_in_cookies import async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import async_validate_and_refresh_token
@@ -270,3 +272,47 @@ async def disburse_dividends(request, activity_id):
 
     referer = request.META.get("HTTP_REFERER", "member:dashboard")
     return HttpResponseRedirect(referer)
+
+
+@csrf_exempt
+@require_POST
+def update_user_row(request, activity_id, user_id):
+    print("==========update_user_row()==========")
+    if request.method == "POST":
+        try:
+            # parse json payload
+            data = json.loads(request.body)
+            loan_limit = str(data.get("loan_limit"))
+            restrict_loan = str(data.get("restrict_loan"))
+
+            # check if both values are digits
+            if not loan_limit.isdigit() or not restrict_loan.isdigit():
+                return JsonResponse({"status": "error", "message": "Invalid data provided"}, status=HTTPStatus.BAD_REQUEST)
+
+            # validate inputs
+            if loan_limit is None or restrict_loan is None:
+                return JsonResponse({"status": "error", "message": "Invalid data provided"}, status=HTTPStatus.BAD_REQUEST)
+            print("==========past 1()==========")
+
+            if not isinstance(int(loan_limit), (int)) or not isinstance(int(restrict_loan), (int)):
+                return JsonResponse({"status": "error", "message": "Invalid data provided"}, status=HTTPStatus.BAD_REQUEST)
+            print("==========past 2()==========")
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            }
+
+            url = f"{os.getenv('api_url')}/table_banking/update_user_row/{activity_id}/{user_id}"
+            data = {"loan_limit": int(loan_limit), "restrict_loan": int(restrict_loan)}
+
+            response = requests.put(url, json=data, headers=headers)
+
+            if response.status_code == HTTPStatus.OK:
+                return JsonResponse({"status": "success", "message": "User row updated successfully"}, status=HTTPStatus.OK)
+            else:
+                return JsonResponse({"status": "error", "message": f"{response.json().get('detail')}"}, status=HTTPStatus.BAD_REQUEST)
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"{e}"}, status=HTTPStatus.BAD_REQUEST)
+    else:
+        return JsonResponse({"status": "error", "message": "Invalid request method"}, status=HTTPStatus.BAD_REQUEST)

@@ -23,6 +23,7 @@ async def create_user(
     try:
         email = (user.email).lower()
         new_user = db.query(models.User).filter(models.User.email == email).first()
+        print("========NEW USER===========")
         print("new user", new_user)
 
         if new_user:
@@ -60,6 +61,7 @@ async def create_user(
         print("=====sgnup error=====")
         print(e)
         db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to create user")
 
 
 # update member email to true after email verification
