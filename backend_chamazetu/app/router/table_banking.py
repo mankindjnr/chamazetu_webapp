@@ -17,8 +17,9 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
-from .activities import get_active_activity_by_id, get_active_user_in_activity, get_activity_cycle_number, get_activity_fines_sum, chamaActivity
+from .activities import get_active_activity_by_id, get_active_user_in_activity
 from .members import contributions_total
+from .chama_and_activity_classes import chamaActivity
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -418,11 +419,8 @@ async def get_loan_settings(
 ):
 
     try:
-        activity = (
-            db.query(models.Activity)
-            .filter(models.Activity.id == activity_id)
-            .first()
-        )
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
@@ -433,19 +431,16 @@ async def get_loan_settings(
                 detail="You are not allowed to view loan settings for this activity",
             )
 
-        cycle_number = db.query(func.max(models.TableBankingLoanManagement.cycle_number)).filter(
-            models.TableBankingLoanManagement.activity_id == activity_id
-        ).scalar()
+        cycle_number = chama_activity.current_activity_cycle()
 
         loan_settings = db.query(models.TableBankingLoanSettings).filter(
             models.TableBankingLoanSettings.activity_id == activity_id,
             models.TableBankingLoanSettings.cycle_number == cycle_number,
         ).first()
 
-        if not loan_settings:
-            return {"loan_settings": None}
+        activity_category = chama_activity.activity_chama_category()
 
-        return {"loan_settings": loan_settings}
+        return {"loan_settings": loan_settings, "activity_category": activity_category, "admin_fee": activity.admin_fee}
     except HTTPException as http_exc:
         management_error_logger.error(
             f"Error occurred while fetching loan settings for activity_id: {activity_id} - {http_exc.detail}"
@@ -844,11 +839,8 @@ async def request_soft_loan(
         requested_amount = loan_request.requested_amount
 
         with db.begin_nested():
-            activity = (
-                db.query(models.Activity)
-                .filter(models.Activity.id == activity_id)
-                .first()
-            )
+            chama_activity = chamaActivity(db, activity_id)
+            activity = chama_activity.activity()
 
             if not activity:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
@@ -863,7 +855,7 @@ async def request_soft_loan(
                     detail="User is not a member of this activity",
                 )
 
-            cycle_number = await get_activity_cycle_number(activity_id, db)
+            cycle_number = chama_activity.current_activity_cycle()
 
             # retrieve the loan settings
             loan_settings = db.query(models.TableBankingLoanSettings).filter(
@@ -1001,7 +993,8 @@ async def pay_soft_loan(
                 detail="Insufficient wallet balance",
             )
 
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
@@ -1013,7 +1006,7 @@ async def pay_soft_loan(
                 detail="User is not a member of this activity",
             )
 
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        cycle_number = chama_activity.current_activity_cycle()
 
         with db.begin_nested():
             requested_loans = db.query(models.TableBankingRequestedLoans).filter(
@@ -1159,7 +1152,8 @@ async def approve_loan(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
@@ -1185,7 +1179,7 @@ async def approve_loan(
                     detail="Loan not found",
                 )
 
-            cycle_number = await get_activity_cycle_number(activity_id, db)
+            cycle_number = chama_activity.current_activity_cycle()
 
             # loan management table
             loan_management = db.query(models.TableBankingLoanManagement).filter(
@@ -1274,7 +1268,8 @@ async def reject_loan(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
@@ -1329,12 +1324,13 @@ async def retrieve_loan_history(
     db: Session = Depends(database.get_db),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Activity not found",)
 
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        cycle_number = chama_activity.current_activity_cycle()
 
         from_date = datetime.strptime(dates.from_date, "%Y-%m-%d")
         to_date = datetime.strptime(dates.to_date, "%Y-%m-%d")
@@ -1414,7 +1410,6 @@ async def update_table_banking_loans(
             ).all()
 
             activity_ids = [activity.id for activity in activities]
-            print("===activity ids:\n", activity_ids)
 
             overdue_loans = (
                 db.query(models.TableBankingRequestedLoans).filter(
@@ -1426,7 +1421,6 @@ async def update_table_banking_loans(
                 .with_for_update()
                 .all()
             )
-            print("===overdue loans:\n", overdue_loans)
 
             if not overdue_loans:
                 return {"message": "No overdue loans found"}
@@ -1439,7 +1433,8 @@ async def update_table_banking_loans(
                 loans_by_activity[loan.activity_id].append(loan)
 
             for activity in activities:
-                cycle_number = await get_activity_cycle_number(activity.id, db)
+                chama_activity = chamaActivity(db, activity.id)
+                cycle_number = chama_activity.current_activity_cycle()
                 interest_rate = db.query(models.TableBankingLoanSettings.interest_rate).filter(
                     models.TableBankingLoanSettings.activity_id == activity.id
                 ).scalar()
@@ -2054,7 +2049,7 @@ async def disburse_dividends_principal_fines(
             users_to_disburse = [user for user in active_users if user.user_id not in active_loans_fines_users]
 
             total_amount_disbursed = 0.0
-            sum_of_paid_fines = await get_activity_fines_sum(activity_id, db)
+            sum_of_paid_fines = chama_activity.fines_available_for_transfer()
             sum_of_all_shares = sum([user.shares for user in active_users])
             dividend_per_share = dividends.unpaid_dividends / sum_of_all_shares
 
@@ -2171,4 +2166,67 @@ async def disburse_dividends_principal_fines(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error occurred while disbursing dividends and principal for activity"
+        )
+
+
+@router.put("/user_loan_eligibility/{activity_id}/{user_id}", status_code=status.HTTP_200_OK)
+async def user_loan_eligibility(
+    activity_id: int,
+    user_id: int,
+    data: schemas.TableBankingLoanEligibility,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_activity = chamaActivity(db, activity_id)
+        activity_is_active = chama_activity.activity_is_active()
+
+        if not activity_is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This activity is not active",
+            )
+
+        eligibility_record = db.query(models.TableBankingLoanEligibility).filter(
+            models.TableBankingLoanEligibility.activity_id == activity_id,
+            models.TableBankingLoanEligibility.user_id == user_id,
+        ).with_for_update().first()
+
+        is_ready = True
+
+        if not eligibility_record:
+            if not data.blacklisted and data.loan_limit < 1:
+                is_ready = False
+                print("===loan limit is less than 1")
+            if is_ready:
+                print("===adding new record")
+                user = db.query(models.User).filter(models.User.id == user_id).first()
+                db.add(models.TableBankingLoanEligibility(
+                    activity_id=activity_id,
+                    user_id=user_id,
+                    user_name=f"{user.first_name} {user.last_name}",
+                    eligible=not data.blacklisted,
+                    loan_limit=data.loan_limit,
+                    updated_at=datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0),
+                ))
+        else:
+            eligibility_record.eligible = not data.blacklisted
+            eligibility_record.loan_limit = data.loan_limit
+            eligibility_record.updated_at = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
+
+        if is_ready:
+            db.commit()
+
+        return {"message": "User loan eligibility updated successfully"}
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Error occurred while checking user loan eligibility for activity_id: {activity_id} - {http_exc.detail}"
+        )
+        raise http_exc
+    except Exception as exc:
+        management_error_logger.error(
+            f"Error occurred while checking user loan eligibility for activity_id: {activity_id} - {exc}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error occurred while checking user loan eligibility for this activity",
         )

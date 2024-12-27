@@ -100,9 +100,9 @@
         </li>
   
         <li class="nav-item">
-          <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
+          <a class="nav-link collapsed" href="{% url 'manager:activity_settings' activity_id %}">
             <i class="ri-settings-5-fill"></i>
-            <span>Loan Settings</span> 
+            <span>Activity Settings</span> 
           </a>
         </li>
 
@@ -167,10 +167,10 @@
                       <tr>
                         <th scope="row">{{ record.user_name }}</th>
                         <td>
-                          <input type="number" value="{{ record.loan_limit }}" class="form-control loan-limit" data-user-id="{{ record.user_id }}" />
+                          <input type="number" value="{{ record.loan_limit }}" class="form-control loan-limit" data-user-id="{{ record.user_id }}" id="loan-limit-{{ record.user_id }}" />
                         </td>
                         <td>
-                          <input type="checkbox" class="form-check-input blacklist" data-user-id="{{ record.user_id }}" {% if not record.eligible %} checked {% endif %} />
+                          <input type="checkbox" class="form-check-input blacklist" data-user-id="{{ record.user_id }}" id="blacklist-{{ record.user_id }}" {% if not record.eligible %} checked {% endif %} />
                         </td>
                         <td>
                           <button class="btn btn-sm btn-primary update-row" data-user-id="{{ record.user_id }}" activity_id="{{ activity_id }}">Update</button>
@@ -227,7 +227,20 @@
         .catch(error => console.error('Error:', error));
       });
     });
-  });
+
+
+    document.querySelectorAll('.blacklist').forEach(checkbox => {
+      checkbox.addEventListener('change', (event) => {
+        var userId = event.target.getAttribute('data-user-id');
+        var loanLimitInput = document.getElementById(`loan-limit-${userId}`);
+        loanLimitInput.disabled = event.target.checked;
+      });
+      
+      // trigger change event to disable loan limit input if checkbox is checked
+      checkbox.dispatchEvent(new Event('change'));
+    });
+
+    });
   </script>
   
 

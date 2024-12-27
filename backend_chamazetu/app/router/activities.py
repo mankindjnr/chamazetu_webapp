@@ -11,6 +11,7 @@ import calendar
 from sqlalchemy import func, update, and_, table, column, desc, select, insert, Float
 
 from .. import schemas, database, utils, oauth2, models
+from .chama_and_activity_classes import chamaActivity
 
 router = APIRouter(prefix="/activities", tags=["activities"])
 
@@ -18,259 +19,6 @@ nairobi_tz = ZoneInfo("Africa/Nairobi")
 management_info_logger = logging.getLogger("management_info")
 management_error_logger = logging.getLogger("management_error")
 
-
-#  CHAMA ACTIVITY CLASS
-class chamaActivity:
-    def __init__(self, db: Session, activity_id: int):
-        self.db = db
-        self.activity_id = activity_id
-
-    def activity_is_active(self) -> bool:
-        """check if an activity is active"""
-        activity = self.db.query(models.Activity).filter(
-            models.Activity.id == self.activity_id,
-            models.Activity.is_active == True,
-        ).first()
-
-        return True if activity else False
-
-    def activity(self) -> dict:
-        """retrieve activity details"""
-        activity = self.db.query(models.Activity).filter(
-            models.Activity.id == self.activity_id,
-            models.Activity.is_active == True,
-            ).first()
-
-        return activity
-
-    def activity_chama_category(self) -> str:
-        """is the activity part of a public or private chama"""
-        chama_category = self.db.query(models.Chama.category).filter(
-            models.Chama.id == self.activity().chama_id
-        ).scalar()
-
-        return chama_category
-
-    def activity_manager(self) -> dict:
-        """retrieve the manager for given activity"""
-        manager_id = self.db.query(models.Activity.manager_id).filter(
-            models.Activity.id == self.activity_id
-        ).scalar()
-
-        manager = self.db.query(models.User).filter(models.User.id == manager_id).first()
-
-        return {
-            "manager_id": manager.id,
-            "manager_name": f"{manager.first_name} {manager.last_name}",
-            "manager_email": manager.email,
-        }
-
-    def activity_members(self) -> List[dict]:
-        """retrieve all members of a given activity"""
-        members = (
-            self.db.query(models.User)
-            .join(
-                models.activity_user_association,
-                models.User.id == models.activity_user_association.c.user_id,
-            )
-            .filter(models.activity_user_association.c.activity_id == self.activity_id)
-            .all()
-        )
-
-        members_list = []
-        for member in members:
-            members_list.append(
-                {
-                    "member_id": member.id,
-                    "member_name": f"{member.first_name} {member.last_name}",
-                    "member_email": member.email,
-                    "active": "active" if member.is_active else "inactive",
-                }
-            )
-
-        return members_list
-
-    def number_of_active_members(self) -> int:
-        """count the number of active members in an activity"""
-        count = (
-            self.db.query(func.count(models.activity_user_association.c.user_id))
-            .filter(
-                models.activity_user_association.c.activity_id == self.activity_id,
-                models.activity_user_association.c.user_is_active == True,
-            )
-            .scalar()
-        )
-
-        return count or 0
-
-    def number_of_inactive_members(self) -> int:
-        """count the number of inactive members in an activity"""
-        count = (
-            self.db.query(func.count(models,activity_user_association.c.user_id))
-            .filter(
-                models.activity_user_association.c.activity_id == self.activity_id,
-                models.activity_user_association.c.user_is_active == False,
-            )
-            .scalar()
-        )
-
-        return count or 0
-
-    def previous_and_upcoming_contribution_dates(self) -> dict:
-        """retrieve the previous and the upcoming contribution dasy for an activity"""
-        contribution_days = self.db.query(models.ActivityContributionDate).filter(
-            models.ActivityContributionDate.activity_id == self.activity_id
-        ).first()
-
-        return {
-            "previous_contribution_date": contribution_days.previous_contribution_date,
-            "next_contribution_date": contribution_days.next_contribution_date,
-        }
-
-    def activity_creation_date(self) -> datetime:
-        """retrieve an activity's creation date"""
-        creation_date = self.db.query(models.Activity.creation_date).filter(
-            models.Activity.id == self.activity_id
-        ).scalar()
-
-        return creation_date
-
-    def activity_type(self) -> str:
-        """retrieve the type of activity"""
-        activity_type = self.db.query(models.Activity.activity_type).filter(
-            models.Activity.id == self.activity_id
-        ).scalar()
-
-        return activity_type
-
-    def current_activity_cycle(self) -> int:
-        """retrieve the current cycle number for an activity"""
-        cycle = self.db.query(models.ActivityCycle.cycle_number).filter(
-            models.ActivityCycle.activity_id == self.activity_id
-        ).scalar()
-
-        return cycle or 0
-
-    def activity_dates(self) -> dict:
-        """creation date, first_contribution_date, last_contribution_date, restart_date"""
-        dates = self.db.query(models.Activity).filter(models.Activity.id == self.activity_id).first()
-        last_contribution_date = self.db.query(models.LastContributionDate).filter(
-            models.LastContributionDate.activity_id == self.activity_id,
-            models.LastContributionDate.cycle_number == self.current_activity_cycle(),
-            ).first()
-
-        return {
-            "creation_date": dates.creation_date,
-            "first_contribution_date": dates.first_contribution_date,
-            "last_contribution_date": last_contribution_date,
-            "restart_date": dates.restart_date,
-        }
-
-    def activity_account_balance(self) -> Float:
-        """retrieve the account balance for an activity"""
-        balance = self.db.query(models.Activity_Account.account_balance).filter(
-            models.Activity_Account.activity_id == self.activity_id
-        ).scalar()
-
-        return balance or 0.0
-
-    def paid_and_unpaid_dividends(self) -> dict:
-        """retrieve dividend records for table banking activities"""
-        # check activity type first
-        if self.activity_type() == "table-banking":
-            dividends = self.db.query(models.TableBankingDividend).filter(
-                models.TableBankingDividend.activity_id == self.activity_id,
-                models.TableBankingDividend.cycle_number == self.current_activity_cycle(),
-            ).first()
-
-            return {
-                "unpaid_dividends": dividends.unpaid_dividends,
-                "paid_dividends": dividends.paid_dividends,
-            }
-        
-    def unpaid_loans_and_interest(self) -> dict:
-        """retrieve the total unpaid loans for a table banking activity"""
-        if self.activity_type() == "table-banking":
-            unpaid = self.db.query(models.TableBankingLoanManagement).filter(
-                models.TableBankingLoanManagement.activity_id == self.activity_id,
-                models.TableBankingLoanManagement.cycle_number == self.current_activity_cycle(),
-            ).first()
-
-            return {
-                "unpaid_loans": unpaid.unpaid_loans,
-                "unpaid_interest": unpaid.unpaid_interest,
-            }
-
-    def paid_loans_and_interest(self) -> dict:
-        """retrieve the total paid loans for a table banking activity"""
-        if self.activity_type() == "table-banking":
-            loans = self.db.query(models.TableBankingLoanManagement).filter(
-                models.TableBankingLoanManagement.activity_id == self.activity_id,
-                models.TableBankingLoanManagement.cycle_number == self.current_activity_cycle(),
-            ).first()
-
-            return {
-                "paid_loans": loans.paid_loans,
-                "paid_interest": loans.paid_interest,
-            }
-
-    def current_cycle_unpaid_fines_and_missed_amount(self) -> dict:
-        """retrieve the total unpaid fines for an activity"""
-        current_cycle = self.current_activity_cycle()
-        unpaid_fines = self.db.query(func.coalesce(func.sum(models.ActivityFine.fine), 0)).filter(
-            models.ActivityFine.activity_id == self.activity_id,
-            models.ActivityFine.is_paid == False,
-            models.ActivityFine.cycle_number == current_cycle,
-        ).scalar()
-
-        missed_amount = self.db.query(func.coalesce(func.sum(models.ActivityFine.missed_amount), 0)).filter(
-            models.ActivityFine.activity_id == self.activity_id,
-            models.ActivityFine.is_paid == False,
-            models.ActivityFine.cycle_number == current_cycle,
-        ).scalar()
-
-
-        return {
-            "unpaid_fines": unpaid_fines or 0.0,
-            "missed_amount": missed_amount or 0.0,
-            "total_unpaid": unpaid_fines + missed_amount,
-        }
-
-    def current_cycle_paid_fines(self) -> Float:
-        """retrieve the total paid fines for an activity"""
-        paid_fines = self.db.query(func.coalesce(func.sum(models.ActivityFine.fine), 0)).filter(
-            models.ActivityFine.activity_id == self.activity_id,
-            models.ActivityFine.is_paid == True,
-            models.ActivityFine.cycle_number == self.current_activity_cycle(),
-        ).scalar()
-
-        return paid_fines or 0.0
-
-    def fines_available_for_transfer(self) -> int:
-        """we will first check if there is a fines transfer record for the current cycle
-        in the ManagerFiesTransfer table. if there is, we will only sum the paid_fines whose
-        paid_date is > than the transfer date and <= today. if there is no transfer record, if there is no transfer record,
-        we will return the current_cycle_paid_fines
-        """
-
-        today = datetime.now(nairobi_tz).date()
-        previous_transfer = self.db.query(models.ManagerFinesTransfer).filter(
-            models.ManagerFinesTransfer.activity_id == self.activity_id,
-            models.ManagerFinesTransfer.cycle_number == self.current_activity_cycle(),
-        ).first()
-
-        if previous_transfer:
-            paid_fines = self.db.query(func.coalesce(func.sum(models.ActivityFine.fine), 0)).filter(
-                models.ActivityFine.activity_id == self.activity_id,
-                models.ActivityFine.is_paid == True,
-                models.ActivityFine.cycle_number == self.current_activity_cycle(),
-                models.ActivityFine.paid_date > previous_transfer.transfer_date,
-                models.ActivityFine.paid_date <= today,
-            ).scalar()
-        else:
-            paid_fines = self.current_cycle_paid_fines()
-
-        return paid_fines or 0.0
 
 # function that gets an activity by id
 async def get_active_activity_by_id(activity_id: int, db: Session):
@@ -297,13 +45,6 @@ async def get_active_user_in_activity(activity_id: int, user_id: int, db: Sessio
             )
         )
         .first()
-    )
-
-async def get_activity_cycle_number(activity_id: int, db: Session):
-    return (
-        db.query(func.max(models.TableBankingLoanManagement.cycle_number))
-        .filter(models.TableBankingLoanManagement.activity_id == activity_id)
-        .scalar()
     )
 
 
@@ -399,7 +140,8 @@ async def get_activity_detail(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)        
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()     
 
         if not activity:
             raise HTTPException(
@@ -647,7 +389,8 @@ async def set_last_contrbution_date(
         last_contribution_date = datetime.strptime(
             final_contribution_date.last_contribution_date, "%Y-%m-%d"
         )
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -659,7 +402,7 @@ async def set_last_contrbution_date(
                 status_code=403, detail="You are not the manager of this activity"
             )
 
-        current_cycle = await get_activity_cycle_number(activity_id, db)
+        current_cycle = chama_activity.current_activity_cycle()
 
         final_contribution_date = (
             db.query(models.LastContributionDate)
@@ -710,7 +453,8 @@ async def join_activity(
 ):
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -837,7 +581,8 @@ async def get_merry_go_round_activity(
 ):
     try:
         # fetch activity and eager load related accout and user data in one go
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -868,43 +613,20 @@ async def get_merry_go_round_activity(
             or 0
         )
 
-        account_balance = (
-            db.query(models.Activity_Account.account_balance)
-            .filter(models.Activity_Account.activity_id == activity_id)
-            .scalar()
-            or 0.0
-        )
+        account_balance = chama_activity.activity_account_balance()
 
         ## sum todays contributions to this activity
         today = datetime.now(nairobi_tz).date()
-        today_contributions = (
-            db.query(func.coalesce(func.sum(models.ActivityTransaction.amount), 0))
-            .filter(
-                models.ActivityTransaction.activity_id == activity_id,
-                models.ActivityTransaction.user_id == current_user.id,
-                models.ActivityTransaction.transaction_type == "contribution",
-                models.ActivityTransaction.transaction_completed == True,
-                func.date(models.ActivityTransaction.transaction_date) == today,
-            )
-            .scalar()
-            or 0
-        )
+        today_contributions = chama_activity.todays_contributions()
 
-        next_contribution_date = (
-            db.query(models.ActivityContributionDate.next_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
-        prev_contribution_date = (
-            db.query(models.ActivityContributionDate.previous_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
-
-        if not next_contribution_date or not prev_contribution_date:
+        contrib_dates = chama_activity.previous_and_upcoming_contribution_dates()
+        if not contrib_dates:
             raise HTTPException(
                 status_code=400, detail="Failed to get contribution dates"
             )
+
+        next_contribution_date = contrib_dates["next_contribution_date"]
+        prev_contribution_date = contrib_dates["previous_contribution_date"]
 
         prev_sunday = today - timedelta(days=today.weekday() + 1)
         ActivityUserAssoc = aliased(models.activity_user_association)
@@ -1018,6 +740,7 @@ async def get_merry_go_round_activity(
             "next_contribution_date": next_contribution_date.strftime("%d-%B-%Y"),
             "today_contributions": today_contributions,
             "weekly_contributions": weekly_contributions_list,
+            "admin_fee": activity.admin_fee,
         }
 
         return activity_data
@@ -1045,7 +768,8 @@ async def get_activity_data(
 ):
     try:
         # fetch activity and eager load related accout and user data in one go
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -1070,12 +794,7 @@ async def get_activity_data(
             or 0
         )
 
-        account_balance = (
-            db.query(models.Activity_Account.account_balance)
-            .filter(models.Activity_Account.activity_id == activity_id)
-            .scalar()
-            or 0.0
-        )
+        account_balance = chama_activity.activity_account_balance()
 
         # if this is a table-banking activity, fetch loans data for user
         personal_loan = 0
@@ -1094,33 +813,16 @@ async def get_activity_data(
 
         ## sum todays contributions to this activity
         today = datetime.now(nairobi_tz).date()
-        today_contributions = (
-            db.query(func.coalesce(func.sum(models.ActivityTransaction.amount), 0))
-            .filter(
-                models.ActivityTransaction.activity_id == activity_id,
-                models.ActivityTransaction.transaction_type == "contribution",
-                models.ActivityTransaction.transaction_completed == True,
-                func.date(models.ActivityTransaction.transaction_date) == today,
-            )
-            .scalar()
-            or 0
-        )
+        today_contributions = chama_activity.todays_contributions()
 
-        next_contribution_date = (
-            db.query(models.ActivityContributionDate.next_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
-        if not next_contribution_date:
+        contrib_dates = chama_activity.previous_and_upcoming_contribution_dates()
+        if not contrib_dates:
             raise HTTPException(
-                status_code=400, detail="Failed to get next contribution date"
+                status_code=400, detail="Failed to get contribution dates"
             )
 
-        prev_contribution_date = (
-            db.query(models.ActivityContributionDate.previous_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
+        next_contribution_date = contrib_dates["next_contribution_date"]
+        prev_contribution_date = contrib_dates["previous_contribution_date"]
 
         prev_sunday = today - timedelta(days=today.weekday() + 1)
         ActivityUserAssoc = aliased(models.activity_user_association)
@@ -1237,6 +939,7 @@ async def get_activity_data(
             "next_contribution_date": next_contribution_date.strftime("%d-%B-%Y"),
             "today_contributions": today_contributions,
             "weekly_contributions": weekly_contributions_list,
+            "admin_fee": activity.admin_fee,
         }
 
         return activity_data
@@ -1524,6 +1227,7 @@ async def set_fines_for_missed_contributions(
                 models.activity_user_association.c.activity_id,
                 models.activity_user_association.c.shares,
                 models.activity_user_association.c.share_value,
+                models.activity_user_association.c.admin_fee,
             )
             .filter(
                 and_(
@@ -1550,7 +1254,6 @@ async def set_fines_for_missed_contributions(
             chama_activity = chamaActivity(db, activity.activity_id)
             current_cycle = chama_activity.current_activity_cycle()
             if not current_cycle or current_cycle == 0:
-                print("=====skipping activity======")
                 continue
 
             # filter users by the current activity
@@ -1578,7 +1281,7 @@ async def set_fines_for_missed_contributions(
                 )
 
                 # calculate missed contribution amount for this user-activity pair
-                expected_contribution = user.share_value * user.shares
+                expected_contribution = user.share_value * user.shares + (user.admin_fee * user.shares)
                 missed_amount = expected_contribution - total_contribution
 
                 if missed_amount > 0:
@@ -1747,7 +1450,8 @@ async def get_chama_activity_members(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -1815,7 +1519,8 @@ async def get_about_activity(
     # TODO: later retrieve the shares he current user has in this activity and the amount of money he has contributed so far
     # they will have the option to change the number of shares they hold.
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -1944,7 +1649,8 @@ async def toggle_restart_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -1988,7 +1694,8 @@ async def toggle_is_deleted_activity(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -2031,7 +1738,8 @@ async def activity_rotation_order(
 
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -2043,7 +1751,6 @@ async def activity_rotation_order(
                 status_code=403, detail="You are not the manager of this activity"
             )
 
-        print("=====activity===")
         next_contribution_date = (
             db.query(models.ActivityContributionDate.next_contribution_date)
             .filter(models.ActivityContributionDate.activity_id == activity_id)
@@ -2468,7 +2175,8 @@ async def create_rotation_contribution_for_activity(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity =chama_activity.activity()
 
         if not activity:
             raise HTTPException(
@@ -2506,11 +2214,7 @@ async def create_rotation_contribution_for_activity(
             raise HTTPException(status_code=404, detail="Upcoming recipient not found")
 
         # get the cycle number for the activity
-        cycle_number = (
-            db.query(func.max(models.RotationOrder.cycle_number))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
 
         # get the users for the activity with the cycle number
         activity_users = (
@@ -2903,13 +2607,14 @@ async def get_the_last_contribution_date(
     db: Session = Depends(database.get_db),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity_is_active()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
             )
 
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        cycle_number = chama_activity.current_activity_cycle()
         # get the last contribution date for the activity
         last_contribution_date = db.query(models.LastContributionDate.last_contribution_date).filter(
             models.LastContributionDate.activity_id == activity_id,
@@ -2942,7 +2647,8 @@ async def get_the_last_contribution_date(
 # find the sum of all paid fines so far in an activity
 async def get_activity_fines_sum(activity_id: int, db: Session):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -2956,7 +2662,7 @@ async def get_activity_fines_sum(activity_id: int, db: Session):
 
         last_cycle_date = db.query(models.LastContributionDate.last_contribution_date).filter(
             models.LastContributionDate.activity_id == activity_id,
-            models.LastContributionDate.cycle_number == await get_activity_cycle_number(activity_id, db),
+            models.LastContributionDate.cycle_number == chama_activity.current_activity_cycle(),
         ).scalar()
 
         if not last_cycle_date:
@@ -2979,3 +2685,62 @@ async def get_activity_fines_sum(activity_id: int, db: Session):
     except Exception as e:
         management_error_logger.error(f"Failed to get activity fines sum: {e}")
         raise HTTPException(status_code=400, detail="Failed to get activity fines sum")
+
+
+@router.put("/admin_fees/{activity_id}", status_code=status.HTTP_200_OK)
+async def update_activity_admin_fee(
+    activity_id: int,
+    admin_fee: schemas.AdminFeeBase,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    try:
+        today = datetime.now(nairobi_tz).date()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+
+        if not activity:
+            raise HTTPException(
+                status_code=404, detail="Activity not found or does not exist"
+            )
+
+        cycle_date = None
+        if activity.restart_date:
+            cycle_date = activity.restart_date
+        else:
+            cycle_date = activity.first_contribution_date
+        
+
+        # admin fee can only be updated before the cycle date
+        if cycle_date.date() <= today:
+            raise HTTPException(
+                status_code=403, detail="Admin fee can only be updated before the cycle date"
+            )
+
+        if activity.manager_id != current_user.id:
+            raise HTTPException(
+                status_code=403, detail="You are not the manager of this activity"
+            )
+
+        # update the admin fee for the activity
+        activity.admin_fee = admin_fee.admin_fee
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Activity admin fee updated successfully",
+        }
+    except HTTPException as http_exc:
+        management_error_logger.error(
+            f"Failed to update activity admin fee(http error): {http_exc}"
+        )
+        raise http_exc
+    except Exception as exc:
+        db.rollback()
+        management_error_logger.error(
+            f"Failed to update activity admin fee(exception error): {str(exc)}"
+        )
+        raise HTTPException(
+            status_code=400, detail=f"Failed to update activity admin fee"
+        )

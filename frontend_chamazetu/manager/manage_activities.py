@@ -324,3 +324,26 @@ async def transfer_fines(request, activity_id):
 
     referer = request.META.get("HTTP_REFERER", "manager:dashboard")
     return HttpResponseRedirect(referer)
+
+@async_tokens_in_cookies()
+@async_validate_and_refresh_token()
+async def admin_fees(request, activity_id):
+    if request.method == "POST":
+        admin_fee = request.POST.get("admin_fee")
+        data = {
+            "admin_fee": admin_fee,
+        }
+        url = f"{os.getenv('API_URL')}/activities/admin_fees/{activity_id}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+        }
+
+        response = requests.put(url, json=data, headers=headers)
+        if response.status_code == HTTPStatus.OK:
+            messages.success(request, "Admin fee updated successfully")
+        else:
+            messages.error(request, f"{response.json().get('detail')}")
+    
+    referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+    return HttpResponseRedirect(referer)

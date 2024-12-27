@@ -47,6 +47,7 @@ from .manage_activities import (
     investment_marketplace,
     set_last_contribution_date,
     transfer_fines,
+    admin_fees,
 )
 
 from .manage_members import membership_management, allow_new_members
@@ -54,7 +55,7 @@ from .manage_members import membership_management, allow_new_members
 from .table_banking import (
     get_soft_loans,
     set_update_table_banking_interest_rate,
-    get_loan_settings,
+    activity_settings,
     update_loan_approval_settings,
     loan_eligibility,
     restrict_user,
@@ -66,4 +67,6 @@ from .table_banking import (
     update_user_row,
 )
 
+
+from .merry_go_round import merry_go_round_settings
 

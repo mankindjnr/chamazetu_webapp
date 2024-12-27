@@ -43,7 +43,6 @@ async def from_wallet_to_activity(
         return redirect(reverse("member:dashboard"))
 
     current_user = request.COOKIES.get("current_user")
-    print("====current_user====: ", current_user)
     user_id = get_user_id(current_user)
     amount = request.POST.get("amount", "").strip()
 

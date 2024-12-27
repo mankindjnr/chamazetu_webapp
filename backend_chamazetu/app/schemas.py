@@ -210,6 +210,11 @@ class ActivityBase(BaseModel):
     class Config:
         from_attributes = True
 
+class AdminFeeBase(BaseModel):
+    admin_fee: int
+
+    class Config:
+        from_attributes = True
 
 class CreateActivityResp(BaseModel):
     status: str
@@ -1028,6 +1033,13 @@ class TableBankingPayLoan(BaseModel):
 class TableBankingLoanHistory(BaseModel):
     from_date: str
     to_date: str
+
+    class Config:
+        from_attributes = True
+
+class TableBankingLoanEligibility(BaseModel):
+    blacklisted: bool
+    loan_limit: int
 
     class Config:
         from_attributes = True

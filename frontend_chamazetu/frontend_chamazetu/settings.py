@@ -28,7 +28,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "chamazetu.com",
     "www.chamazetu.com",
-    "192.168.100.14",
+    "192.168.100.6",
     "0.0.0.0",
     "34.45.2.223",
     "102.37.140.49",
@@ -70,13 +70,13 @@ CORS_ALLOWED_ORIGINS = [
     "https://chamazetu.com",
     "https://www.chamazetu.com",
     "https://0.0.0.0:8000",
-    "https://192.168.100.14",
+    "https://192.168.100.6",
     "https://50a0-102-213-49-73.ngrok-free.app",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:80",
-    "http://192.168.100.14",
+    "http://192.168.100.6",
     "https://127.0.0.1",
     "https://chamazetu.com",
     "https://www.chamazetu.com",

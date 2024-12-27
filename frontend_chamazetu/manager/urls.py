@@ -175,9 +175,9 @@ urlpatterns = [
         name="set_update_table_banking_interest_rate",
     ),
     path(
-        "get_loan_settings/<int:activity_id>",
-        views.get_loan_settings,
-        name="get_loan_settings",
+        "activity_settings/<int:activity_id>",
+        views.activity_settings,
+        name="activity_settings",
     ),
     path(
         "update_loan_approval_settings/<int:activity_id>",
@@ -239,17 +239,14 @@ urlpatterns = [
         views.update_user_row,
         name="update_user_row",
     ),
+    path(
+        "admin_fees/<int:activity_id>",
+        views.admin_fees,
+        name="admin_fees",
+    ),
+    path(
+        "merry_go_round_settings/<int:activity_id>",
+        views.merry_go_round_settings,
+        name="merry_go_round_settings",
+    ),
 ]
-
-
-
-# console.log(`UserId: ${user_dd}, ActivityId: ${ativity_id}, LoanLimit: ${loanLimit}, RestrictLoan: ${restrictLoan}`)
-#         fetch(`/manager/update_user_row/${activity_id}/${user_id}`, {
-#           method: 'POST',
-#           headers: {
-#             'Content-Type': 'application/json',
-#             'X-CSRFToken': '{{ csrf_token }}'
-#           },
-#           body: JSON.stringify({
-#             loan_limit: loanLimit,
-#             restrict_loan: restrictLoan

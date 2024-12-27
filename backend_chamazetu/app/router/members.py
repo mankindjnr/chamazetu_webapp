@@ -17,7 +17,8 @@ from .date_functions import (
     calculate_weekly_interval,
     calculate_monthly_same_day_interval,
 )
-from .activities import get_active_activity_by_id, get_activity_cycle_number
+from .activities import get_active_activity_by_id
+from .chama_and_activity_classes import chamaActivity
 
 from .. import schemas, database, utils, oauth2, models
 
@@ -274,14 +275,12 @@ async def chama_dashboard(
         )
 
         chama_activities_ids = [activity.activity_id for activity in chama_activities]
-        print("====chama activities====")
 
         user_wallet_balance = (
             db.query(models.User.wallet_balance)
             .filter(models.User.id == current_user.id)
             .scalar()
         )
-        print("====user wallet balance====")
 
         if not user_wallet_balance:
             user_wallet_balance = 0.0
@@ -294,7 +293,6 @@ async def chama_dashboard(
             .filter(models.ActivityFine.activity_id.in_(chama_activities_ids))
             .scalar()
         )
-        print("====chama total fines====")
 
         # have a table to track the total fines paid instead of calculating it every time
         chama_account = (
@@ -313,7 +311,6 @@ async def chama_dashboard(
             }
             for activity in chama_activities
         ]
-        print("====chama activities====")
         # TODO: recent transaction will be those done by manager outside of chama and not investment/loan transactions
 
         return {
@@ -378,7 +375,8 @@ async def get_member_shares(
     db: Session = Depends(database.get_db),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -396,7 +394,7 @@ async def get_member_shares(
         if not user_shares:
             raise HTTPException(status_code=404, detail="user shares not found")
 
-        expected_contribution = user_shares.shares * activity.activity_amount
+        expected_contribution = user_shares.shares * activity.activity_amount + (activity.admin_fee * user_shares.shares)
 
         return {"expected_contribution": expected_contribution}
 
@@ -542,10 +540,8 @@ async def contribute_to_merry_go_round(
         total_fines_repaid = 0
         total_contribution = 0
         break_outer_loop = False
-        print("=========start nested============")
         with db.begin_nested():
             if fines:
-                print("===fines===")
                 for fine in fines:
                     amount_repaid_towards_fine = 0  # amount repaid towards this fine
                     fine_transaction_code = generate_transaction_code(
@@ -649,13 +645,10 @@ async def contribute_to_merry_go_round(
 
                     # if the amount is 0, we break
                     if break_outer_loop:
-                        print("===breaking outer loop===")
                         break
 
             # if after fine repayment, the member has some amount left, we contribute towards the upcoming rotation_contribution
-            print("===amount:", amount)
             if amount > 0 and expected_amount > 0:
-                print("======excess: we are now contributing to the next rotation=====")
                 transaction_code = generate_transaction_code(
                     "manual_contribution", wallet_id
                 )
@@ -788,7 +781,6 @@ async def automatic_merry_go_round_contributions(
 
         # Process each activity individually
         for activity in activities:
-            print("==========activity==========")
             activity_id = activity.activity_id
             chama_id = activity.chama_id
             activity_fine = (
@@ -853,7 +845,6 @@ async def automatic_merry_go_round_contributions(
 
             # loop through each user within the activty and process contributions and fines
             for user in activity_users:
-                print("==========user==========")
                 user_id = user.user_id
                 wallet_id = user.wallet_id
                 wallet_balance = user.wallet_balance
@@ -959,7 +950,6 @@ async def automatic_merry_go_round_contributions(
 
                         # record the fine repayment transaction
                         if total_fines_repaid > 0:
-                            print("======recording fines======")
                             fine_transaction_code = generate_transaction_code(
                                 "auto_late_contribution", wallet_id
                             )
@@ -978,7 +968,6 @@ async def automatic_merry_go_round_contributions(
 
                     # process contributions
                     if wallet_balance > 0:
-                        print("===wallet_balance > 0====")
                         next_contributions = (
                             db.query(models.RotatingContributions)
                             .filter(
@@ -999,7 +988,6 @@ async def automatic_merry_go_round_contributions(
                         )
 
                         for rotation in next_contributions:
-                            print("====we have conts=====")
                             contributing_balance = (
                                 rotation.expected_amount - rotation.contributed_amount
                             )
@@ -1025,7 +1013,6 @@ async def automatic_merry_go_round_contributions(
                                 break
 
                         if total_contribution > 0:
-                            print("r===record trans=====")
                             # record the transaction
                             transaction_code = generate_transaction_code(
                                 "auto_contribution", wallet_id
@@ -3418,8 +3405,9 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
             raise HTTPException(status_code=404, detail="User not found")
 
         # get the first contribution date
-        activity = await get_active_activity_by_id(activity_id, db)
-        cycle_number = await get_activity_cycle_number(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+        cycle_number = chama_activity.current_activity_cycle()
 
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
@@ -3434,7 +3422,7 @@ async def contributions_total(activity_id: int, user_id: int, db: Session):
             models.LastContributionDate.activity_id == activity_id,
             models.LastContributionDate.cycle_number == cycle_number,
         ).scalar()
-        print("=====past last contribtion date=======")
+
         if not last_contribution_day:
             end_date = today
 

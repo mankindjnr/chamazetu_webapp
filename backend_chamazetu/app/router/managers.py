@@ -16,7 +16,7 @@ from .date_functions import (
     calculate_monthly_same_day_interval,
 )
 from .members import get_active_activity_by_id
-from .activities import chamaActivity
+from .chama_and_activity_classes import chamaActivity
 
 from .. import schemas, database, utils, oauth2, models
 from app.celery import initiaite_final_fines_transfer_to_manager_wallet

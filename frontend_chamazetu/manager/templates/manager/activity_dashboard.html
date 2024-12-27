@@ -94,6 +94,13 @@
           <span>Rotation Order</span> 
         </a>
       </li>
+
+      <li class="nav-item">
+        <a class="nav-link collapsed" href="{% url 'manager:rotating_order' activity_id %}">
+          <i class="ri-rotate-lock-line"></i>
+          <span>Activity Settings</span> 
+        </a>
+      </li>
       {% endif %}
 
       {% if activity.activity_type == 'table-banking' %}
@@ -113,9 +120,9 @@
       </li>
 
       <li class="nav-item">
-        <a class="nav-link collapsed" href="{% url 'manager:get_loan_settings' activity_id %}">
+        <a class="nav-link collapsed" href="{% url 'manager:activity_settings' activity_id %}">
           <i class="ri-settings-5-fill"></i>
-          <span>Loan Settings</span> 
+          <span>Activity Settings</span> 
         </a>
       </li>
 

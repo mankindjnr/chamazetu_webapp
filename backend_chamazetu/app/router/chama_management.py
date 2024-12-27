@@ -9,7 +9,7 @@ from typing import List, Union
 from sqlalchemy.exc import SQLAlchemyError
 
 from .. import schemas, database, utils, oauth2, models
-
+from .chama_and_activity_classes import chamaManager, chamaActivity
 router = APIRouter(prefix="/chamas", tags=["management"])
 
 management_info_logger = logging.getLogger("management_info")

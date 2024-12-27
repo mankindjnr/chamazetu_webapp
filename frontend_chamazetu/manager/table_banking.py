@@ -96,7 +96,7 @@ async def update_loan_approval_settings(request, activity_id):
 
 @async_tokens_in_cookies()
 @async_validate_and_refresh_token()
-async def get_loan_settings(request, activity_id):
+async def activity_settings(request, activity_id):
     url = f"{os.getenv('api_url')}/table_banking/loan_settings/{activity_id}"
     headers = {
         "Content-Type": "application/json",
@@ -105,8 +105,13 @@ async def get_loan_settings(request, activity_id):
     response = requests.get(url, headers=headers)
 
     if response.status_code == HTTPStatus.OK:
-        settings = response.json()["loan_settings"]
-        return render(request, "manager/loan_settings.html", {"activity_id": activity_id, "settings": settings})
+        activity = response.json()
+        return render(request, "manager/table_banking_settings.html", {
+            "activity_id": activity_id,
+            "settings": activity["loan_settings"],
+            "category": activity["activity_category"],
+            "admin_fee": activity["admin_fee"]
+            })
     else:
         messages.error(request, f"{response.json().get('detail')}")
 
@@ -277,13 +282,15 @@ async def disburse_dividends(request, activity_id):
 @csrf_exempt
 @require_POST
 def update_user_row(request, activity_id, user_id):
-    print("==========update_user_row()==========")
     if request.method == "POST":
         try:
             # parse json payload
             data = json.loads(request.body)
             loan_limit = str(data.get("loan_limit"))
             restrict_loan = str(data.get("restrict_loan"))
+
+            if int(loan_limit) < 500 and int(loan_limit) != 0:
+                return JsonResponse({"status": "error", "message": "Loan limit cannot be less than Ksh 500"}, status=HTTPStatus.BAD_REQUEST)
 
             # check if both values are digits
             if not loan_limit.isdigit() or not restrict_loan.isdigit():
@@ -292,21 +299,22 @@ def update_user_row(request, activity_id, user_id):
             # validate inputs
             if loan_limit is None or restrict_loan is None:
                 return JsonResponse({"status": "error", "message": "Invalid data provided"}, status=HTTPStatus.BAD_REQUEST)
-            print("==========past 1()==========")
 
             if not isinstance(int(loan_limit), (int)) or not isinstance(int(restrict_loan), (int)):
                 return JsonResponse({"status": "error", "message": "Invalid data provided"}, status=HTTPStatus.BAD_REQUEST)
-            print("==========past 2()==========")
 
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
-            }
+            # get fresh access token here to send to the API and confirm the user is still logged in and manager
+            # headers = {
+            #     "Content-Type": "application/json",
+            #     "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+            # }
 
-            url = f"{os.getenv('api_url')}/table_banking/update_user_row/{activity_id}/{user_id}"
-            data = {"loan_limit": int(loan_limit), "restrict_loan": int(restrict_loan)}
+            url = f"{os.getenv('api_url')}/table_banking/user_loan_eligibility/{activity_id}/{user_id}"
+            data = {"loan_limit": int(loan_limit), "blacklisted": True if int(restrict_loan) == 1 else False}
+            print("==========past 3()==========")
+            print(data)
 
-            response = requests.put(url, json=data, headers=headers)
+            response = requests.put(url, json=data)
 
             if response.status_code == HTTPStatus.OK:
                 return JsonResponse({"status": "success", "message": "User row updated successfully"}, status=HTTPStatus.OK)

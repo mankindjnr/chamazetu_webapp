@@ -60,6 +60,7 @@ activity_user_association = Table(
     ),
     Column("shares", Integer, nullable=False, default=1, index=True),
     Column("share_value", Integer, nullable=False, default=0, index=True),
+    Column("admin_fee", Integer, nullable=False, default=0, index=True),
     Column("date_joined", DateTime, default=nairobi_now),
     Column("user_is_active", Boolean, default=True),
     Column("activity_is_active", Boolean, default=True),
@@ -293,6 +294,7 @@ class Activity(Base):
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
     mandatory = Column(Boolean, default=False)
+    admin_fee = Column(Integer, nullable=False, default=0)
 
     # relationships
     chama = relationship("Chama", back_populates="activities")

@@ -181,6 +181,7 @@ async def access_activity(request, chama_name, chama_id, activity_type, activity
                 activity_data["activity_frequency"],
                 activity_data["previous_contribution_date"],
                 activity_data["next_contribution_date"],
+                activity_data["admin_fee"],
             )
         )
     else:
@@ -189,6 +190,7 @@ async def access_activity(request, chama_name, chama_id, activity_type, activity
             activity_data["activity_amount"],
             activity_data["activity_id"],
             activity_data["activity_frequency"],
+            activity_data["admin_fee"],
         )
     if activity_data:
         return render(
@@ -276,7 +278,7 @@ async def generic_activity(
 
 # weekly_contributions = [{'user_id': 1, 'amount': 10, 'date': '2024-09-03T17:03:42', 'first_name': 'nurtu', 'last_name': 'posta', 'shares': 1}]
 async def organise_weekly_contributions(
-    weekly_contributions_raw, activity_amount, activity_id, frequency
+    weekly_contributions_raw, activity_amount, activity_id, frequency, admin_fee
 ):
     weekly_data = defaultdict(
         lambda: {
@@ -319,7 +321,7 @@ async def organise_weekly_contributions(
     for contribution in weekly_contributions_refined:
         user_id = contribution["user_id"]
         shares = contribution["shares"]
-        expected = activity_amount * shares
+        expected = activity_amount * shares + (admin_fee * shares)
         contributed = get_member_contribution_so_far(user_id, activity_id)
         contribution["expected"] = expected
         contribution["contributed"] = contributed
@@ -341,6 +343,7 @@ async def organise_weekly_group_contributions(
     frequency,
     previous_date,
     next_date,
+    admin_fee,
 ):
 
     # get the days of the week represented by the dates from > previous_date to <= next_date
@@ -405,7 +408,7 @@ async def organise_weekly_group_contributions(
     for contribution in final_result:
         user_id = contribution["user_id"]
         shares = contribution["shares"]
-        expected = activity_amount * shares
+        expected = activity_amount * shares + (admin_fee * shares)
         contributed = get_member_contribution_so_far(user_id, activity_id)
         contribution["expected"] = expected
         contribution["contributed"] = contributed

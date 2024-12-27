@@ -211,19 +211,72 @@
 
               </div>
             </div>
-
-
             <!-- end final contribution day card -->
 
-            <!-- TODO: managers to set if loans can be requested before the contribution day or only on the contribution day -->
+            <!--TODO: managers to set if loans can be requested before the contribution day or only on the contribution day -->
              <!-- for now, if a loan is taken before a contribution day, it has to await approval -->
+
+            {% if category == 'public' %}
+            <!-- admin fees card -->
+            <!-- activities in public chamas get to set admin fees - admin fees cannot be set after the first contribution day but can after the last cont day -->
+            <div class="col-xxl-4 col-md-4" >
+              <div class="card info-card revenue-card clickable-card" id="adminFeesCard">
+
+                <div class="card-body">
+                  <h5 class="card-title">Admin Fee <span>| public managers </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-admin-fill"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-success pt-2 fw-bold">                     
+                      </span> <span class="text-muted small pt-2 ps-1">
+                        Will members be charged an admin fee for been part of this activity?
+                      </span>
+    
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- end of admin fees -->
+
+            <!-- co managers -->
+             <!-- public chamas can have co managers who will be assigned by the manager/admin -->
+             <div class="col-xxl-4 col-md-4" >
+              <div class="card info-card revenue-card clickable-card" id="coManagersCard">
+
+                <div class="card-body">
+                  <h5 class="card-title">Co-Managers <span>| public </span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-admin-line"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-success pt-2 fw-bold">                     
+                      </span> <span class="text-muted small pt-2 ps-1">
+                        Co-managers cannot delete, edit, create new activities or withdraw funds.
+                      </span>
+    
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+             <!-- end of co managers -->
+            {% endif %}
 
             <!-- grace period card -->
             <div class="col-xxl-4 col-md-4" >
               <div class="card info-card revenue-card clickable-card" id="gracePeriodCard">
 
                 <div class="card-body">
-                  <h5 class="card-title">Grace Period<span>| <button class="btn btn-danger btn-sm">coming soon </button> </span></h5>
+                  <h5 class="card-title">Grace Period <span>| <button class="btn btn-danger btn-sm">coming soon </button> </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -371,6 +424,52 @@
 
              <!-- end final contribution day form -->
 
+              <!-- admin fees form -->
+              <div class="card shadow-lg border-0" id="adminFeesForm" style="display: none; background-color: #f9fafc;">
+                <div class="card-body p-4">
+                  <div class="card-title text-success">
+                    <h5 class="teko-text">Set Admin Fees</h5>
+                    <hr>
+                  </div>
+                  <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                    <p class="arima-text text-secondary">
+                      Set the admin fees for this activity. Admin fees can only be set before the first contribution day but can be adjusted after the last contribution day.
+                      Admin fees will be added to the total amount contributed by members and will be deducted before any funds are disbursed.              
+                    </p>
+                  </div>
+              
+                  <form class="p-3" action="{% url 'manager:admin_fees' activity_id %}" method="POST">
+                    {% csrf_token %}
+
+                    {% if admin_fee > 0 %}
+                    <div class="mb-3">
+                      <label for="currentAdminFee" class="form-label fw-bold arima-text text-secondary">Current Admin Fee</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary fw-bold">Ksh:</span>
+                        <input type="number" class="form-control border-0 shadow-sm" id="current_admin_fee" name="current_admin_fee" readonly value="{{ admin_fee }}">
+                        <small class="amount-error-message text-danger"></small>
+                      </div>
+                    </div>
+                    {% endif %}
+  
+                    <div class="mb-3">
+                      <label for="adminFee" class="form-label fw-bold arima-text text-secondary">New Admin Fee</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light text-secondary fw-bold">Ksh:</span>
+                        <input type="number" class="form-control border-0 shadow-sm" id="admin_fee" name="admin_fee" required>
+                        <small class="amount-error-message text-danger"></small>
+                      </div>
+                    </div>
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-end">
+                      <button type="button" class="btn btn-sm btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Set Admin Fees</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              <!-- end admin fees form -->
+
           </div>
         </div><!-- End Left side columns -->
         
@@ -416,6 +515,10 @@
     const finalDayCard = document.getElementById('finalDayCard');
     const finalDayForm = document.getElementById('finalDayForm');
 
+    // admin fees card and form
+    const adminFeesCard = document.getElementById('adminFeesCard');
+    const adminFeesForm = document.getElementById('adminFeesForm');
+
     // show the form when the card is clicked and hide all other cards
     interestRateCard.addEventListener('click', function() {
       interestRateForm.style.display = 'block';
@@ -440,6 +543,16 @@
       finalDayForm.style.display = 'block';
       cards.forEach(c => {
         if (c !== finalDayForm) {
+          c.style.display = 'none';
+        }
+      });
+    });
+
+    // admin fees card and form
+    adminFeesCard.addEventListener('click', function() {
+      adminFeesForm.style.display = 'block';
+      cards.forEach(c => {
+        if (c !== adminFeesForm) {
           c.style.display = 'none';
         }
       });
