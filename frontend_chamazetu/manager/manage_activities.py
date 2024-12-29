@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.views.decorators.csrf import csrf_exempt
 
 from chama.decorate.tokens_in_cookies import tokens_in_cookies, async_tokens_in_cookies
 from chama.decorate.validate_refresh_token import (
@@ -110,7 +111,6 @@ async def create_random_rotation_order(request, activity_id):
                 {"success": False, "message": "Failed to create rotation order"}
             )
     except requests.exceptions.RequestException as e:
-        print(e)
         return JsonResponse(
             {"success": False, "message": "Failed to create rotation order"}
         )
@@ -347,3 +347,69 @@ async def admin_fees(request, activity_id):
     
     referer = request.META.get("HTTP_REFERER", "manager:dashboard")
     return HttpResponseRedirect(referer)
+
+@csrf_exempt
+def remove_member_from_activity(request, activity_id, member_id):
+    print("========remove_member_from_activity========")
+    if request.method == "PUT":
+        try:
+            # Construct the API request
+            api_url = f"{os.getenv('API_URL')}/manage_activities/remove_member_from_activity/{activity_id}/{member_id}"
+            headers = {
+                "Authorization": f"Bearer {request.COOKIES.get('access_token')}",
+                "Content-Type": "application/json",
+            }
+            response = requests.put(api_url, headers=headers)
+
+            if response.status_code == HTTPStatus.OK:
+                return JsonResponse({"success": True, "message": "Member removed successfully."}, status=200)
+            else:
+                return JsonResponse(
+                    {"success": False, "message": "Failed to remove member."},
+                    status=response.status_code
+                )
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": f"An error occurred: {str(e)}"},
+                status=500
+            )
+    return JsonResponse({"success": False, "message": "Invalid request method."}, status=405)
+
+@csrf_exempt
+@require_POST
+def search_for_members_by_names(request, activity_id):
+    print("========search_for_members_by_names========")
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            first_name = data.get("first_name")
+            last_name = data.get("last_name")
+
+            if not first_name or not last_name:
+                return JsonResponse(
+                    {"success": False, "message": "Please provide both names"}
+                )
+
+            url = f"{os.getenv('API_URL')}/manage_activities/search_members_in_activity/{activity_id}/{first_name}/{last_name}"
+
+            response = requests.get(url)
+
+            if response.status_code == HTTPStatus.OK:
+                members = response.json()
+                print("========members========")
+                print(members)
+                return JsonResponse({"success": True, "members": members})
+            else:
+                return JsonResponse(
+                    {"success": False, "message": "Failed to fetch members"}
+                )
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "message": "Failed to fetch members"}
+            )
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": "Failed to fetch members"}
+            )
+    else:
+        return JsonResponse({"success": False, "message": "Invalid request method"})

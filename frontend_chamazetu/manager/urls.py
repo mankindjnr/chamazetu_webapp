@@ -249,4 +249,14 @@ urlpatterns = [
         views.merry_go_round_settings,
         name="merry_go_round_settings",
     ),
+    path(
+        "remove_member_from_activity/<int:activity_id>/<int:member_id>",
+        views.remove_member_from_activity,
+        name="remove_member_from_activity",
+    ),
+    path(
+        "search_for_members_by_names/<int:activity_id>",
+        views.search_for_members_by_names,
+        name="search_for_members_by_names",
+    ),
 ]

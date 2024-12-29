@@ -48,6 +48,8 @@ from .manage_activities import (
     set_last_contribution_date,
     transfer_fines,
     admin_fees,
+    remove_member_from_activity,
+    search_for_members_by_names,
 )
 
 from .manage_members import membership_management, allow_new_members

@@ -1,8 +1,0 @@
-2024-12-27 16:38:36,959 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
-    version = _bcrypt.__about__.__version__
-AttributeError: module 'bcrypt' has no attribute '__about__'
-2024-12-27 16:38:56,707 - management_info - INFO - Activity contribution days updated successfully
-2024-12-27 16:39:34,021 - root - INFO - token_data: username='timlojutra@gufum.com'
-2024-12-27 16:41:05,624 - root - INFO - token_data: username='timlojutra@gufum.com'

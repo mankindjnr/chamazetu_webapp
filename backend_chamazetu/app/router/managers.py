@@ -420,8 +420,8 @@ async def create_random_rotation_order(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
-        print(" ======past the activity detection=============")
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -434,11 +434,7 @@ async def create_random_rotation_order(
                 status_code=403, detail="You are not allowed to create rotation order"
             )
 
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
         if cycle_number == 0:
             cycle_number = 1
         else:
@@ -450,11 +446,7 @@ async def create_random_rotation_order(
         contribution_day = activity.contribution_day
         first_contribution_date = activity.first_contribution_date
 
-        next_contribution_date = (
-            db.query(models.ActivityContributionDate.next_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
+        next_contribution_date = chama_activity.activity_dates()["next_contribution_date"]
 
         # get all users in the chama from the activity_user_association table, we will need the user_id, user_name, share_value, number of shares
         # user name is from the user table as firstname and lastname
@@ -475,6 +467,7 @@ async def create_random_rotation_order(
                 and_(
                     models.activity_user_association.c.activity_id == activity_id,
                     models.activity_user_association.c.activity_is_active == True,
+                    models.activity_user_association.c.user_is_active == True,
                 )
             )
             .all()

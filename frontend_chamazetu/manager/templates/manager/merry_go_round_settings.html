@@ -177,7 +177,7 @@
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Swap Order Numbers <span>| <button class="btn btn-danger btn-sm" type="button">coming soon</button> </span></h5>
+                  <h5 class="card-title">Swap Order <span>| <button class="btn btn-danger btn-sm" type="button">coming soon</button> </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -201,7 +201,7 @@
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Reduce Number of Shares <span>|<button class="btn btn-danger btn-sm" type="button">coming soon</button> </span></h5>
+                  <h5 class="card-title">Reduce Shares <span>|<button class="btn btn-danger btn-sm" type="button">coming soon</button> </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -220,6 +220,28 @@
               </div>
 
             </div><!-- End of decrease number shares card -->
+
+            <!-- remove an activity member -->
+            <div class="col-xxl-4 col-md-4">
+              <div class="card info-card sales-card clickable-card" id="removeMemberCard" >
+
+                <div class="card-body">
+                  <h5 class="card-title">Remove Member <span>| admin</span></h5>
+
+                  <div class="d-flex align-items-center">
+                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                      <i class="ri-pass-expired-fill"></i>
+                    </div>
+                    <div class="ps-3">
+                      <span class="text-muted small pt-2 ps-1">Remove a member from the activity.</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+             <!-- end of removing an activity member -->
 
             <!-- if its public: get a way to determine -->
              <!-- admin fee -->
@@ -452,6 +474,147 @@
               </div>
             </div> <!-- End increase shares form -->
 
+            <!-- remove member as admin form -->
+            <div class="card overflow-auto shadow-lg border-0" id="removeMemberForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Remove a Member from the Activity</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                  <p class="arima-text text-secondary">
+                    As admin, you can remove a member from the activity. This action is irreversible. The member will be removed from the activity in accrodance to the EXIT rules set.
+                    Search the member by their first name and last name, if there is more than one result, carefully click the correct member to remove.
+                  </p>
+                </div>
+            
+                <form id="searchMemberForm" class="p-3">
+                  {% csrf_token %}
+                  <!-- First  name and last name-->
+                  <div class="mb-3">
+                    <label class="form-label fw-bold text-secondary arima-text">Member Names *</label>
+                    <div class="d-flex align-items-center">
+                      <div class="me-3">
+                        <input type="text" class="form-control border-0 shadow-sm" id="first_name" name="first_name" required placeholder="first name">
+                      </div>
+                      <div>
+                        <input type="text" class="form-control border-0 shadow-sm" id="last_name" name="last_name" required placeholder="last name">
+                      </div>
+                    </div>
+                  </div>
+            
+                  <!-- Buttons -->
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-success btn-sm">Search Member</button>
+                  </div>
+                </form>
+
+                <!-- Results table -->
+                <div id="searchResults" class="mt-4 card-body" style="display: none;">
+                  <p class="arima-text" style="color: #dc3545;"><strong>Results</strong></p>
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        <th scope="col">Profile Picture</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                      <!-- Dynamic rows will be inserted here -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <script>
+                  document.addEventListener("DOMContentLoaded", function () {
+                    const activity_id = "{{ activity_id }}";
+                    console.log(activity_id);
+                    const searchForm = document.getElementById("searchMemberForm");
+                    const resultsDiv = document.getElementById("searchResults");
+                    const resultsTableBody = document.getElementById("resultsTableBody");
+
+                    document.getElementById("searchMemberForm").addEventListener("submit", async function (event) {
+                      event.preventDefault();
+
+                      const firstName = document.getElementById("first_name").value;
+                      const lastName = document.getElementById("last_name").value;
+                      console.log("--------------------------------")
+                      console.log(firstName, lastName); 
+
+                      resultsTableBody.innerHTML = ""; // Clear previous results
+
+                      try {
+                        const response = await fetch(`/manager/search_for_members_by_names/${activity_id}`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                          },
+                          body: JSON.stringify({ first_name: firstName, last_name: lastName }),
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                          resultsDiv.style.display = "block";
+                          data.members.forEach(member => {
+                            const row = `
+                              <tr>
+                                <td><img src="${member.profile_picture}" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;"></td>
+                                <td>${member.first_name} ${member.last_name}</td>
+                                <td>${member.email}</td>
+                                <td>
+                                  <button class="btn btn-sm btn-danger remove-member" data-member-id="${member.id}">Remove</button>
+                                </td>
+                              </tr>
+                            `;
+                            resultsTableBody.insertAdjacentHTML("beforeend", row);
+                          });
+                        } else {
+                          alert(data.message);
+                        }
+                      } catch (error) {
+                        console.error("Error searching members:", error);
+                      }
+                    });
+
+                    // Event delegation for removing members
+                    document.getElementById("searchResults").addEventListener("click", async function (event) {
+                      if (event.target.classList.contains("remove-member")) {
+                        const memberId = event.target.dataset.memberId;
+                        console.log("memberId", memberId);
+
+                        try {
+                          const response = await fetch(`/manager/remove_member_from_activity/${activity_id}/${memberId}`, {
+                            method: "PUT",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                            },
+                          });
+
+                          const data = await response.json();
+                          if (data.success) {
+                            event.target.closest("tr").remove(); // Remove row from the table
+                            alert("Member removed successfully.");
+                          } else {
+                            alert(data.message);
+                          }
+                        } catch (error) {
+                          console.error("Error removing member:", error);
+                          alert("An unexpected error occurred. Please try again.");
+                        }
+                      }
+                    });
+                  });
+
+                </script>
+              </div>
+            </div>
+            <!-- end remove member as admin form -->
+
           </div>
         </div><!-- End Left side columns -->
         
@@ -479,6 +642,9 @@
 
     const reduceSharesCard = document.getElementById('reduceSharesCard');
     const reduceSharesForm = document.getElementById('reduceSharesForm');
+
+    const removeMemberCard = document.getElementById('removeMemberCard');
+    const removeMemberForm = document.getElementById('removeMemberForm');
 
     // show the form when the card is clicked and hide all other cards
     increaseSharesCard.addEventListener('click', function() {
@@ -518,6 +684,15 @@
         }
       });
     });
+
+    removeMemberCard.addEventListener('click', function() {
+      removeMemberForm.style.display = 'block';
+      cards.forEach(c => {
+        if (c !== removeMemberForm) {
+          c.style.display = 'none';
+        }
+      });
+    });
    
     
     // Close button functionality
@@ -532,11 +707,21 @@
       });
     });
 
+
+
+    // SEARCH AND RESULTS FUNCTIONALITY
+    
     
   });
 </script>
 
 <style>
+
+.rounded-circle {
+  border-radius: 50%;
+  border: 2px solid #28a745; /* Optional: Add a border */
+}
+
   /* Beautiful styling for the paragraph */
   .beautiful-paragraph {
     font-family: 'Arial', sans-serif;
