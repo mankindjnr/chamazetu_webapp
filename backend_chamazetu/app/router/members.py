@@ -2642,7 +2642,8 @@ async def share_increase_data(
 
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -2667,12 +2668,12 @@ async def share_increase_data(
         share_value = activity.activity_amount
 
         # get the share increase activation record from MerryGoRoundShareIncrease
-        activation_record = (db.query(models.MerryGoRoundShareIncrease)
+        activation_record = (db.query(models.MerryGoRoundShareAdjustment)
         .filter(
             and_(
-                models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                models.MerryGoRoundShareIncrease.allow_share_increase == True,
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+                models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                models.MerryGoRoundShareAdjustment.allow_share_increase == True,
+                func.date(models.MerryGoRoundShareAdjustment.deadline) >= today,
             )
         )
         .first()
@@ -2685,18 +2686,10 @@ async def share_increase_data(
 
 
         # get cycle number
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
 
         # upcoming rotation date/next contribution date
-        upcoming_rotation_date = (
-            db.query(models.ActivityContributionDate.next_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
+        upcoming_rotation_date = chama_activity.activity_dates()["next_contribution_date"]
 
         # count the number of past rotations till now in our current cycle number
         past_rotations = (
@@ -2710,8 +2703,6 @@ async def share_increase_data(
             )
             .count()
         )
-
-        print("===past rotations===", past_rotations)
 
         return {
             "current_shares": user_share,
@@ -2748,7 +2739,8 @@ async def increase_merry_go_round_shares(
     try:
         today = datetime.now(nairobi_tz).date()
         transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -2770,12 +2762,12 @@ async def increase_merry_go_round_shares(
             )
 
         # share increase activation data
-        activation_record = (db.query(models.MerryGoRoundShareIncrease)
+        activation_record = (db.query(models.MerryGoRoundShareAdjustment)
         .filter(
             and_(
-                models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                models.MerryGoRoundShareIncrease.allow_share_increase == True,
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+                models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                models.MerryGoRoundShareAdjustment.allow_share_increase == True,
+                func.date(models.MerryGoRoundShareAdjustment.deadline) >= today,
             )
         )
         .first()
@@ -2792,22 +2784,14 @@ async def increase_merry_go_round_shares(
             )
 
         # calculate adjustment cost and validate wallet balance
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
 
         if cycle_number != activation_record.cycle_number:
             raise HTTPException(
                 status_code=400, detail="Invalid cycle number, try again later"
             )
 
-        next_contribution_date = (
-            db.query(models.ActivityContributionDate.next_contribution_date)
-            .filter(models.ActivityContributionDate.activity_id == activity_id)
-            .scalar()
-        )
+        next_contribution_date = chama_activity.activity_dates()["next_contribution_date"]
 
         # retrieve all rotations in the current cycle upto the next contribution date
         rotations_to_clear = (

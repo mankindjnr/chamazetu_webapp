@@ -1571,7 +1571,9 @@ async def allow_members_to_increase_shares(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -1588,12 +1590,12 @@ async def allow_members_to_increase_shares(
         # check if there is an already active record in the MerryGoRoundShareIncrease table, by checking if the deadline is in the future and
         # the allow_share_increase is true
         active_share_increase = (
-            db.query(models.MerryGoRoundShareIncrease)
+            db.query(models.MerryGoRoundShareAdjustment)
             .filter(
                 and_(
-                    models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                    models.MerryGoRoundShareIncrease.deadline > datetime.now(nairobi_tz),
-                    models.MerryGoRoundShareIncrease.allow_share_increase == True,
+                    models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                    models.MerryGoRoundShareAdjustment.deadline > datetime.now(nairobi_tz),
+                    models.MerryGoRoundShareAdjustment.allow_share_increase == True,
                 )
             )
             .first()
@@ -1605,11 +1607,7 @@ async def allow_members_to_increase_shares(
             )
 
         # get the current cycle number for the activity
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
         if not cycle_number or cycle_number == 0:
             raise HTTPException(
                 status_code=400, detail="No rotation order has been created yet"
@@ -1617,10 +1615,11 @@ async def allow_members_to_increase_shares(
 
         print(" =======setting share increase======")
         # insert the share increase data into the database
-        share_increase_activation = models.MerryGoRoundShareIncrease(
+        share_increase_activation = models.MerryGoRoundShareAdjustment(
             activity_id=activity_id,
             max_shares = adjustment_data.max_no_shares,
             allow_share_increase = True,
+            allow_share_reduction = False,
             allow_new_members = False,
             cycle_number=cycle_number,
             activity_amount=activity.activity_amount,
@@ -1628,7 +1627,6 @@ async def allow_members_to_increase_shares(
             deadline=datetime.strptime(adjustment_data.deadline_date, "%Y-%m-%d"),
         )
 
-        # return {"message": "Share increase activated successfully"}
         db.add(share_increase_activation)
         db.commit()
 

@@ -70,5 +70,5 @@ from .table_banking import (
 )
 
 
-from .merry_go_round import merry_go_round_settings
+from .merry_go_round import merry_go_round_settings, search_for_members_by_order_number, swap_members_order_in_rotation
 

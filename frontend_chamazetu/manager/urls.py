@@ -259,4 +259,14 @@ urlpatterns = [
         views.search_for_members_by_names,
         name="search_for_members_by_names",
     ),
+    path(
+        "search_for_members_by_order_number/<int:activity_id>",
+        views.search_for_members_by_order_number,
+        name="search_for_members_by_order_number",
+    ),
+    path(
+        "swap_members_order_in_rotation/<int:activity_id>/<int:pushed_order_number>/<int:pulled_order_number>",
+        views.swap_members_order_in_rotation,
+        name="swap_members_order_in_rotation",
+    ),
 ]

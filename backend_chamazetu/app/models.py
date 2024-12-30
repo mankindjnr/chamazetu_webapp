@@ -319,8 +319,8 @@ class Activity(Base):
     late_rotation_disbursements = relationship(
         "LateRotationDisbursements", back_populates="activity"
     )
-    merry_go_round_share_increase = relationship(
-        "MerryGoRoundShareIncrease", back_populates="activity"
+    merry_go_round_share_adjustment = relationship(
+        "MerryGoRoundShareAdjustment", back_populates="activity"
     )
     table_banking_dividends = relationship(
         "TableBankingDividend", back_populates="activity"
@@ -803,21 +803,22 @@ class LateRotationDisbursements(Base):
     )
 
 
-class MerryGoRoundShareIncrease(Base):
-    __tablename__ = "merry_go_round_share_increase"
+class MerryGoRoundShareAdjustment(Base):
+    __tablename__ = "merry_go_round_share_adjustment"
 
     id = Column(Integer, primary_key=True, index=True)
     activity_id = Column(Integer, ForeignKey("activities.id"), index=True)
     cycle_number = Column(Integer, nullable=False)
     max_shares = Column(Integer, nullable=False)
     allow_share_increase = Column(Boolean, default=False)
+    allow_share_reduction = Column(Boolean, default=False)
     allow_new_members = Column(Boolean, default=False)
     activity_amount = Column(Integer, nullable=False)
     adjustment_fee = Column(Integer, nullable=False)
     deadline = Column(DateTime, nullable=False)
 
     # relationships
-    activity = relationship("Activity", back_populates="merry_go_round_share_increase")
+    activity = relationship("Activity", back_populates="merry_go_round_share_adjustment")
 
 class ChamaLateJoining(Base):
     __tablename__ = "chama_late_joining"

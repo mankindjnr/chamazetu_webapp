@@ -350,7 +350,6 @@ async def admin_fees(request, activity_id):
 
 @csrf_exempt
 def remove_member_from_activity(request, activity_id, member_id):
-    print("========remove_member_from_activity========")
     if request.method == "PUT":
         try:
             # Construct the API request
@@ -378,7 +377,6 @@ def remove_member_from_activity(request, activity_id, member_id):
 @csrf_exempt
 @require_POST
 def search_for_members_by_names(request, activity_id):
-    print("========search_for_members_by_names========")
     if request.method == "POST":
         try:
             data = json.loads(request.body)
@@ -396,8 +394,6 @@ def search_for_members_by_names(request, activity_id):
 
             if response.status_code == HTTPStatus.OK:
                 members = response.json()
-                print("========members========")
-                print(members)
                 return JsonResponse({"success": True, "members": members})
             else:
                 return JsonResponse(

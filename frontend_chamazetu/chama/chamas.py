@@ -11,6 +11,14 @@ from .thread_urls import fetch_data
 
 load_dotenv()
 
+async def activity_chama_category(activity_id):
+    resp = requests.get(
+        f"{os.getenv('api_url')}/chamas/activity_chama_category/{activity_id}"
+    )
+    if resp.status_code == HTTPStatus.OK:
+        return resp.json()
+    return None
+
 
 # we can later have  asection for chamas that are currently not acceting members so
 # members can request to join/ be invited to join/ waitlist

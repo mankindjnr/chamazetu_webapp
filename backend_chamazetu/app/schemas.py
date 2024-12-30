@@ -216,6 +216,13 @@ class AdminFeeBase(BaseModel):
     class Config:
         from_attributes = True
 
+class SwapRotationOrder(BaseModel):
+    pushed_order_number: int
+    pulled_order_number: int
+
+    class Config:
+        from_attributes = True
+
 class CreateActivityResp(BaseModel):
     status: str
     message: str

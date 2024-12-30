@@ -132,7 +132,7 @@
               <div class="card info-card sales-card clickable-card" id="increaseSharesCard" >
 
                 <div class="card-body">
-                  <h5 class="card-title">Increase Number Shares <span>| Existing members</span></h5>
+                  <h5 class="card-title">Increase Shares<span>| members</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -153,7 +153,7 @@
               <div class="card info-card revenue-card clickable-card" id="allowNewMembersCard">
 
                 <div class="card-body">
-                  <h5 class="card-title">Allow New Members<span>| Members Joining Late</span></h5>
+                  <h5 class="card-title">New Members<span>| past deadline</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -162,7 +162,7 @@
                     <div class="ps-3">
                       <span class="text-success pt-2 fw-bold">                     
                       </span> <span class="text-muted small pt-2 ps-1">
-                        Allow new members to join the activity even after it has started.
+                        Allow new members to join the activity past the deadline.
                       </span>
     
                     </div>
@@ -177,7 +177,7 @@
               <div class="card info-card revenue-card">
 
                 <div class="card-body">
-                  <h5 class="card-title">Swap Order <span>| <button class="btn btn-danger btn-sm" type="button">coming soon</button> </span></h5>
+                  <h5 class="card-title">Swap Order<span>| members </span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
@@ -186,7 +186,7 @@
                     <div class="ps-3">
                       <span class="text-success pt-2 fw-bold">
                       </span> <span class="text-muted small pt-2 ps-1">
-                        Allow members to swap their order numbers.
+                        Swap the order of members in the activity.
                       </span>
 
                     </div>
@@ -243,20 +243,20 @@
             </div>
              <!-- end of removing an activity member -->
 
-            <!-- if its public: get a way to determine -->
+            {% if category == 'public' %}
              <!-- admin fee -->
              <div class="col-xxl-4 col-md-4">
-              <div class="card info-card sales-card clickable-card" id="increaseSharesCard" >
+              <div class="card info-card sales-card clickable-card" id="adminFeesCard" >
 
                 <div class="card-body">
                   <h5 class="card-title">Admin Fee <span>| public</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="ri-arrow-up-double-fill"></i>
+                      <i class="ri-admin-fill"></i>
                     </div>
                     <div class="ps-3">
-                      <span class="text-muted small pt-2 ps-1">Allow members to increase their shares.</span>
+                      <span class="text-muted small pt-2 ps-1">Will this activity have an admin fee?</span>
                     </div>
                   </div>
                 </div>
@@ -269,17 +269,17 @@
 
              <!-- co managers -->
              <div class="col-xxl-4 col-md-4">
-              <div class="card info-card sales-card clickable-card" id="increaseSharesCard" >
+              <div class="card info-card sales-card clickable-card" id="coManagersCard" >
 
                 <div class="card-body">
                   <h5 class="card-title">Co-Managers <span>| public chamas</span></h5>
 
                   <div class="d-flex align-items-center">
                     <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                      <i class="ri-arrow-up-double-fill"></i>
+                      <i class="ri-admin-line"></i>
                     </div>
                     <div class="ps-3">
-                      <span class="text-muted small pt-2 ps-1">Allow members to increase their shares.</span>
+                      <span class="text-muted small pt-2 ps-1">Allow others to manage the activity.</span>
                     </div>
                   </div>
                 </div>
@@ -289,20 +289,21 @@
             </div>
 
               <!-- end of co managers -->
+            {% endif %}
 
               <!-- exit rules -->
               <div class="col-xxl-4 col-md-4">
-                <div class="card info-card sales-card clickable-card" id="increaseSharesCard" >
+                <div class="card info-card sales-card clickable-card" id="exitRulesCard" >
   
                   <div class="card-body">
                     <h5 class="card-title">Exit Rules <span>| before end of cycle</span></h5>
   
                     <div class="d-flex align-items-center">
                       <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <i class="ri-arrow-up-double-fill"></i>
+                        <i class="ri-stop-fill"></i>
                       </div>
                       <div class="ps-3">
-                        <span class="text-muted small pt-2 ps-1">Allow members to increase their shares.</span>
+                        <span class="text-muted small pt-2 ps-1">Set rules for members who exit the activity before the end of the cycle.</span>
                       </div>
                     </div>
                   </div>
@@ -474,6 +475,41 @@
               </div>
             </div> <!-- End increase shares form -->
 
+            <!-- admin fees form -->
+            <div class="card shadow-lg border-0" id="adminFeesForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Set Admin Fees</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                  <p class="arima-text text-secondary">
+                    Set the admin fees for this activity. Admin fees can only be set before the first contribution day but can be adjusted after the last contribution day.
+                    Admin fees will be added to the total amount contributed by members and will be deducted before any funds are disbursed.              
+                  </p>
+                </div>
+            
+                <form class="p-3" action="{% url 'manager:admin_fees' activity_id %}" method="POST">
+                  {% csrf_token %}
+
+                  <div class="mb-3">
+                    <label for="adminFee" class="form-label fw-bold arima-text text-secondary">New Admin Fee</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light text-secondary fw-bold">Ksh:</span>
+                      <input type="number" class="form-control border-0 shadow-sm" id="admin_fee" name="admin_fee" required>
+                      <small class="amount-error-message text-danger"></small>
+                    </div>
+                  </div>
+                  <!-- Buttons -->
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Set Admin Fees</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <!-- end admin fees form -->
+
             <!-- remove member as admin form -->
             <div class="card overflow-auto shadow-lg border-0" id="removeMemberForm" style="display: none; background-color: #f9fafc;">
               <div class="card-body p-4">
@@ -531,7 +567,7 @@
                 <script>
                   document.addEventListener("DOMContentLoaded", function () {
                     const activity_id = "{{ activity_id }}";
-                    console.log(activity_id);
+                    // console.log(activity_id);
                     const searchForm = document.getElementById("searchMemberForm");
                     const resultsDiv = document.getElementById("searchResults");
                     const resultsTableBody = document.getElementById("resultsTableBody");
@@ -541,8 +577,8 @@
 
                       const firstName = document.getElementById("first_name").value;
                       const lastName = document.getElementById("last_name").value;
-                      console.log("--------------------------------")
-                      console.log(firstName, lastName); 
+                      // console.log("--------------------------------")
+                      // console.log(firstName, lastName); 
 
                       resultsTableBody.innerHTML = ""; // Clear previous results
 
@@ -615,6 +651,148 @@
             </div>
             <!-- end remove member as admin form -->
 
+            <!-- swap order form -->
+            <div class="card overflow-auto shadow-lg border-0" id="swapOrderForm" style="display: none; background-color: #f9fafc;">
+              <div class="card-body p-4">
+                <div class="card-title text-success">
+                  <h5 class="teko-text">Swap Members Order in Rotation Cycle</h5>
+                  <hr>
+                </div>
+                <div class="pagetitle d-flex justify-content-between align-items-center mb-4">
+                  <p class="arima-text text-secondary">
+                    As admin, you can swap the order of members in the activity. This action is irreversible.
+                    Search for the members by their current order number and swap them accordingly. Only members who are yet to receive their lump sum can be swapped.
+                  </p>
+                </div>
+            
+                <form id="searchOrderForm" class="p-3">
+                  {% csrf_token %}
+                  <!-- First  name and last name-->
+                  <div class="mb-3">
+                    <label class="form-label fw-bold text-secondary arima-text">Order Numbers</label>
+                    <div class="d-flex align-items-center">
+                      <div class="me-3">
+                        <input type="number" class="form-control border-0 shadow-sm" id="position_one" name="position_one" required placeholder="first order number">
+                      </div>
+                      <div>
+                        <input type="number" class="form-control border-0 shadow-sm" id="position_two" name="position_two" required placeholder="second order number">
+                      </div>
+                    </div>
+                  </div>
+            
+                  <!-- Buttons -->
+                  <div class="d-flex justify-content-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm me-2 close-btn">Close</button>
+                    <button type="submit" class="btn btn-success btn-sm">Search Members</button>
+                  </div>
+                </form>
+
+                <!-- Results table -->
+                <div id="orderResults" class="mt-4 card-body" style="display: none;">
+                  <p class="arima-text" style="color: #dc3545;"><strong>Results</strong></p>
+                  <table class="table table-success table-striped-columns">
+                    <thead>
+                      <tr>
+                        <th scope="col">Profile Picture</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Share</th>
+                        <th scope="col">Current Order Number</th>
+                      </tr>
+                    </thead>
+                    <tbody id="orderResultsTableBody">
+                      <!-- Dynamic rows will be inserted here -->
+                    </tbody>
+                  </table>
+                  <div class="d-flex justify-content-end">
+                    <button type="submit" id="swapButton" class="btn btn-success btn-sm" style="display: none;" >Swap Members</button>
+                </div>
+
+                <script>
+                  document.getElementById("searchOrderForm").addEventListener("submit", function (e) {
+                    e.preventDefault();
+
+                    const positionOne = document.getElementById("position_one").value;
+                    const positionTwo = document.getElementById("position_two").value;
+                    const activityId = "{{ activity_id }}"; // Replace with your dynamic activity ID
+                    console.log("======search by order=========")
+
+                    fetch(`/manager/search_for_members_by_order_number/${activityId}`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                      },
+                      body: JSON.stringify({ position_one: positionOne, position_two: positionTwo }),
+                    })
+                      .then((response) => response.json())
+                      .then((data) => {
+                        if (data.members) {
+                          const tableBody = document.getElementById("orderResultsTableBody");
+                          tableBody.innerHTML = ""; // Clear existing rows
+
+                          data.members.forEach((member) => {
+                            const row = document.createElement("tr");
+                            row.innerHTML = `
+                              <td>
+                                <img src="${member.profile_picture}" alt="Profile" class="rounded-circle" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                              </td>
+                              <td>${member.full_name}</td>
+                              <td>${member.share_name}</td>
+                              <td>${member.order_number}</td>
+                            `;
+                            tableBody.appendChild(row);
+                          });
+
+                          document.getElementById("orderResults").style.display = "block";
+                          document.getElementById("swapButton").style.display = "block";
+
+                          // Attach click event to the Swap button
+                          document.getElementById("swapButton").onclick = function () {
+                            swapMembers(positionOne, positionTwo, activityId);
+                          };
+                        } else {
+                          alert(data.error || "No members found.");
+                        }
+                      })
+                      .catch((error) => {
+                        console.error("Error:", error);
+                        alert("Members not found, confirm the order numbers and try again")
+                      });
+                  });
+
+                  function swapMembers(positionOne, positionTwo, activityId) {
+                    console.log("======swapping members========")
+                    console.log("positionOne", positionOne)
+                    console.log("positionTwo", positionTwo)
+                    fetch(`/manager/swap_members_order_in_rotation/${activityId}/${positionTwo}/${positionOne}`, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}",
+                      },
+                    })
+                      .then((response) => response.json())
+                      .then((data) => {
+                        if (data.message) {
+                          alert("Members swapped successfully.");
+                          location.reload(); // Reload the page to reflect changes
+                        } else {
+                          alert(data.error || "Failed to swap members.");
+                        }
+                      })
+                      .catch((error) => {
+                        console.error("Error:", error);
+                        alert("Failed to swap members. Please try again.");
+                      });
+                  }
+
+                </script>
+
+              </div>
+              </div>
+
+            <!-- end of swap order form -->
+
           </div>
         </div><!-- End Left side columns -->
         
@@ -645,6 +823,9 @@
 
     const removeMemberCard = document.getElementById('removeMemberCard');
     const removeMemberForm = document.getElementById('removeMemberForm');
+
+    const adminFeesCard = document.getElementById('adminFeesCard');
+    const adminFeesForm = document.getElementById('adminFeesForm');
 
     // show the form when the card is clicked and hide all other cards
     increaseSharesCard.addEventListener('click', function() {
@@ -689,6 +870,15 @@
       removeMemberForm.style.display = 'block';
       cards.forEach(c => {
         if (c !== removeMemberForm) {
+          c.style.display = 'none';
+        }
+      });
+    });
+
+    adminFeesCard.addEventListener('click', function() {
+      adminFeesForm.style.display = 'block';
+      cards.forEach(c => {
+        if (c !== adminFeesForm) {
           c.style.display = 'none';
         }
       });

@@ -55,6 +55,26 @@ async def create_chama(
     finally:
         db.close()  # close the database connection
 
+@router.get("/activity_chama_category/{activity_id}", status_code=status.HTTP_200_OK)
+async def get_activity_chama_category(
+    activity_id: int,
+    db: Session = Depends(database.get_db),
+):
+    try:
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
+
+        if not activity:
+            raise HTTPException(status_code=404, detail="Activity not found")
+
+        return chama_activity.activity_chama_category()
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        management_error_logger.error(
+            f"failed to get chama category for activity: {activity_id}, error: {e}"
+        )
+        raise HTTPException(status_code=400, detail="Error while trying to retrieve activity category")
 
 # retrive chama accepting chamas and are active
 @router.get(

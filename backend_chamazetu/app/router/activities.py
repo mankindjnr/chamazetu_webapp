@@ -2698,10 +2698,16 @@ async def update_activity_admin_fee(
         today = datetime.now(nairobi_tz).date()
         chama_activity = chamaActivity(db, activity_id)
         activity = chama_activity.activity()
+        activity_category = chama_activity.activity_chama_category()
 
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
+            )
+
+        if activity_category != "public":
+            raise HTTPException(
+                status_code=403, detail="You can only update admin fee for public activities"
             )
 
         cycle_date = None
@@ -2722,6 +2728,7 @@ async def update_activity_admin_fee(
                 status_code=403, detail="You are not the manager of this activity"
             )
 
+        # TODO: later check if there are already users who have joined the activity and update the admin_fee column of the association table
         # update the admin fee for the activity
         activity.admin_fee = admin_fee.admin_fee
 
