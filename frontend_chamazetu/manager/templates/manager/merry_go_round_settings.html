@@ -351,7 +351,7 @@
             
                   <!-- Late fee input -->
                   <div class="mb-3" id="late_fee">
-                    <label for="walletnumber" class="form-label fw-bold arima-text text-secondary">Late Share Adjustment Fee</label>
+                    <label for="late_fee" class="form-label fw-bold arima-text text-secondary">Late Share Adjustment Fee</label>
                     <div class="input-group">
                       <input type="number" class="form-control border-0 shadow-sm" id="late_fee" name="late_fee" placeholder="Enter 0 if there is no fee" required>
                     </div>
@@ -360,8 +360,7 @@
             
                   <!-- Notify members options -->
                   <div class="mb-3">
-                    <label class="form-label fw-bold text-secondary arima-text">Notify Members *</label>
-                    <small class="text-muted d-block mb-2">Notify members that they can now increase their shares.</small>
+                    <small class="text-muted d-block mb-2" id="notifyMembers">Notify members that they can now increase their shares.</small>
                     <div class="d-flex align-items-center">
                       <div class="form-check form-switch me-3">
                         <input type="checkbox" class="form-check-input" id="notify" name="notify" onclick="toggleCheckBox('notify', 'dont_notify')">
@@ -422,7 +421,7 @@
                   {% csrf_token %}
                   <!-- Maximum shares input -->
                   <div class="mb-3">
-                    <label for="max_addon" class="form-label fw-bold arima-text text-secondary">Maximum Number of Shares New Members Can Have</label>
+                    <label for="max_shares" class="form-label fw-bold arima-text text-secondary">Maximum Number of Shares New Members Can Have</label>
                     <div class="input-group">
                       <span class="input-group-text bg-light text-secondary fw-bold">Shares:</span>
                       <input type="number" class="form-control border-0 shadow-sm" id="max_shares" name="max_shares" min="1" required>
@@ -432,7 +431,7 @@
             
                   <!-- Deadline input -->
                   <div class="mb-3" id="deadline">
-                    <label for="joining_deadline" class="form-label fw-bold arima-text text-secondary">Final Date to Join</label>
+                    <label for="deadline" class="form-label fw-bold arima-text text-secondary">Final Date to Join</label>
                     <div class="input-group">
                       <input type="date" class="form-control border-0 shadow-sm" id="deadline" name="deadline" required>
                     </div>
@@ -441,7 +440,7 @@
             
                   <!-- Late fee input -->
                   <div class="mb-3" id="late_fee">
-                    <label for="latefee" class="form-label fw-bold arima-text text-secondary">Late Adjustment Fee</label>
+                    <label for="late_fee" class="form-label fw-bold arima-text text-secondary">Late Adjustment Fee</label>
                     <div class="input-group">
                       <input type="number" class="form-control border-0 shadow-sm" id="late_fee" name="late_fee" placeholder="Enter 0 if there is no fee" required>
                     </div>
@@ -493,7 +492,7 @@
                   {% csrf_token %}
 
                   <div class="mb-3">
-                    <label for="adminFee" class="form-label fw-bold arima-text text-secondary">New Admin Fee</label>
+                    <label for="admin_fee" class="form-label fw-bold arima-text text-secondary">New Admin Fee</label>
                     <div class="input-group">
                       <span class="input-group-text bg-light text-secondary fw-bold">Ksh:</span>
                       <input type="number" class="form-control border-0 shadow-sm" id="admin_fee" name="admin_fee" required>
@@ -528,7 +527,7 @@
                   {% csrf_token %}
                   <!-- First  name and last name-->
                   <div class="mb-3">
-                    <label class="form-label fw-bold text-secondary arima-text">Member Names *</label>
+                    <label for="first_name" class="form-label fw-bold text-secondary arima-text">Member Names *</label>
                     <div class="d-flex align-items-center">
                       <div class="me-3">
                         <input type="text" class="form-control border-0 shadow-sm" id="first_name" name="first_name" required placeholder="first name">
@@ -669,7 +668,7 @@
                   {% csrf_token %}
                   <!-- First  name and last name-->
                   <div class="mb-3">
-                    <label class="form-label fw-bold text-secondary arima-text">Order Numbers</label>
+                    <label for="position_one" class="form-label fw-bold text-secondary arima-text">Order Numbers</label>
                     <div class="d-flex align-items-center">
                       <div class="me-3">
                         <input type="number" class="form-control border-0 shadow-sm" id="position_one" name="position_one" required placeholder="first order number">
