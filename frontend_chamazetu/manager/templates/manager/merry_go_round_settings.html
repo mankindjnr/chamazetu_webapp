@@ -264,7 +264,6 @@
               </div>
 
             </div>
-
              <!-- end of admin fee -->
 
              <!-- co managers -->
@@ -802,6 +801,20 @@
   </main><!-- End #main -->
 
 <script>
+  function initializeCloseButtons() {
+    const closeButtons = document.querySelectorAll('.close-btn');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        // Hide the form
+        this.closest('.card').style.display = 'none';
+        
+        // Show all cards again
+        const cards = document.querySelectorAll('.clickable-card');
+        cards.forEach(c => c.style.display = 'block');
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function() {
     const cards = document.querySelectorAll('.clickable-card');
     const forms = document.querySelectorAll('.card-body + .card');
@@ -885,23 +898,12 @@
    
     
     // Close button functionality
-    const closeButtons = document.querySelectorAll('.close-btn');
-    closeButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        // Hide the form
-        this.closest('.card').style.display = 'none';
-        
-        // Show all cards again
-        cards.forEach(c => c.style.display = 'block');
-      });
-    });
-
-
-
-    // SEARCH AND RESULTS FUNCTIONALITY
-    
+    initializeCloseButtons();
     
   });
+
+  // call the function to initialize the close buttons whenever the conditional content is rendered
+  document.addEventListener('DOMContentLoaded', initializeCloseButtons);
 </script>
 
 <style>
