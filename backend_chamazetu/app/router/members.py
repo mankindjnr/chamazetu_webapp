@@ -3363,12 +3363,25 @@ async def missed_amounts_total(
                     models.ActivityFine.is_paid == False,
                     )
                 )
-            .first()
+            .scalar()
         )
 
+        paid_fines =(
+            db.query(
+                func.coalesce(func.sum(models.ActivityFine.fine), 0),
+            )
+            .filter(
+                and_(
+                    models.ActivityFine.user_id == user.id,
+                    models.ActivityFine.is_paid == True,
+                    )
+                )
+            ).scalar()
+
         missed_amounts_resp = {
-            "missed_amount": missed_amounts[0],
-            "fine": missed_amounts[1],
+            "missed_amounts": missed_amounts[0],
+            "unpaid_fines": missed_amounts[1],
+            "paid_fines": paid_fines,
         }
 
         return missed_amounts_resp

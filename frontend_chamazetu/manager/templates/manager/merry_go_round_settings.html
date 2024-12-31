@@ -432,7 +432,7 @@
             
                   <!-- Deadline input -->
                   <div class="mb-3" id="deadline">
-                    <label for="deadline" class="form-label fw-bold arima-text text-secondary">Final Date to Join</label>
+                    <label for="joining_deadline" class="form-label fw-bold arima-text text-secondary">Final Date to Join</label>
                     <div class="input-group">
                       <input type="date" class="form-control border-0 shadow-sm" id="deadline" name="deadline" required>
                     </div>
@@ -441,7 +441,7 @@
             
                   <!-- Late fee input -->
                   <div class="mb-3" id="late_fee">
-                    <label for="walletnumber" class="form-label fw-bold arima-text text-secondary">Late Adjustment Fee</label>
+                    <label for="latefee" class="form-label fw-bold arima-text text-secondary">Late Adjustment Fee</label>
                     <div class="input-group">
                       <input type="number" class="form-control border-0 shadow-sm" id="late_fee" name="late_fee" placeholder="Enter 0 if there is no fee" required>
                     </div>
@@ -620,7 +620,7 @@
                     document.getElementById("searchResults").addEventListener("click", async function (event) {
                       if (event.target.classList.contains("remove-member")) {
                         const memberId = event.target.dataset.memberId;
-                        console.log("memberId", memberId);
+                        // console.log("memberId", memberId);
 
                         try {
                           const response = await fetch(`/manager/remove_member_from_activity/${activity_id}/${memberId}`, {
@@ -714,7 +714,7 @@
                     const positionOne = document.getElementById("position_one").value;
                     const positionTwo = document.getElementById("position_two").value;
                     const activityId = "{{ activity_id }}"; // Replace with your dynamic activity ID
-                    console.log("======search by order=========")
+                    // console.log("======search by order=========")
 
                     fetch(`/manager/search_for_members_by_order_number/${activityId}`, {
                       method: "POST",
@@ -761,9 +761,9 @@
                   });
 
                   function swapMembers(positionOne, positionTwo, activityId) {
-                    console.log("======swapping members========")
-                    console.log("positionOne", positionOne)
-                    console.log("positionTwo", positionTwo)
+                    // console.log("======swapping members========")
+                    // console.log("positionOne", positionOne)
+                    // console.log("positionTwo", positionTwo)
                     fetch(`/manager/swap_members_order_in_rotation/${activityId}/${positionTwo}/${positionOne}`, {
                       method: "PUT",
                       headers: {
