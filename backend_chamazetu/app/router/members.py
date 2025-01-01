@@ -3363,7 +3363,7 @@ async def missed_amounts_total(
                     models.ActivityFine.is_paid == False,
                     )
                 )
-            .scalar()
+            .first()
         )
 
         paid_fines =(
