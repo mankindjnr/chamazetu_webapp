@@ -2418,7 +2418,8 @@ async def get_activity_rotation_contribution(
 ):
 
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -2428,6 +2429,7 @@ async def get_activity_rotation_contribution(
                 and_(
                     models.activity_user_association.c.activity_id == activity_id,
                     models.activity_user_association.c.user_id == current_user.id,
+                    models.activity_user_association.c.user_is_active == True,
                 )
             )
             .first()
@@ -2466,26 +2468,19 @@ async def get_activity_rotation_contribution(
         )
 
         # print("upcoming rotation date", upcoming_rotation_date)
+        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         # check if this activity has a rotation_order record
         rotation_order = db.query(models.RotationOrder).filter(
             and_(
                 models.RotationOrder.activity_id == activity_id,
+                models.RotationOrder.cycle_number == cycle_number,
             )
         )
         if rotation_order:
             rotation_order = True
         else:
             rotation_order = False
-
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
-
-        if not cycle_number:
-            cycle_number = 0
 
         upcoming_recipient = (
             db.query(
@@ -2499,7 +2494,7 @@ async def get_activity_rotation_contribution(
                 and_(
                     models.RotationOrder.activity_id == activity_id,
                     models.RotationOrder.receiving_date == upcoming_rotation_date,
-                    # models.RotationOrder.fulfilled == False,
+                    models.RotationOrder.cycle_number == cycle_number,
                 )
             )
             .first()
@@ -2545,6 +2540,7 @@ async def get_activity_rotation_contribution(
                     models.RotatingContributions.activity_id == activity_id,
                     models.RotatingContributions.rotation_date
                     == upcoming_rotation_date,
+                    models.RotatingContributions.cycle_number == cycle_number,
                 )
             )
             .all()

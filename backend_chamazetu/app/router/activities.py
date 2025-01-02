@@ -204,7 +204,11 @@ async def get_activity_by_id(
 
         missed_contributions = chama_activity.current_cycle_unpaid_fines_and_missed_amount()["total_unpaid"]
 
-        paid_fines = chama_activity.current_cycle_paid_fines()
+        paid_fines = 0
+        if chama_activity.activity_type == "merry-go-round":
+            paid_fines = chama_activity.merry_go_round_max_cycle()
+        else:
+            paid_fines = chama_activity.current_cycle_paid_fines()
 
         rotation_contributions_resp = []
         unpaid_loans = 0
@@ -224,6 +228,7 @@ async def get_activity_by_id(
                         models.RotatingContributions.activity_id == activity_id,
                         models.RotatingContributions.rotation_date
                         == next_contribution_date,
+                        models.RotatingContributions.cycle_number == chama_activity.merry_go_round_max_cycle()
                     )
                 )
                 .all()
