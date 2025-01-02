@@ -1,12 +1,8 @@
-2025-01-02 16:05:20,631 - root - INFO - token_data: username='vatredukno@gufum.com'
-2025-01-02 16:05:56,071 - root - INFO - token_data: username='vatredukno@gufum.com'
-2025-01-02 16:06:11,502 - root - INFO - token_data: username='vatredukno@gufum.com'
-2025-01-02 16:06:35,721 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
+2025-01-02 16:36:48,989 - passlib.handlers.bcrypt - WARNING - (trapped) error reading bcrypt version
 Traceback (most recent call last):
   File "/usr/local/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
     version = _bcrypt.__about__.__version__
 AttributeError: module 'bcrypt' has no attribute '__about__'
-2025-01-02 16:06:52,199 - root - INFO - token_data: username='siknejamlo@gufum.com'
-2025-01-02 16:11:33,289 - root - INFO - token_data: username='yaltacukka@gufum.com'
-2025-01-02 16:11:40,530 - root - INFO - token_data: username='yaltacukka@gufum.com'
-2025-01-02 16:12:01,726 - root - INFO - token_data: username='yaltacukka@gufum.com'
+2025-01-02 16:39:31,901 - root - INFO - token_data: username='cuydafumlo@gufum.com'
+2025-01-02 16:40:43,337 - root - INFO - token_data: username='cuydafumlo@gufum.com'
+2025-01-02 16:40:58,382 - root - INFO - token_data: username='cuydafumlo@gufum.com'

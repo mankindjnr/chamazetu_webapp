@@ -1777,7 +1777,7 @@ async def activity_rotation_order(
 
         # if latest_cycle_subquery is None:
         #     raise HTTPException(status_code=404, detail="Latest cycle number not found")
-        cycle_number = chama_activity.merry_go_round_cycle_number()
+        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         # print(latest_cycle_subquery)
         print("===past cycle  number====")
