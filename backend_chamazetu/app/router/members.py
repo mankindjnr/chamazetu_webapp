@@ -3213,7 +3213,7 @@ async def join_merry_go_round_activity_late(
                     "activity_id": activity_id,
                     "contributor_id": current_user.id,
                     "recipient_id": upcoming_recipient.recipient_id,
-                    "expected_amount": newly_expected_amount,
+                    "expected_amount": activity_amount,
                     "contributed_amount": activity_amount if sufficient_balance else 0,
                     "fine": 0,
                     "rotation_date": next_contribution_date,
