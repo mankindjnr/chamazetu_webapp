@@ -440,6 +440,8 @@ async def create_random_rotation_order(
         else:
             cycle_number += 1
 
+        print("=============cycle number", cycle_number)
+
         share_value = activity.activity_amount
         frequency = activity.frequency
         interval = activity.interval
@@ -447,6 +449,7 @@ async def create_random_rotation_order(
         first_contribution_date = activity.first_contribution_date
 
         next_contribution_date = chama_activity.activity_dates()["next_contribution_date"]
+        print("======next contribution date", next_contribution_date)
 
         # get all users in the chama from the activity_user_association table, we will need the user_id, user_name, share_value, number of shares
         # user name is from the user table as firstname and lastname
@@ -473,6 +476,8 @@ async def create_random_rotation_order(
             .all()
         )
 
+        print("======users", users)
+
         if not users:
             raise HTTPException(
                 status_code=404, detail="No users found in the activity"
@@ -485,6 +490,7 @@ async def create_random_rotation_order(
         # create a rotation order for each user in the activity
         rotation_order = []
 
+        print("======expected receiving amount", expected_receiving_amount)
         for user in users:
             for i in range(user.shares):
                 rotation_order.append(
@@ -500,6 +506,7 @@ async def create_random_rotation_order(
 
         # shuffle the rotation order
         shuffled_order = utils.shuffle_list(rotation_order)
+        print("=====past the shuffling=================")
 
         # we will now include the receiving date for each user in the rotation order as well as their order_in_rotation number(1, 2 ...),
         # the dates will follow the frequency and interval of the activity
