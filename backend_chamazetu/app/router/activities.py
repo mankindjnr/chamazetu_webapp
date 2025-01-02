@@ -1769,14 +1769,15 @@ async def activity_rotation_order(
 
         print("=====last cycle number===")
         # subquery to get the latest cycle_number for the given activity_id
-        latest_cycle_subquery = (
-            db.query(func.max(models.RotationOrder.cycle_number))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar_subquery()
-        )
+        # latest_cycle_subquery = (
+        #     db.query(func.max(models.RotationOrder.cycle_number))
+        #     .filter(models.RotationOrder.activity_id == activity_id)
+        #     .scalar_subquery()
+        # )
 
-        if latest_cycle_subquery is None:
-            raise HTTPException(status_code=404, detail="Latest cycle number not found")
+        # if latest_cycle_subquery is None:
+        #     raise HTTPException(status_code=404, detail="Latest cycle number not found")
+        cycle_number = chama_activity.merry_go_round_cycle_number()
 
         # print(latest_cycle_subquery)
         print("===past cycle  number====")
@@ -1785,7 +1786,7 @@ async def activity_rotation_order(
             db.query(func.max(models.RotationOrder.receiving_date))
             .filter(
                 models.RotationOrder.activity_id == activity_id,
-                models.RotationOrder.cycle_number == latest_cycle_subquery,
+                models.RotationOrder.cycle_number == cycle_number,
             )
             .scalar()
         )
@@ -1815,6 +1816,7 @@ async def activity_rotation_order(
                     models.RotatingContributions.activity_id == activity_id,
                     models.RotatingContributions.rotation_date
                     == next_contribution_date,
+                    models.RotatingContributions.cycle_number == cycle_number,
                 )
             )
             .scalar()
@@ -1835,7 +1837,7 @@ async def activity_rotation_order(
             .join(models.User, models.User.id == models.RotationOrder.recipient_id)
             .filter(
                 models.RotationOrder.activity_id == activity_id,
-                models.RotationOrder.cycle_number == latest_cycle_subquery,
+                models.RotationOrder.cycle_number == cycle_number,
             )
             .order_by(models.RotationOrder.order_in_rotation)
             .all()
