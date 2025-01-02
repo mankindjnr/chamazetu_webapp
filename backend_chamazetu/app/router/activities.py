@@ -2422,7 +2422,8 @@ async def get_late_joining_data(
     try:
         today = datetime.now(nairobi_tz).date()
 
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -2430,11 +2431,11 @@ async def get_late_joining_data(
 
         print("===activity===")
         # get the late joining data for the activity
-        late_joining_data = db.query(models.MerryGoRoundShareIncrease).filter(
+        late_joining_data = db.query(models.MerryGoRoundShareAdjustment).filter(
             and_(
-                models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                models.MerryGoRoundShareIncrease.allow_new_members == True,
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+                models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                models.MerryGoRoundShareAdjustment.allow_new_members == True,
+                func.date(models.MerryGoRoundShareAdjustment.deadline) >= today,
             )
         ).first()
 
@@ -2452,11 +2453,7 @@ async def get_late_joining_data(
         )
 
         # current cycle number
-        cycle_number = (
-            db.query(func.max(models.RotationOrder.cycle_number))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         if not cycle_number:
             raise HTTPException(status_code=404, detail="Cycle number not found")

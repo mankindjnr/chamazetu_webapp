@@ -3022,7 +3022,8 @@ async def join_merry_go_round_activity_late(
     try:
         today = datetime.now(nairobi_tz).date()
         transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        chama_activity = activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -3044,12 +3045,12 @@ async def join_merry_go_round_activity_late(
             )
 
         # share increase activation data
-        activation_record = (db.query(models.MerryGoRoundShareIncrease)
+        activation_record = (db.query(models.MerryGoRoundShareAdjustment)
         .filter(
             and_(
-                models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                models.MerryGoRoundShareIncrease.allow_new_members == True,
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+                models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                models.MerryGoRoundShareAdjustment.allow_new_members == True,
+                func.date(models.MerryGoRoundShareAdjustment.deadline) >= today,
             )
         )
         .first()
@@ -3066,11 +3067,10 @@ async def join_merry_go_round_activity_late(
             )
 
         # calculate adjustment cost and validate wallet balance
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        if activity.activity_type == 'merry-go-round':
+            cycle_number = chama_activity.merry_go_round_max_cycle()
+        else:
+            cycle_number = chama_activity.current_activity_cycle()
 
         next_contribution_date = (
             db.query(models.ActivityContributionDate.next_contribution_date)
