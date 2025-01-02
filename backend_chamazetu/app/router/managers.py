@@ -448,7 +448,7 @@ async def create_random_rotation_order(
         contribution_day = activity.contribution_day
         first_contribution_date = activity.first_contribution_date
 
-        next_contribution_date = chama_activity.activity_dates()["next_contribution_date"]
+        next_contribution_date = chama_activity.previous_and_upcoming_contribution_dates()["next_contribution_date"]
         print("======next contribution date", next_contribution_date)
 
         # get all users in the chama from the activity_user_association table, we will need the user_id, user_name, share_value, number of shares
