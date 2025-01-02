@@ -223,30 +223,31 @@ async def allow_new_activity_members(request, activity_id):
             "Content-Type": "application/json",
         }
 
+        last_joining_date = request.POST.get("last_joining_date")
+        adjustment_fee = int(request.POST.get("adjustment_fee"))
+        max_shares = int(request.POST.get("max_shares"))
+
+        print("last_joining_date:", last_joining_date)
+        print("adjustment_fee:", adjustment_fee)
+        print("max_shares:", max_shares)
+
         # get the data from the form(deadline, adjustment fee, max_shares)
-        if not request.POST.get("deadline") or not request.POST.get("late_fee") or not request.POST.get("max_shares"):
-            messages.error(request, "Please fill in all fields")
-            fallback = reverse("manager:order_management", args=[activity_id])
-            referer = request.META.get("HTTP_REFERER", fallback)
-            return HttpResponseRedirect(referer)
+        if adjustment_fee >= 0 and max_shares > 0 and last_joining_date:
+            data = {
+                "deadline_date": last_joining_date,
+                "adjustment_fee": adjustment_fee,
+                "max_no_shares": max_shares
+            }
 
-        deadline = request.POST.get("deadline")
-        adjustment_fee = request.POST.get("late_fee")
-        max_shares = request.POST.get("max_shares")
+            print("data:", data)
+            response = requests.post(url, headers=headers, json=data)
+            if response.status_code == HTTPStatus.CREATED:
+                messages.success(request, "New members can now join this activity")
+            else:
+                messages.error(request, f"{response.json()['detail']}")
 
-        data = {
-            "deadline_date": deadline,
-            "adjustment_fee": adjustment_fee,
-            "max_no_shares": int(max_shares)
-        }
-
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == HTTPStatus.CREATED:
-            messages.success(request, "New members can now join this activity")
-        else:
-            messages.error(request, f"{response.json()['detail']}")
-
-    return redirect(reverse("manager:order_management", args=[activity_id]))
+    referer = request.META.get("HTTP_REFERER", "manager:dashboard")
+    return HttpResponseRedirect(referer)
 
 @async_tokens_in_cookies()
 @async_validate_and_refresh_token()

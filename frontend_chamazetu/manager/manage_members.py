@@ -50,8 +50,10 @@ async def allow_new_members(request, chama_id):
     if request.method == "POST":
         adjustment_fee = request.POST.get("adjustment_fee")
         deadline = request.POST.get("deadline")
+        print("adjustment_fee:", adjustment_fee)
+        print("deadline", deadline)
 
-        if int(adjustment_fee) and deadline:
+        if int(adjustment_fee) is not None and deadline is not None:
             url = f"{os.getenv('api_url')}/managers/allow_new_chama_members/{chama_id}"
             headers = {
                 "Content-Type": "application/json",

@@ -1654,7 +1654,8 @@ async def allow_new_members_to_join(
 
     try:
         today = datetime.now(nairobi_tz).date()
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -1671,12 +1672,12 @@ async def allow_new_members_to_join(
         # check if there is an already active record in the MerryGoRoundShareIncrease table, by checking if the deadline is in the future and
         # the allow_new_members is true
         active_share_increase = (
-            db.query(models.MerryGoRoundShareIncrease)
+            db.query(models.MerryGoRoundShareAdjustment)
             .filter(
                 and_(
-                    models.MerryGoRoundShareIncrease.activity_id == activity_id,
-                    func.date(models.MerryGoRoundShareIncrease.deadline) > today,
-                    models.MerryGoRoundShareIncrease.allow_new_members == True,
+                    models.MerryGoRoundShareAdjustment.activity_id == activity_id,
+                    func.date(models.MerryGoRoundShareAdjustment.deadline) > today,
+                    models.MerryGoRoundShareAdjustment.allow_new_members == True,
                 )
             )
             .first()
@@ -1688,23 +1689,18 @@ async def allow_new_members_to_join(
             )
 
         # get the current cycle number for the activity
-        cycle_number = (
-            db.query(func.coalesce(func.max(models.RotationOrder.cycle_number), 0))
-            .filter(models.RotationOrder.activity_id == activity_id)
-            .scalar()
-        )
+        cycle_number = chama_activity.current_activity_cycle()
         if not cycle_number or cycle_number == 0:
             raise HTTPException(
                 status_code=400, detail="No rotation order has been created yet"
             )
 
-        print(" =======setting new members to join======")
-
         # insert the share increase data into the database
-        share_increase_activation = models.MerryGoRoundShareIncrease(
+        share_increase_activation = models.MerryGoRoundShareAdjustment(
             activity_id=activity_id,
             max_shares = adjustment_data.max_no_shares,
             allow_share_increase = False,
+            allow_share_reduction = False,
             allow_new_members = True,
             cycle_number=cycle_number,
             activity_amount=activity.activity_amount,
