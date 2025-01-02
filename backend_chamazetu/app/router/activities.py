@@ -340,10 +340,10 @@ async def get_all_activities(
 
         activities_ids = [activity.id for activity in activities]
 
-        active_late_joining_activities = db.query(models.MerryGoRoundShareIncrease).filter(
+        active_late_joining_activities = db.query(models.MerryGoRoundShareAdjustment).filter(
             and_(
-                models.MerryGoRoundShareIncrease.activity_id.in_(activities_ids),
-                func.date(models.MerryGoRoundShareIncrease.deadline) >= today,
+                models.MerryGoRoundShareAdjustment.activity_id.in_(activities_ids),
+                func.date(models.MerryGoRoundShareAdjustment.deadline) >= today,
             )
         ).all()
 

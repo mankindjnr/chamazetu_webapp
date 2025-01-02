@@ -464,7 +464,8 @@ async def contribute_to_merry_go_round(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        activity = await get_active_activity_by_id(activity_id, db)
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(status_code=404, detail="Activity not found")
 
@@ -495,6 +496,7 @@ async def contribute_to_merry_go_round(
                 and_(
                     models.activity_user_association.c.user_id == user_id,
                     models.activity_user_association.c.activity_id == activity_id,
+                    models.activity_user_association.c.user_is_active == True,
                 )
             )
             .scalar()
@@ -649,6 +651,7 @@ async def contribute_to_merry_go_round(
 
             # if after fine repayment, the member has some amount left, we contribute towards the upcoming rotation_contribution
             if amount > 0 and expected_amount > 0:
+                cycle_number = chama_activity.merry_go_round_max_cycle()
                 transaction_code = generate_transaction_code(
                     "manual_contribution", wallet_id
                 )
@@ -664,6 +667,7 @@ async def contribute_to_merry_go_round(
                             == next_contribution_date,
                             models.RotatingContributions.expected_amount
                             != models.RotatingContributions.contributed_amount,
+                            models.RotatingContributions.cycle_number == cycle_number,
                         )
                     )
                     .all()
@@ -2439,6 +2443,8 @@ async def get_activity_rotation_contribution(
                 status_code=404, detail="You are not a member of this activity"
             )
 
+        cycle_number = chama_activity.merry_go_round_max_cycle()
+
         upcoming_rotation_date = (
             db.query(models.ActivityContributionDate.next_contribution_date)
             .filter(models.ActivityContributionDate.activity_id == activity_id)
@@ -2462,13 +2468,11 @@ async def get_activity_rotation_contribution(
                     models.RotatingContributions.activity_id == activity_id,
                     models.RotatingContributions.rotation_date
                     == upcoming_rotation_date,
+                    models.RotatingContributions.cycle_number == cycle_number,
                 )
             )
             .scalar()
         )
-
-        # print("upcoming rotation date", upcoming_rotation_date)
-        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         # check if this activity has a rotation_order record
         rotation_order = db.query(models.RotationOrder).filter(
