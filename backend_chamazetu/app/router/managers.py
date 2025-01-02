@@ -563,12 +563,14 @@ async def create_random_rotation_order(
         management_error_logger.error(
             f"failed to create rotation order for chama, error: {e}"
         )
+        print("http exception", e)
         raise e
     except Exception as e:
         db.rollback()
         management_error_logger.error(
             f"failed to create rotation order for chama, error: {e}"
         )
+        print("exception", e)
         raise HTTPException(
             status_code=400, detail="Failed to create rotation order for chama"
         )
