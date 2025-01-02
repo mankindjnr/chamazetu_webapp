@@ -159,6 +159,15 @@ class chamaActivity:
 
         return cycle or 0
 
+    # we are going to retrieve the max cycle number in the rotatiom_order table specifically for merry_go_round activities
+    def merry_go_round_max_cycle(self) -> int:
+        """retrieve the max cycle number for a merry_go_round activity"""
+        max_cycle = self.db.query(func.max(models.RotationOrder.cycle_number)).filter(
+            models.RotationOrder.activity_id == self.activity_id
+        ).scalar()
+
+        return max_cycle or 0
+
     def activity_dates(self) -> dict:
         """creation date, first_contribution_date, last_contribution_date, restart_date"""
         dates = self.db.query(models.Activity).filter(models.Activity.id == self.activity_id).first()
