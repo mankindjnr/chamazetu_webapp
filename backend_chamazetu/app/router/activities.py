@@ -2219,7 +2219,7 @@ async def create_rotation_contribution_for_activity(
             raise HTTPException(status_code=404, detail="Upcoming recipient not found")
 
         # get the cycle number for the activity
-        cycle_number = chama_activity.current_activity_cycle()
+        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         # get the users for the activity with the cycle number
         activity_users = (

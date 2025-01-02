@@ -153,7 +153,7 @@ async def access_chama(request, chamaname, chama_id):
         # update_table_banking_loan_records.delay()
         # merry_go_round_activity_auto_contributions.delay()
         # make_late_auto_disbursements.delay()
-        update_accepting_members_chain.delay()
+        # update_accepting_members_chain.delay()
         chama_data = chama.json()
         return render(
             request,
