@@ -1767,20 +1767,9 @@ async def activity_rotation_order(
                 status_code=404, detail="Next contribution date not found"
             )
 
-        print("=====last cycle number===")
-        # subquery to get the latest cycle_number for the given activity_id
-        # latest_cycle_subquery = (
-        #     db.query(func.max(models.RotationOrder.cycle_number))
-        #     .filter(models.RotationOrder.activity_id == activity_id)
-        #     .scalar_subquery()
-        # )
-
-        # if latest_cycle_subquery is None:
-        #     raise HTTPException(status_code=404, detail="Latest cycle number not found")
         cycle_number = chama_activity.merry_go_round_max_cycle()
 
-        # print(latest_cycle_subquery)
-        print("===past cycle  number====")
+
         # if this activity latest cycle number largest/latest date is behind the current date, then we need to create a new set of rotatiion_order records
         final_rotation_date = (
             db.query(func.max(models.RotationOrder.receiving_date))
@@ -1791,7 +1780,6 @@ async def activity_rotation_order(
             .scalar()
         )
 
-        print(f"final_rotation_date: {final_rotation_date}")
         if final_rotation_date is None or final_rotation_date.date() < today:
             return {
                 "pooled_so_far": 0,
@@ -1802,8 +1790,6 @@ async def activity_rotation_order(
                 "rotation_date": None,
                 "new_rotation_needed": False if final_rotation_date is None else True,
             }
-
-        print("====past fina date===")
 
         pooled_so_far = (
             db.query(

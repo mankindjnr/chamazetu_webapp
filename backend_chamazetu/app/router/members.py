@@ -3020,7 +3020,6 @@ async def join_merry_go_round_activity_late(
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
     try:
-        print("======joining_late=======")
         today = datetime.now(nairobi_tz).date()
         transaction_datetime = datetime.now(nairobi_tz).replace(tzinfo=None, microsecond=0)
         chama_activity = activity = chamaActivity(db, activity_id)
@@ -3092,8 +3091,6 @@ async def join_merry_go_round_activity_late(
             .all()
         )
 
-        #TODO: if the rotation is one and is the first one, just add the user to the cycle without deductions. just deduct the adjustment fee
-
         if not rotations_to_clear:
             # this is okay since we are getting upto the next contribution date
             raise HTTPException(
@@ -3108,15 +3105,12 @@ async def join_merry_go_round_activity_late(
 
         sufficient_balance = True
         user_record = db.query(models.User).filter(models.User.id == current_user.id).with_for_update().first()
-        if user_record.wallet_balance < adjustment_cost and user_record.wallet_balance < adjustment_fee:
+        if user_record.wallet_balance < adjustment_cost:
             raise HTTPException(
                 status_code=400, detail="Insufficient wallet balance for adjustment, top up and try again"
             )
-        elif user_record.wallet_balance < adjustment_cost and user_record.wallet_balance >= adjustment_fee:
-            sufficient_balance = False
 
         with db.begin_nested():
-            print("======begin nested===========")
             # add the user to the activity_user_association table
             new_user_in_activity = insert(models.activity_user_association).values(
                 user_id=current_user.id,
@@ -3153,8 +3147,6 @@ async def join_merry_go_round_activity_late(
             # insert new records to the rotation order, users may have more than one new share, they will be added as consecutive records
             new_rotations = []
             newly_expected_amount = last_rotation.expected_amount + (activity_amount * no_of_shares.new_shares)
-            print("===previousexpected:", last_rotation.expected_amount)
-            print("=====newly expected:", newly_expected_amount)
             next_receiving_date = None
             frequency = activity.frequency
             interval = activity.interval
@@ -3214,54 +3206,53 @@ async def join_merry_go_round_activity_late(
                     "contributor_id": current_user.id,
                     "recipient_id": upcoming_recipient.recipient_id,
                     "expected_amount": activity_amount,
-                    "contributed_amount": activity_amount if sufficient_balance else 0,
+                    "contributed_amount": activity_amount,
                     "fine": 0,
                     "rotation_date": next_contribution_date,
                     "cycle_number": cycle_number,
                     "contributing_share": rotation.share_name,
                     "recipient_share": upcoming_recipient.share_name,
-                    "contributed_on_time": sufficient_balance,
+                    "contributed_on_time": True,
                 }
 
                 new_rotating_contributions.append(models.RotatingContributions(**new_contribution))
 
             # for this upcoming contribution to take effect we have to add a contribution record in the activities transactions table
-            if sufficient_balance:
-                transaction_code = generate_transaction_code("contribution", user_record.wallet_id)
-                contribution_record = models.ActivityTransaction(
-                    user_id=current_user.id,
-                    amount=activity_amount * no_of_shares.new_shares,
-                    origin=user_record.wallet_id,
-                    activity_id=activity_id,
-                    transaction_date=transaction_datetime,
-                    updated_at=transaction_datetime,
-                    transaction_completed=True,
-                    transaction_code=transaction_code,
-                    transaction_type="contribution",
-                )
+            transaction_code = generate_transaction_code("contribution", user_record.wallet_id)
+            contribution_record = models.ActivityTransaction(
+                user_id=current_user.id,
+                amount=activity_amount * no_of_shares.new_shares,
+                origin=user_record.wallet_id,
+                activity_id=activity_id,
+                transaction_date=transaction_datetime,
+                updated_at=transaction_datetime,
+                transaction_completed=True,
+                transaction_code=transaction_code,
+                transaction_type="contribution",
+            )
 
-                db.add(contribution_record)
+            db.add(contribution_record)
 
-                # use the past rotations we got earlier excluding the upcoming rotation to now make new late disbursement records
-                # since we have collected the missed amount this far and for the upcoming contribution day, we can now make sure the
-                # recipients of the past rotations receive their share. the upcoming one has already been accounted for in the new rotating contributions
-                late_disbursements = []
+            # use the past rotations we got earlier excluding the upcoming rotation to now make new late disbursement records
+            # since we have collected the missed amount this far and for the upcoming contribution day, we can now make sure the
+            # recipients of the past rotations receive their share. the upcoming one has already been accounted for in the new rotating contributions
+            late_disbursements = []
 
-                for late_recipient in rotations_to_clear:
-                    if late_recipient.receiving_date == next_contribution_date:
-                        continue
+            for late_recipient in rotations_to_clear:
+                if late_recipient.receiving_date == next_contribution_date:
+                    continue
 
-                    late_disbursement = {
-                        "chama_id": activity.chama_id,
-                        "activity_id": activity_id,
-                        "late_contribution": no_of_shares.new_shares * activity_amount,
-                        "missed_rotation_date": late_recipient.receiving_date,
-                        "disbursement_completed": False,
-                        "late_contributor_id": current_user.id,
-                        "late_recipient_id": late_recipient.recipient_id,
-                    }
+                late_disbursement = {
+                    "chama_id": activity.chama_id,
+                    "activity_id": activity_id,
+                    "late_contribution": no_of_shares.new_shares * activity_amount,
+                    "missed_rotation_date": late_recipient.receiving_date,
+                    "disbursement_completed": False,
+                    "late_contributor_id": current_user.id,
+                    "late_recipient_id": late_recipient.recipient_id,
+                }
 
-                    late_disbursements.append(models.LateRotationDisbursements(**late_disbursement))
+                late_disbursements.append(models.LateRotationDisbursements(**late_disbursement))
 
             # now update all rotation order in the currect cycle their new expected amount since we just added new shares
             rows_to_update = db.query(models.RotationOrder).filter(
@@ -3277,22 +3268,18 @@ async def join_merry_go_round_activity_late(
             # perform bulk inserts
             db.bulk_save_objects(new_rotations)
             db.bulk_save_objects(new_rotating_contributions)
-            if sufficient_balance:
-                db.bulk_save_objects(late_disbursements)
+            db.bulk_save_objects(late_disbursements)
 
             # update the wallet balance
-            if sufficient_balance:
-                user_record.wallet_balance -= adjustment_cost
-            else:
-                user_record.wallet_balance -= adjustment_fee
+            user_record.wallet_balance -= adjustment_cost
 
             # update the activity account with the adjustment cost
             activity_account = db.query(models.Activity_Account).filter(models.Activity_Account.id == activity_id).with_for_update().first()
-            activity_account.account_balance += adjustment_cost if sufficient_balance else adjustment_fee
+            activity_account.account_balance += adjustment_cost
 
             # update chama account
             chama_account = db.query(models.Chama_Account).filter(models.Chama_Account.id == activity.chama_id).with_for_update().first()
-            chama_account.account_balance += adjustment_cost if sufficient_balance else adjustment_fee
+            chama_account.account_balance += adjustment_cost
 
             db.commit()
 
