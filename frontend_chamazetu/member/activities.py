@@ -794,8 +794,6 @@ async def get_disbursement_records(request, activity_id):
 
     if response.status_code == HTTPStatus.OK:
         data = response.json()
-        print("=====disbursement records=====")
-        print(data)
         return render(
             request,
             "member/disbursement_records.html",

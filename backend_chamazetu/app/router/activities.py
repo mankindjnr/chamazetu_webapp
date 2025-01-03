@@ -2484,7 +2484,8 @@ async def activity_disbursement_records(
     db: Session = Depends(database.get_db),
 ):
     try:
-        activity = db.query(models.Activity).filter(models.Activity.id == activity_id).first()
+        chama_activity = chamaActivity(db, activity_id)
+        activity = chama_activity.activity()
         if not activity:
             raise HTTPException(
                 status_code=404, detail="Activity not found or does not exist"
@@ -2492,11 +2493,13 @@ async def activity_disbursement_records(
 
         # get all the disbursement records for the activity by retrieving all past records in the rotation order behind today
         today = datetime.now(nairobi_tz).date()
+        cycle_number = chama_activity.merry_go_round_max_cycle()
 
         disbursement_records = db.query(models.RotationOrder).filter(
             and_(
                 models.RotationOrder.activity_id == activity_id,
                 func.date(models.RotationOrder.receiving_date) < today,
+                models.RotationOrder.cycle_number == cycle_number,
             )
         ).all()
 
